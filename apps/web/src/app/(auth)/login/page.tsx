@@ -1,27 +1,35 @@
-import { Card } from "@kiakia/ui";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { LoginForm } from "../_components/LoginForm";
+// app/login/page.tsx
+import { Metadata } from "next";
+import ImagePane from "../_components/ImagePane";
+import { MobileLoginLayout } from "./components/MobileLoginLayout";
+import { DesktopLoginLayout } from "./components/DesktopLoginLayout";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata: Metadata = {
+  title: "Sign in to your account",
+  description:
+    "Log in to KiaKia to continue enjoying high-velocity food delivery with zero compromises on quality.",
+  openGraph: {
+    title: "Sign in | KiaKia",
+    description:
+      "Log in to KiaKia to continue enjoying high-velocity food delivery.",
+    images: ["/assets/login-image.png"],
+  },
+};
 
 export default function LoginPage() {
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-16">
-      <div className="w-full max-w-sm">
-        <Card>
-          <h1 className="text-xl font-semibold text-ink">Welcome back</h1>
-          <p className="mt-1 text-sm text-ink-muted">Enter your details to access your account.</p>
-          <div className="mt-6">
-            <LoginForm />
-          </div>
-        </Card>
-        <p className="mt-4 text-center text-sm text-ink-muted">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="font-medium text-brand-600 hover:underline">
-            Sign up
-          </Link>
-        </p>
+    <main className="flex min-h-screen flex-col bg-[#FCF9F8] lg:flex-row">
+      {/* Desktop Image Pane (hidden on mobile) */}
+      <ImagePane
+        imageSrc="/assets/login-image.png"
+        altText="A KiaKia customer enjoying a freshly delivered meal"
+        heading="Welcome Back."
+        subheading="Log in to continue enjoying high-velocity food delivery with zero compromises on quality."
+      />
+
+      <div className="flex flex-1 flex-col bg-[#FCF9F8] lg:w-1/2 lg:items-center lg:justify-center lg:bg-transparent">
+        <MobileLoginLayout />
+        <DesktopLoginLayout />
       </div>
     </main>
   );
