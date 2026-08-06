@@ -1,0 +1,17 @@
+{
+  "name": "@kiakia/config",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "files": [
+    "tsconfig.base.json",
+    "eslint-preset.mjs"
+  ],
+  "dependencies": {
+    "eslint": "^9.20.0",
+    "typescript-eslint": "^8.20.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

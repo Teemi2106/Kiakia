@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@import "@kiakia/ui/tokens.css";
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}

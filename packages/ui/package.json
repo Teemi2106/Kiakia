@@ -1,0 +1,33 @@
+{
+  "name": "@kiakia/ui",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "sideEffects": ["*.css"],
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./tokens.css",
+    "./*": "./src/*.tsx"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"no tests in @kiakia/ui yet\" && exit 0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "dependencies": {
+    "@kiakia/domain": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "@kiakia/config": "workspace:*",
+    "@types/react": "^19.0.0",
+    "eslint": "^9.20.0",
+    "typescript": "^5.7.0"
+  }
+}

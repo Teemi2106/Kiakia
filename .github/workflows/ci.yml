@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  # Placeholder, correctly-*shaped* values only — not real credentials.
+  # Lets `next build` and env validation (lib/env.*.ts) succeed without a
+  # live Supabase project, matching local dev's .env.local. Real secrets
+  # (a live project's anon/service-role keys) belong in repo/environment
+  # secrets once staging exists, referenced the same way, never inlined.
+  NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "placeholder-publishable-key"
+  NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+  SUPABASE_SERVICE_ROLE_KEY: "placeholder-service-role-key"
+  MONNIFY_API_KEY: "placeholder-monnify-api-key"
+  MONNIFY_API_SECRET: "placeholder-monnify-api-secret"
+  MONNIFY_CONTRACT_CODE: "placeholder-contract-code"
+  MONNIFY_BASE_URL: "https://sandbox.monnify.com"
+
+jobs:
+  build:
+    name: lint, typecheck, unit test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # §18: "Add a CI grep that fails the build if [the service-role key]
+      # appears" outside the two files allowed to reference it, and that no
+      # NEXT_PUBLIC_ var name suggests a secret.
+      - name: Guard against service-role key leakage
+        run: |
+          set -euo pipefail
+
+          leaked=$(grep -rInE "SERVICE_ROLE|MONNIFY_API_SECRET" apps/web/src packages/*/src 2>/dev/null \
+            | grep -v "apps/web/src/lib/env.server.ts" \
+            | grep -v "apps/web/src/lib/supabase/admin.ts" \
+            || true)
+
+          if [ -n "$leaked" ]; then
+            echo "A secret (service-role key or Monnify API secret) is referenced outside the files allowed to touch it:"
+            echo "$leaked"
+            exit 1
+          fi
+
+          exposed=$(grep -rEn "NEXT_PUBLIC_[A-Z_]*(SERVICE|SECRET|PRIVATE)" apps/web/src packages/*/src 2>/dev/null || true)
+          if [ -n "$exposed" ]; then
+            echo "A NEXT_PUBLIC_ var name suggests a secret is being exposed to the client:"
+            echo "$exposed"
+            exit 1
+          fi
+
+      - name: lint, typecheck, test, build
+        run: pnpm turbo run lint typecheck test build
+
+  pgtap:
+    name: pgTAP (RLS + transition_order)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase and apply migrations
+        run: supabase start
+
+      - name: Run pgTAP tests
+        run: supabase test db
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop

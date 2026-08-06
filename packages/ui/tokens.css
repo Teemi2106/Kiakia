@@ -1,0 +1,72 @@
+/**
+ * KiaKia design tokens — the "single token source" §20 calls for, shared by
+ * every app in the monorepo. This is hand-authored CSS today, standing in
+ * for the Figma-variables -> Style Dictionary -> Tailwind pipeline §20
+ * describes; when that pipeline exists, it should regenerate this file's
+ * `@theme` block, not a parallel one.
+ *
+ * Palette per §20: "KiaKia red primary, cream surfaces, dark charcoal text,
+ * green for positive money states, rounded cards with subtle borders, pill
+ * category chips, amber/red/green status badges." Values below are a
+ * reasonable first pass at that description — swap for exact brand hex
+ * once the Figma file has real variables (§20 point 1).
+ */
+
+@theme {
+  /* Brand */
+  --color-brand-50: oklch(97% 0.02 25);
+  --color-brand-100: oklch(93% 0.05 25);
+  --color-brand-300: oklch(78% 0.14 25);
+  --color-brand-500: oklch(58% 0.21 25);
+  --color-brand-600: oklch(52% 0.21 25);
+  --color-brand-700: oklch(44% 0.19 25);
+
+  /* Surfaces */
+  --color-surface: oklch(98% 0.015 80);
+  --color-surface-raised: oklch(100% 0 0);
+  --color-surface-sunken: oklch(95% 0.015 80);
+  --color-border: oklch(88% 0.02 80);
+
+  /* Text */
+  --color-ink: oklch(24% 0.01 260);
+  --color-ink-muted: oklch(45% 0.01 260);
+  --color-ink-inverse: oklch(98% 0 0);
+
+  /* Money / status semantics */
+  --color-positive: oklch(62% 0.15 150); /* released balance, delivered, success */
+  --color-positive-surface: oklch(95% 0.05 150);
+  --color-warning: oklch(75% 0.16 80); /* pending, preparing */
+  --color-warning-surface: oklch(96% 0.06 80);
+  --color-danger: oklch(58% 0.22 25); /* cancelled, failed, overdue */
+  --color-danger-surface: oklch(95% 0.05 25);
+
+  /* Shape */
+  --radius-card: 1rem;
+  --radius-pill: 999px;
+  --radius-control: 0.625rem;
+
+  /* Type */
+  --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-mono: var(--font-geist-mono, ui-monospace, monospace);
+}
+
+/**
+ * Explicit opt-in only — deliberately NOT gated behind
+ * `@media (prefers-color-scheme: dark)`. Every screen built from the
+ * Figma file so far (marketing, auth, customer, vendor) is light-only;
+ * there's no dark variant of the photography, logo, or any screen in that
+ * file. Auto-switching on the visitor's OS preference silently broke every
+ * page for anyone with system dark mode on (dark backgrounds against
+ * light-background photography/logo assets) until this was caught here.
+ * Nothing in the app sets `data-theme="dark"` yet — this block is inert
+ * until a real theme toggle exists.
+ */
+:root[data-theme="dark"] {
+  --color-surface: oklch(20% 0.01 260);
+  --color-surface-raised: oklch(24% 0.012 260);
+  --color-surface-sunken: oklch(16% 0.01 260);
+  --color-border: oklch(32% 0.012 260);
+  --color-ink: oklch(96% 0.005 260);
+  --color-ink-muted: oklch(72% 0.01 260);
+  --color-ink-inverse: oklch(16% 0.01 260);
+}

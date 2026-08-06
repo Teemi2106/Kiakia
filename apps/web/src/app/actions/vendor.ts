@@ -1,0 +1,127 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { requireRole, verifySession } from "@/lib/auth/dal";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export interface FormState {
+  readonly error?: string;
+  readonly success?: boolean;
+}
+
+function slugify(name: string): string {
+  return (
+    name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "vendor"
+  );
+}
+
+/**
+ * register_vendor() is SECURITY DEFINER + grant execute to authenticated
+ * (0009_register_vendor.sql) — this action's job is just shaping the form
+ * into RPC args and handling the slug-collision retry, not authorization;
+ * the RPC itself checks the caller doesn't already have a vendor.
+ */
+export async function registerVendorAction(_prevState: FormState, formData: FormData): Promise<FormState> {
+  await verifySession();
+
+  const name = formData.get("name") as string | null;
+  const category = (formData.get("category") as string | null) || "food";
+  const description = (formData.get("description") as string | null) || null;
+  const addressLine = (formData.get("addressLine") as string | null) || null;
+  const landmark = (formData.get("landmark") as string | null) || null;
+  const lat = formData.get("lat") as string | null;
+  const lng = formData.get("lng") as string | null;
+
+  if (!name || name.trim().length < 2) {
+    return { error: "Enter your store name." };
+  }
+
+  const supabase = await createClient();
+  const baseSlug = slugify(name);
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const slug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+
+    const { data: vendor, error } = await supabase.rpc("register_vendor", {
+      p_name: name.trim(),
+      p_slug: slug,
+      p_category: category,
+      p_description: description,
+      p_address_line: addressLine,
+      p_landmark: landmark,
+      p_location: lat && lng ? `POINT(${lng} ${lat})` : null,
+    });
+
+    if (!error && vendor) {
+      redirect("/dashboard");
+    }
+
+    if (error?.message.includes("one vendor per account")) {
+      return { error: "This account is already linked to a vendor." };
+    }
+    if (!error?.message.includes("duplicate key") && !error?.code?.includes("23505")) {
+      return { error: "We couldn't create your store. Please try again." };
+    }
+    // Slug collision — loop and retry with a suffixed slug.
+  }
+
+  return { error: "We couldn't find an available store URL. Try a different store name." };
+}
+
+/**
+ * Vendor-owned CRUD, not a SECURITY DEFINER RPC — see the plan's reasoning:
+ * this Server Action's own `requireRole` + vendor_staff membership check IS
+ * the authorization boundary, same pattern as order placement (§5). Writes
+ * via the admin client because `vendors` UPDATE is revoked from
+ * `authenticated` (0007_rls.sql). `status`/`kyc_status` are deliberately
+ * not accepted here — still admin-only/manual-SQL, per §22.
+ */
+export async function updateVendorSettingsAction(_prevState: FormState, formData: FormData): Promise<FormState> {
+  const session = await requireRole(["vendor_staff", "vendor_manager", "vendor_owner"]);
+
+  const vendorId = formData.get("vendorId") as string | null;
+  if (!vendorId) return { error: "Missing store." };
+
+  const supabase = await createClient();
+  const { data: staff } = await supabase
+    .from("vendor_staff")
+    .select("vendor_id")
+    .eq("vendor_id", vendorId)
+    .eq("user_id", session.userId)
+    .maybeSingle();
+
+  if (!staff) {
+    return { error: "You don't have access to this store." };
+  }
+
+  const name = formData.get("name") as string | null;
+  if (!name || name.trim().length < 2) {
+    return { error: "Enter your store name." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("vendors")
+    .update({
+      name: name.trim(),
+      description: (formData.get("description") as string | null) || null,
+      address_line: (formData.get("addressLine") as string | null) || null,
+      landmark: (formData.get("landmark") as string | null) || null,
+      avg_prep_mins: Number(formData.get("avgPrepMins")) || 20,
+      min_order_kobo: Math.round(Number(formData.get("minOrderNaira")) * 100) || 0,
+      delivery_radius_m: Number(formData.get("deliveryRadiusM")) || 3000,
+      is_accepting_orders: formData.get("isAcceptingOrders") === "on",
+    })
+    .eq("id", vendorId);
+
+  if (error) {
+    return { error: "Could not save your settings." };
+  }
+
+  return { success: true };
+}

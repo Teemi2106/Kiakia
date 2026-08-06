@@ -1,0 +1,26 @@
+{
+  "name": "@kiakia/db",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"no tests in @kiakia/db\" && exit 0",
+    "gen:types": "supabase gen types typescript --local --schema public > src/generated.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.47.0"
+  },
+  "devDependencies": {
+    "@kiakia/config": "workspace:*",
+    "eslint": "^9.20.0",
+    "supabase": "^2.1.0",
+    "typescript": "^5.7.0"
+  }
+}
