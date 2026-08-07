@@ -1,11 +1,10 @@
-// app/(auth)/customer/cart/_components/CartDesktop.tsx
+// components/Cart/CartDesktop.tsx
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { Button } from "@kiakia/ui";
 import { X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { removeCartItem, updateCartItemQty } from "@/lib/cart";
 import { CartItem } from "./CartItem";
@@ -15,24 +14,30 @@ import { OrderSummary } from "./OrderSummary";
 interface CartDesktopProps {
   items: any[];
   vendor: { id: string; name: string };
+  onClose: () => void;
+  onUpdate?: () => void; // Add this
 }
 
-export function CartDesktop({ items, vendor }: CartDesktopProps) {
-  const router = useRouter();
+export function CartDesktop({
+  items,
+  vendor,
+  onClose,
+  onUpdate,
+}: CartDesktopProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
 
   async function changeQty(id: string, qty: number) {
     if (qty < 0) return;
     setPendingId(id);
     await updateCartItemQty(id, qty);
-    router.refresh();
+    onUpdate?.(); // Refresh data
     setPendingId(null);
   }
 
   async function remove(id: string) {
     setPendingId(id);
     await removeCartItem(id);
-    router.refresh();
+    onUpdate?.(); // Refresh data
     setPendingId(null);
   }
 
@@ -41,13 +46,10 @@ export function CartDesktop({ items, vendor }: CartDesktopProps) {
 
   return (
     <>
-      {/* Overlay - ensure it covers everything */}
-      <div
-        className="fixed inset-0 z-40 bg-black/50"
-        onClick={() => router.back()}
-      />
+      {/* Overlay */}
+      <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
 
-      {/* Drawer - higher z-index than overlay */}
+      {/* Drawer */}
       <div className="fixed right-0 top-0 z-50 flex h-full w-[420px] flex-col bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#EAE7E7] px-6 py-5">
@@ -63,7 +65,7 @@ export function CartDesktop({ items, vendor }: CartDesktopProps) {
             </div>
           </div>
           <button
-            onClick={() => router.back()}
+            onClick={onClose}
             className="rounded-full p-2 hover:bg-black/5"
             aria-label="Close cart"
           >
@@ -101,7 +103,7 @@ export function CartDesktop({ items, vendor }: CartDesktopProps) {
         <div className="border-t border-[#EAE7E7] bg-white px-6 py-6 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.1)]">
           <PromoCode />
           <OrderSummary total={totalKobo} />
-          <Link href="/checkout">
+          <Link href="/checkout" onClick={onClose}>
             <Button className="mt-4 w-full gap-2 rounded-xl bg-[#B61913] py-4 font-inter text-base font-normal text-white shadow-[0_4px_6px_-1px_rgba(182,25,19,0.2),0_2px_4px_-2px_rgba(182,25,19,0.2)] hover:bg-[#9e1611]">
               Proceed to Checkout →
             </Button>

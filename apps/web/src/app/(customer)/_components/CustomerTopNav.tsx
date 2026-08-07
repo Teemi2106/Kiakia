@@ -1,10 +1,10 @@
-// app/(auth)/customer/_components/CustomerTopNav.tsx
+// app/(customer)/_components/CustomerTopNav.tsx
 "use client";
 
 import {
   Bell,
-  ShoppingCart,
   Search,
+  ShoppingCart,
   User,
   Home,
   ClipboardList,
@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@kiakia/ui";
+import { useCart } from "../cart/_components/CartProvider"; // <-- Import this
 
 const NAV_LINKS = [
   { href: "/home", label: "Home", icon: Home },
@@ -23,9 +24,10 @@ const NAV_LINKS = [
 
 export function CustomerTopNav() {
   const pathname = usePathname();
+  const { openCart } = useCart(); // <-- Get openCart from context
 
   return (
-    <nav className="fixed top-0 z-50 w-full bg-[#FCF9F8] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+    <nav className="fixed top-0 z-40 w-full bg-[#FCF9F8] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
       <div className="flex h-14 items-center justify-between px-4 sm:h-[63px] sm:px-6">
         {/* Logo */}
         <Link href="/home" className="shrink-0">
@@ -39,7 +41,7 @@ export function CustomerTopNav() {
           />
         </Link>
 
-        {/* Desktop Navigation Links (hidden on mobile) */}
+        {/* Desktop Navigation Links */}
         <div className="hidden items-center gap-6 sm:flex">
           {NAV_LINKS.map((link) => {
             const isActive = pathname === link.href;
@@ -77,14 +79,23 @@ export function CustomerTopNav() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Cart */}
+          {/* Search - Mobile */}
           <Link
-            href="/cart"
-            className="rounded-full p-2 hover:bg-black/5"
+            href="/home?q="
+            className="rounded-full p-2 hover:bg-black/5 sm:hidden"
+            aria-label="Search"
+          >
+            <Search className="size-5 text-[#5B403C]" />
+          </Link>
+
+          {/* Cart - Now using openCart from context */}
+          <button
+            onClick={openCart} // <-- Using the hook function
+            className="relative rounded-full p-2 hover:bg-black/5"
             aria-label="Cart"
           >
             <ShoppingCart className="size-5 text-[#5B403C] sm:size-[19.98px]" />
-          </Link>
+          </button>
 
           {/* Notifications */}
           <button
@@ -105,7 +116,7 @@ export function CustomerTopNav() {
         </div>
       </div>
 
-      {/* Mobile Search Bar (below nav) */}
+      {/* Mobile Search Bar */}
       <div className="border-t border-[#E5E2E1] bg-[#FCF9F8] px-4 py-3 sm:hidden">
         <form action="/home" method="GET" className="relative">
           <div className="relative">
