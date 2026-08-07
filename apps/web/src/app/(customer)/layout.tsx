@@ -1,14 +1,3 @@
-import {
-  Bell,
-  ShoppingCart,
-  Search,
-  Home,
-  ClipboardList,
-  History,
-  User,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { verifySession } from "@/lib/auth/dal";
 import { CustomerBottomNav } from "./_components/CustomerBottomNav";
 import { CustomerTopNav } from "./_components/CustomerTopNav";
@@ -24,14 +13,10 @@ export default async function CustomerLayout({
   await verifySession();
 
   return (
+    // Remove any relative positioning or z-index from parent containers
     <div className="flex min-h-screen flex-col bg-[#FCF9F8]">
-      {/* Top Navigation */}
       <CustomerTopNav />
-
-      {/* Main Content */}
-      <main className="flex-1 pt-[72px] sm:pt-[72px]">{children}</main>
-
-      {/* Bottom Navigation (Mobile only) */}
+      <main className="flex-1">{children}</main>
       <CustomerBottomNav />
     </div>
   );

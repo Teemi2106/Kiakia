@@ -26,6 +26,98 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   Drinks: <Salad className="size-5 text-[#B61913]" />,
 };
 
+// Dummy vendors for development/testing
+const DUMMY_VENDORS = [
+  {
+    id: "1",
+    name: "The Place",
+    slug: "the-place",
+    category: "Jollof",
+    avg_prep_mins: 25,
+    rating_avg: 4.8,
+    rating_count: 234,
+    banner_url: null,
+    is_accepting_orders: true,
+  },
+  {
+    id: "2",
+    name: "Mama Cass",
+    slug: "mama-cass",
+    category: "Soups",
+    avg_prep_mins: 20,
+    rating_avg: 4.6,
+    rating_count: 189,
+    banner_url: null,
+    is_accepting_orders: true,
+  },
+  {
+    id: "3",
+    name: "Kitchen Muse",
+    slug: "kitchen-muse",
+    category: "Grills",
+    avg_prep_mins: 30,
+    rating_avg: 4.7,
+    rating_count: 156,
+    banner_url: null,
+    is_accepting_orders: true,
+  },
+  {
+    id: "4",
+    name: "Iyan Aladuke",
+    slug: "iyan-aladuke",
+    category: "Swallow",
+    avg_prep_mins: 15,
+    rating_avg: 4.9,
+    rating_count: 312,
+    banner_url: null,
+    is_accepting_orders: true,
+  },
+  {
+    id: "5",
+    name: "Tasty Bites",
+    slug: "tasty-bites",
+    category: "Sides",
+    avg_prep_mins: 10,
+    rating_avg: 4.3,
+    rating_count: 98,
+    banner_url: null,
+    is_accepting_orders: false,
+  },
+  {
+    id: "6",
+    name: "Spice Haven",
+    slug: "spice-haven",
+    category: "Drinks",
+    avg_prep_mins: 12,
+    rating_avg: 4.5,
+    rating_count: 145,
+    banner_url: null,
+    is_accepting_orders: true,
+  },
+  {
+    id: "7",
+    name: "Naija Kitchen",
+    slug: "naija-kitchen",
+    category: "Jollof",
+    avg_prep_mins: 28,
+    rating_avg: 4.4,
+    rating_count: 201,
+    banner_url: null,
+    is_accepting_orders: true,
+  },
+  {
+    id: "8",
+    name: "Soul Food",
+    slug: "soul-food",
+    category: "Grills",
+    avg_prep_mins: 22,
+    rating_avg: 4.2,
+    rating_count: 87,
+    banner_url: null,
+    is_accepting_orders: false,
+  },
+];
+
 export default async function CustomerHomePage({
   searchParams,
 }: {
@@ -33,20 +125,41 @@ export default async function CustomerHomePage({
 }) {
   const { q, category } = await searchParams;
 
-  const supabase = await createClient();
-  let query = supabase
-    .from("vendors")
-    .select(
-      "id, name, slug, category, avg_prep_mins, rating_avg, rating_count, banner_url, is_accepting_orders",
-    )
-    .eq("status", "active")
-    .order("rating_avg", { ascending: false })
-    .limit(30);
+  // Use dummy data for development
+  const useDummyData = true; // Set to false when you want real data
 
-  if (q) query = query.ilike("name", `%${q}%`);
-  if (category) query = query.eq("category", category);
+  let vendors = null;
 
-  const { data: vendors } = await query;
+  if (useDummyData) {
+    // Filter dummy data based on search params
+    let filtered = DUMMY_VENDORS;
+    if (q) {
+      filtered = filtered.filter((v) =>
+        v.name.toLowerCase().includes(q.toLowerCase()),
+      );
+    }
+    if (category) {
+      filtered = filtered.filter((v) => v.category === category);
+    }
+    vendors = filtered;
+  } else {
+    // Real Supabase query
+    const supabase = await createClient();
+    let query = supabase
+      .from("vendors")
+      .select(
+        "id, name, slug, category, avg_prep_mins, rating_avg, rating_count, banner_url, is_accepting_orders",
+      )
+      .eq("status", "active")
+      .order("rating_avg", { ascending: false })
+      .limit(30);
+
+    if (q) query = query.ilike("name", `%${q}%`);
+    if (category) query = query.eq("category", category);
+
+    const { data } = await query;
+    vendors = data;
+  }
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6">
@@ -61,7 +174,7 @@ export default async function CustomerHomePage({
         </div>
         <div className="relative flex h-full flex-col justify-center px-12 py-10">
           <Badge className="mb-4 w-fit bg-[#FE8E27] text-[#653200] hover:bg-[#FE8E27]">
-            <span className="text-xs font-bold uppercase tracking-[0.6px]">
+            <span className="text-xs p-2 font-bold uppercase tracking-[0.6px]">
               Limited Time Offer
             </span>
           </Badge>
@@ -99,7 +212,7 @@ export default async function CustomerHomePage({
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
         <div className="absolute bottom-4 left-4 right-4">
           <Badge className="mb-2 bg-[#FE8E27] text-[#653200] hover:bg-[#FE8E27]">
-            <span className="text-[10px] font-bold uppercase tracking-[0.5px]">
+            <span className="text-[10px] p-1 font-bold uppercase tracking-[0.5px]">
               Limited Time Offer
             </span>
           </Badge>
@@ -209,7 +322,10 @@ export default async function CustomerHomePage({
                     style={
                       vendor.banner_url
                         ? { backgroundImage: `url(${vendor.banner_url})` }
-                        : undefined
+                        : {
+                            backgroundImage:
+                              "url('/assets/vendor-placeholder.png')",
+                          }
                     }
                   />
                   <div className="p-4">

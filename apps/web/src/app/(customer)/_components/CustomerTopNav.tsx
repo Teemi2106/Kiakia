@@ -77,15 +77,6 @@ export function CustomerTopNav() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Search - Mobile (icon only) */}
-          <Link
-            href="/home?q="
-            className="rounded-full p-2 hover:bg-black/5 sm:hidden"
-            aria-label="Search"
-          >
-            <Search className="size-5 text-[#5B403C]" />
-          </Link>
-
           {/* Cart */}
           <Link
             href="/cart"
