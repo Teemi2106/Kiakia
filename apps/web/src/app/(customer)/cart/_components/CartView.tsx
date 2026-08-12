@@ -39,10 +39,15 @@ export function CartView({ items }: { items: readonly CartItemRow[] }) {
   return (
     <div className="mt-4 flex flex-col gap-3">
       {items.map((item) => (
-        <div key={item.id} className="flex items-center gap-3 rounded-card border border-border bg-surface-raised p-3">
+        <div
+          key={item.id}
+          className="flex items-center gap-3 rounded-card border border-border bg-surface-raised p-3"
+        >
           <div className="min-w-0 flex-1">
             <p className="font-medium text-ink">{item.name_snapshot}</p>
-            <p className="text-sm text-ink-muted">{formatNaira(koboOf(item.unit_price_kobo))} each</p>
+            <p className="text-sm text-ink-muted">
+              {formatNaira(koboOf(item.unit_price_kobo))} each
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -84,7 +89,9 @@ export function CartView({ items }: { items: readonly CartItemRow[] }) {
         <span>Subtotal</span>
         <span>{formatNaira(koboOf(totalKobo))}</span>
       </div>
-      <p className="text-xs text-ink-muted">Delivery and service fees are calculated at checkout.</p>
+      <p className="text-xs text-ink-muted">
+        Delivery and service fees are calculated at checkout.
+      </p>
 
       <Link href="/checkout">
         <Button className="mt-2 w-full">Proceed to Checkout →</Button>

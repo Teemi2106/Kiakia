@@ -42,10 +42,11 @@ export function RegisterForm({ action = registerAction }: RegisterFormProps) {
               placeholder="Jane Doe"
               autoComplete="name"
               required
-              className="w-full pl-9"
+              className="w-full !pl-12"
             />
           </div>
         </div>
+
         <div>
           <label htmlFor="email" className="text-sm font-medium text-ink">
             Email Address
@@ -59,10 +60,11 @@ export function RegisterForm({ action = registerAction }: RegisterFormProps) {
               placeholder="jane@example.com"
               autoComplete="email"
               required
-              className="w-full pl-9"
+              className="w-full !pl-12"
             />
           </div>
         </div>
+
         <div>
           <label htmlFor="phone" className="text-sm font-medium text-ink">
             Phone Number
@@ -76,10 +78,11 @@ export function RegisterForm({ action = registerAction }: RegisterFormProps) {
               placeholder="+2348012345678"
               autoComplete="tel"
               required
-              className="w-full pl-9"
+              className="w-full !pl-12"
             />
           </div>
         </div>
+
         <div>
           <label htmlFor="password" className="text-sm font-medium text-ink">
             Password
@@ -92,7 +95,7 @@ export function RegisterForm({ action = registerAction }: RegisterFormProps) {
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               required
-              className="w-full pl-9 pr-9"
+              className="w-full !pl-12 !pr-9"
             />
             <button
               type="button"
@@ -100,12 +103,20 @@ export function RegisterForm({ action = registerAction }: RegisterFormProps) {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
             </button>
           </div>
         </div>
+
         <div>
-          <label htmlFor="confirmPassword" className="text-sm font-medium text-ink">
+          <label
+            htmlFor="confirmPassword"
+            className="text-sm font-medium text-ink"
+          >
             Confirm Password
           </label>
           <div className="relative mt-1">
@@ -116,21 +127,34 @@ export function RegisterForm({ action = registerAction }: RegisterFormProps) {
               type={showConfirmPassword ? "text" : "password"}
               autoComplete="new-password"
               required
-              className="w-full pl-9 pr-9"
+              className="w-full !pl-12 !pr-9"
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
-              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              aria-label={
+                showConfirmPassword ? "Hide password" : "Show password"
+              }
             >
-              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {showConfirmPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
             </button>
           </div>
         </div>
+
         {state.error && <p className="text-sm text-danger">{state.error}</p>}
-        <Button type="submit" loading={pending} className="mt-1 w-full gap-2">
-          Create Account <ArrowRight className="size-4" />
+
+        <Button
+          type="submit"
+          loading={pending}
+          className="mt-1 w-full gap-2 flex items-center justify-center"
+        >
+          <span>Create Account</span>
+          <ArrowRight className="size-4 shrink-0" />
         </Button>
       </form>
       <OAuthButtons />

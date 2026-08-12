@@ -1,3 +1,4 @@
+// packages/ui/src/BottomNav.tsx
 import type { ComponentType, ReactNode } from "react";
 import { cn } from "./cn";
 
@@ -25,16 +26,24 @@ export interface BottomNavProps {
   readonly LinkComponent?: ComponentType<LinkComponentProps>;
 }
 
-const DefaultLink: ComponentType<LinkComponentProps> = ({ href, className, children }) => (
+const DefaultLink: ComponentType<LinkComponentProps> = ({
+  href,
+  className,
+  children,
+}) => (
   <a href={href} className={className}>
     {children}
   </a>
 );
 
 /** Fixed bottom tab bar — Home/Orders/History/Profile, pill-highlighted active tab (Figma Customer Home). */
-export function BottomNav({ items, activeHref, LinkComponent = DefaultLink }: BottomNavProps) {
+export function BottomNav({
+  items,
+  activeHref,
+  LinkComponent = DefaultLink,
+}: BottomNavProps) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-border bg-surface-raised pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed inset-x-0 bottom-0 z-10 flex h-16 items-center bg-[#F0EDED] px-[18.75px] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)] rounded-t-xl pb-[env(safe-area-inset-bottom)]">
       {items.map((item) => {
         const active = item.href === activeHref;
         return (
@@ -42,14 +51,28 @@ export function BottomNav({ items, activeHref, LinkComponent = DefaultLink }: Bo
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium",
-              active ? "text-brand-600" : "text-ink-muted",
+              "flex flex-1 flex-col items-center justify-center transition-all",
+              active
+                ? "h-11 rounded-full bg-[#FE8E27] px-4 py-1"
+                : "h-[38px] px-2 py-0",
             )}
           >
-            <span className={cn("flex size-8 items-center justify-center rounded-pill", active && "bg-brand-100")}>
+            <span
+              className={cn(
+                "flex items-center justify-center",
+                active ? "text-[#653200]" : "text-[#5B403C]",
+              )}
+            >
               {item.icon}
             </span>
-            {item.label}
+            <span
+              className={cn(
+                "text-xs font-medium leading-4",
+                active ? "text-[#653200]" : "text-[#5B403C]",
+              )}
+            >
+              {item.label}
+            </span>
           </LinkComponent>
         );
       })}

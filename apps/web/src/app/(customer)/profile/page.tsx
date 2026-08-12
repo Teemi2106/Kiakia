@@ -1,9 +1,14 @@
+// app/(customer)/profile/page.tsx
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getRoles, hasRole, verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
-import { AddressList } from "./_components/AddressList";
-import { ProfileInfo } from "./_components/ProfileInfo";
+import { ProfileCard } from "./_components/ProfileCard";
+import { SettingsNav } from "./_components/SettingsNav";
+import { SupportSection } from "./_components/SupportSection";
+import { FAQSection } from "./_components/FAQSection";
+import { MobileSettings } from "./_components/MobileSettings";
+import { MobileHelp } from "./_components/MobileHelp";
+import { MobileLegal } from "./_components/MobileLegal";
 import { SignOutButton } from "./_components/SignOutButton";
 
 export const metadata: Metadata = { title: "Profile" };
@@ -11,11 +16,20 @@ export const metadata: Metadata = { title: "Profile" };
 export default async function ProfilePage() {
   const session = await verifySession();
   const roles = await getRoles();
-  const isVendor = hasRole(roles, "vendor_staff", "vendor_manager", "vendor_owner");
+  const isVendor = hasRole(
+    roles,
+    "vendor_staff",
+    "vendor_manager",
+    "vendor_owner",
+  );
   const supabase = await createClient();
 
   const [{ data: profile }, { data: addresses }] = await Promise.all([
-    supabase.from("profiles").select("full_name, phone, avatar_url, created_at").eq("id", session.userId).single(),
+    supabase
+      .from("profiles")
+      .select("full_name, phone, avatar_url, created_at")
+      .eq("id", session.userId)
+      .single(),
     supabase
       .from("addresses")
       .select("id, label, line1, landmark, city, state, is_default")
@@ -23,29 +37,56 @@ export default async function ProfilePage() {
       .order("is_default", { ascending: false }),
   ]);
 
+  const roleLabel = isVendor ? "Vendor" : "Customer";
+
   return (
-    <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
-      <h1 className="text-xl font-semibold text-ink">Profile</h1>
+    <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-30 sm:px-6 sm:py-18">
+      {/* Desktop Layout - Two Columns */}
+      <div className="hidden flex-col gap-6 md:flex md:flex-row md:items-start md:gap-8">
+        {/* Left Column */}
+        <div className="flex w-full flex-col gap-6 md:w-[314.67px] md:shrink-0">
+          <ProfileCard
+            fullName={profile?.full_name ?? ""}
+            email={session.email ?? ""}
+            phone={profile?.phone}
+            memberSince={profile?.created_at}
+            avatarUrl={profile?.avatar_url}
+            role={roleLabel}
+          />
+          <SettingsNav />
 
-      <ProfileInfo
-        fullName={profile?.full_name ?? ""}
-        email={session.email}
-        phone={profile?.phone}
-        memberSince={profile?.created_at}
-      />
+          {/* Sign Out Button - Desktop */}
+          <SignOutButton />
+        </div>
 
-      <h2 className="mt-6 text-sm font-semibold text-ink">Saved Addresses</h2>
-      <AddressList addresses={addresses ?? []} />
+        {/* Right Column */}
+        <div className="flex-1">
+          <div className="rounded-2xl border border-[#E5E2E1] bg-white p-6 shadow-sm">
+            <SupportSection />
+            <FAQSection />
+          </div>
+        </div>
+      </div>
 
-      <Link
-        href={isVendor ? "/dashboard" : "/onboarding"}
-        className="mt-6 block rounded-card border border-dashed border-border p-4 text-center text-sm font-medium text-brand-600 hover:border-brand-500"
-      >
-        {isVendor ? "Go to Vendor Dashboard →" : "Have a restaurant or store? Become a Vendor →"}
-      </Link>
+      {/* Mobile Layout - Full Width */}
+      <div className="flex flex-col gap-6 md:hidden">
+        <ProfileCard
+          fullName={profile?.full_name ?? ""}
+          email={session.email ?? ""}
+          phone={profile?.phone}
+          memberSince={profile?.created_at}
+          avatarUrl={profile?.avatar_url}
+          role={roleLabel}
+          variant="mobile"
+        />
 
-      <div className="mt-6">
-        <SignOutButton />
+        <MobileSettings addresses={addresses ?? []} />
+        <MobileHelp />
+        <MobileLegal />
+
+        <div className="mt-4">
+          <SignOutButton />
+        </div>
       </div>
     </div>
   );
