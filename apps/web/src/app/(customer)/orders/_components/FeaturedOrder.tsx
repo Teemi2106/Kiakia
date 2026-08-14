@@ -80,7 +80,7 @@ export function FeaturedOrder({ order, vendorName }: FeaturedOrderProps) {
 
           <div className="mt-6 flex items-center gap-3">
             <Link
-              href={`/orders/${order.id}`}
+              href={`/orders/${order.id}/tracking`}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B61913] px-4 py-3 font-inter text-sm font-bold text-white shadow-sm hover:bg-[#9e1611]"
             >
               <MapPin className="size-4" />
