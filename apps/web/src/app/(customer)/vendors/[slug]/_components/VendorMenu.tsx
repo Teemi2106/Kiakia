@@ -1,25 +1,32 @@
+// app/(customer)/vendors/[slug]/_components/VendorMenu.tsx
 "use client";
 
-import { formatNaira, koboOf } from "@kiakia/domain";
-import { Badge } from "@kiakia/ui";
-import { Plus, Star } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { addToCart } from "@/lib/cart";
 import { createClient } from "@/lib/supabase/client";
+import { VendorHero } from "./VendorHero";
+import { CategoryNav } from "./CategoryNav";
+import { MenuSection } from "./MenuSection";
 import { ItemOptionsSheet } from "./ItemOptionsSheet";
 import type { MenuCategory, MenuItem, VendorSummary } from "./types";
 
 interface CartSummary {
-  readonly count: number;
-  readonly totalKobo: number;
+  count: number;
+  totalKobo: number;
 }
 
-export function VendorMenu({ vendor, categories }: { vendor: VendorSummary; categories: readonly MenuCategory[] }) {
+export function VendorMenu({
+  vendor,
+  categories,
+}: {
+  vendor: VendorSummary;
+  categories: readonly MenuCategory[];
+}) {
   const [activeItem, setActiveItem] = useState<MenuItem | null>(null);
   const [cart, setCart] = useState<CartSummary>({ count: 0, totalKobo: 0 });
   const [status, setStatus] = useState<string | null>(null);
 
+  // Load existing cart on mount
   useEffect(() => {
     let cancelled = false;
 
@@ -39,7 +46,10 @@ export function VendorMenu({ vendor, categories }: { vendor: VendorSummary; cate
         .maybeSingle();
       if (!existingCart) return;
 
-      const { data: items } = await supabase.from("cart_items").select("qty, line_total_kobo").eq("cart_id", existingCart.id);
+      const { data: items } = await supabase
+        .from("cart_items")
+        .select("qty, line_total_kobo")
+        .eq("cart_id", existingCart.id);
       if (cancelled || !items) return;
 
       setCart({
@@ -54,11 +64,17 @@ export function VendorMenu({ vendor, categories }: { vendor: VendorSummary; cate
     };
   }, [vendor.id]);
 
-  async function handleAdd(item: MenuItem, selectedOptionIds: readonly string[], qty: number) {
+  async function handleAdd(
+    item: MenuItem,
+    selectedOptionIds: readonly string[],
+    qty: number,
+  ) {
     const chosenOptions = item.optionGroups
       .flatMap((g) => g.options)
       .filter((o) => selectedOptionIds.includes(o.id));
-    const unitPriceKobo = item.priceKobo + chosenOptions.reduce((sum, o) => sum + o.priceDeltaKobo, 0);
+    const unitPriceKobo =
+      item.priceKobo +
+      chosenOptions.reduce((sum, o) => sum + o.priceDeltaKobo, 0);
 
     const result = await addToCart({
       vendorId: vendor.id,
@@ -66,7 +82,11 @@ export function VendorMenu({ vendor, categories }: { vendor: VendorSummary; cate
       name: item.name,
       unitPriceKobo,
       qty,
-      options: chosenOptions.map((o) => ({ optionId: o.id, name: o.name, priceDeltaKobo: o.priceDeltaKobo })),
+      options: chosenOptions.map((o) => ({
+        optionId: o.id,
+        name: o.name,
+        priceDeltaKobo: o.priceDeltaKobo,
+      })),
     });
 
     setActiveItem(null);
@@ -76,106 +96,64 @@ export function VendorMenu({ vendor, categories }: { vendor: VendorSummary; cate
       return;
     }
 
-    setCart((prev) => ({ count: prev.count + qty, totalKobo: prev.totalKobo + unitPriceKobo * qty }));
+    setCart((prev) => ({
+      count: prev.count + qty,
+      totalKobo: prev.totalKobo + unitPriceKobo * qty,
+    }));
     setStatus(`Added ${item.name} to your cart.`);
   }
 
+  const handleAddClick = (item: MenuItem) => {
+    if (item.optionGroups.length > 0) {
+      setActiveItem(item);
+    } else {
+      // No options, add directly with qty 1
+      void handleAdd(item, [], 1);
+    }
+  };
+
   return (
     <div className="flex flex-1 flex-col pb-24">
-      <div
-        className="h-40 w-full bg-surface-sunken bg-cover bg-center"
-        style={vendor.bannerUrl ? { backgroundImage: `url(${vendor.bannerUrl})` } : undefined}
-      />
+      {/* Hero Section */}
+      <VendorHero vendor={vendor} />
 
-      <div className="mx-auto -mt-10 w-full max-w-2xl px-4">
-        <div className="rounded-card border border-border bg-surface-raised p-4 shadow-sm">
-          <div className="flex items-start justify-between gap-2">
-            <h1 className="text-xl font-semibold text-ink">{vendor.name}</h1>
-            {!vendor.isAcceptingOrders && <Badge tone="danger">Currently closed</Badge>}
-          </div>
-          <div className="mt-1 flex items-center gap-3 text-xs text-ink-muted">
-            {vendor.ratingCount > 0 && (
-              <span className="flex items-center gap-1">
-                <Star className="size-3.5 fill-warning text-warning" />
-                {vendor.ratingAvg.toFixed(1)} ({vendor.ratingCount})
-              </span>
-            )}
-            <span>~{vendor.avgPrepMins} min prep</span>
-            {vendor.minOrderKobo > 0 && <span>Min. order {formatNaira(koboOf(vendor.minOrderKobo))}</span>}
-          </div>
-          {vendor.description && <p className="mt-2 text-sm text-ink-muted">{vendor.description}</p>}
-        </div>
+      {/* Category Navigation */}
+      <CategoryNav categories={categories} />
 
-        {categories.length > 0 && (
-          <div className="mt-4 flex gap-4 overflow-x-auto border-b border-border pb-2">
+      {/* Menu Content */}
+      <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+        {categories.length === 0 ? (
+          <p className="mt-8 text-center text-sm text-[#5B403C]">
+            This vendor hasn&apos;t added a menu yet.
+          </p>
+        ) : (
+          <div className="space-y-12">
             {categories.map((category) => (
-              <a
+              <MenuSection
                 key={category.id}
-                href={`#category-${category.id}`}
-                className="shrink-0 whitespace-nowrap text-sm font-medium text-ink-muted hover:text-brand-600"
-              >
-                {category.name}
-              </a>
+                category={category}
+                onAddItem={handleAddClick}
+              />
             ))}
           </div>
         )}
-
-        {categories.length === 0 && <p className="mt-8 text-sm text-ink-muted">This vendor hasn&apos;t added a menu yet.</p>}
-
-        {categories.map((category) => (
-          <section key={category.id} id={`category-${category.id}`} className="mt-6 scroll-mt-20">
-            <h2 className="text-base font-semibold text-ink">{category.name}</h2>
-            <div className="mt-3 flex flex-col gap-3">
-              {category.items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 rounded-card border border-border bg-surface-raised p-3">
-                  <div
-                    className="size-16 shrink-0 rounded-control bg-surface-sunken bg-cover bg-center"
-                    style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})` } : undefined}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-ink">{item.name}</p>
-                    {item.description && <p className="truncate text-xs text-ink-muted">{item.description}</p>}
-                    <p className="mt-1 text-sm font-medium text-brand-600">{formatNaira(koboOf(item.priceKobo))}</p>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={!item.isAvailable || !vendor.isAcceptingOrders}
-                    onClick={() => setActiveItem(item)}
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full border border-brand-500 text-brand-600 disabled:opacity-40"
-                    aria-label={`Add ${item.name}`}
-                  >
-                    <Plus className="size-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
       </div>
 
+      {/* Status Toast */}
       {status && (
-        <div className="fixed bottom-24 left-1/2 z-10 -translate-x-1/2 rounded-pill bg-ink px-4 py-2 text-xs text-ink-inverse shadow-lg">
+        <div className="fixed bottom-24 left-1/2 z-10 -translate-x-1/2 rounded-full bg-[#1C1B1B] px-4 py-2 text-xs text-white shadow-lg">
           {status}
         </div>
       )}
 
-      {cart.count > 0 && (
-        <div className="fixed inset-x-0 bottom-16 z-10 px-4">
-          <Link
-            href="/cart"
-            className="mx-auto flex max-w-2xl items-center justify-between rounded-pill bg-brand-500 px-5 py-3 text-sm font-medium text-white shadow-lg"
-          >
-            <span>{cart.count} · View Cart</span>
-            <span>{formatNaira(koboOf(cart.totalKobo))}</span>
-          </Link>
-        </div>
-      )}
-
+      {/* Item Options Sheet */}
       {activeItem && (
         <ItemOptionsSheet
           item={activeItem}
           onClose={() => setActiveItem(null)}
-          onConfirm={(optionIds, qty) => void handleAdd(activeItem, optionIds, qty)}
+          onConfirm={(optionIds, qty) =>
+            void handleAdd(activeItem, optionIds, qty)
+          }
         />
       )}
     </div>

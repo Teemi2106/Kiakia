@@ -6,7 +6,7 @@ import { cn } from "./cn";
 export type BadgeTone = "neutral" | "positive" | "warning" | "danger";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-pill px-2.5 py-1 text-xs font-medium",
+  "inline-flex items-center rounded-pill px-15 py-2 text-xs font-medium",
   {
     variants: {
       tone: {
@@ -29,7 +29,10 @@ export function Badge({ className, tone, ...props }: BadgeProps) {
   return <span className={cn(badgeVariants({ tone }), className)} {...props} />;
 }
 
-const ORDER_STATUS_PRESENTATION: Record<OrderStatus, { label: string; tone: BadgeTone }> = {
+const ORDER_STATUS_PRESENTATION: Record<
+  OrderStatus,
+  { label: string; tone: BadgeTone }
+> = {
   draft: { label: "Draft", tone: "neutral" },
   placed: { label: "Placed", tone: "warning" },
   accepted: { label: "Accepted", tone: "warning" },
@@ -47,10 +50,19 @@ const ORDER_STATUS_PRESENTATION: Record<OrderStatus, { label: string; tone: Badg
 };
 
 /** Maps an order_state_machine OrderStatus to its display label + tone (§20, §10). */
-export function OrderStatusBadge({ status, className }: { status: OrderStatus; className?: string }) {
+export function OrderStatusBadge({
+  status,
+  className,
+  Icon,
+}: {
+  status: OrderStatus;
+  className?: string;
+  Icon?: React.ReactNode;
+}) {
   const { label, tone } = ORDER_STATUS_PRESENTATION[status];
   return (
     <Badge tone={tone} className={className}>
+      {Icon && <span className="mr-2">{Icon}</span>}
       {label}
     </Badge>
   );

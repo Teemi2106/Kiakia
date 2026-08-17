@@ -1,15 +1,19 @@
+// app/(customer)/vendors/[slug]/page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { VendorMenu } from "./_components/VendorMenu";
-import type { MenuCategory, MenuItem, VendorSummary } from "./_components/types";
+import type {
+  MenuCategory,
+  MenuItem,
+  VendorSummary,
+} from "./_components/types";
 
-// Flat queries + in-memory assembly, not a nested/embedded Supabase select
-// — the generated Database type sets `Relationships: []` on every table
-// (see packages/db/src/generated.ts's header) to avoid a TS instantiation
-// bug, which means embedded selects wouldn't type-check the nested arrays
-// correctly. This works either way; it's just more explicit.
-export default async function VendorPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function VendorPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const supabase = await createClient();
 
@@ -48,7 +52,9 @@ export default async function VendorPage({ params }: { params: Promise<{ slug: s
       .order("sort_order"),
     supabase
       .from("menu_items")
-      .select("id, category_id, name, description, image_url, price_kobo, is_available, sort_order")
+      .select(
+        "id, category_id, name, description, image_url, price_kobo, is_available, sort_order",
+      )
       .eq("vendor_id", vendor.id)
       .order("sort_order"),
   ]);
@@ -65,7 +71,10 @@ export default async function VendorPage({ params }: { params: Promise<{ slug: s
   const groupIds = (groupRows ?? []).map((group) => group.id);
 
   const { data: optionRows } = groupIds.length
-    ? await supabase.from("options").select("id, group_id, name, price_delta_kobo, is_available").in("group_id", groupIds)
+    ? await supabase
+        .from("options")
+        .select("id, group_id, name, price_delta_kobo, is_available")
+        .in("group_id", groupIds)
     : { data: [] };
 
   function toMenuItem(item: NonNullable<typeof itemRows>[number]): MenuItem {
@@ -99,24 +108,41 @@ export default async function VendorPage({ params }: { params: Promise<{ slug: s
   const categories: MenuCategory[] = (categoryRows ?? []).map((category) => ({
     id: category.id,
     name: category.name,
-    items: (itemRows ?? []).filter((item) => item.category_id === category.id).map(toMenuItem),
+    items: (itemRows ?? [])
+      .filter((item) => item.category_id === category.id)
+      .map(toMenuItem),
   }));
 
-  // menu_items with no category (or a category that isn't active) still
-  // need somewhere to render.
   const categorizedIds = new Set(categoryRows?.map((c) => c.id));
-  const uncategorized = (itemRows ?? []).filter((item) => !item.category_id || !categorizedIds.has(item.category_id));
+  const uncategorized = (itemRows ?? []).filter(
+    (item) => !item.category_id || !categorizedIds.has(item.category_id),
+  );
   if (uncategorized.length > 0) {
-    categories.push({ id: "uncategorized", name: "Other", items: uncategorized.map(toMenuItem) });
+    categories.push({
+      id: "uncategorized",
+      name: "Other",
+      items: uncategorized.map(toMenuItem),
+    });
   }
 
   return <VendorMenu vendor={vendor} categories={categories} />;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data } = await supabase.from("vendors").select("name, description").eq("slug", slug).maybeSingle();
+  const { data } = await supabase
+    .from("vendors")
+    .select("name, description")
+    .eq("slug", slug)
+    .maybeSingle();
 
-  return { title: data?.name ?? "Vendor", description: data?.description ?? undefined };
+  return {
+    title: data?.name ?? "Vendor",
+    description: data?.description ?? undefined,
+  };
 }

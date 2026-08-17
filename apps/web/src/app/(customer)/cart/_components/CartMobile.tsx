@@ -1,7 +1,6 @@
 // app/(customer)/cart/_components/CartMobile.tsx
 "use client";
 
-import { formatNaira, koboOf } from "@kiakia/domain";
 import { ChevronLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

@@ -1,7 +1,7 @@
 // app/(customer)/profile/_components/ProfileCard.tsx
 "use client";
 
-import { Camera, User } from "lucide-react";
+import { Camera, User, Star } from "lucide-react";
 import Image from "next/image";
 
 interface ProfileCardProps {
@@ -62,7 +62,7 @@ export function ProfileCard({
             <p className="font-inter text-base text-[#5B403C]">{phone}</p>
           )}
           <div className="mt-3 flex items-center gap-2 rounded-full bg-[#F0EDED] px-3 py-1">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#934B00]" />
+            <Star className="size-4 text-[#934B00]" />
             <span className="font-inter text-sm font-semibold text-[#1C1B1B]">
               {role}
             </span>

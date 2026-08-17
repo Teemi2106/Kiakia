@@ -12,14 +12,46 @@ import { z } from "zod";
  */
 const clientSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  // Supabase's newer key system: "publishable" replaces "anon" (same slot
-  // in the SDK constructor, just renamed). sb_publishable_... prefix.
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
-  NEXT_PUBLIC_SITE_URL: z.string().url(),
+  NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
 });
 
-export const clientEnv = clientSchema.parse({
-  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-});
+// Safe parse with better error handling
+function getClientEnv() {
+  const result = clientSchema.safeParse({
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  });
+
+  if (!result.success) {
+    // Log the errors but don't throw - this gives us a proper error message
+    console.error("❌ Client environment validation failed:");
+    result.error.errors.forEach((err) => {
+      console.error(`  - ${err.path.join(".")}: ${err.message}`);
+    });
+
+    // Provide helpful defaults for development
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "⚠️  Using development defaults - some features may not work",
+      );
+      return {
+        NEXT_PUBLIC_SUPABASE_URL:
+          process.env.NEXT_PUBLIC_SUPABASE_URL || "http://localhost:54321",
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+          process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+          "dummy-key-for-development",
+        NEXT_PUBLIC_SITE_URL:
+          process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+      };
+    }
+
+    throw new Error(`Environment validation failed: ${result.error.message}`);
+  }
+
+  return result.data;
+}
+
+export const clientEnv = getClientEnv();

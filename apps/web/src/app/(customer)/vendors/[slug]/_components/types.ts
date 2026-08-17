@@ -1,3 +1,4 @@
+// app/(customer)/vendors/[slug]/_components/types.ts
 export interface MenuOption {
   readonly id: string;
   readonly name: string;
