@@ -3,16 +3,22 @@
 
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { OrderStatusBadge } from "@kiakia/ui";
-import { MapPin, Phone, Clock } from "lucide-react";
+import { MapPin, Phone, Clock, ForkKnifeCrossedIcon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Order } from "./types";
 
 interface FeaturedOrderProps {
   order: Order;
   vendorName: string;
+  vendorProfileImageUrl?: string | null;
 }
 
-export function FeaturedOrder({ order, vendorName }: FeaturedOrderProps) {
+export function FeaturedOrder({
+  order,
+  vendorName,
+  vendorProfileImageUrl,
+}: FeaturedOrderProps) {
   const getItemsSummary = (items?: Array<{ name: string; qty: number }>) => {
     if (!items || items.length === 0) return "No items";
     return items.map((item) => `${item.qty}x ${item.name}`).join(", ");
@@ -38,13 +44,24 @@ export function FeaturedOrder({ order, vendorName }: FeaturedOrderProps) {
         <div className="relative w-[324px] shrink-0">
           <div className="h-full w-full bg-[#F0EDED]">
             <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-6xl text-[#5B403C]/20">
-              🍽️
+              {vendorProfileImageUrl ? (
+                <Image
+                  src={vendorProfileImageUrl}
+                  alt={vendorName}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <span className="text-6xl">
+                  <ForkKnifeCrossedIcon />
+                </span>
+              )}
             </div>
           </div>
           <div className="absolute left-4 top-4">
             <OrderStatusBadge
               status={order.status as any}
-              className="bg-white/90 backdrop-blur-sm"
+              className="bg-white/90 backdrop-blur-sm px-3"
             />
           </div>
         </div>
@@ -65,14 +82,27 @@ export function FeaturedOrder({ order, vendorName }: FeaturedOrderProps) {
             </p>
             <div className="mt-4 flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Clock className="size-4 text-[#5B403C]" />
-                <span className="font-inter text-sm font-semibold text-[#5B403C]">
+                <Clock className="size-4 text-[#dab510]" />
+                <span className="font-inter text-sm font-semibold text-[#000000]">
                   {eta.label}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-inter text-sm font-semibold text-[#934B00]">
+                <span className="font-inter text-sm font-semibold text-[#000000]">
                   {eta.time}
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="size-4 text-[#d1351d]" />
+                <span className="font-inter text-sm font-semibold text-[#000000]">
+                  Delivering to :
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-inter text-sm font-semibold text-[#000000]">
+                  {order.Location || "No location provided"}
                 </span>
               </div>
             </div>

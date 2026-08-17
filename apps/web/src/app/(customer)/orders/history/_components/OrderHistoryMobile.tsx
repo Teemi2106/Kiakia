@@ -3,7 +3,7 @@
 
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { OrderStatusBadge } from "@kiakia/ui";
-import { Filter, X } from "lucide-react";
+import { Filter, X, ForkKnifeCrossedIcon, RefreshCcwIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -208,7 +208,14 @@ export function OrderHistoryMobile({
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 overflow-hidden rounded-lg bg-[#F0EDED]">
                       <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-xl">
-                        🍽️
+                        {/* {Profile_Image ? (  uncomment when you have the vendor profile image URL
+                          <Image src={Profile_Image || ""} alt={vendorName} />
+                        ) : (
+                          <span className="text-6xl">
+                            <ForkKnifeCrossedIcon />
+                          </span>
+                        )} */}
+                        <ForkKnifeCrossedIcon />
                       </div>
                     </div>
                     <div>
@@ -259,7 +266,7 @@ export function OrderHistoryMobile({
                           : "bg-[#B61913]"
                       }`}
                     >
-                      <span className="h-3 w-3 bg-white" />
+                      <RefreshCcwIcon className="size-4" />
                       Reorder
                     </button>
                   </div>
@@ -272,9 +279,7 @@ export function OrderHistoryMobile({
         {/* Load More */}
         {filteredOrders.length > 0 && (
           <div className="flex justify-center py-6">
-            <button className="h-8 w-8 rounded-full border-2 border-[#E4BEB8]">
-              <span className="block h-4 w-4 bg-[#5B403C]" />
-            </button>
+            <button className="h-8 w-8 rounded-full border-2 border-[#E4BEB8]"></button>
           </div>
         )}
       </div>

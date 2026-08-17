@@ -1,6 +1,5 @@
 // app/(customer)/orders/page.tsx
-import { formatNaira, koboOf } from "@kiakia/domain";
-import { Card, EmptyState, OrderStatusBadge, buttonVariants } from "@kiakia/ui";
+import { EmptyState, buttonVariants } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { verifySession } from "@/lib/auth/dal";
@@ -39,6 +38,7 @@ const DUMMY_ORDERS = [
     total_kobo: 850000,
     vendor_id: "vendor-2",
     created_at: new Date(Date.now() - 3600000).toISOString(),
+    Location: "Ikeja, Lagos",
     items: [
       { name: "Spicy Suya Portions (Beef)", qty: 2 },
       { name: "Roasted Yam slices", qty: 1 },
@@ -52,6 +52,7 @@ const DUMMY_ORDERS = [
     total_kobo: 1250000,
     vendor_id: "vendor-1",
     created_at: new Date().toISOString(),
+    Location: "Ikeja, Lagos",
     items: [
       { name: "Special Jollof Rice Combo", qty: 1 },
       { name: "Extra Plantain", qty: 1 },
@@ -74,8 +75,8 @@ const DUMMY_ORDERS = [
 ];
 
 const DUMMY_VENDORS = [
-  { id: "vendor-1", name: "Mama Cass" },
-  { id: "vendor-2", name: "Iya Basira" },
+  { id: "vendor-1", name: "Mama Cass", profile_image_url: null },
+  { id: "vendor-2", name: "Iya Basira", profile_image_url: null },
 ];
 
 export default async function ActiveOrdersPage() {
@@ -114,7 +115,7 @@ export default async function ActiveOrdersPage() {
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-12">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-sora text-[28px] font-bold text-[#1C1B1B] sm:text-[48px] sm:leading-[56px] sm:tracking-[-0.96px]">
+        <h1 className="font-sora text-[28px] font-bold text-[#1C1B1B] pt-6 sm:text-[48px] sm:leading-[56px] sm:tracking-[-0.96px]">
           Active Orders
         </h1>
         <p className="mt-2 font-inter text-base text-[#5B403C] sm:text-[18px] sm:leading-7">

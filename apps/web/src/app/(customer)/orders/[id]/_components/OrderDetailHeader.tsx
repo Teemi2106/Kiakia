@@ -37,8 +37,8 @@ export function OrderDetailHeader({
           icon: Clock,
           title: "Order Confirmed!",
           subtitle: `${vendorName} is preparing your order.`,
-          bgColor: "bg-[rgba(23,106,34,0.1)]",
-          iconColor: "bg-[#358439]",
+          bgColor: "bg-[orange]",
+          iconColor: "bg-[orange]",
           iconBg: "text-[#F7FFF1]",
         };
       case "ready_for_pickup":

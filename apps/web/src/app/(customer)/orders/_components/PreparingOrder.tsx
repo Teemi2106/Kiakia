@@ -3,15 +3,22 @@
 
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { OrderStatusBadge } from "@kiakia/ui";
+import { ForkKnifeCrossedIcon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Order } from "./types";
 
 interface PreparingOrderProps {
   order: Order;
   vendorName: string;
+  vendorProfileImageUrl?: string | null;
 }
 
-export function PreparingOrder({ order, vendorName }: PreparingOrderProps) {
+export function PreparingOrder({
+  order,
+  vendorName,
+  vendorProfileImageUrl,
+}: PreparingOrderProps) {
   const getItemsSummary = (items?: Array<{ name: string; qty: number }>) => {
     if (!items || items.length === 0) return "No items";
     return items.map((item) => `${item.qty}x ${item.name}`).join(", ");
@@ -34,7 +41,20 @@ export function PreparingOrder({ order, vendorName }: PreparingOrderProps) {
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 overflow-hidden rounded-full border border-[#E5E2E1] bg-[#F0EDED]">
             <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-xl">
-              🍽️
+              {vendorProfileImageUrl ? (
+                <div className="relative h-full w-full">
+                  <Image
+                    src={vendorProfileImageUrl}
+                    alt={vendorName}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <span className="text-2xl">
+                  <ForkKnifeCrossedIcon />
+                </span>
+              )}
             </div>
           </div>
           <div>
@@ -44,7 +64,7 @@ export function PreparingOrder({ order, vendorName }: PreparingOrderProps) {
             <p className="font-inter text-xs text-[#5B403C]">{order.code}</p>
           </div>
         </div>
-        <OrderStatusBadge status={order.status as any} />
+        <OrderStatusBadge className="px-3" status={order.status as any} />
       </div>
 
       <div className="mt-4">

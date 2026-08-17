@@ -4,6 +4,14 @@
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { OrderStatusBadge } from "@kiakia/ui";
 import Link from "next/link";
+import Image from "next/image";
+import {
+  ForkKnifeCrossedIcon,
+  BoxIcon,
+  CurrencyIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useState } from "react";
 
 interface Order {
@@ -18,6 +26,7 @@ interface Order {
 interface Vendor {
   id: string;
   name: string;
+  profile_image?: string | null;
 }
 
 interface OrderHistoryDesktopProps {
@@ -166,7 +175,18 @@ export function OrderHistoryDesktop({
                   {/* Image */}
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[#F0EDED]">
                     <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-2xl text-[#5B403C]/20">
-                      🍽️
+                      {/* uncomment when you have added profile image */}
+                      {/* {vendorProfileImageUrl ? (
+                        <Image
+                          src={vendorProfileImageUrl || ""}
+                          alt={vendorName}
+                        />
+                      ) : (
+                        <span className="text-6xl">
+                          <ForkKnifeCrossedIcon />
+                        </span>
+                      )} */}
+                      <ForkKnifeCrossedIcon className="size-6 text-[#5B403C]" />
                     </div>
                   </div>
 
@@ -192,10 +212,10 @@ export function OrderHistoryDesktop({
                     </p>
                     <div className="mt-1 flex items-center gap-4">
                       <span className="flex items-center gap-1 text-xs text-[#5B403C]">
-                        <span className="h-3 w-3 bg-[#5B403C]" /> 3 items
+                        <BoxIcon className="size-3 text-[#5B403C]" /> 3 items
                       </span>
                       <span className="flex items-center gap-1 text-xs text-[#5B403C]">
-                        <span className="h-3 w-3 bg-[#5B403C]" />{" "}
+                        <CurrencyIcon className="size-3 text-[#5B403C]" />{" "}
                         {formatNaira(koboOf(order.total_kobo))}
                       </span>
                     </div>
@@ -225,7 +245,7 @@ export function OrderHistoryDesktop({
         <div className="mt-8 flex justify-center">
           <nav className="flex items-center gap-2">
             <button className="flex h-10 w-10 items-center justify-center rounded-full opacity-50">
-              <span className="h-3 w-1.5 bg-[#5B403C]" />
+              <ChevronLeft className="size-4 text-[#5B403C]" />
             </button>
             <button className="flex h-10 w-10 items-center justify-center rounded-full bg-[#B61913] text-white">
               1
@@ -241,7 +261,7 @@ export function OrderHistoryDesktop({
               8
             </button>
             <button className="flex h-10 w-10 items-center justify-center rounded-full">
-              <span className="h-3 w-1.5 bg-[#5B403C]" />
+              <ChevronRight className="size-4 text-[#5B403C]" />
             </button>
           </nav>
         </div>

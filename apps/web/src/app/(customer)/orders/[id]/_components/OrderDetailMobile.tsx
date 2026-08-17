@@ -1,7 +1,7 @@
 // app/(customer)/orders/[id]/_components/OrderDetailMobile.tsx
 "use client";
 
-import { ChevronLeft, MapPin, MessageCircle } from "lucide-react";
+import { ChevronLeft, MapPin, MessageCircle, Share2Icon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { OrderDetailHeader } from "./OrderDetailHeader";
@@ -60,16 +60,9 @@ export function OrderDetailMobile({
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <Link
-            href="/track"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#B61913] px-6 py-4 font-inter text-sm font-semibold text-white shadow-sm hover:bg-[#9e1611]"
-          >
-            <MapPin className="size-5" />
-            Track Order
-          </Link>
           <button className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#934B00] bg-[#FCF9F8] px-6 py-4 font-inter text-sm font-semibold text-[#934B00] hover:bg-[#f0edec]">
-            <MessageCircle className="size-5" />
-            Contact Support
+            <Share2Icon className="size-5" />
+            Share code with Contact
           </button>
         </div>
       </div>

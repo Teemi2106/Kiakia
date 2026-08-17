@@ -6,10 +6,12 @@ export interface Order {
   total_kobo: number;
   vendor_id: string;
   created_at: string;
+  Location?: string;
   items?: Array<{ name: string; qty: number }>;
 }
 
 export interface Vendor {
   id: string;
   name: string;
+  profile_image_url?: string | null;
 }

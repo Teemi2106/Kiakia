@@ -1,7 +1,7 @@
 // app/(customer)/tracking/_components/VendorCard.tsx
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ForkKnifeCrossed, MessageCircleQuestion } from "lucide-react";
 
 interface VendorCardProps {
   vendor: {
@@ -23,7 +23,7 @@ export function VendorCard({ vendor }: VendorCardProps) {
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-[#DCD9D9] text-xl">
-              🍽️
+              <ForkKnifeCrossed />
             </div>
           )}
         </div>
@@ -38,7 +38,7 @@ export function VendorCard({ vendor }: VendorCardProps) {
         </div>
 
         <button className="rounded-full p-2 hover:bg-black/5">
-          <ChevronRight className="size-4 text-[#934B00]" />
+          <MessageCircleQuestion className="size-4 text-[#934B00]" />
         </button>
       </div>
     </div>

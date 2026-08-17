@@ -1,7 +1,13 @@
 // app/(customer)/orders/[id]/delivered/_components/DeliveryHeader.tsx
 "use client";
 
-import { Phone, MessageCircle, CheckCircle2, MapPin } from "lucide-react";
+import {
+  Phone,
+  MessageCircle,
+  CheckCircle2,
+  MapPin,
+  Contact2,
+} from "lucide-react";
 
 interface DeliveryHeaderProps {
   driver: {
@@ -50,7 +56,7 @@ export function DeliveryHeader({ driver }: DeliveryHeaderProps) {
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-xl">
-                  🧑
+                  <Contact2 className="size-5 text-[#5B403C]" />
                 </div>
               )}
             </div>

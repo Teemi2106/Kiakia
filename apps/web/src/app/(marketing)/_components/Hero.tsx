@@ -52,7 +52,7 @@ export function Hero() {
           <div className="absolute inset-0 bg-gradient-to-t from-[rgba(252,249,248,0.4)] to-transparent" />
         </div>
         <div className="flex max-w-[448px] flex-col items-center gap-4">
-          <h1 className="font-sora text-[28px] font-bold leading-[34px] text-[#1C1B1B]">
+          <h1 className="w-full text-center font-sora text-[28px] font-bold leading-[34px] text-[#1C1B1B] whitespace-nowrap sm:text-4xl sm:leading-[44px] md:text-[48px] md:leading-[56px]">
             Cravings Delivered Fast.
           </h1>
           <p className="px-4 text-center font-inter text-base leading-6 text-[#5B403C]">

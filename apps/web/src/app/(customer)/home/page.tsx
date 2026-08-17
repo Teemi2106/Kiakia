@@ -50,7 +50,7 @@ export default async function CustomerHomePage({
   const { data: vendors } = await query;
 
   return (
-    <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6">
+    <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-20 sm:px-6">
       {/* Hero Banner - Desktop */}
       <div className="relative mb-8 hidden h-[392px] overflow-hidden rounded-2xl border border-[#E5E2E1] bg-[#F6F3F2] sm:block">
         <div className="absolute inset-0">
@@ -92,7 +92,7 @@ export default async function CustomerHomePage({
       </div>
 
       {/* Mobile Promo Banner */}
-      <div className="relative mb-6 h-[160px] overflow-hidden rounded-xl shadow-sm sm:hidden">
+      <div className="relative mt-4 mb-6 h-[160px] pb-10 w-full overflow-hidden rounded-xl shadow-sm sm:hidden">
         <div
           className="h-full w-full bg-cover bg-center"
           style={{ backgroundImage: "url('/assets/hero-banner.png')" }}
@@ -186,13 +186,6 @@ export default async function CustomerHomePage({
           <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
             Nearby Favorites
           </h2>
-          <Link
-            href="/vendors"
-            className="flex items-center gap-1 font-inter text-sm font-semibold text-[#E23B2E] hover:underline"
-          >
-            See all
-            <span className="text-[#E23B2E]">→</span>
-          </Link>
         </div>
 
         {!vendors || vendors.length === 0 ? (

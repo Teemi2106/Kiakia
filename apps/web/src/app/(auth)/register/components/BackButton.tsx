@@ -8,8 +8,7 @@ export function BackButton() {
   const router = useRouter();
 
   const handleGoBack = () => {
-    router.back(); // Goes to the previous page
-    // OR router.push('/somewhere') if you want to go to a specific page
+    router.push("/"); // Goes to the previous page
   };
 
   return (

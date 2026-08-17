@@ -19,6 +19,7 @@ export interface CartItem {
 export interface Vendor {
   readonly name: string;
   readonly min_order_kobo: number;
+  ProfileImage?: string | null;
 }
 
 export type PaymentMethod = "card" | "cash";

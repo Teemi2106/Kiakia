@@ -2,7 +2,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Check, Shield, Phone, MessageCircle } from "lucide-react";
+import {
+  ChevronLeft,
+  Check,
+  Shield,
+  Phone,
+  MessageCircle,
+  Contact,
+  Info,
+} from "lucide-react";
 import { DeliveryHeader } from "./DeliveryHeader";
 import { DeliveryCodeSection } from "./DeliveryCodeSection";
 import type { Driver } from "./types";
@@ -54,7 +62,7 @@ export function DeliveredMobile({
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white bg-[#E5E2E1]">
                   <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-lg">
-                    🧑
+                    <Contact className="size-5 text-[#5B403C]" />
                   </div>
                 </div>
                 <div>
@@ -82,17 +90,17 @@ export function DeliveredMobile({
         <div className="px-4 pt-6">
           {/* Status Badge */}
           <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#FFDCC5] bg-[rgba(255,220,197,0.2)] px-3 py-2">
-            <span className="h-3.5 w-3.5 bg-[#934B00]" />
-            <span className="font-inter text-xs font-semibold uppercase tracking-[0.7px] text-[#703800]">
-              Delivered Successfully
+            <Info className="size-4 text-[#b69013]" />
+            <span className="font-inter text-xs text-center font-semibold uppercase tracking-[0.7px] text-[#703800]">
+              {driver.name} has Successfully arrived
             </span>
           </div>
 
           {/* Headline */}
-          <h1 className="font-sora text-[28px] font-bold leading-[34px] text-[#1C1B1B]">
-            Order Delivered! 🎉
+          <h1 className="font-sora text-[28px] text-center font-bold leading-[34px] text-[#1C1B1B]">
+            Order Delivered!
           </h1>
-          <p className="mt-2 font-inter text-lg text-[#5B403C]">
+          <p className="mt-2 font-inter text-center text-lg text-[#5B403C]">
             Your order has been successfully delivered.
           </p>
 
@@ -138,11 +146,6 @@ export function DeliveredMobile({
               </div>
             </div>
           </div>
-
-          {/* Rate Delivery Button */}
-          <button className="mt-6 w-full rounded-xl bg-[#B61913] py-4 font-inter text-sm font-semibold text-white shadow-md hover:bg-[#9e1611]">
-            Rate Your Delivery
-          </button>
         </div>
       </div>
     </div>

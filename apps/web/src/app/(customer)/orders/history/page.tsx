@@ -81,7 +81,7 @@ export default async function OrderHistoryPage() {
       : { data: [] };
     vendors = realVendors ?? [];
   }
-
+  // Couldn't add profile img because type of vendor is not defined in the supabase query, so I just added name for now.
   const vendorName = (id: string) =>
     vendors?.find((v) => v.id === id)?.name ?? "Vendor";
 

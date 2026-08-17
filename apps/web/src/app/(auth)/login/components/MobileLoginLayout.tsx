@@ -12,7 +12,7 @@ function BackButton() {
   const router = useRouter();
   return (
     <button
-      onClick={() => router.back()}
+      onClick={() => router.push("/")}
       className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5"
       aria-label="Go back"
     >

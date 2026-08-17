@@ -53,13 +53,16 @@ const ORDER_STATUS_PRESENTATION: Record<
 export function OrderStatusBadge({
   status,
   className,
+  Icon,
 }: {
   status: OrderStatus;
   className?: string;
+  Icon?: React.ReactNode;
 }) {
   const { label, tone } = ORDER_STATUS_PRESENTATION[status];
   return (
     <Badge tone={tone} className={className}>
+      {Icon && <span className="mr-2">{Icon}</span>}
       {label}
     </Badge>
   );

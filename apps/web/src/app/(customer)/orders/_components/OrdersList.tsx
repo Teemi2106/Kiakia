@@ -33,6 +33,10 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
                   key={order.id}
                   order={order}
                   vendorName={getVendorName(order.vendor_id)}
+                  vendorProfileImageUrl={
+                    vendors?.find((v) => v.id === order.vendor_id)
+                      ?.profile_image_url
+                  }
                 />
               ))
             ) : (
@@ -52,6 +56,10 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
                   key={order.id}
                   order={order}
                   vendorName={getVendorName(order.vendor_id)}
+                  vendorProfileImageUrl={
+                    vendors?.find((v) => v.id === order.vendor_id)
+                      ?.profile_image_url
+                  }
                 />
               ))
             ) : (
@@ -82,6 +90,9 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
             key={order.id}
             order={order}
             vendorName={getVendorName(order.vendor_id)}
+            vendorProfileImageUrl={
+              vendors?.find((v) => v.id === order.vendor_id)?.profile_image_url
+            }
           />
         ))}
       </div>

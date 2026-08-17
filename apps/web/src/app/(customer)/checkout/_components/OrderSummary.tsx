@@ -3,9 +3,10 @@
 
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { Button } from "@kiakia/ui";
-import { ShoppingBag } from "lucide-react";
+import { ForkKnifeCrossedIcon } from "lucide-react";
 import { placeOrderAction, type CheckoutFormState } from "@/app/actions/orders";
 import { useActionState } from "react";
+import Image from "next/image";
 import type { CartItem, Vendor, PaymentMethod } from "./types";
 
 const initialState = {};
@@ -54,7 +55,13 @@ export function OrderSummary({
             >
               <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#E5E2E1]">
                 <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-2xl text-[#5B403C]/20">
-                  🍽️
+                  {vendor?.ProfileImage ? (
+                    <Image src={vendor.ProfileImage || ""} alt={vendor.name} />
+                  ) : (
+                    <span className="text-6xl">
+                      <ForkKnifeCrossedIcon />
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex-1">

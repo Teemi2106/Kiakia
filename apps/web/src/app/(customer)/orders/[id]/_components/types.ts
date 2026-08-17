@@ -17,6 +17,7 @@ export interface OrderDetail {
 
 export interface Vendor {
   name: string;
+  profile_image_url?: string | null;
 }
 
 export interface OrderItem {

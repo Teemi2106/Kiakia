@@ -3,7 +3,7 @@
 
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { Badge } from "@kiakia/ui";
-import { Star, Clock, MapPin, ShoppingBag } from "lucide-react";
+import { Star, Clock, InfoIcon, ShoppingBag, Car } from "lucide-react";
 import Image from "next/image";
 
 interface VendorHeroProps {
@@ -72,6 +72,13 @@ export function VendorHero({ vendor }: VendorHeroProps) {
                       ~{vendor.avgPrepMins} min
                     </span>
                   </div>
+                  {/* delivery fee */}
+                  <div className="flex items-center gap-2 rounded-full bg-[#F0EDED] px-3 py-1">
+                    <Car className="size-4 text-[#5B403C]" />
+                    <span className="font-inter text-sm font-semibold text-[#1C1B1B]">
+                      {formatNaira(koboOf(40000))} fee
+                    </span>
+                  </div>
                   {/* Min Order */}
                   {vendor.minOrderKobo > 0 && (
                     <div className="flex items-center gap-2 rounded-full bg-[#F0EDED] px-3 py-1">
@@ -85,8 +92,8 @@ export function VendorHero({ vendor }: VendorHeroProps) {
               {/* Status Badge */}
               {vendor.isAcceptingOrders ? (
                 <Badge className="bg-[rgba(218,53,41,0.1)] text-[#DA3529] hover:bg-[rgba(218,53,41,0.1)]">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-[#DA3529]" />
+                  <span className="flex items-center px-3  gap-2">
+                    <InfoIcon className="size-4" />
                     Accepting Orders
                   </span>
                 </Badge>
@@ -134,6 +141,12 @@ export function VendorHero({ vendor }: VendorHeroProps) {
                   <Clock className="size-3 text-[#5B403C]" />
                   <span className="font-inter text-xs text-[#5B403C]">
                     {vendor.avgPrepMins} min
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 rounded bg-[#F6F3F2] px-2 py-1">
+                  <Car className="size-3 text-[#5B403C]" />
+                  <span className="font-inter text-xs text-[#5B403C]">
+                    {formatNaira(koboOf(40000))} fee
                   </span>
                 </div>
                 {vendor.minOrderKobo > 0 && (

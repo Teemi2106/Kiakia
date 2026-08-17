@@ -3,15 +3,19 @@
 
 import { formatNaira, koboOf } from "@kiakia/domain";
 import type { OrderDetail, OrderItem } from "./types";
+import Image from "next/image";
+import { ForkKnifeCrossedIcon } from "lucide-react";
 
 interface OrderSummaryDetailsProps {
   items: OrderItem[];
   order: OrderDetail;
+  vendorImage?: string | null;
 }
 
 export function OrderSummaryDetails({
   items,
   order,
+  vendorImage,
 }: OrderSummaryDetailsProps) {
   return (
     <div className="space-y-4">
@@ -28,7 +32,13 @@ export function OrderSummaryDetails({
           >
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F0EDED]">
               <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-2xl text-[#5B403C]/20">
-                🍽️
+                {vendorImage ? (
+                  <Image src={vendorImage || ""} alt={"profile pic"} />
+                ) : (
+                  <span className="text-6xl">
+                    <ForkKnifeCrossedIcon />
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex flex-1 items-center justify-between">

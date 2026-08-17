@@ -7,7 +7,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  Pencil,
+  Plus,
 } from "lucide-react";
 import { useState } from "react";
 import type { PaymentMethod } from "./types";
@@ -50,7 +50,7 @@ export function PaymentSection({
             Payment Method
           </h2>
           <button className="rounded-full p-2 hover:bg-black/5">
-            <Pencil className="size-4 text-[#B61913]" />
+            <Plus className="size-4 text-[#B61913]" />
           </button>
         </div>
 

@@ -1,7 +1,7 @@
 // app/(customer)/orders/[id]/_components/DeliveryCodeSection.tsx
 "use client";
 
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Share2Icon } from "lucide-react";
 
 interface DeliveryCodeSectionProps {
   deliveryCode: string | null;
@@ -51,6 +51,10 @@ export function DeliveryCodeSection({
           Don&apos;t share this code until your order is delivered
         </span>
       </div>
+      <span className="hidden  sm:flex font-inter text-sm text-[#5B403C] ">
+        <Share2Icon className="size-5" />
+        Share code
+      </span>
     </div>
   );
 }

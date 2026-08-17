@@ -19,6 +19,7 @@ const DEMO_DRIVER: Driver = {
   rating: 4.8,
   plateNumber: "AAA-1234",
   avatarUrl: undefined,
+  car: "Red Toyota Corolla",
 };
 
 const DEMO_VENDOR: Vendor = {
@@ -36,7 +37,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
 
   return (
     <>
-      <div className="hidden lg:block">
+      <div className="hidden pt-6 lg:block">
         <TrackingDesktop
           steps={DEMO_STEPS}
           driver={DEMO_DRIVER}

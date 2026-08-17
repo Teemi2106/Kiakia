@@ -11,6 +11,7 @@ export interface Driver {
   rating: number;
   plateNumber: string;
   avatarUrl?: string;
+  car?: string;
 }
 
 export interface Vendor {

@@ -1,11 +1,17 @@
 // app/(customer)/tracking/_components/TrackingMobile.tsx
 "use client";
 
-import { ChevronLeft, Phone, MessageCircle, MapPin } from "lucide-react";
+import {
+  ChevronLeft,
+  Phone,
+  MessageCircle,
+  MapPin,
+  ContactRound,
+  Star,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MapArea } from "./MapArea";
 import Link from "next/link";
-import { Timeline } from "./Timeline";
 import type { TimelineStep, Driver, Vendor } from "./types";
 
 interface TrackingMobileProps {
@@ -108,7 +114,7 @@ export function TrackingMobile({
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 overflow-hidden rounded-full bg-[#EAE7E7]">
                 <div className="flex h-full w-full items-center justify-center bg-[#EAE7E7] text-xl">
-                  🧑
+                  <ContactRound />
                 </div>
               </div>
               <div>
@@ -116,7 +122,7 @@ export function TrackingMobile({
                   {driver.name}
                 </p>
                 <p className="font-inter text-xs text-[#5B403C]">
-                  ⭐ {driver.rating} • Plate: {driver.plateNumber}
+                  {driver.car} {driver.plateNumber}
                 </p>
               </div>
             </div>

@@ -96,9 +96,9 @@ export function Header() {
         </div>
 
         {/* Mobile: Profile Icon */}
-        <button className="sm:hidden" aria-label="Profile">
+        <Link className="sm:hidden" aria-label="Profile" href="/login">
           <User className="size-5 text-[#B61913]" />
-        </button>
+        </Link>
       </header>
 
       {/* ===== MOBILE SLIDE-IN MENU ===== */}
