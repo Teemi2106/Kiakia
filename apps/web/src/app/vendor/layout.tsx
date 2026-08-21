@@ -13,8 +13,8 @@ export default async function VendorAuthLayout({ children }: { children: React.R
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-16">
-      <div className="w-full max-w-sm">{children}</div>
+     <main className="flex min-h-screen flex-1 items-center justify-center bg-[#FCF9F8] p-4 md:p-6">
+      <div className="w-full max-w-7xl">{children}</div>
     </main>
   );
 }

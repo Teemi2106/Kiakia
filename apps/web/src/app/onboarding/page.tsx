@@ -1,7 +1,8 @@
-import { Card } from "@kiakia/ui";
+// app/(auth)/onboarding/page.tsx
 import type { Metadata } from "next";
 import { verifySession } from "@/lib/auth/dal";
-import { VendorOnboardingForm } from "./_components/VendorOnboardingForm";
+import { OnboardingDesktop } from "./_components/OnboardingDesktop";
+import { OnboardingMobile } from "./_components/OnboardingMobile";
 
 export const metadata: Metadata = { title: "Become a Vendor" };
 
@@ -13,18 +14,13 @@ export default async function OnboardingPage() {
   await verifySession();
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-16">
-      <div className="w-full max-w-md">
-        <Card>
-          <h1 className="text-xl font-semibold text-ink">Partner with KiaKia</h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            List your kitchen or store and start reaching customers across Jabi-Utako.
-          </p>
-          <div className="mt-6">
-            <VendorOnboardingForm />
-          </div>
-        </Card>
+    <>
+      <div className="hidden md:block">
+        <OnboardingDesktop />
       </div>
-    </main>
+      <div className="md:hidden">
+        <OnboardingMobile />
+      </div>
+    </>
   );
 }
