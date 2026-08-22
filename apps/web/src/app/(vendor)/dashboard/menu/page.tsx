@@ -1,108 +1,141 @@
+// app/(vendor)/menu/page.tsx
 import { getVendorForCurrentUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
-import { formatNaira, koboOf } from "@kiakia/domain";
 import { EmptyState, buttonVariants } from "@kiakia/ui";
-import { Pencil } from "lucide-react";
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AddCategoryForm, DeleteCategoryButton } from "./_components/CategoryControls";
-import { AvailabilityToggle, DeleteItemButton } from "./_components/MenuItemRowActions";
+import { MenuDesktop } from "./_components/MenuDesktop";
+import { MenuMobile } from "./_components/MenuMobile";
+import type { MenuItem, Category } from "./_components/types";
 
-export const metadata: Metadata = { title: "Menu Management" };
+export const metadata = { title: "Menu Management" };
+
+// Demo data for when no real data exists
+const DEMO_CATEGORIES: Category[] = [
+  { id: "cat-1", name: "Rice", sort_order: 0 },
+  { id: "cat-2", name: "Swallow", sort_order: 1 },
+  { id: "cat-3", name: "Sides", sort_order: 2 },
+];
+
+const DEMO_ITEMS: MenuItem[] = [
+  {
+    id: "item-1",
+    name: "Smokey Party Jollof Rice",
+    category_id: "cat-1",
+    price_kobo: 350000,
+    is_available: true,
+    sort_order: 0,
+    image_url: null,
+    description:
+      "Authentic firewood taste served with grilled chicken and dodo.",
+  },
+  {
+    id: "item-2",
+    name: "Pounded Yam & Egusi",
+    category_id: "cat-2",
+    price_kobo: 480000,
+    is_available: true,
+    sort_order: 0,
+    image_url: null,
+    description:
+      "Freshly pounded yam with rich Egusi soup containing stockfish and tripe.",
+  },
+  {
+    id: "item-3",
+    name: "Extra Sweet Dodo",
+    category_id: "cat-3",
+    price_kobo: 120000,
+    is_available: true,
+    sort_order: 0,
+    image_url: null,
+    description: "Perfectly fried, sweet and golden ripe plantains.",
+  },
+  {
+    id: "item-4",
+    name: "Catfish Pepper Soup",
+    category_id: "cat-3",
+    price_kobo: 280000,
+    is_available: false,
+    sort_order: 1,
+    image_url: null,
+    description:
+      "Spicy and comforting catfish soup infused with traditional local spices.",
+  },
+];
 
 export default async function VendorMenuPage() {
   const vendor = await getVendorForCurrentUser();
   if (!vendor) notFound();
 
   const supabase = await createClient();
-  const [{ data: categories }, { data: items }] = await Promise.all([
-    supabase.from("menu_categories").select("id, name, sort_order").eq("vendor_id", vendor.id).order("sort_order"),
+
+  const [{ data: categoryData }, { data: itemData }] = await Promise.all([
+    supabase
+      .from("menu_categories")
+      .select("id, name, sort_order")
+      .eq("vendor_id", vendor.id)
+      .order("sort_order"),
     supabase
       .from("menu_items")
-      .select("id, name, category_id, price_kobo, is_available, sort_order")
+      .select(
+        "id, name, category_id, price_kobo, is_available, sort_order, image_url, description",
+      )
       .eq("vendor_id", vendor.id)
       .order("sort_order"),
   ]);
 
-  const uncategorizedItems = (items ?? []).filter(
-    (item) => !item.category_id || !categories?.some((c) => c.id === item.category_id),
-  );
+  const categories = categoryData?.length ? categoryData : DEMO_CATEGORIES;
+  const items = itemData?.length ? itemData : DEMO_ITEMS;
 
-  return (
-    <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-ink">Menu Management</h1>
-        <Link href="/dashboard/menu/items/new" className={buttonVariants({ variant: "primary", size: "sm" })}>
-          + New Item
-        </Link>
-      </div>
+  // Helper function to update item availability (will be passed to client components)
+  // This will be handled by server actions when the toggle is clicked
 
-      {!items || items.length === 0 ? (
+  if (items.length === 0) {
+    return (
+      <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-ink">Menu Management</h1>
+          <Link
+            href="/dashboard/menu/items/new"
+            className={buttonVariants({ variant: "primary", size: "sm" })}
+          >
+            + New Item
+          </Link>
+        </div>
         <div className="mt-6">
           <EmptyState
             title="No menu items yet"
             description="Add your first item to start accepting orders."
             action={
-              <Link href="/dashboard/menu/items/new" className={buttonVariants({ variant: "primary" })}>
+              <Link
+                href="/dashboard/menu/items/new"
+                className={buttonVariants({ variant: "primary" })}
+              >
                 Add item
               </Link>
             }
           />
         </div>
-      ) : (
-        <div className="mt-6 flex flex-col gap-6">
-          {(categories ?? []).map((category) => {
-            const categoryItems = (items ?? []).filter((item) => item.category_id === category.id);
-            return (
-              <section key={category.id}>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-ink">{category.name}</h2>
-                  <DeleteCategoryButton vendorId={vendor.id} categoryId={category.id} />
-                </div>
-                <MenuItemRows vendorId={vendor.id} items={categoryItems} />
-              </section>
-            );
-          })}
-
-          {uncategorizedItems.length > 0 && (
-            <section>
-              <h2 className="text-sm font-semibold text-ink">Other</h2>
-              <MenuItemRows vendorId={vendor.id} items={uncategorizedItems} />
-            </section>
-          )}
-        </div>
-      )}
-
-      <div className="mt-6">
-        <AddCategoryForm vendorId={vendor.id} />
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-function MenuItemRows({
-  vendorId,
-  items,
-}: {
-  vendorId: string;
-  items: readonly { id: string; name: string; price_kobo: number; is_available: boolean }[];
-}) {
   return (
-    <div className="mt-2 flex flex-col gap-2">
-      {items.map((item) => (
-        <div key={item.id} className="flex items-center gap-3 rounded-card border border-border bg-surface-raised p-3">
-          <div className="min-w-0 flex-1">
-            <p className="font-medium text-ink">{item.name}</p>
-            <p className="text-sm text-ink-muted">{formatNaira(koboOf(item.price_kobo))}</p>
-          </div>
-          <AvailabilityToggle vendorId={vendorId} itemId={item.id} initialValue={item.is_available} />
-          <Link href={`/dashboard/menu/items/${item.id}/edit`} className="text-ink-muted hover:text-ink" aria-label="Edit item">
-            <Pencil className="size-4" />
-          </Link>
-          <DeleteItemButton vendorId={vendorId} itemId={item.id} />
-        </div>
-      ))}
-    </div>
+    <>
+      <div className="hidden lg:block">
+        <MenuDesktop
+          items={items}
+          categories={categories}
+          vendorId={vendor.id}
+        />
+      </div>
+      <div className="lg:hidden">
+        <MenuMobile
+          items={items}
+          categories={categories}
+          vendorId={vendor.id}
+        />
+      </div>
+    </>
   );
 }

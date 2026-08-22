@@ -1,0 +1,143 @@
+// app/(vendor)/menu/_components/MenuMobile.tsx
+"use client";
+
+import { useState, useMemo } from "react";
+import { Plus } from "lucide-react";
+import Link from "next/link";
+import { MenuCard } from "./MenuCard";
+import { MenuFilters } from "./MenuFilters";
+import type { MenuItem, Category } from "./types";
+import { toggleItemAvailabilityAction } from "@/app/actions/menu";
+
+interface MenuMobileProps {
+  items: MenuItem[];
+  categories: Category[];
+  vendorId: string;
+  onEditItem?: (item: MenuItem) => void;
+}
+
+export function MenuMobile({
+  items: initialItems,
+  categories,
+  vendorId,
+  onEditItem,
+}: MenuMobileProps) {
+  const [items, setItems] = useState(initialItems);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
+
+  // Get unique category names for filters
+  const categoryNames = useMemo(() => {
+    return categories.map((c) => c.name);
+  }, [categories]);
+
+  // Get category ID from name
+  const getCategoryIdFromName = (categoryName: string) => {
+    const category = categories.find((c) => c.name === categoryName);
+    return category?.id || null;
+  };
+
+  // Filter items based on search and category
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      // Search filter
+      const matchesSearch = item.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
+      // Category filter
+      let matchesFilter = true;
+      if (activeFilter !== "all") {
+        const categoryId = getCategoryIdFromName(activeFilter);
+        matchesFilter = item.category_id === categoryId;
+      }
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [items, searchQuery, activeFilter, categories]);
+
+  const handleToggleAvailability = async (
+    itemId: string,
+    isAvailable: boolean,
+  ) => {
+    // Update UI immediately
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, is_available: isAvailable } : item,
+      ),
+    );
+
+    // Call server action
+    await toggleItemAvailabilityAction(vendorId, itemId, isAvailable);
+  };
+
+  // Group items by category for display
+  const groupedItems = filteredItems.reduce(
+    (acc, item) => {
+      const categoryId = item.category_id || "uncategorized";
+      if (!acc[categoryId]) {
+        acc[categoryId] = [];
+      }
+      acc[categoryId].push(item);
+      return acc;
+    },
+    {} as Record<string, MenuItem[]>,
+  );
+
+  const getCategoryName = (categoryId: string) => {
+    if (categoryId === "uncategorized") return "Other";
+    return categories.find((c) => c.id === categoryId)?.name || "Other";
+  };
+
+  return (
+    <div className="p-4 pb-24">
+      {/* Filters */}
+      <MenuFilters
+        categories={["All", ...categoryNames]}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+        onSearch={setSearchQuery}
+      />
+
+      {/* Menu Items Grid */}
+      <div className="mt-6 space-y-8">
+        {Object.entries(groupedItems).map(([categoryId, categoryItems]) => (
+          <section key={categoryId}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+                {getCategoryName(categoryId)}
+              </h2>
+              <span className="rounded-full bg-[rgba(182,25,19,0.1)] px-3 py-1 text-xs font-medium text-[#B61913]">
+                {categoryItems.length} Item{categoryItems.length > 1 ? "s" : ""}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              {categoryItems.map((item) => (
+                <MenuCard
+                  key={item.id}
+                  item={item}
+                  vendorId={vendorId}
+                  onToggleAvailability={handleToggleAvailability}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
+
+        {filteredItems.length === 0 && (
+          <div className="py-12 text-center">
+            <p className="text-[#5B403C]">No menu items found</p>
+          </div>
+        )}
+      </div>
+
+      {/* FAB - Add New Item */}
+      <Link
+        href="/dashboard/menu/items/new"
+        className="fixed bottom-24 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#B61913] text-white shadow-xl transition-transform hover:scale-105 active:scale-90"
+      >
+        <Plus className="size-8" />
+      </Link>
+    </div>
+  );
+}

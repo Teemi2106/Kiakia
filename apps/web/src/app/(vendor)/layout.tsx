@@ -20,7 +20,7 @@ export default async function VendorLayout({
   return (
     <div className="flex flex-1 overflow-x-hidden max-w-full">
       {vendor && <VendorSidebar vendorName={vendor.name} />}
-      <div className="sm:hidden">
+      <div>
         <VendorTopNav />
       </div>
       <div className="flex flex-1 flex-col pb-16 sm:pb-0 min-w-0 max-w-full">

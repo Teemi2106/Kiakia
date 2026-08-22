@@ -1,18 +1,25 @@
 "use client";
 
-import { deleteMenuItemAction, toggleItemAvailabilityAction } from "@/app/actions/menu";
+import {
+  deleteMenuItemAction,
+  toggleItemAvailabilityAction,
+} from "@/app/actions/menu";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+
+interface AvailabilityToggleProps {
+  vendorId: string;
+  itemId: string;
+  initialValue: boolean;
+  onToggle?: (isAvailable: boolean) => void;
+}
 
 export function AvailabilityToggle({
   vendorId,
   itemId,
   initialValue,
-}: {
-  vendorId: string;
-  itemId: string;
-  initialValue: boolean;
-}) {
+  onToggle,
+}: AvailabilityToggleProps) {
   const [checked, setChecked] = useState(initialValue);
   const [pending, setPending] = useState(false);
 
@@ -20,7 +27,22 @@ export function AvailabilityToggle({
     setPending(true);
     const next = !checked;
     setChecked(next);
-    await toggleItemAvailabilityAction(vendorId, itemId, next);
+
+    // Call the callback if provided
+    if (onToggle) {
+      onToggle(next);
+    }
+
+    try {
+      await toggleItemAvailabilityAction(vendorId, itemId, next);
+    } catch (error) {
+      // Revert on error
+      setChecked(checked);
+      if (onToggle) {
+        onToggle(checked);
+      }
+      console.error("Failed to toggle availability:", error);
+    }
     setPending(false);
   }
 
@@ -40,7 +62,13 @@ export function AvailabilityToggle({
   );
 }
 
-export function DeleteItemButton({ vendorId, itemId }: { vendorId: string; itemId: string }) {
+export function DeleteItemButton({
+  vendorId,
+  itemId,
+}: {
+  vendorId: string;
+  itemId: string;
+}) {
   return (
     <button
       type="button"
