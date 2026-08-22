@@ -1,3 +1,4 @@
+// app/(vendor)/dashboard/page.tsx
 import { getVendorForCurrentUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { formatNaira, koboOf } from "@kiakia/domain";
@@ -11,7 +12,8 @@ import {
 } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { VendorOrderActions } from "../_components/VendorOrderActions";
+import { DashboardDesktop } from "./_components/DashboardDesktop";
+import { DashboardMobile } from "./_components/DashboardMobile";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -25,6 +27,40 @@ const ACTIVE_STATUSES = [
   "in_transit",
   "arrived",
 ] as const;
+
+// Demo data for development
+const DEMO_ORDERS = [
+  {
+    id: "order-1",
+    code: "KK-8892",
+    status: "preparing",
+    total_kobo: 1250000,
+    created_at: new Date().toISOString(),
+    items: "2x Extra Chicken, 1x Coke",
+    eta: "12 mins left",
+    image: null,
+  },
+  {
+    id: "order-2",
+    code: "KK-8895",
+    status: "placed",
+    total_kobo: 820000,
+    created_at: new Date().toISOString(),
+    items: "Assorted Meat, Goat Meat",
+    eta: "Just now",
+    image: null,
+  },
+  {
+    id: "order-3",
+    code: "KK-8889",
+    status: "ready_for_pickup",
+    total_kobo: 1500000,
+    created_at: new Date().toISOString(),
+    items: "Masa Side, Extra Spice",
+    eta: "Driver: Emeka Q.",
+    image: null,
+  },
+];
 
 export default async function VendorDashboardPage() {
   const vendor = await getVendorForCurrentUser();
@@ -65,77 +101,26 @@ export default async function VendorDashboardPage() {
       .limit(5),
   ]);
 
+  // For demo, combine real data with demo data if needed
+  const useDummyData = true;
+  const orders = useDummyData ? DEMO_ORDERS : incoming || [];
+
   return (
-    <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
-      <h1 className="text-xl font-semibold text-ink">{vendor.name}</h1>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Store Status</CardTitle>
-          </CardHeader>
-          <CardBody>
-            <p className="capitalize">Listing: {vendor.status}</p>
-            <p className="capitalize">KYC: {vendor.kyc_status}</p>
-            <p>
-              {vendor.is_accepting_orders
-                ? "Accepting orders"
-                : "Not accepting orders"}
-            </p>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Orders</CardTitle>
-          </CardHeader>
-          <CardBody>
-            <p className="text-3xl font-semibold text-ink">
-              {activeCount ?? 0}
-            </p>
-          </CardBody>
-        </Card>
+    <>
+      <div className="hidden lg:block">
+        <DashboardDesktop
+          vendor={vendor}
+          activeCount={activeCount ?? 0}
+          orders={orders}
+        />
       </div>
-
-      <h2 className="mt-6 text-sm font-semibold text-ink">Incoming Orders</h2>
-      {!incoming || incoming.length === 0 ? (
-        <div className="mt-3">
-          <EmptyState title="No new orders right now" />
-        </div>
-      ) : (
-        <div className="mt-3 flex flex-col gap-3">
-          {incoming.map((order) => (
-            <Card key={order.id}>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-medium text-ink">{order.code}</p>
-                  <p className="text-sm text-ink-muted">
-                    {formatNaira(koboOf(order.total_kobo))}
-                  </p>
-                </div>
-                <Badge tone="warning">
-                  {order.status.replaceAll("_", " ")}
-                </Badge>
-              </div>
-              <div className="mt-3">
-                <VendorOrderActions orderId={order.id} status={order.status} />
-              </div>
-              <Link
-                href={`/dashboard/orders/${order.id}`}
-                className="mt-2 block text-center text-xs font-medium text-brand-600 hover:underline"
-              >
-                View details →
-              </Link>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <p className="mt-6 text-xs text-ink-muted">
-        <Link href="/dashboard/earnings" className="hover:underline">
-          Earnings, escrow balance, and payouts →
-        </Link>
-      </p>
-    </div>
+      <div className="lg:hidden">
+        <DashboardMobile
+          vendor={vendor}
+          activeCount={activeCount ?? 0}
+          orders={orders}
+        />
+      </div>
+    </>
   );
 }

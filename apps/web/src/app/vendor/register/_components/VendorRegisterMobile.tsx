@@ -36,24 +36,25 @@ export function VendorRegisterMobile() {
       {/* Main Content */}
       <main className="flex-1 w-full px-4 py-6 pb-safe-bottom">
         {/* Header Section */}
-          <div className="mb-6">
-            <h1 className="mb-2 font-sora text-[28px] font-bold leading-[34px] text-[#1C1B1B]">
-              Partner with{" "}
-              <span className="inline-block">
-                <Image
-                  src="/assets/logo-mark.png"
-                  alt="KiaKia"
-                  width={32}
-                  height={32}
-                  className="inline-block h-8 w-auto object-contain align-middle"
-                  priority
-                />
-              </span>
-            </h1>
-            <p className="font-inter text-base leading-6 text-[#5B403C]">
-              Let&apos;s get your store set up and ready to serve hungry customers.
-            </p>
-          </div>
+        <div className="mb-6">
+          <h1 className="mb-2 font-sora text-[28px] font-bold leading-[34px] text-[#1C1B1B]">
+            Partner with{" "}
+            <span className="inline-block">
+              <Image
+                src="/assets/logo-mark.png"
+                alt="KiaKia"
+                width={32}
+                height={32}
+                className="inline-block h-8 w-auto object-contain align-middle"
+                priority
+              />
+            </span>
+          </h1>
+          <p className="font-inter text-base leading-6 text-[#5B403C]">
+            Let&apos;s get your store set up and ready to serve hungry
+            customers.
+          </p>
+        </div>
 
         {/* Hero Image */}
         <div className="relative mb-6 h-40 w-full overflow-hidden rounded-2xl bg-[#F0EDED]">
@@ -77,6 +78,14 @@ export function VendorRegisterMobile() {
         {/* Registration Form */}
         <RegisterForm action={vendorRegisterAction} />
 
+        {/* Register Link */}
+        <Link
+          href="/vendor/login"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#934B00] bg-white py-3 font-inter text-sm font-semibold leading-5 tracking-[0.01em] text-[#934B00] transition-all hover:bg-[#F6F3F2] active:scale-[0.98]"
+        >
+          Login
+          <Store className="size-5" />
+        </Link>
         {/* Footer Note */}
         <div className="mt-4 text-center pb-8">
           <p className="font-inter text-xs font-medium leading-4 text-[#5B403C]">
