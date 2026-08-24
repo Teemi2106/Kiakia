@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Shield } from "lucide-react";
+import { Shield,User } from "lucide-react";
 
 export function EscrowCodeInput() {
   const [code, setCode] = useState(["", "", "", ""]);
@@ -25,13 +25,13 @@ export function EscrowCodeInput() {
       inputs.current[index - 1]?.focus();
     }
   };
-
+//remember to add proper imagge fetching for the user icon
   return (
     <div>
       <p className="text-sm text-[#5B403C] mb-4">COURIER ASSIGNED</p>
       <div className="flex items-center gap-3 mb-4">
         <div className="h-10 w-10 rounded-full bg-[#F0EDED] flex items-center justify-center">
-          <span className="text-sm">🧑</span>
+          <User className="size-8 text-[#5B403C]/40" />
         </div>
         <div className="flex-1">
           <p className="font-bold text-sm">Gokada Express</p>
