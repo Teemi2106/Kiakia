@@ -45,7 +45,7 @@ export function VendorTopNav({ onMenuClick }: VendorTopNavProps) {
   const pageTitle = getPageTitle();
 
   return (
-    <nav className="fixed left-3 top-0 z-40 w-full bg-warning-surface shadow-[0px_1px_2px_rgba(0,0,0,0.05)] md:left-64 md:w-[calc(100%-256px)]">
+    <nav className="fixed left-3 top-0 z-40 w-full bg-surface shadow-[0px_1px_2px_rgba(0,0,0,0.05)] md:left-64 md:w-[calc(100%-256px)]">
       <div className="flex h-14 items-center justify-between px-4 sm:h-[63px] sm:px-6">
         {/* Left Section - Title */}
         <div className="flex items-center gap-2">
