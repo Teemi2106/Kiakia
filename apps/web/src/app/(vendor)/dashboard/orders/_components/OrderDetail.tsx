@@ -98,7 +98,7 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1]">
-                          <span className="text-2xl">🍽️</span>
+                          <Utensils className="size-8 text-[#5B403C]/40" />
                         </div>
                       )}
                     </div>
