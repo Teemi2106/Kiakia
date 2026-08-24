@@ -2,7 +2,7 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Lock, Wallet, TrendingUp } from "lucide-react";
+import { Lock, Wallet, TrendingUp, CircleDollarSign} from "lucide-react";
 
 interface StatsCardsProps {
   activeCount: number;
@@ -111,7 +111,7 @@ export function StatsCards({
           </button>
         </div>
         <span className="absolute -bottom-4 -right-4 text-9xl opacity-10 group-hover:rotate-12 transition-transform">
-          💰
+          <CircleDollarSign className="size-8 text-[#5B403C]/40" />
         </span>
       </div>
 
