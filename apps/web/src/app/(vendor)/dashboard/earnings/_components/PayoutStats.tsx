@@ -2,7 +2,7 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Calendar, TrendingUp } from "lucide-react";
+import { Calendar, TrendingUp, Clock } from "lucide-react";
 
 export function PayoutStats() {
   return (
@@ -38,7 +38,7 @@ export function PayoutStats() {
           Oct 24, 2023
         </h4>
         <div className="mt-2 flex items-center gap-1 text-sm font-medium text-[#5B403C]">
-          <span className="text-sm">⏰</span>
+          <Clock className="size-8 text-[#5B403C]/40" />
           Processing in 3 days
         </div>
       </div>
