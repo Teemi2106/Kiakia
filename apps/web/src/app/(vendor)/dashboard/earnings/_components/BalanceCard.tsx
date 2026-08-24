@@ -2,7 +2,7 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Lock, TrendingUp } from "lucide-react";
+import { Lock, TrendingUp,Info } from "lucide-react";
 
 interface BalanceCardProps {
   availableKobo: number;
@@ -54,7 +54,7 @@ export function BalanceCard({ availableKobo, pendingKobo }: BalanceCardProps) {
         </div>
         <div className="mt-4 border-t border-[#E4BEB8] pt-4">
           <p className="flex items-center gap-1 text-xs italic text-[#5B403C]">
-            <span className="text-sm">ℹ️</span> Released after delivery
+            <Info className="size-8 text-[#5B403C]/40" /> Released after delivery
             confirmation
           </p>
         </div>
