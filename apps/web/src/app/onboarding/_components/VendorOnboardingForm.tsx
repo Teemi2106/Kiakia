@@ -84,10 +84,10 @@ export function VendorOnboardingForm() {
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
 
       <Button type="submit" loading={pending} className="mt-1 w-full">
-        Continue for Verification →
+        Create my store →
       </Button>
       <p className="text-center text-xs text-ink-muted">
-        Your store starts in review — you&apos;ll be notified once it&apos;s approved.
+        Your store goes live immediately — you can start adding menu items right away.
       </p>
     </form>
   );

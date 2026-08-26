@@ -2,6 +2,7 @@
 
 import { Button, Card, Input } from "@kiakia/ui";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export function ProfileInfo({
@@ -15,22 +16,39 @@ export function ProfileInfo({
   phone: string | null | undefined;
   memberSince: string | null | undefined;
 }) {
+  const router = useRouter();
   const [name, setName] = useState(fullName);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function save() {
     setSaving(true);
     setSaved(false);
+    setError(null);
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from("profiles").update({ full_name: name }).eq("id", user.id);
-      setSaved(true);
+    if (!user) {
+      setError("You're signed out — sign in again to save changes.");
+      setSaving(false);
+      return;
     }
+    const { error: updateError } = await supabase.from("profiles").update({ full_name: name }).eq("id", user.id);
+    if (updateError) {
+      setError("Couldn't save your name. Please try again.");
+      setSaving(false);
+      return;
+    }
+    setSaved(true);
     setSaving(false);
+    router.refresh();
+  }
+
+  function onNameChange(value: string) {
+    setName(value);
+    setSaved(false);
   }
 
   return (
@@ -54,7 +72,7 @@ export function ProfileInfo({
           <label htmlFor="fullName" className="text-xs font-medium text-ink-muted">
             Full name
           </label>
-          <Input id="fullName" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full" />
+          <Input id="fullName" value={name} onChange={(e) => onNameChange(e.target.value)} className="mt-1 w-full" />
         </div>
         <div>
           <label className="text-xs font-medium text-ink-muted">Email</label>
@@ -66,6 +84,7 @@ export function ProfileInfo({
             <p className="mt-1 text-sm text-ink">{phone}</p>
           </div>
         )}
+        {error && <p className="text-xs text-red-600">{error}</p>}
         <Button onClick={() => void save()} loading={saving} variant="secondary" className="self-start">
           {saved ? "Saved ✓" : "Save changes"}
         </Button>
