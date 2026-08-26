@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth/dal";
+import { requireVendorContext } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { InvalidMoneyError, nairaToKobo } from "@kiakia/domain";
 
 export interface FormState {
   readonly error?: string;
@@ -18,9 +19,15 @@ export interface FormState {
  * no atomicity benefit here (option groups/options ARE multi-table, but
  * still don't need row-locking/state-machine logic the way orders do) —
  * the Server Action's own auth check is the real boundary.
+ *
+ * requireVendorContext(), not requireRole(VENDOR_ROLES) — holding a vendor
+ * role is necessary but not sufficient; the session must also have
+ * explicitly switched into vendor mode (switchToVendorAction). Every
+ * action below is a Server Action reachable by direct POST regardless of
+ * which layout rendered the form that normally calls it. See lib/auth/dal.ts.
  */
 async function assertVendorStaff(vendorId: string): Promise<void> {
-  const session = await requireRole(["vendor_staff", "vendor_manager", "vendor_owner"]);
+  const session = await requireVendorContext();
   const supabase = await createClient();
   const { data: staff } = await supabase
     .from("vendor_staff")
@@ -97,7 +104,13 @@ interface OptionGroupInput {
   minSelect: number;
   maxSelect: number;
   isRequired: boolean;
-  options: { name: string; priceDeltaKobo: number }[];
+  // S4 (independent security review): the vendor dashboard form
+  // (OptionGroupsBuilder.tsx) collects/serializes this field as
+  // `priceDeltaNaira`, never `priceDeltaKobo` — the two names must match
+  // what MenuItemForm.tsx actually JSON.stringifies into the hidden
+  // `optionGroups` field, or every option surcharge silently gets written
+  // as `undefined`/0.
+  options: { name: string; priceDeltaNaira: number }[];
 }
 
 function parseOptionGroups(raw: FormDataEntryValue | null): OptionGroupInput[] {
@@ -111,7 +124,26 @@ function parseOptionGroups(raw: FormDataEntryValue | null): OptionGroupInput[] {
   }
 }
 
-async function writeOptionGroups(itemId: string, groups: OptionGroupInput[]): Promise<void> {
+/**
+ * Returns an error message on the first thing that fails to save (an
+ * invalid option price, or an insert error the caller previously discarded
+ * silently), or null on full success.
+ *
+ * S4 (independent security review): two bugs here previously —
+ *   1. `option.priceDeltaKobo` doesn't exist on the client's payload (see
+ *      OptionGroupInput's comment above), so every option's
+ *      `price_delta_kobo` was written as `undefined`. Combined with 0016's
+ *      new `price_delta_kobo >= 0` CHECK constraint, that insert now fails
+ *      outright instead of silently defaulting — and the failure was
+ *      discarded (`if (error || !newGroup) continue;`), leaving an option
+ *      group with zero options and no indication anything went wrong.
+ *   2. The options insert's own error was never checked at all.
+ * Fixed by reading the field the form actually sends, converting it with
+ * the same nairaToKobo() helper every other naira-to-kobo write path in
+ * this codebase uses (never hand-rolled `* 100`), validating it BEFORE
+ * insert, and surfacing (not swallowing) every insert error.
+ */
+async function writeOptionGroups(itemId: string, groups: OptionGroupInput[]): Promise<string | null> {
   const admin = createAdminClient();
   // Cascades to options (0003_catalog.sql: on delete cascade) — fresh
   // insert on every save is simpler and safer than diffing.
@@ -119,7 +151,7 @@ async function writeOptionGroups(itemId: string, groups: OptionGroupInput[]): Pr
 
   for (const group of groups) {
     if (!group.name.trim()) continue;
-    const { data: newGroup, error } = await admin
+    const { data: newGroup, error: groupError } = await admin
       .from("option_groups")
       .insert({
         menu_item_id: itemId,
@@ -131,19 +163,32 @@ async function writeOptionGroups(itemId: string, groups: OptionGroupInput[]): Pr
       .select("id")
       .single();
 
-    if (error || !newGroup) continue;
+    if (groupError || !newGroup) {
+      return `Could not save the "${group.name.trim()}" option group. Please try again.`;
+    }
 
-    const options = group.options.filter((o) => o.name.trim());
-    if (options.length > 0) {
-      await admin.from("options").insert(
-        options.map((option) => ({
-          group_id: newGroup.id,
-          name: option.name.trim(),
-          price_delta_kobo: option.priceDeltaKobo,
-        })),
-      );
+    const namedOptions = group.options.filter((o) => o.name.trim());
+    if (namedOptions.length === 0) continue;
+
+    const priced: { group_id: string; name: string; price_delta_kobo: number }[] = [];
+    for (const option of namedOptions) {
+      let priceDeltaKobo: number;
+      try {
+        priceDeltaKobo = nairaToKobo(option.priceDeltaNaira);
+      } catch (err) {
+        const detail = err instanceof InvalidMoneyError ? err.message : "invalid price";
+        return `"${option.name.trim()}" has an invalid price (${detail}). Prices can't be negative.`;
+      }
+      priced.push({ group_id: newGroup.id, name: option.name.trim(), price_delta_kobo: priceDeltaKobo });
+    }
+
+    const { error: optionsError } = await admin.from("options").insert(priced);
+    if (optionsError) {
+      return `Could not save options for "${group.name.trim()}". Please try again.`;
     }
   }
+
+  return null;
 }
 
 export async function createMenuItemAction(_prevState: FormState, formData: FormData): Promise<FormState> {
@@ -176,7 +221,8 @@ export async function createMenuItemAction(_prevState: FormState, formData: Form
 
   if (error || !item) return { error: "Could not create menu item." };
 
-  await writeOptionGroups(item.id, parseOptionGroups(formData.get("optionGroups")));
+  const optionGroupsError = await writeOptionGroups(item.id, parseOptionGroups(formData.get("optionGroups")));
+  if (optionGroupsError) return { error: optionGroupsError };
 
   revalidatePath("/dashboard/menu");
   redirect("/dashboard/menu");
@@ -214,7 +260,8 @@ export async function updateMenuItemAction(_prevState: FormState, formData: Form
 
   if (error) return { error: "Could not save menu item." };
 
-  await writeOptionGroups(itemId, parseOptionGroups(formData.get("optionGroups")));
+  const optionGroupsError = await writeOptionGroups(itemId, parseOptionGroups(formData.get("optionGroups")));
+  if (optionGroupsError) return { error: optionGroupsError };
 
   revalidatePath("/dashboard/menu");
   redirect("/dashboard/menu");

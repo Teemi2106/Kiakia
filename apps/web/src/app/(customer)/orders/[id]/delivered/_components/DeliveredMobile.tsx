@@ -11,13 +11,12 @@ import {
   Contact,
   Info,
 } from "lucide-react";
-import { DeliveryHeader } from "./DeliveryHeader";
 import { DeliveryCodeSection } from "./DeliveryCodeSection";
 import type { Driver } from "./types";
 
 interface DeliveredMobileProps {
-  driver: Driver;
-  deliveryCode: string;
+  driver?: Driver;
+  deliveryCode?: string;
 }
 
 export function DeliveredMobile({
@@ -56,34 +55,38 @@ export function DeliveredMobile({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-white to-transparent" />
 
-          {/* Driver Info Overlay */}
-          <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-[rgba(228,190,184,0.3)] bg-white/90 p-3 backdrop-blur-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white bg-[#E5E2E1]">
-                  <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-lg">
-                    <Contact className="size-5 text-[#5B403C]" />
+          {/* Driver Info Overlay — omitted when no rider is assigned
+              (dispatch is Phase 3, not built yet), rather than shown with
+              fabricated details. */}
+          {driver && (
+            <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-[rgba(228,190,184,0.3)] bg-white/90 p-3 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white bg-[#E5E2E1]">
+                    <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-lg">
+                      <Contact className="size-5 text-[#5B403C]" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+                      {driver.name}
+                    </p>
+                    <p className="font-inter text-xs font-medium text-[#5B403C]">
+                      {[driver.vehicle, driver.plateNumber].filter(Boolean).join(" • ")}
+                    </p>
                   </div>
                 </div>
-                <div>
-                  <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
-                    {driver.name}
-                  </p>
-                  <p className="font-inter text-xs font-medium text-[#5B403C]">
-                    {driver.vehicle} • {driver.plateNumber}
-                  </p>
+                <div className="flex gap-2">
+                  <button className="rounded-full bg-[#F0EDED] p-2">
+                    <Phone className="size-4 text-[#B61913]" />
+                  </button>
+                  <button className="rounded-full bg-[#F0EDED] p-2">
+                    <MessageCircle className="size-4 text-[#B61913]" />
+                  </button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button className="rounded-full bg-[#F0EDED] p-2">
-                  <Phone className="size-4 text-[#B61913]" />
-                </button>
-                <button className="rounded-full bg-[#F0EDED] p-2">
-                  <MessageCircle className="size-4 text-[#B61913]" />
-                </button>
-              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Content */}
@@ -92,7 +95,7 @@ export function DeliveredMobile({
           <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#FFDCC5] bg-[rgba(255,220,197,0.2)] px-3 py-2">
             <Info className="size-4 text-[#b69013]" />
             <span className="font-inter text-xs text-center font-semibold uppercase tracking-[0.7px] text-[#703800]">
-              {driver.name} has Successfully arrived
+              {driver ? `${driver.name} has successfully arrived` : "Your order has arrived"}
             </span>
           </div>
 
@@ -104,8 +107,9 @@ export function DeliveredMobile({
             Your order has been successfully delivered.
           </p>
 
-          {/* Delivery Code */}
-          <DeliveryCodeSection deliveryCode={deliveryCode} />
+          {/* Delivery Code — 0011_delivery_code.sql: genuine per-order code,
+              omitted for pre-migration orders that never got one. */}
+          {deliveryCode && <DeliveryCodeSection deliveryCode={deliveryCode} />}
 
           {/* Divider */}
           <div className="my-6 h-px bg-[#EAE7E7]" />

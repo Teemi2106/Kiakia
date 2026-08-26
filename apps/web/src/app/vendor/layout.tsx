@@ -6,10 +6,22 @@ export default async function VendorAuthLayout({ children }: { children: React.R
   // but an existing vendor lands on /dashboard while everyone else (a
   // signed-in customer with no vendor role yet) lands on /onboarding —
   // never /home, since these are the vendor entry points.
+  //
+  // B2 (independent security review): this used to call setActiveRole("vendor")
+  // directly here, in a Server Component's render — Next.js 16 throws on a
+  // cookie write during render (only Server Actions/Route Handlers may write
+  // cookies). Redirecting to /vendor/enter instead: that Route Handler is
+  // allowed to write cookies, and delegates to switchToVendorAction() (the
+  // same "switch into vendor mode" primitive used everywhere else,
+  // app/actions/session.ts) so the cookie write + /dashboard redirect still
+  // happens — just from a place Next actually permits it.
   const session = await getOptionalSession();
   if (session) {
     const roles = await getRoles();
-    redirect(hasRole(roles, ...VENDOR_ROLES) ? "/dashboard" : "/onboarding");
+    if (hasRole(roles, ...VENDOR_ROLES)) {
+      redirect("/vendor/enter");
+    }
+    redirect("/onboarding");
   }
 
   return (

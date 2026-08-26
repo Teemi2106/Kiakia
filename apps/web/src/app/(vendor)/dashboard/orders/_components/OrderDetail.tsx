@@ -10,13 +10,13 @@ import {
   Info,
   CheckCircle,
   Truck,
-  Timer,
   X,
 } from "lucide-react";
 import Image from "next/image";
 import { StatusBadge } from "./StatusBadge";
 import { EscrowCodeInput } from "./EscrowCodeInput";
 import type { Order } from "./types";
+import { Utensils } from "lucide-react";
 
 interface OrderDetailProps {
   order: Order;
@@ -164,29 +164,51 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
                 Manage Order
               </h3>
               <div className="space-y-3">
-                <button
-                  onClick={() => onStatusChange(order.id, "accepted")}
-                  className="w-full bg-[#B61913] text-white py-4 rounded-xl font-bold text-base shadow-lg shadow-[#B61913]/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  <CheckCircle className="size-5" />
-                  Accept Order
-                </button>
-                <button
-                  onClick={() => onStatusChange(order.id, "in_transit")}
-                  className="w-full bg-[#176A22] text-white py-4 rounded-xl font-bold text-base hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  <Truck className="size-5" />
-                  Out for Delivery
-                </button>
-                <div className="py-2" />
-                <button className="w-full border-2 border-[#B61913] text-[#B61913] py-4 rounded-xl font-bold text-base hover:bg-[#B61913]/5 transition-all flex items-center justify-center gap-2">
-                  <Timer className="size-5" />
-                  Update Prep Time
-                </button>
-                <button className="w-full text-[#BA1A1A] font-bold py-4 rounded-xl hover:bg-[rgba(186,26,26,0.1)] transition-all flex items-center justify-center gap-2">
-                  <X className="size-5" />
-                  Reject Order
-                </button>
+                {/* Only the next edge the vendor actor can trigger for the
+                    order's current status is shown, matching the state
+                    machine VendorOrderActions.tsx already enforces —
+                    ready_for_pickup onward needs a rider (Phase 3). */}
+                {order.status === "placed" && (
+                  <>
+                    <button
+                      onClick={() => onStatusChange(order.id, "accepted")}
+                      className="w-full bg-[#B61913] text-white py-4 rounded-xl font-bold text-base shadow-lg shadow-[#B61913]/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle className="size-5" />
+                      Accept Order
+                    </button>
+                    <button
+                      onClick={() => onStatusChange(order.id, "rejected_by_vendor")}
+                      className="w-full text-[#BA1A1A] font-bold py-4 rounded-xl hover:bg-[rgba(186,26,26,0.1)] transition-all flex items-center justify-center gap-2"
+                    >
+                      <X className="size-5" />
+                      Reject
+                    </button>
+                  </>
+                )}
+                {order.status === "accepted" && (
+                  <button
+                    onClick={() => onStatusChange(order.id, "preparing")}
+                    className="w-full bg-[#176A22] text-white py-4 rounded-xl font-bold text-base hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Truck className="size-5" />
+                    Start Preparing
+                  </button>
+                )}
+                {order.status === "preparing" && (
+                  <button
+                    onClick={() => onStatusChange(order.id, "ready_for_pickup")}
+                    className="w-full bg-[#176A22] text-white py-4 rounded-xl font-bold text-base hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle className="size-5" />
+                    Mark Ready for Pickup
+                  </button>
+                )}
+                {order.status === "ready_for_pickup" && (
+                  <p className="text-center text-sm text-[#5B403C]">
+                    Waiting for a rider to be assigned…
+                  </p>
+                )}
               </div>
 
               {/* Escrow Code */}

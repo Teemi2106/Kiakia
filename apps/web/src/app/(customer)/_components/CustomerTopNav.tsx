@@ -2,6 +2,7 @@
 "use client";
 
 import {
+  ArrowLeftRight,
   Bell,
   Search,
   ShoppingCart,
@@ -15,6 +16,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@kiakia/ui";
 import { useCart } from "../cart/_components/CartProvider"; // <-- Import this
+import { switchToVendorAction } from "@/app/actions/session";
 
 const NAV_LINKS = [
   { href: "/home", label: "Home", icon: Home },
@@ -22,7 +24,13 @@ const NAV_LINKS = [
   { href: "/orders/history", label: "History", icon: History },
 ] as const;
 
-export function CustomerTopNav() {
+interface CustomerTopNavProps {
+  canSwitchToVendor?: boolean;
+}
+
+export function CustomerTopNav({
+  canSwitchToVendor = false,
+}: CustomerTopNavProps) {
   const pathname = usePathname();
   const { openCart } = useCart(); // <-- Get openCart from context
 
@@ -79,6 +87,21 @@ export function CustomerTopNav() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2 sm:gap-4">
+          {/* Switch to vendor dashboard - only for accounts that own a store */}
+          {canSwitchToVendor && (
+            <form action={switchToVendorAction}>
+              <button
+                type="submit"
+                className="flex items-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-medium text-[#5B403C] hover:bg-black/5 sm:px-3"
+                aria-label="Switch to vendor dashboard"
+                title="Switch to vendor dashboard"
+              >
+                <ArrowLeftRight className="size-4" />
+                <span className="hidden sm:inline">Vendor dashboard</span>
+              </button>
+            </form>
+          )}
+
           {/* Cart - Now using openCart from context */}
           <button
             onClick={openCart} // <-- Using the hook function

@@ -6,62 +6,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MenuDesktop } from "./_components/MenuDesktop";
 import { MenuMobile } from "./_components/MenuMobile";
-import type { MenuItem, Category } from "./_components/types";
 
 export const metadata = { title: "Menu Management" };
-
-// Demo data for when no real data exists
-const DEMO_CATEGORIES: Category[] = [
-  { id: "cat-1", name: "Rice", sort_order: 0 },
-  { id: "cat-2", name: "Swallow", sort_order: 1 },
-  { id: "cat-3", name: "Sides", sort_order: 2 },
-];
-
-const DEMO_ITEMS: MenuItem[] = [
-  {
-    id: "item-1",
-    name: "Smokey Party Jollof Rice",
-    category_id: "cat-1",
-    price_kobo: 350000,
-    is_available: true,
-    sort_order: 0,
-    image_url: null,
-    description:
-      "Authentic firewood taste served with grilled chicken and dodo.",
-  },
-  {
-    id: "item-2",
-    name: "Pounded Yam & Egusi",
-    category_id: "cat-2",
-    price_kobo: 480000,
-    is_available: true,
-    sort_order: 0,
-    image_url: null,
-    description:
-      "Freshly pounded yam with rich Egusi soup containing stockfish and tripe.",
-  },
-  {
-    id: "item-3",
-    name: "Extra Sweet Dodo",
-    category_id: "cat-3",
-    price_kobo: 120000,
-    is_available: true,
-    sort_order: 0,
-    image_url: null,
-    description: "Perfectly fried, sweet and golden ripe plantains.",
-  },
-  {
-    id: "item-4",
-    name: "Catfish Pepper Soup",
-    category_id: "cat-3",
-    price_kobo: 280000,
-    is_available: false,
-    sort_order: 1,
-    image_url: null,
-    description:
-      "Spicy and comforting catfish soup infused with traditional local spices.",
-  },
-];
 
 export default async function VendorMenuPage() {
   const vendor = await getVendorForCurrentUser();
@@ -84,11 +30,8 @@ export default async function VendorMenuPage() {
       .order("sort_order"),
   ]);
 
-  const categories = categoryData?.length ? categoryData : DEMO_CATEGORIES;
-  const items = itemData?.length ? itemData : DEMO_ITEMS;
-
-  // Helper function to update item availability (will be passed to client components)
-  // This will be handled by server actions when the toggle is clicked
+  const categories = categoryData ?? [];
+  const items = itemData ?? [];
 
   if (items.length === 0) {
     return (

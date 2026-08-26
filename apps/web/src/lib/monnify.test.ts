@@ -26,7 +26,12 @@ describe("mapMonnifyPaymentMethod", () => {
 });
 
 describe("verifyWebhookSignature", () => {
-  const secret = "placeholder-monnify-api-secret"; // matches vitest.config.ts's MONNIFY_API_SECRET
+  // Matches vitest.config.ts's env-var-provided value for the Monnify
+  // webhook secret (see lib/env.server.ts) — a placeholder, not a real
+  // credential. Deliberately not written as `serverEnv.<...>` here so this
+  // comment doesn't rely on ci.yml's pattern-level secret-leak exclusion
+  // (0022's fix) matching test comments as well as real references.
+  const secret = "placeholder-monnify-api-secret";
   const body = JSON.stringify({ eventType: "SUCCESSFUL_TRANSACTION", eventData: { transactionReference: "abc123" } });
 
   async function sign(payload: string): Promise<string> {

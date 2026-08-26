@@ -11,9 +11,9 @@ const state = {
   adminClient: { current: supabaseClientMock() },
 };
 
-const requireRole = vi.fn((..._args: unknown[]) => Promise.resolve(state.session));
+const requireVendorContext = vi.fn((..._args: unknown[]) => Promise.resolve(state.session));
 
-vi.mock("@/lib/auth/dal", () => ({ requireRole: (...args: unknown[]) => requireRole(...args) }));
+vi.mock("@/lib/auth/dal", () => ({ requireVendorContext: (...args: unknown[]) => requireVendorContext(...args) }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn(() => Promise.resolve(state.client.current)) }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn(() => state.adminClient.current) }));
 
@@ -36,8 +36,8 @@ const MY_VENDOR = "vendor-mine";
 const STAFF_ROW = ok({ vendor_id: MY_VENDOR });
 
 beforeEach(() => {
-  requireRole.mockClear();
-  requireRole.mockImplementation((..._args: unknown[]) => Promise.resolve(state.session));
+  requireVendorContext.mockClear();
+  requireVendorContext.mockImplementation((..._args: unknown[]) => Promise.resolve(state.session));
   state.client.current = supabaseClientMock({ from: { vendor_staff: queryBuilder(STAFF_ROW) } });
 });
 
@@ -45,7 +45,7 @@ describe("createCategoryAction", () => {
   it("rejects an empty name without checking staff membership", async () => {
     const result = await createCategoryAction({}, formData({ vendorId: MY_VENDOR, name: "  " }));
     expect(result.error).toBeTruthy();
-    expect(requireRole).not.toHaveBeenCalled();
+    expect(requireVendorContext).not.toHaveBeenCalled();
   });
 
   it("refuses a caller who doesn't staff the given vendor", async () => {
@@ -105,7 +105,7 @@ describe("updateMenuItemAction (cross-vendor IDOR)", () => {
   it("rejects an invalid payload before ever checking staff membership", async () => {
     const result = await updateMenuItemAction({}, formData({ ...VALID_FIELDS, priceNaira: "-5" }));
     expect(result.error).toBeTruthy();
-    expect(requireRole).not.toHaveBeenCalled();
+    expect(requireVendorContext).not.toHaveBeenCalled();
   });
 
   it("refuses to update a menu item belonging to a different vendor, even with a legitimate vendorId", async () => {
@@ -174,7 +174,7 @@ describe("createMenuItemAction", () => {
   it("rejects a non-positive price", async () => {
     const result = await createMenuItemAction({}, formData({ vendorId: MY_VENDOR, name: "Rice", priceNaira: "0" }));
     expect(result.error).toBeTruthy();
-    expect(requireRole).not.toHaveBeenCalled();
+    expect(requireVendorContext).not.toHaveBeenCalled();
   });
 
   it("creates the item scoped to the caller's own vendor and redirects", async () => {
@@ -191,5 +191,65 @@ describe("createMenuItemAction", () => {
     await expect(
       createMenuItemAction({}, formData({ vendorId: MY_VENDOR, name: "Rice", priceNaira: "2500" })),
     ).rejects.toThrow("NEXT_REDIRECT:/dashboard/menu");
+  });
+
+  it("S4: writes option groups using the form's actual priceDeltaNaira field, converted to kobo via nairaToKobo", async () => {
+    const optionsInsert = vi.fn(() => queryBuilder(ok(null)));
+    state.adminClient.current = {
+      from: vi.fn((table: string) => {
+        if (table === "menu_items") {
+          return { insert: vi.fn(() => ({ select: vi.fn(() => ({ single: () => Promise.resolve(ok({ id: "new-item" })) })) })) };
+        }
+        if (table === "option_groups") {
+          return {
+            delete: vi.fn(() => ({ eq: vi.fn(() => Promise.resolve(ok(null))) })),
+            insert: vi.fn(() => ({ select: vi.fn(() => ({ single: () => Promise.resolve(ok({ id: "group-1" })) })) })),
+          };
+        }
+        if (table === "options") return { insert: optionsInsert };
+        throw new Error(`unexpected table ${table}`);
+      }),
+    } as never;
+
+    const optionGroups = JSON.stringify([
+      { name: "Size", minSelect: 1, maxSelect: 1, isRequired: true, options: [{ name: "Large", priceDeltaNaira: 500 }] },
+    ]);
+
+    await expect(
+      createMenuItemAction({}, formData({ vendorId: MY_VENDOR, name: "Rice", priceNaira: "2500", optionGroups })),
+    ).rejects.toThrow("NEXT_REDIRECT:/dashboard/menu");
+
+    expect(optionsInsert).toHaveBeenCalledWith([
+      expect.objectContaining({ group_id: "group-1", name: "Large", price_delta_kobo: 50000 }),
+    ]);
+  });
+
+  it("S4: rejects a negative option price with a form error instead of silently dropping the option (never reaches the options insert)", async () => {
+    state.adminClient.current = {
+      from: vi.fn((table: string) => {
+        if (table === "menu_items") {
+          return { insert: vi.fn(() => ({ select: vi.fn(() => ({ single: () => Promise.resolve(ok({ id: "new-item" })) })) })) };
+        }
+        if (table === "option_groups") {
+          return {
+            delete: vi.fn(() => ({ eq: vi.fn(() => Promise.resolve(ok(null))) })),
+            insert: vi.fn(() => ({ select: vi.fn(() => ({ single: () => Promise.resolve(ok({ id: "group-1" })) })) })),
+          };
+        }
+        // "options" must never be reached — an invalid price is caught
+        // before any insert is attempted.
+        throw new Error(`unexpected table ${table}`);
+      }),
+    } as never;
+
+    const optionGroups = JSON.stringify([
+      { name: "Size", minSelect: 1, maxSelect: 1, isRequired: true, options: [{ name: "Large", priceDeltaNaira: -5 }] },
+    ]);
+
+    const result = await createMenuItemAction(
+      {},
+      formData({ vendorId: MY_VENDOR, name: "Rice", priceNaira: "2500", optionGroups }),
+    );
+    expect(result.error).toContain("invalid price");
   });
 });

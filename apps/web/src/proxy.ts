@@ -11,6 +11,7 @@ const PROTECTED_PREFIXES = [
   "/orders",
   "/profile",
   "/dashboard",
+  "/admin",
 ];
 
 function requiresAuth(pathname: string): boolean {

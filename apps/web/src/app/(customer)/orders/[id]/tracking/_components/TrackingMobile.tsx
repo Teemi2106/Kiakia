@@ -7,18 +7,24 @@ import {
   MessageCircle,
   MapPin,
   ContactRound,
-  Star,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MapArea } from "./MapArea";
 import Link from "next/link";
+import type { OrderStatus } from "@kiakia/domain";
+import { DeliveryCodeSection } from "../../delivered/_components/DeliveryCodeSection";
+import { trackingHeadline } from "./statusCopy";
 import type { TimelineStep, Driver, Vendor } from "./types";
 
 interface TrackingMobileProps {
   steps: TimelineStep[];
-  driver: Driver;
+  driver?: Driver;
   vendor: Vendor;
   orderId?: string; // Add orderId
+  orderCode: string;
+  status: OrderStatus;
+  /** Only passed by the page when status is in_transit/arrived — see page.tsx. */
+  deliveryCode?: string;
 }
 
 export function TrackingMobile({
@@ -26,6 +32,9 @@ export function TrackingMobile({
   driver,
   vendor,
   orderId,
+  orderCode,
+  status,
+  deliveryCode,
 }: TrackingMobileProps) {
   const router = useRouter();
 
@@ -33,7 +42,7 @@ export function TrackingMobile({
     <div className="relative h-[calc(100vh-136px)] w-full overflow-hidden">
       {/* Map Layer */}
       <div className="absolute inset-0">
-        <MapArea variant="mobile" />
+        <MapArea variant="mobile" hasRider={Boolean(driver)} />
       </div>
 
       {/* Back Button */}
@@ -54,19 +63,25 @@ export function TrackingMobile({
           {/* Status */}
           <div className="mb-4 text-center">
             <h2 className="font-sora text-[28px] font-bold text-[#B61913]">
-              Arriving in 12 min
+              {trackingHeadline(status)}
             </h2>
-            <p className="font-inter text-lg font-medium text-[#1C1B1B]">
-              Rider is on the way
-            </p>
             <p className="font-inter text-sm font-semibold text-[#5B403C]">
-              Estimated arrival: 7:45 PM
+              Order #{orderCode}
             </p>
           </div>
 
+          {/* Delivery Code — the rider needs this to confirm delivery
+              (verify_delivery_and_release_escrow), so it's shown while the
+              order is actually en route, not only after the fact. */}
+          {deliveryCode && (
+            <div className="mb-4 rounded-xl border border-[#F0EDED] bg-white shadow-sm">
+              <DeliveryCodeSection deliveryCode={deliveryCode} />
+            </div>
+          )}
+
           {/* Timeline Steps (Mobile) */}
           <div className="mb-4 flex items-center justify-between px-2">
-            {steps.map((step, index) => {
+            {steps.map((step) => {
               const isActive = step.status === "active";
               const isDone = step.status === "done";
               const isPending = step.status === "pending";
@@ -109,32 +124,40 @@ export function TrackingMobile({
           {/* Divider */}
           <div className="mb-4 h-px w-full bg-[#EAE7E7]" />
 
-          {/* Driver Info */}
-          <div className="mb-4 flex items-center justify-between rounded-xl border border-[#F0EDED] bg-white p-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 overflow-hidden rounded-full bg-[#EAE7E7]">
-                <div className="flex h-full w-full items-center justify-center bg-[#EAE7E7] text-xl">
-                  <ContactRound />
+          {/* Driver Info — a rider isn't assigned until dispatch runs
+              (Phase 3, not built), so this is omitted rather than shown
+              with fabricated details when there's no rider yet. */}
+          {driver ? (
+            <div className="mb-4 flex items-center justify-between rounded-xl border border-[#F0EDED] bg-white p-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 overflow-hidden rounded-full bg-[#EAE7E7]">
+                  <div className="flex h-full w-full items-center justify-center bg-[#EAE7E7] text-xl">
+                    <ContactRound />
+                  </div>
+                </div>
+                <div>
+                  <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+                    {driver.name}
+                  </p>
+                  <p className="font-inter text-xs text-[#5B403C]">
+                    {[driver.car, driver.plateNumber].filter(Boolean).join(" ")}
+                  </p>
                 </div>
               </div>
-              <div>
-                <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
-                  {driver.name}
-                </p>
-                <p className="font-inter text-xs text-[#5B403C]">
-                  {driver.car} {driver.plateNumber}
-                </p>
+              <div className="flex gap-2">
+                <button className="rounded-full bg-[#DA3529] p-2.5">
+                  <Phone className="size-4 text-white" />
+                </button>
+                <button className="rounded-full bg-[#DA3529] p-2.5">
+                  <MessageCircle className="size-4 text-white" />
+                </button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button className="rounded-full bg-[#DA3529] p-2.5">
-                <Phone className="size-4 text-white" />
-              </button>
-              <button className="rounded-full bg-[#DA3529] p-2.5">
-                <MessageCircle className="size-4 text-white" />
-              </button>
+          ) : (
+            <div className="mb-4 rounded-xl border border-[#F0EDED] bg-white p-3 text-center text-sm text-[#5B403C] shadow-sm">
+              Waiting for a rider to be assigned…
             </div>
-          </div>
+          )}
 
           {/* Vendor Info */}
           <div className="flex items-center justify-between">

@@ -18,6 +18,13 @@ vi.mock("@/lib/auth/dal", () => ({
   VENDOR_ROLES: ["vendor_staff", "vendor_manager", "vendor_owner"],
 }));
 
+const setActiveRole = vi.fn((..._args: unknown[]) => Promise.resolve());
+const clearActiveRole = vi.fn(() => Promise.resolve());
+vi.mock("@/lib/auth/active-role", () => ({
+  setActiveRole: (...args: unknown[]) => setActiveRole(...args),
+  clearActiveRole: () => clearActiveRole(),
+}));
+
 const {
   loginAction,
   registerAction,
@@ -145,6 +152,7 @@ describe("vendorRegisterAction", () => {
 describe("vendorLoginAction", () => {
   beforeEach(() => {
     getRoles.mockReset();
+    setActiveRole.mockClear();
     mockClient.current = supabaseClientMock({
       auth: { signInWithPassword: vi.fn(() => Promise.resolve({ error: null })) },
     });
@@ -155,6 +163,7 @@ describe("vendorLoginAction", () => {
     await expect(
       vendorLoginAction({}, formData({ email: "ada@example.com", password: "abcd1234" })),
     ).rejects.toThrow("NEXT_REDIRECT:/dashboard");
+    expect(setActiveRole).toHaveBeenCalledWith("vendor");
   });
 
   it("redirects to /onboarding when the account has no vendor role yet", async () => {
@@ -162,6 +171,15 @@ describe("vendorLoginAction", () => {
     await expect(
       vendorLoginAction({}, formData({ email: "ada@example.com", password: "abcd1234" })),
     ).rejects.toThrow("NEXT_REDIRECT:/onboarding");
+  });
+
+  it("resets a stale vendor-mode cookie to customer when redirecting a non-vendor account to /onboarding (S3)", async () => {
+    getRoles.mockResolvedValueOnce([]);
+    await expect(
+      vendorLoginAction({}, formData({ email: "ada@example.com", password: "abcd1234" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/onboarding");
+    expect(setActiveRole).toHaveBeenCalledWith("customer");
+    expect(setActiveRole).not.toHaveBeenCalledWith("vendor");
   });
 
   it("returns a generic error on bad credentials without checking roles", async () => {
@@ -219,10 +237,12 @@ describe("updatePasswordAction", () => {
 });
 
 describe("signOutAction", () => {
-  it("signs out and redirects to /login", async () => {
+  it("signs out, clears the active-role cookie, and redirects to /login", async () => {
     const signOut = vi.fn(() => Promise.resolve({ error: null }));
     mockClient.current = supabaseClientMock({ auth: { signOut } });
+    clearActiveRole.mockClear();
     await expect(signOutAction()).rejects.toThrow("NEXT_REDIRECT:/login");
     expect(signOut).toHaveBeenCalledOnce();
+    expect(clearActiveRole).toHaveBeenCalledOnce();
   });
 });

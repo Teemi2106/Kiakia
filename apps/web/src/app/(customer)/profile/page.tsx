@@ -1,6 +1,6 @@
 // app/(customer)/profile/page.tsx
 import type { Metadata } from "next";
-import { getRoles, hasRole, verifySession } from "@/lib/auth/dal";
+import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileCard } from "./_components/ProfileCard";
 import { SettingsNav } from "./_components/SettingsNav";
@@ -15,13 +15,6 @@ export const metadata: Metadata = { title: "Profile" };
 
 export default async function ProfilePage() {
   const session = await verifySession();
-  const roles = await getRoles();
-  const isVendor = hasRole(
-    roles,
-    "vendor_staff",
-    "vendor_manager",
-    "vendor_owner",
-  );
   const supabase = await createClient();
 
   const [{ data: profile }, { data: addresses }] = await Promise.all([
@@ -37,8 +30,6 @@ export default async function ProfilePage() {
       .order("is_default", { ascending: false }),
   ]);
 
-  const roleLabel = isVendor ? "Vendor" : "Customer";
-
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-30 sm:px-6 sm:py-18">
       {/* Desktop Layout - Two Columns */}
@@ -51,7 +42,7 @@ export default async function ProfilePage() {
             phone={profile?.phone}
             memberSince={profile?.created_at}
             avatarUrl={profile?.avatar_url}
-            role={roleLabel}
+            role="Customer"
           />
           // if you make the pages then uncomment the settings
           {/* <SettingsNav /> */}
@@ -76,7 +67,7 @@ export default async function ProfilePage() {
           phone={profile?.phone}
           memberSince={profile?.created_at}
           avatarUrl={profile?.avatar_url}
-          role={roleLabel}
+          role="Customer"
           variant="mobile"
         />
 

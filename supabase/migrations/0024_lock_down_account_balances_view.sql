@@ -1,0 +1,23 @@
+-- KiaKia — independent security review (round 3), SHOULD-FIX 9.
+--
+-- account_balances (0005_ledger.sql) had no RLS/grant restriction of its own
+-- and no `security_invoker`, so it was world-readable by any `authenticated`
+-- (or possibly `anon`) caller despite `revoke all on accounts, transactions,
+-- ledger_entries, payments from authenticated` (0007_rls.sql) — a view
+-- defined by a role with access to the underlying tables runs with THAT
+-- role's privileges by default (security_definer-like behavior for views is
+-- the Postgres default prior to security_invoker), so the revoke on the
+-- base tables never actually applied to reads through this view. Any
+-- authenticated user could read every account's balance, including the
+-- platform's own revenue/escrow/gateway accounts and every other vendor's
+-- and rider's earnings — this became a real leak (not just a theoretical
+-- one) the moment 0020_verify_delivery_and_release_escrow.sql started
+-- actually populating per-vendor/per-rider balances.
+--
+-- Fix: revoke all access from anon/authenticated outright. Only
+-- service_role (which bypasses RLS/grants entirely) can read this view now
+-- — vendor/rider-facing earnings surfaces are Phase 4 (§21) and will get
+-- their own narrowly-scoped read policy or RPC then, not a wildcard opened
+-- now.
+
+revoke all on account_balances from anon, authenticated;

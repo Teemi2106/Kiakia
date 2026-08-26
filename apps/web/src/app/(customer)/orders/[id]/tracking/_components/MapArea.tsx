@@ -3,9 +3,15 @@
 
 interface MapAreaProps {
   variant?: "desktop" | "mobile";
+  // Rider live location/ETA needs dispatch (Phase 3, not built yet — see
+  // supabase/migrations/0002_identity.sql) so the rider marker/ETA callout
+  // below is only ever shown when a rider is actually assigned to the
+  // order, and even then only as a static "assigned" indicator, not a real
+  // position — no coordinates are fabricated.
+  hasRider?: boolean;
 }
 
-export function MapArea({ variant = "desktop" }: MapAreaProps) {
+export function MapArea({ variant = "desktop", hasRider = false }: MapAreaProps) {
   const isDesktop = variant === "desktop";
 
   return (
@@ -41,20 +47,24 @@ export function MapArea({ variant = "desktop" }: MapAreaProps) {
             </div>
           </div>
 
-          {/* Rider Marker */}
-          <div className="absolute left-[34.5%] top-[41.04%]">
-            <div className="relative flex flex-col items-center">
-              <div className="rounded-lg bg-[#B61913] px-3 py-1.5 shadow-lg">
-                <span className="font-inter text-xs font-bold text-white">
-                  Rider: 2 min
-                </span>
-              </div>
-              <div className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#B61913]" />
-              <div className="mt-2 flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#FCF9F8] bg-[#B61913] shadow-lg">
-                <div className="h-3 w-5 bg-white" />
+          {/* Rider Marker — no live position/ETA exists yet (Phase 3), so
+              this is only ever shown as a static "rider assigned"
+              indicator, never with a fabricated distance/time. */}
+          {hasRider && (
+            <div className="absolute left-[34.5%] top-[41.04%]">
+              <div className="relative flex flex-col items-center">
+                <div className="rounded-lg bg-[#B61913] px-3 py-1.5 shadow-lg">
+                  <span className="font-inter text-xs font-bold text-white">
+                    Rider assigned
+                  </span>
+                </div>
+                <div className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#B61913]" />
+                <div className="mt-2 flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#FCF9F8] bg-[#B61913] shadow-lg">
+                  <div className="h-3 w-5 bg-white" />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </>
       )}
 
@@ -75,15 +85,18 @@ export function MapArea({ variant = "desktop" }: MapAreaProps) {
             </div>
           </div>
 
-          {/* Rider Blinker */}
-          <div className="absolute left-[151.5px] top-[329.59px]">
-            <div className="relative">
-              <div className="absolute inset-0 animate-ping rounded-full bg-[#B61913] opacity-40" />
-              <div className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#FCF9F8] bg-[#B61913] shadow-lg">
-                <div className="h-2.5 w-4 bg-white" />
+          {/* Rider Blinker — same "assigned, no fabricated position" rule
+              as the desktop marker above. */}
+          {hasRider && (
+            <div className="absolute left-[151.5px] top-[329.59px]">
+              <div className="relative">
+                <div className="absolute inset-0 animate-ping rounded-full bg-[#B61913] opacity-40" />
+                <div className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#FCF9F8] bg-[#B61913] shadow-lg">
+                  <div className="h-2.5 w-4 bg-white" />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>

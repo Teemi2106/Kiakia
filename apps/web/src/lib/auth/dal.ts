@@ -3,6 +3,7 @@ import type { Role, VendorRow } from "@kiakia/db";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "../supabase/server";
+import { getActiveRole } from "./active-role";
 
 /**
  * Data Access Layer — the single place every Server Action and every
@@ -101,6 +102,39 @@ export async function requireRole(allowed: readonly Role[], redirectTo = "/"): P
   }
 
   return session;
+}
+
+/**
+ * Gates the (vendor) route group. Holding a vendor role is necessary but not
+ * sufficient — the session must also have explicitly switched into vendor
+ * mode (see lib/auth/active-role.ts), so a customer who also owns a store
+ * doesn't land in the vendor dashboard just by holding the role; they have
+ * to switch into it via switchToVendorAction, same as the (customer) group
+ * bounces a session that's actively in vendor mode over to /dashboard.
+ */
+export async function requireVendorContext(redirectTo = "/home"): Promise<Session> {
+  const session = await requireRole(VENDOR_ROLES, redirectTo);
+
+  if ((await getActiveRole()) !== "vendor") {
+    redirect(redirectTo);
+  }
+
+  return session;
+}
+
+/** The role bundle that grants access to the (admin) route group. */
+export const ADMIN_ROLES = ["admin", "superadmin"] as const satisfies readonly Role[];
+
+/**
+ * Gates the (admin) route group. Unlike (vendor), there's no explicit
+ * "active mode" concept for admin — holding an admin/superadmin role is
+ * itself sufficient, no mode-switch cookie to layer on top. Same
+ * redirect-if-absent shape as requireRole()/requireVendorContext() so
+ * every Server Action under app/actions/admin.ts can call this on its own,
+ * without trusting that (admin)/layout.tsx already checked.
+ */
+export async function requireAdminContext(redirectTo = "/home"): Promise<Session> {
+  return requireRole(ADMIN_ROLES, redirectTo);
 }
 
 /**

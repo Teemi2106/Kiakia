@@ -3,7 +3,8 @@
 import type { Json, OrderStatus } from "@kiakia/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireRole, verifySession } from "@/lib/auth/dal";
+import { requireVendorContext, verifySession } from "@/lib/auth/dal";
+import { getActiveRole } from "@/lib/auth/active-role";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { initializeTransaction } from "@/lib/monnify";
@@ -16,16 +17,124 @@ interface DeliveryAddressJson {
   state: string;
 }
 
+interface SessionLike {
+  readonly userId: string;
+  readonly email: string | null;
+}
+
+interface OrderForPayment {
+  readonly id: string;
+  readonly code: string;
+  readonly total_kobo: number;
+}
+
+/**
+ * Shared by placeOrderAction and retryPaymentAction so the two can't
+ * diverge on how a payment gets initialized for an order — the P0 bug this
+ * fixes was exactly that divergence: retryPaymentAction called
+ * initializeTransaction() and redirected to Monnify checkout but never
+ * wrote the `payments` row capture_payment() requires (0010_capture_payment.sql
+ * raises "no payment row found" without one), so a customer completing
+ * payment on a retry could never actually have it captured.
+ *
+ * Upserts on `idempotency_key` (order.code, unique on `payments`,
+ * 0005_ledger.sql) rather than a plain insert — a retry may be the very
+ * first payments row for this order (initial Monnify init failed before
+ * placeOrderAction reached the insert) or a second attempt on a row that
+ * already exists from an abandoned first checkout; both must resolve to
+ * exactly one 'pending' payments row per order, never a duplicate-key
+ * error on the second case.
+ *
+ * S2 (independent security review, two rounds): this used to blindly
+ * upsert status: 'pending' with no read-back and no error check first —
+ * a TOCTOU race against the Monnify webhook that could revert an
+ * already-captured payment back to 'pending'. The read-back added in the
+ * first round narrows that window but doesn't close it: initializeTransaction()
+ * below is a network round-trip, and a webhook capture landing during it
+ * would still slip past the earlier read. The second round makes the
+ * *write* itself conditional instead of relying on a prior read: an
+ * ignoreDuplicates insert never overwrites an existing row, and the
+ * follow-up refresh only touches rows still `status = 'pending'` — so a
+ * row the webhook already flipped to 'success' during the round-trip is
+ * left alone by the database itself, not by a check that ran too early.
+ */
+async function initializePaymentForOrder(session: SessionLike, order: OrderForPayment): Promise<string> {
+  const supabase = await createClient();
+  const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", session.userId).maybeSingle();
+
+  const admin = createAdminClient();
+
+  const { data: existingPayment } = await admin
+    .from("payments")
+    .select("status")
+    .eq("idempotency_key", order.code)
+    .maybeSingle();
+
+  if (existingPayment?.status === "success") {
+    // Already captured — most likely the webhook landed between the
+    // caller's own status check and this call. Never overwrite it back to
+    // 'pending', and never hand back a fresh checkout URL for an order
+    // that's already paid.
+    throw new Error("This order has already been paid for.");
+  }
+
+  const transaction = await initializeTransaction({
+    amountKobo: order.total_kobo,
+    paymentReference: order.code,
+    paymentDescription: `KiaKia order ${order.code}`,
+    customerName: profile?.full_name ?? "KiaKia Customer",
+    customerEmail: session.email ?? "",
+    redirectUrl: `${serverEnv.NEXT_PUBLIC_SITE_URL}/orders/${order.id}`,
+  });
+
+  // Never overwrite a row the webhook already captured while the Monnify
+  // round-trip above was in flight: an ignoreDuplicates insert leaves any
+  // existing row untouched, and the refresh below only matches rows still
+  // `status = 'pending'` — so a row that's now 'success' is left alone by
+  // the WHERE clause itself, not by a check that ran before the race window.
+  const { error: insertError } = await admin.from("payments").upsert(
+    {
+      order_id: order.id,
+      provider: "monnify",
+      provider_ref: transaction.transactionReference,
+      amount_kobo: order.total_kobo,
+      status: "pending",
+      idempotency_key: order.code,
+    },
+    { onConflict: "idempotency_key", ignoreDuplicates: true },
+  );
+
+  if (insertError) {
+    throw new Error("We couldn't prepare your payment. Please try again.");
+  }
+
+  const { error: refreshError } = await admin
+    .from("payments")
+    .update({
+      provider_ref: transaction.transactionReference,
+      amount_kobo: order.total_kobo,
+    })
+    .eq("idempotency_key", order.code)
+    .eq("status", "pending");
+
+  if (refreshError) {
+    throw new Error("We couldn't prepare your payment. Please try again.");
+  }
+
+  return transaction.checkoutUrl;
+}
+
 /**
  * placeOrderAction: the one Server Action that turns a cart into a paid
  * order. Two privileged steps chained together —
  *   1. place_order() RPC (user-scoped client; re-derives every price
  *      server-side, §12) creates the draft order.
  *   2. Monnify init-transaction + a 'pending' payments row (admin client —
- *      payments writes are revoked from `authenticated`, 0007_rls.sql).
+ *      payments writes are revoked from `authenticated`, 0007_rls.sql), via
+ *      initializePaymentForOrder() above.
  * If Monnify's init call fails after the order exists, the order is left
  * in draft/pending — the order detail page's "Complete payment" retry
- * (not built as a separate action; same code path) can pick it back up.
+ * (retryPaymentAction below) can pick it back up.
  */
 
 export interface CheckoutFormState {
@@ -37,6 +146,17 @@ export async function placeOrderAction(
   formData: FormData,
 ): Promise<CheckoutFormState> {
   const session = await verifySession();
+
+  // Mirror of requireVendorContext()'s gate on the vendor side: this is a
+  // customer money-moving action, reachable by direct POST regardless of
+  // which layout rendered the form that normally leads here — a session
+  // actively in vendor mode must not be able to place an order as if it
+  // were the customer surface. See lib/auth/active-role.ts and the
+  // (customer) layout's own mirror check.
+  if ((await getActiveRole()) === "vendor") {
+    redirect("/dashboard");
+  }
+
   const supabase = await createClient();
 
   const deliveryNote = (formData.get("deliveryNote") as string | null) || null;
@@ -118,29 +238,9 @@ export async function placeOrderAction(
     return { error: "We couldn't place your order. Please try again." };
   }
 
-  const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", session.userId).maybeSingle();
-
   let checkoutUrl: string;
   try {
-    const transaction = await initializeTransaction({
-      amountKobo: order.total_kobo,
-      paymentReference: order.code,
-      paymentDescription: `KiaKia order ${order.code}`,
-      customerName: profile?.full_name ?? "KiaKia Customer",
-      customerEmail: session.email ?? "",
-      redirectUrl: `${serverEnv.NEXT_PUBLIC_SITE_URL}/orders/${order.id}`,
-    });
-    checkoutUrl = transaction.checkoutUrl;
-
-    const admin = createAdminClient();
-    await admin.from("payments").insert({
-      order_id: order.id,
-      provider: "monnify",
-      provider_ref: transaction.transactionReference,
-      amount_kobo: order.total_kobo,
-      status: "pending",
-      idempotency_key: order.code,
-    });
+    checkoutUrl = await initializePaymentForOrder(session, order);
   } catch (error) {
     console.error("Monnify init-transaction failed", error);
     // The order exists (draft, unpaid) — send the customer to its detail
@@ -154,16 +254,29 @@ export async function placeOrderAction(
 /**
  * Re-runs the Monnify init step for an existing draft order — the "Complete
  * payment" retry on the order detail page, for when the first attempt
- * failed after place_order() already succeeded. Bound to a form's `action`
- * via `retryPaymentAction.bind(null, order.id)`, which requires a
+ * failed after place_order() already succeeded, or was simply abandoned
+ * before the customer completed checkout. Bound to a form's `action` via
+ * `retryPaymentAction.bind(null, order.id)`, which requires a
  * `Promise<void>` return — failures throw instead of returning an error
  * state, surfaced by the (customer) route group's error.tsx boundary. Both
  * failure cases here are edge cases the button shouldn't normally allow
  * reaching (the page that renders it already checked status/payment_status
  * moments earlier), not everyday user errors that need inline messaging.
+ *
+ * Uses initializePaymentForOrder() (shared with placeOrderAction) so this
+ * writes the same 'pending' payments row placeOrderAction would have —
+ * previously this action redirected to Monnify checkout without ever
+ * writing one, so a completed retry payment could never be captured (the
+ * webhook's capture_payment() raises "no payment row found" forever).
  */
 export async function retryPaymentAction(orderId: string): Promise<void> {
   const session = await verifySession();
+
+  // Mirror of the same active-role gate as placeOrderAction — see there.
+  if ((await getActiveRole()) === "vendor") {
+    redirect("/dashboard");
+  }
+
   const supabase = await createClient();
 
   const { data: order } = await supabase
@@ -179,18 +292,9 @@ export async function retryPaymentAction(orderId: string): Promise<void> {
     throw new Error("This order has already been paid for.");
   }
 
-  const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", session.userId).maybeSingle();
+  const checkoutUrl = await initializePaymentForOrder(session, order);
 
-  const transaction = await initializeTransaction({
-    amountKobo: order.total_kobo,
-    paymentReference: order.code,
-    paymentDescription: `KiaKia order ${order.code}`,
-    customerName: profile?.full_name ?? "KiaKia Customer",
-    customerEmail: session.email ?? "",
-    redirectUrl: `${serverEnv.NEXT_PUBLIC_SITE_URL}/orders/${order.id}`,
-  });
-
-  redirect(transaction.checkoutUrl);
+  redirect(checkoutUrl);
 }
 
 /**
@@ -204,7 +308,12 @@ export async function retryPaymentAction(orderId: string): Promise<void> {
  * boundary, same reasoning as retryPaymentAction above.
  */
 export async function advanceOrderAction(orderId: string, toStatus: OrderStatus): Promise<void> {
-  const session = await requireRole(["vendor_staff", "vendor_manager", "vendor_owner"]);
+  // requireVendorContext(), not requireRole(VENDOR_ROLES) — holding a
+  // vendor role is necessary but not sufficient; the session must also
+  // have explicitly switched into vendor mode (switchToVendorAction). This
+  // is a Server Action reachable by direct POST regardless of which layout
+  // rendered the button that normally calls it. See lib/auth/dal.ts.
+  const session = await requireVendorContext();
   const supabase = await createClient();
 
   const { error } = await supabase.rpc("transition_order", {

@@ -10,7 +10,6 @@ import {
   Info,
   CheckCircle,
   Truck,
-  Timer,
   XCircle,
   Shield,
   Store,
@@ -303,30 +302,49 @@ export function OrderModal({
 
         {/* Modal Actions Footer */}
         <div className="sticky bottom-0 bg-white border-t border-[#E4BEB8] p-4 space-y-3">
-          <button
-            onClick={() => onStatusChange(order.id, "accepted")}
-            className="w-full bg-[#B61913] text-white py-4 rounded-xl font-inter font-bold text-base flex items-center justify-center gap-2 shadow-[0_10px_15px_-3px_rgba(182,25,19,0.2)]"
-          >
-            <CheckCircle className="size-5" />
-            Accept Order
-          </button>
-          <button
-            onClick={() => onStatusChange(order.id, "in_transit")}
-            className="w-full bg-[#176A22] text-white py-4 rounded-xl font-inter font-bold text-base flex items-center justify-center gap-2"
-          >
-            <Truck className="size-5" />
-            Out for Delivery
-          </button>
-          <div className="flex gap-3">
-            <button className="flex-1 border-2 border-[#B61913] text-[#B61913] py-3 rounded-xl font-inter font-bold text-base flex items-center justify-center gap-2">
-              <Timer className="size-4" />
-              Update Prep Time
+          {/* Status-conditional, mirroring VendorOrderActions.tsx's state
+              machine — ready_for_pickup onward needs a rider (Phase 3). */}
+          {order.status === "placed" && (
+            <>
+              <button
+                onClick={() => onStatusChange(order.id, "accepted")}
+                className="w-full bg-[#B61913] text-white py-4 rounded-xl font-inter font-bold text-base flex items-center justify-center gap-2 shadow-[0_10px_15px_-3px_rgba(182,25,19,0.2)]"
+              >
+                <CheckCircle className="size-5" />
+                Accept Order
+              </button>
+              <button
+                onClick={() => onStatusChange(order.id, "rejected_by_vendor")}
+                className="w-full bg-[rgba(255,218,214,0.2)] text-[#BA1A1A] py-3 rounded-xl font-inter font-bold text-base flex items-center justify-center gap-2"
+              >
+                <XCircle className="size-4" />
+                Reject
+              </button>
+            </>
+          )}
+          {order.status === "accepted" && (
+            <button
+              onClick={() => onStatusChange(order.id, "preparing")}
+              className="w-full bg-[#176A22] text-white py-4 rounded-xl font-inter font-bold text-base flex items-center justify-center gap-2"
+            >
+              <Truck className="size-5" />
+              Start Preparing
             </button>
-            <button className="flex-1 bg-[rgba(255,218,214,0.2)] text-[#BA1A1A] py-3 rounded-xl font-inter font-bold text-base flex items-center justify-center gap-2">
-              <XCircle className="size-4" />
-              Reject
+          )}
+          {order.status === "preparing" && (
+            <button
+              onClick={() => onStatusChange(order.id, "ready_for_pickup")}
+              className="w-full bg-[#176A22] text-white py-4 rounded-xl font-inter font-bold text-base flex items-center justify-center gap-2"
+            >
+              <CheckCircle className="size-5" />
+              Mark Ready for Pickup
             </button>
-          </div>
+          )}
+          {order.status === "ready_for_pickup" && (
+            <p className="text-center text-sm text-[#5B403C]">
+              Waiting for a rider to be assigned…
+            </p>
+          )}
         </div>
       </div>
     </div>

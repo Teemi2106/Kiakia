@@ -1,5 +1,4 @@
 // app/(customer)/orders/[id]/page.tsx
-//DUMMY DATA FOR TESTING DON'T FORGET TO REMOVE AND ADD SUPABSE CODE
 import { retryPaymentAction } from "@/app/actions/orders";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +11,6 @@ import {
   CardTitle,
   OrderStatusBadge,
 } from "@kiakia/ui";
-import { CheckCircle2 } from "lucide-react";
 import type { OrderStatus } from "@kiakia/domain";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -21,51 +19,6 @@ import { OrderDetailMobile } from "./_components/OrderDetailMobile";
 
 export const metadata: Metadata = { title: "Order" };
 
-// Dummy data for testing
-const DUMMY_ORDER = {
-  id: "order-1",
-  code: "ORD-2024-001",
-  status: "preparing",
-  payment_status: "paid",
-  subtotal_kobo: 1250000,
-  delivery_fee_kobo: 50000,
-  service_fee_kobo: 25000,
-  discount_kobo: 10000,
-  total_kobo: 1315000,
-  delivery_address: {
-    line1: "123 Main Street",
-    landmark: "Near the mall",
-    city: "Lagos",
-    state: "Lagos",
-  },
-  delivery_note: "Please call when you arrive",
-  delivery_code: "4091",
-  vendor_id: "vendor-1",
-};
-
-const DUMMY_VENDOR = { name: "Mama Cass" };
-
-const DUMMY_ITEMS = [
-  {
-    id: "item-1",
-    name_snapshot: "Special Jollof Rice Combo",
-    qty: 2,
-    line_total_kobo: 500000,
-  },
-  {
-    id: "item-2",
-    name_snapshot: "Extra Plantain",
-    qty: 1,
-    line_total_kobo: 100000,
-  },
-  {
-    id: "item-3",
-    name_snapshot: "Chilled Malt Drink",
-    qty: 1,
-    line_total_kobo: 150000,
-  },
-];
-
 export default async function OrderDetailPage({
   params,
 }: {
@@ -73,47 +26,36 @@ export default async function OrderDetailPage({
 }) {
   await verifySession();
   const { id } = await params;
+  const supabase = await createClient();
 
-  // Use dummy data for testing
-  const useDummyData = true; // Set to false for real data
+  const { data: orderRow } = await supabase
+    .from("orders")
+    .select(
+      "id, code, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_note, vendor_id",
+    )
+    .eq("id", id)
+    .maybeSingle();
 
-  let order = null;
-  let vendor = null;
-  let items = [];
+  if (!orderRow) notFound();
 
-  if (useDummyData) {
-    order = DUMMY_ORDER;
-    vendor = DUMMY_VENDOR;
-    items = DUMMY_ITEMS;
-  } else {
-    const supabase = await createClient();
+  // delivery_code lives in its own table now (order_delivery_codes,
+  // supabase/migrations/0022_delivery_code_off_orders.sql), RLS-scoped to
+  // this order's own customer only — never the assigned rider or vendor
+  // staff. For a rider/vendor-staff session that can otherwise read this
+  // order row (0007_rls.sql's own "assigned rider reads that order" /
+  // "vendor staff read their vendor orders" policies), this query
+  // naturally returns no row, so `code` below is undefined for them — that
+  // is the fix, not an oversight.
+  const [{ data: vendor }, { data: items }, { data: deliveryCodeRow }] = await Promise.all([
+    supabase.from("vendors").select("name").eq("id", orderRow.vendor_id).maybeSingle(),
+    supabase
+      .from("order_items")
+      .select("id, name_snapshot, qty, line_total_kobo")
+      .eq("order_id", orderRow.id),
+    supabase.from("order_delivery_codes").select("code").eq("order_id", orderRow.id).maybeSingle(),
+  ]);
 
-    const { data: realOrder } = await supabase
-      .from("orders")
-      .select(
-        "id, code, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_note, delivery_code, vendor_id",
-      )
-      .eq("id", id)
-      .maybeSingle();
-
-    if (!realOrder) notFound();
-
-    const [{ data: realVendor }, { data: realItems }] = await Promise.all([
-      supabase
-        .from("vendors")
-        .select("name")
-        .eq("id", realOrder.vendor_id)
-        .maybeSingle(),
-      supabase
-        .from("order_items")
-        .select("id, name_snapshot, qty, line_total_kobo")
-        .eq("order_id", realOrder.id),
-    ]);
-
-    order = realOrder;
-    vendor = realVendor;
-    items = realItems ?? [];
-  }
+  const order = { ...orderRow, delivery_code: deliveryCodeRow?.code ?? null };
 
   // Check if payment is needed
   const needsPayment =
@@ -153,7 +95,7 @@ export default async function OrderDetailPage({
           </CardHeader>
           <CardBody>
             <ul className="flex flex-col gap-1">
-              {items.map((item) => (
+              {(items ?? []).map((item) => (
                 <li key={item.id} className="flex justify-between">
                   <span>
                     {item.qty}× {item.name_snapshot}
@@ -196,10 +138,10 @@ export default async function OrderDetailPage({
   return (
     <>
       <div className="hidden md:block">
-        <OrderDetailDesktop order={order} vendor={vendor} items={items} />
+        <OrderDetailDesktop order={order} vendor={vendor} items={items ?? []} />
       </div>
       <div className="md:hidden">
-        <OrderDetailMobile order={order} vendor={vendor} items={items} />
+        <OrderDetailMobile order={order} vendor={vendor} items={items ?? []} />
       </div>
     </>
   );

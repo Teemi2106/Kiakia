@@ -28,40 +28,6 @@ const ACTIVE_STATUSES = [
   "arrived",
 ] as const;
 
-// Demo data for development
-const DEMO_ORDERS = [
-  {
-    id: "order-1",
-    code: "KK-8892",
-    status: "preparing",
-    total_kobo: 1250000,
-    created_at: new Date().toISOString(),
-    items: "2x Extra Chicken, 1x Coke",
-    eta: "12 mins left",
-    image: null,
-  },
-  {
-    id: "order-2",
-    code: "KK-8895",
-    status: "placed",
-    total_kobo: 820000,
-    created_at: new Date().toISOString(),
-    items: "Assorted Meat, Goat Meat",
-    eta: "Just now",
-    image: null,
-  },
-  {
-    id: "order-3",
-    code: "KK-8889",
-    status: "ready_for_pickup",
-    total_kobo: 1500000,
-    created_at: new Date().toISOString(),
-    items: "Masa Side, Extra Spice",
-    eta: "Driver: Emeka Q.",
-    image: null,
-  },
-];
-
 export default async function VendorDashboardPage() {
   const vendor = await getVendorForCurrentUser();
 
@@ -101,9 +67,7 @@ export default async function VendorDashboardPage() {
       .limit(5),
   ]);
 
-  // For demo, combine real data with demo data if needed
-  const useDummyData = true;
-  const orders = useDummyData ? DEMO_ORDERS : incoming || [];
+  const orders = incoming || [];
 
   return (
     <>

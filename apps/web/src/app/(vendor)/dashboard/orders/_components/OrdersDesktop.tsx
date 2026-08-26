@@ -12,9 +12,15 @@ interface OrdersDesktopProps {
 }
 
 export function OrdersDesktop({ orders, onStatusChange }: OrdersDesktopProps) {
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(
-    orders[0] || null,
+  // Stored by id, not the full object — `orders` is re-fetched server-side
+  // (and this component re-rendered with a new array) after every status
+  // change, so re-deriving from the fresh array keeps the detail panel in
+  // sync instead of showing a stale, pre-transition order.
+  const [selectedId, setSelectedId] = useState<string | null>(
+    orders[0]?.id ?? null,
   );
+  const selectedOrder =
+    orders.find((order) => order.id === selectedId) ?? orders[0] ?? null;
 
   return (
     <div className="flex flex-1 overflow-hidden h-[calc(100vh-80px)]">
@@ -23,7 +29,7 @@ export function OrdersDesktop({ orders, onStatusChange }: OrdersDesktopProps) {
         <OrderList
           orders={orders}
           selectedOrder={selectedOrder}
-          onSelectOrder={setSelectedOrder}
+          onSelectOrder={(order) => setSelectedId(order.id)}
           variant="desktop"
         />
       </section>

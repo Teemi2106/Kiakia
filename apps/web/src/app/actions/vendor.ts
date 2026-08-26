@@ -1,9 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireRole, verifySession } from "@/lib/auth/dal";
+import { requireVendorContext, verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { setActiveRole } from "@/lib/auth/active-role";
 
 export interface FormState {
   readonly error?: string;
@@ -58,6 +59,10 @@ export async function registerVendorAction(_prevState: FormState, formData: Form
     });
 
     if (!error && vendor) {
+      // Creating the store is itself the explicit switch — go straight into
+      // vendor mode rather than leaving them in customer mode on their own
+      // brand-new dashboard.
+      await setActiveRole("vendor");
       redirect("/dashboard");
     }
 
@@ -75,14 +80,19 @@ export async function registerVendorAction(_prevState: FormState, formData: Form
 
 /**
  * Vendor-owned CRUD, not a SECURITY DEFINER RPC — see the plan's reasoning:
- * this Server Action's own `requireRole` + vendor_staff membership check IS
- * the authorization boundary, same pattern as order placement (§5). Writes
- * via the admin client because `vendors` UPDATE is revoked from
- * `authenticated` (0007_rls.sql). `status`/`kyc_status` are deliberately
- * not accepted here — still admin-only/manual-SQL, per §22.
+ * this Server Action's own `requireVendorContext` + vendor_staff membership
+ * check IS the authorization boundary, same pattern as order placement
+ * (§5). requireVendorContext(), not requireRole(VENDOR_ROLES) — holding a
+ * vendor role is necessary but not sufficient; the session must also have
+ * explicitly switched into vendor mode (switchToVendorAction) — this is a
+ * Server Action reachable by direct POST regardless of which layout
+ * rendered the settings form. Writes via the admin client because
+ * `vendors` UPDATE is revoked from `authenticated` (0007_rls.sql).
+ * `status`/`kyc_status` are deliberately not accepted here — still
+ * admin-only/manual-SQL, per §22.
  */
 export async function updateVendorSettingsAction(_prevState: FormState, formData: FormData): Promise<FormState> {
-  const session = await requireRole(["vendor_staff", "vendor_manager", "vendor_owner"]);
+  const session = await requireVendorContext();
 
   const vendorId = formData.get("vendorId") as string | null;
   if (!vendorId) return { error: "Missing store." };

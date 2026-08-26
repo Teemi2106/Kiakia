@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { e2eEnv, loginAs } from "./fixtures";
+import { e2eEnv, loginAsVendor } from "./fixtures";
 
 // Golden path: a vendor advances one order through the statuses only a
 // vendor actor can trigger — placed -> accepted -> preparing ->
@@ -16,7 +16,7 @@ import { e2eEnv, loginAs } from "./fixtures";
 // running this spec, not through the app.
 test.describe("vendor: fulfill an incoming order", () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page, e2eEnv.vendorEmail, e2eEnv.vendorPassword);
+    await loginAsVendor(page, e2eEnv.vendorEmail, e2eEnv.vendorPassword);
   });
 
   test("accepts a placed order and advances it to ready for pickup", async ({ page }) => {

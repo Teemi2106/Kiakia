@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { addToCart } from "@/lib/cart";
 import { createClient } from "@/lib/supabase/client";
+import { useCart } from "@/app/(customer)/cart/_components/CartProvider";
 import { VendorHero } from "./VendorHero";
 import { CategoryNav } from "./CategoryNav";
 import { MenuSection } from "./MenuSection";
@@ -25,6 +26,7 @@ export function VendorMenu({
   const [activeItem, setActiveItem] = useState<MenuItem | null>(null);
   const [cart, setCart] = useState<CartSummary>({ count: 0, totalKobo: 0 });
   const [status, setStatus] = useState<string | null>(null);
+  const { refreshCart } = useCart();
 
   // Load existing cart on mount
   useEffect(() => {
@@ -101,6 +103,7 @@ export function VendorMenu({
       totalKobo: prev.totalKobo + unitPriceKobo * qty,
     }));
     setStatus(`Added ${item.name} to your cart.`);
+    refreshCart();
   }
 
   const handleAddClick = (item: MenuItem) => {

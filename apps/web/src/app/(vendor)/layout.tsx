@@ -1,8 +1,4 @@
-import {
-  requireRole,
-  VENDOR_ROLES,
-  getVendorForCurrentUser,
-} from "@/lib/auth/dal";
+import { requireVendorContext, getVendorForCurrentUser } from "@/lib/auth/dal";
 import { VendorBottomNav } from "./_components/VendorBottomNav";
 import { VendorSidebar } from "./_components/VendorSidebar";
 import { VendorTopNav } from "./_components/VendorTopNav";
@@ -12,9 +8,13 @@ export default async function VendorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Only vendor staff reach past this point — everyone else bounces to
-  // /home. This is the real gate; proxy.ts only proved "logged in".
-  await requireRole(VENDOR_ROLES, "/home");
+  // Only a session that (a) holds a vendor role AND (b) has explicitly
+  // switched into vendor mode reaches past this point — everyone else
+  // bounces to /home. This is the real gate; proxy.ts only proved
+  // "logged in". See requireVendorContext() for why holding the role alone
+  // isn't enough (a customer who also owns a store must not land here just
+  // by typing the URL).
+  await requireVendorContext("/home");
   const vendor = await getVendorForCurrentUser();
 
   return (

@@ -8,13 +8,15 @@ import { Info } from "lucide-react";
 import type { Driver } from "./types";
 
 interface DeliveredDesktopProps {
-  driver: Driver;
-  deliveryCode: string;
+  driver?: Driver;
+  deliveryCode?: string;
+  itemCount: number;
 }
 
 export function DeliveredDesktop({
   driver,
   deliveryCode,
+  itemCount,
 }: DeliveredDesktopProps) {
   return (
     <div className="mx-auto flex min-h-screen items-center justify-center px-4 py-13">
@@ -47,11 +49,12 @@ export function DeliveredDesktop({
             </div>
           </div>
 
-          {/* Delivery Code */}
-          <DeliveryCodeSection deliveryCode={deliveryCode} />
+          {/* Delivery Code — 0011_delivery_code.sql: genuine per-order code,
+              omitted for pre-migration orders that never got one. */}
+          {deliveryCode && <DeliveryCodeSection deliveryCode={deliveryCode} />}
 
           {/* Success Checklist */}
-          <SuccessChecklist />
+          <SuccessChecklist itemCount={itemCount} />
         </div>
       </div>
     </div>

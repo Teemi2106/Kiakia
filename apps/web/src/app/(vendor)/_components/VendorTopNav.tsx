@@ -1,9 +1,10 @@
 // app/(vendor)/_components/VendorTopNav.tsx
 "use client";
 
-import { Bell, User } from "lucide-react";
+import { ArrowLeftRight, Bell, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { switchToCustomerAction } from "@/app/actions/session";
 
 // Map paths to display names
 const PAGE_TITLES: Record<string, string> = {
@@ -56,6 +57,19 @@ export function VendorTopNav({ onMenuClick }: VendorTopNavProps) {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Switch back to customer mode */}
+          <form action={switchToCustomerAction}>
+            <button
+              type="submit"
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-medium text-[#5B403C] hover:bg-black/5 sm:px-3"
+              aria-label="Switch to customer view"
+              title="Switch to customer view"
+            >
+              <ArrowLeftRight className="size-4" />
+              <span className="hidden sm:inline">Customer view</span>
+            </button>
+          </form>
+
           {/* Notifications */}
           <button
             className="relative rounded-full p-2 hover:bg-black/5"
@@ -65,9 +79,9 @@ export function VendorTopNav({ onMenuClick }: VendorTopNavProps) {
             <span className="absolute right-2 top-2 size-2 rounded-full bg-[#B61913]" />
           </button>
 
-          {/* Profile Avatar */}
+          {/* Profile Avatar - vendor mode has no /profile route (customer-only); store settings is the equivalent here */}
           <Link
-            href="/profile"
+            href="/dashboard/settings"
             className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#E5E2E1] hover:border-[#E23B2E] sm:h-10 sm:w-10"
           >
             <User className="size-4 text-[#5B403C] sm:size-5" />

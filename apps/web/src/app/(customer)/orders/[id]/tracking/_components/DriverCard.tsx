@@ -1,13 +1,12 @@
 // app/(customer)/tracking/_components/DriverCard.tsx
 "use client";
 
-import { Phone, MessageCircle, Star, Contact } from "lucide-react";
+import { Phone, MessageCircle, Contact } from "lucide-react";
 
 interface DriverCardProps {
   driver: {
     name: string;
-    rating: number;
-    plateNumber: string;
+    plateNumber?: string;
     avatarUrl?: string;
     car?: string;
   };
@@ -35,11 +34,8 @@ export function DriverCard({ driver }: DriverCardProps) {
             {driver.name}
           </p>
           <div className="flex items-center gap-3 text-xs text-[#5B403C]">
-            <Star className="size-3 fill-[#934B00] text-[#934B00]" />
-            <span className="font-medium">{driver.rating}</span>
-            <span className="text-[#000000]">•</span>
-            <span>{driver.car}</span>
-            <span>Plate: {driver.plateNumber}</span>
+            {driver.car && <span>{driver.car}</span>}
+            {driver.plateNumber && <span>Plate: {driver.plateNumber}</span>}
           </div>
         </div>
       </div>

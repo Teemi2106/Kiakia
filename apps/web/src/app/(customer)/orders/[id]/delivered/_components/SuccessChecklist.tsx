@@ -3,7 +3,11 @@
 
 import { Check, Shield } from "lucide-react";
 
-export function SuccessChecklist() {
+interface SuccessChecklistProps {
+  itemCount: number;
+}
+
+export function SuccessChecklist({ itemCount }: SuccessChecklistProps) {
   return (
     <div className="rounded-2xl border border-[#E5E2E1] bg-[#F6F3F2] p-4">
       <div className="mb-3 flex items-center gap-2">
@@ -28,7 +32,7 @@ export function SuccessChecklist() {
             <Check className="size-3.5 text-white" />
           </div>
           <p className="font-inter text-sm text-[#5B403C]">
-            Items match your order ({Math.floor(Math.random() * 3) + 2} items)
+            Items match your order ({itemCount} {itemCount === 1 ? "item" : "items"})
           </p>
         </div>
 

@@ -46,9 +46,21 @@ jobs:
         run: |
           set -euo pipefail
 
+          # apps/web/src/lib/monnify.ts references serverEnv.MONNIFY_API_SECRET
+          # (an env var *name*, sourced from lib/env.server.ts — never a
+          # literal secret value) to build the Monnify basic-auth header and
+          # verify the webhook's HMAC signature. That is not a leak, but
+          # excluding the whole file by path (as a prior round did) would let
+          # a real hardcoded secret added anywhere in that same file slip
+          # past undetected. Excluding narrowly by PATTERN instead
+          # (`serverEnv.<NAME>`, the only legitimate way to reference either
+          # secret outside lib/env.server.ts/lib/supabase/admin.ts) keeps the
+          # check meaningful for every other line in the file, including a
+          # newly hardcoded literal.
           leaked=$(grep -rInE "SERVICE_ROLE|MONNIFY_API_SECRET" apps/web/src packages/*/src 2>/dev/null \
             | grep -v "apps/web/src/lib/env.server.ts" \
             | grep -v "apps/web/src/lib/supabase/admin.ts" \
+            | grep -vE "serverEnv\.(SUPABASE_SERVICE_ROLE_KEY|MONNIFY_API_SECRET)" \
             || true)
 
           if [ -n "$leaked" ]; then

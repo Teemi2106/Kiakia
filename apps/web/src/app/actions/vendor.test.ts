@@ -11,12 +11,15 @@ const state = {
   adminClient: { current: supabaseClientMock() },
 };
 
-const requireRole = vi.fn((..._args: unknown[]) => Promise.resolve(state.session));
+const requireVendorContext = vi.fn((..._args: unknown[]) => Promise.resolve(state.session));
 const verifySession = vi.fn(() => Promise.resolve(state.session));
 
 vi.mock("@/lib/auth/dal", () => ({
-  requireRole: (...args: unknown[]) => requireRole(...args),
+  requireVendorContext: (...args: unknown[]) => requireVendorContext(...args),
   verifySession: () => verifySession(),
+}));
+vi.mock("@/lib/auth/active-role", () => ({
+  setActiveRole: vi.fn(() => Promise.resolve()),
 }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn(() => Promise.resolve(state.client.current)) }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn(() => state.adminClient.current) }));
@@ -33,7 +36,7 @@ const VALID_VENDOR_FORM = { name: "Mama Put Kitchen", category: "food", addressL
 
 describe("registerVendorAction", () => {
   beforeEach(() => {
-    requireRole.mockClear();
+    requireVendorContext.mockClear();
     verifySession.mockClear();
   });
 
@@ -102,8 +105,8 @@ describe("registerVendorAction", () => {
 
 describe("updateVendorSettingsAction", () => {
   beforeEach(() => {
-    requireRole.mockClear();
-    requireRole.mockImplementation(() => Promise.resolve({ userId: "vendor-staff-1", email: null, phone: null }));
+    requireVendorContext.mockClear();
+    requireVendorContext.mockImplementation(() => Promise.resolve({ userId: "vendor-staff-1", email: null, phone: null }));
   });
 
   it("rejects a missing vendorId", async () => {

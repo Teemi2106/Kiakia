@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { emailSchema, loginSchema, passwordSchema, registerSchema } from "@/lib/validation/auth";
 import { serverEnv } from "@/lib/env.server";
 import { getRoles, hasRole, VENDOR_ROLES } from "@/lib/auth/dal";
+import { clearActiveRole, setActiveRole } from "@/lib/auth/active-role";
 
 /**
  * Email + password, per the Figma registration/login screens (switched
@@ -55,6 +56,7 @@ export async function registerAction(_prevState: FormState, formData: FormData):
   // clicks the confirmation link, and redirecting to /home would just
   // bounce off proxy.ts. Handle both without assuming the project's config.
   if (data.session) {
+    await setActiveRole("customer");
     redirect("/home");
   }
 
@@ -123,6 +125,10 @@ export async function loginAction(_prevState: FormState, formData: FormData): Pr
     return { error: "Incorrect email or password." };
   }
 
+  // Logging in through the customer form is an explicit "I want customer
+  // mode" signal — resets any lingering vendor mode from a previous session
+  // in this browser (e.g. a shared device, or switching accounts).
+  await setActiveRole("customer");
   redirect("/home");
 }
 
@@ -149,7 +155,24 @@ export async function vendorLoginAction(_prevState: FormState, formData: FormDat
   }
 
   const roles = await getRoles();
-  redirect(hasRole(roles, ...VENDOR_ROLES) ? "/dashboard" : "/onboarding");
+  if (!hasRole(roles, ...VENDOR_ROLES)) {
+    // S3 (independent security review): without this, a non-vendor account
+    // signing in through /vendor/login left behind whatever kk_active_role
+    // cookie a previous session in this browser had set — including
+    // "vendor" from an earlier vendor session on a shared device. Combined
+    // with the (customer) layout's vendor-mode bounce, that stale cookie
+    // could loop this account between /home (bounced to /dashboard because
+    // the cookie says "vendor") and /dashboard (bounced to /home by
+    // requireVendorContext() because this account doesn't actually hold a
+    // vendor role). Reset to "customer" before sending it to /onboarding,
+    // the same explicit signal loginAction already gives every customer
+    // sign-in.
+    await setActiveRole("customer");
+    redirect("/onboarding");
+  }
+
+  await setActiveRole("vendor");
+  redirect("/dashboard");
 }
 
 export async function requestPasswordResetAction(_prevState: FormState, formData: FormData): Promise<FormState> {
@@ -192,5 +215,10 @@ export async function updatePasswordAction(_prevState: FormState, formData: Form
 export async function signOutAction(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  // Clear the active-role cookie too — otherwise a shared device retains
+  // vendor mode across different accounts signing in afterwards via a
+  // route that doesn't itself reset it (e.g. deep-linking straight to
+  // /login instead of /vendor/login).
+  await clearActiveRole();
   redirect("/login");
 }

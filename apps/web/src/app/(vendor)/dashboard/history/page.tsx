@@ -19,68 +19,20 @@ const TERMINAL_STATUSES = [
   "cancelled_by_platform",
 ] as const;
 
-// Demo data
-const DEMO_ORDERS = [
-  {
-    id: "order-1",
-    code: "KK-89423",
-    status: "delivered",
-    total_kobo: 1240000,
-    created_at: new Date().toISOString(),
-    customer_name: "Adebayo Chinedu",
-    items: "2x Jollof Rice (Party style)",
-  },
-  {
-    id: "order-2",
-    code: "KK-89419",
-    status: "cancelled_by_customer",
-    total_kobo: 850000,
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    customer_name: "Sarah Johnson",
-    items: "1x Grilled Croaker, Fried Yam",
-  },
-  {
-    id: "order-3",
-    code: "KK-89401",
-    status: "rejected_by_vendor",
-    total_kobo: 1820000,
-    created_at: new Date(Date.now() - 172800000).toISOString(),
-    customer_name: "Ibrahim Musa",
-    items: "4x Goat Meat Pepper Soup",
-  },
-  {
-    id: "order-4",
-    code: "KK-89398",
-    status: "delivered",
-    total_kobo: 500000,
-    created_at: new Date(Date.now() - 259200000).toISOString(),
-    customer_name: "Emeka Okafor",
-    items: "1x Egusi Soup & Pounded Yam",
-  },
-];
-
 export default async function VendorHistoryPage() {
   const vendor = await getVendorForCurrentUser();
   if (!vendor) notFound();
 
   const supabase = await createClient();
 
-  // Use demo data for development
-  const useDummyData = true;
-  let orders = [];
-
-  if (useDummyData) {
-    orders = DEMO_ORDERS;
-  } else {
-    const { data: realOrders } = await supabase
-      .from("orders")
-      .select("id, code, status, total_kobo, created_at")
-      .eq("vendor_id", vendor.id)
-      .in("status", TERMINAL_STATUSES)
-      .order("created_at", { ascending: false })
-      .limit(100);
-    orders = realOrders || [];
-  }
+  const { data: realOrders } = await supabase
+    .from("orders")
+    .select("id, code, status, total_kobo, created_at")
+    .eq("vendor_id", vendor.id)
+    .in("status", TERMINAL_STATUSES)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  const orders = realOrders || [];
 
   const fulfilled = orders.filter((o) => o.status === "delivered").length;
   const cancelled = orders.filter(

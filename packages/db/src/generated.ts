@@ -41,6 +41,15 @@ export type Role =
  * story) so it can be reused both for `Tables.orders.Row` and for the
  * return type of every RPC that hands back a full order
  * (`transition_order`, `place_order`, `capture_payment`).
+ *
+ * No `delivery_code` field — that column was dropped from `orders` entirely
+ * (supabase/migrations/0022_delivery_code_off_orders.sql, independent
+ * security review round 3, blocking finding 1: every SECURITY DEFINER
+ * function that `returns orders` bypasses column-level grants as the
+ * function owner, so the code was readable by the assigned rider the
+ * instant they accepted a dispatch offer). See the standalone
+ * `OrderDeliveryCodeRow` type below, sourced from the new
+ * `order_delivery_codes` table instead.
  */
 export interface OrderRow {
   id: string;
@@ -62,7 +71,6 @@ export interface OrderRow {
   delivery_location: string;
   delivery_note: string | null;
   distance_m: number | null;
-  delivery_code: string | null;
   placed_at: string | null;
   accepted_at: string | null;
   ready_at: string | null;
@@ -74,6 +82,46 @@ export interface OrderRow {
   cancelled_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Return type of verify_delivery_and_release_escrow()
+ * (supabase/migrations/0025_fix_delivery_code_rate_limit_persistence.sql),
+ * mirroring the new `delivery_verification_result` composite SQL type. A
+ * real `supabase gen types` run would nest this under
+ * `Database["public"]["CompositeTypes"]["delivery_verification_result"]`
+ * rather than as a standalone interface — hand-authored as a flat type
+ * here instead, same divergence-for-simplicity already taken for OrderRow/
+ * VendorRow above, since there is exactly one function that returns it.
+ *
+ * `code_matched: false` is a NORMAL, non-exceptional result (the rider
+ * mistyped the 4-digit code) — `order_row` is the order UNCHANGED, still
+ * 'arrived'. It is NOT thrown as a Postgres error the way it used to be —
+ * see the migration's own header: the old exception-based path silently
+ * discarded the rate-limit counter it was supposed to feed, because the
+ * insert recording the failed attempt was always rolled back by the raise
+ * that followed it in the same transaction. Any caller (the rider app —
+ * not yet in this repo) must branch on `code_matched` explicitly rather
+ * than relying on a caught/uncaught error for this case. The rate-limit-
+ * exceeded case and every other precondition failure (wrong rider, wrong
+ * status, unpaid, no code, escrow mismatch) are UNCHANGED — still thrown
+ * as Postgres exceptions.
+ */
+export interface DeliveryVerificationResult {
+  code_matched: boolean;
+  order_row: OrderRow;
+}
+
+/**
+ * order_delivery_codes (0022_delivery_code_off_orders.sql) — the rider
+ * handover code, formerly `orders.delivery_code`. Readable only by the
+ * order's own customer via RLS (never the assigned rider, never vendor
+ * staff) — see that migration's table comment.
+ */
+export interface OrderDeliveryCodeRow {
+  order_id: string;
+  code: string;
+  created_at: string;
 }
 
 /** Standalone for the same reason as OrderRow — reused by `register_vendor`'s return type. */
@@ -566,7 +614,6 @@ export interface Database {
           delivery_location: string;
           delivery_note: string | null;
           distance_m: number | null;
-  delivery_code: string | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -583,6 +630,8 @@ export interface Database {
         // calling the transition_order() RPC — see §10. Insert deliberately
         // omits it (and every transition timestamp) so application code
         // cannot set them directly; Update is `never` for the same reason.
+        // No `delivery_code` field — dropped entirely, see OrderRow's own
+        // doc comment and 0022_delivery_code_off_orders.sql.
         Insert: {
           id?: string;
           customer_id: string;
@@ -702,9 +751,16 @@ export interface Database {
         // client rather than exclusively inside a SQL function: the
         // Server Action that places an order records the 'pending' row
         // right after Monnify's init-transaction call succeeds. Everything
-        // downstream (marking it 'success', opening the ledger transaction)
-        // happens inside capture_payment() in raw SQL, which is why Update
-        // stays `never` here — no JS code path ever updates this row.
+        // that touches the payment's SUCCESS state (marking it 'success',
+        // opening the ledger transaction) still happens exclusively inside
+        // capture_payment() in raw SQL — Update deliberately does NOT
+        // include `status` here, so nothing outside that function can flip
+        // it. The one narrow exception: initializePaymentForOrder()
+        // (app/actions/orders.ts) refreshes provider_ref/amount_kobo on a
+        // still-'pending' row when a retry reuses the same idempotency_key,
+        // scoped with `.eq("status", "pending")` at the call site so it can
+        // never touch an already-captured row — hence Update only exposes
+        // those two fields, not the full row.
         Insert: {
           id?: string;
           order_id: string;
@@ -716,6 +772,40 @@ export interface Database {
           raw?: Json;
           idempotency_key: string;
         };
+        Update: {
+          provider_ref?: string;
+          amount_kobo?: number;
+        };
+        Relationships: [];
+      };
+      dispatch_offers: {
+        Row: {
+          id: string;
+          order_id: string;
+          rider_id: string;
+          status: "offered" | "accepted" | "expired" | "declined";
+          offered_at: string;
+          responded_at: string | null;
+        };
+        // Written only by dispatch_order_to_nearby_riders() (the
+        // ready_for_pickup trigger) and accept_dispatch_offer() — no
+        // authenticated-reachable write path exists (0019_rider_dispatch.sql).
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      order_delivery_codes: {
+        Row: {
+          order_id: string;
+          code: string;
+          created_at: string;
+        };
+        // Written only by place_order() — no authenticated-reachable write
+        // path exists. SELECT is scoped by RLS to the order's own customer
+        // ONLY, never the assigned rider or vendor staff — see
+        // 0022_delivery_code_off_orders.sql (independent security review,
+        // round 3, blocking finding 1).
+        Insert: never;
         Update: never;
         Relationships: [];
       };
@@ -758,7 +848,6 @@ export interface Database {
           delivery_location: string;
           delivery_note: string | null;
           distance_m: number | null;
-  delivery_code: string | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -799,7 +888,6 @@ export interface Database {
           delivery_location: string;
           delivery_note: string | null;
           distance_m: number | null;
-  delivery_code: string | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -881,7 +969,6 @@ export interface Database {
           delivery_location: string;
           delivery_note: string | null;
           distance_m: number | null;
-  delivery_code: string | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -894,6 +981,53 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
+      };
+      // accept_dispatch_offer (0019_rider_dispatch.sql) reuses OrderRow
+      // directly for Returns (unlike transition_order/place_order/
+      // capture_payment above, which duplicate the order shape inline) —
+      // OrderRow exists precisely so a full-order-returning RPC doesn't
+      // have to; see this file's OrderRow doc comment.
+      accept_dispatch_offer: {
+        Args: {
+          p_order_id: string;
+        };
+        Returns: OrderRow;
+      };
+      // verify_delivery_and_release_escrow no longer returns OrderRow
+      // directly as of 0025_fix_delivery_code_rate_limit_persistence.sql —
+      // see DeliveryVerificationResult's doc comment for why (an incorrect
+      // delivery code stopped being an exception and became a normal,
+      // discriminated result, so the rate-limiting event it logs can no
+      // longer be lost to that exception's own rollback).
+      verify_delivery_and_release_escrow: {
+        Args: {
+          p_order_id: string;
+          p_delivery_code: string;
+        };
+        Returns: DeliveryVerificationResult;
+      };
+      // approve_vendor / reject_vendor (0021_admin_vendor_approval.sql) —
+      // SECURITY DEFINER, granted to service_role only, never to
+      // authenticated. Called exclusively from an admin Server Action via
+      // createAdminClient() (lib/supabase/admin.ts), after that action's own
+      // DAL check (a requireAdminContext()-equivalent — see this repo's
+      // supabase/migrations/0021_admin_vendor_approval.sql footer note for
+      // the exact shape) verifies the caller holds admin/superadmin. This
+      // stub's shape (p_vendor_id/p_actor_id -> VendorRow) matches the
+      // migration that now actually defines both functions.
+      approve_vendor: {
+        Args: {
+          p_vendor_id: string;
+          p_actor_id: string;
+        };
+        Returns: VendorRow;
+      };
+      reject_vendor: {
+        Args: {
+          p_vendor_id: string;
+          p_actor_id: string;
+        };
+        Returns: VendorRow;
       };
     };
     Enums: {
