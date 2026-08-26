@@ -10,9 +10,11 @@ const CANCELLED_OR_FAILED = new Set<OrderStatus>([
 
 /**
  * Headline copy for the tracking page, derived only from the order's real
- * status column. No ETA/"arriving in N min" is shown — computing one needs
- * rider location + dispatch, which is Phase 3 and not built yet (see
- * supabase/migrations/0002_identity.sql, 0011_delivery_code.sql).
+ * status column. No ETA/"arriving in N min" is shown — dispatch and the
+ * rider's live position are both real now (0026_rider_self_service.sql,
+ * 0027_order_tracking.sql, rendered on the map in MapArea.tsx), but no
+ * distance/route-time calculation exists anywhere in this app yet, so an
+ * ETA would still be fabricated. Add one only once that calculation exists.
  */
 export function trackingHeadline(status: OrderStatus): string {
   switch (status) {

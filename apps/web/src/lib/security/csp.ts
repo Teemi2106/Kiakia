@@ -16,6 +16,12 @@
 // exercised in a browser), add it here then — not guessed now.
 const MONNIFY_ORIGINS = ["https://sdk.monnify.com", "https://api.monnify.com", "https://sandbox.monnify.com"];
 
+// Mapbox GL JS (customer live-tracking map, orders/[id]/tracking). api.mapbox.com
+// serves style/tile/geocoding requests the SDK makes itself; events.mapbox.com
+// is its telemetry beacon. Both are plain fetch/XHR calls, so connect-src is
+// the only directive that needs them.
+const MAPBOX_ORIGINS = ["https://api.mapbox.com", "https://events.mapbox.com"];
+
 export function buildContentSecurityPolicy(nonce: string, supabaseHostname: string | null): string {
   const supabaseHttps = supabaseHostname ? `https://${supabaseHostname}` : "";
   const supabaseWss = supabaseHostname ? `wss://${supabaseHostname}` : "";
@@ -27,10 +33,17 @@ export function buildContentSecurityPolicy(nonce: string, supabaseHostname: stri
     "default-src": "'self'",
     "script-src": `'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""} ${MONNIFY_ORIGINS.join(" ")}`,
     "style-src": "'self' 'unsafe-inline'", // Tailwind's runtime style injection has no nonce hook yet
+    // data:/blob: already cover Mapbox's own raster/sprite image handling —
+    // no origin addition needed here.
     "img-src": `'self' data: blob: ${supabaseHttps}`,
     "font-src": "'self' data:",
-    "connect-src": `'self' ${supabaseHttps} ${supabaseWss} ${MONNIFY_ORIGINS.join(" ")}`,
+    "connect-src": `'self' ${supabaseHttps} ${supabaseWss} ${MONNIFY_ORIGINS.join(" ")} ${MAPBOX_ORIGINS.join(" ")}`,
     "frame-src": `'self' ${MONNIFY_ORIGINS.join(" ")}`,
+    // mapbox-gl spins up its tile-decoding workers from blob: URLs, not a
+    // same-origin script file — without this they're silently blocked and
+    // the map never renders (no other directive covers workers).
+    "worker-src": "'self' blob:",
+    "child-src": "blob:",
     "object-src": "'none'",
     "base-uri": "'self'",
     "form-action": "'self'",

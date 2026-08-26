@@ -2,7 +2,7 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Clock, User, Utensils } from "lucide-react";
+import { Clock, Utensils } from "lucide-react";
 import Image from "next/image";
 import type { Order } from "./types";
 
@@ -71,15 +71,12 @@ export function IncomingOrders({
             <div className="flex-1">
               <div className="flex items-start justify-between">
                 <h4 className="font-inter font-bold text-[#1C1B1B] group-hover:text-[#B61913] transition-colors">
-                  Jollof Party Pack (Large)
+                  {order.items || "Order items"}
                 </h4>
                 <span className="font-inter text-xs font-medium leading-4 text-[#5B403C]">
                   {order.code}
                 </span>
               </div>
-              <p className="font-inter text-sm leading-5 text-[#5B403C]">
-                {order.items || "Order items"}
-              </p>
               <div className="mt-2 flex items-center gap-3">
                 <span
                   className={`rounded px-2 py-0.5 text-[11px] font-bold ${getStatusColor(order.status)}`}
@@ -107,8 +104,6 @@ export function IncomingOrders({
       </div>
     );
   }
-
-  // Mobile version - horizontal scroll cards
 
   // Mobile version - horizontal scroll cards
   return (
@@ -139,7 +134,7 @@ export function IncomingOrders({
             <div className="p-4">
               <div className="mb-2 flex items-start justify-between">
                 <h3 className="font-inter text-sm font-bold text-[#1C1B1B]">
-                  Jollof Party Pack (Large)
+                  {order.items || "Order items"}
                 </h3>
                 <span className="font-bold text-[#B61913]">
                   {formatNaira(koboOf(order.total_kobo))}

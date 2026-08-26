@@ -44,8 +44,7 @@ export default async function ProfilePage() {
             avatarUrl={profile?.avatar_url}
             role="Customer"
           />
-          // if you make the pages then uncomment the settings
-          {/* <SettingsNav /> */}
+          <SettingsNav />
           {/* Sign Out Button - Desktop */}
           <SignOutButton />
         </div>

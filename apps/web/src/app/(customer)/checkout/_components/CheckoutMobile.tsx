@@ -3,6 +3,7 @@
 
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import type { CheckoutFormState } from "@/app/actions/orders";
 import { AddressSection } from "./AddressSection";
 import { PaymentSection } from "./PaymentSection";
 import { OrderSummary } from "./OrderSummary";
@@ -19,6 +20,9 @@ interface CheckoutMobileProps {
   subtotalKobo: number;
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
+  formAction: (formData: FormData) => void;
+  formState: CheckoutFormState;
+  pending: boolean;
 }
 
 export function CheckoutMobile({
@@ -32,6 +36,9 @@ export function CheckoutMobile({
   subtotalKobo,
   deliveryNote,
   onDeliveryNoteChange,
+  formAction,
+  formState,
+  pending,
 }: CheckoutMobileProps) {
   return (
     <div className="flex min-h-screen flex-col pt-13 bg-[#FCF9F8]">
@@ -47,8 +54,16 @@ export function CheckoutMobile({
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 space-y-6 px-4 pb-32 pt-6">
+      {/* Main Content — everything the place-order action reads (addressId,
+          paymentMethod, deliveryNote) must be a descendant of this form. */}
+      <form
+        action={formAction}
+        className="flex-1 space-y-6 px-4 pb-32 pt-6"
+      >
+        {selectedAddress && (
+          <input type="hidden" name="addressId" value={selectedAddress.id} />
+        )}
+        <input type="hidden" name="paymentMethod" value={paymentMethod} />
         {/* Step 1: Delivery Address */}
         <div className="rounded-2xl border border-[#E5E2E1] bg-white p-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
@@ -60,7 +75,10 @@ export function CheckoutMobile({
                 Delivery Address
               </h2>
             </div>
-            <button className="font-inter text-sm font-semibold text-[#B61913] hover:underline">
+            <button
+              type="button"
+              className="font-inter text-sm font-semibold text-[#B61913] hover:underline"
+            >
               Change
             </button>
           </div>
@@ -83,7 +101,10 @@ export function CheckoutMobile({
                 Payment Method
               </h2>
             </div>
-            <button className="font-inter text-sm font-semibold text-[#B61913] hover:underline">
+            <button
+              type="button"
+              className="font-inter text-sm font-semibold text-[#B61913] hover:underline"
+            >
               Change
             </button>
           </div>
@@ -111,10 +132,12 @@ export function CheckoutMobile({
             deliveryNote={deliveryNote}
             onDeliveryNoteChange={onDeliveryNoteChange}
             paymentMethod={paymentMethod}
+            formState={formState}
+            pending={pending}
             variant="mobile"
           />
         </div>
-      </div>
+      </form>
     </div>
   );
 }

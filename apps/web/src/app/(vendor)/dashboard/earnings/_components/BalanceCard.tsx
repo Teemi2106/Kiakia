@@ -2,7 +2,7 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Lock, TrendingUp,Info } from "lucide-react";
+import { Lock, Info } from "lucide-react";
 
 interface BalanceCardProps {
   availableKobo: number;
@@ -21,14 +21,16 @@ export function BalanceCard({ availableKobo, pendingKobo }: BalanceCardProps) {
           <h3 className="font-sora text-4xl font-extrabold md:text-5xl">
             {formatNaira(koboOf(availableKobo))}
           </h3>
-          <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs font-medium">
-            <TrendingUp className="size-3.5" />
-            <span>+12.5% from last week</span>
-          </div>
         </div>
         <div className="relative z-10 mt-6 flex gap-4">
-          <button className="rounded-xl bg-white px-8 py-3 font-inter text-sm font-bold text-[#B61913] shadow-md transition-all hover:bg-[#F6F3F2] active:scale-95">
-            Withdraw Funds
+          <button
+            type="button"
+            disabled
+            title="Withdrawals aren't available yet in this release"
+            aria-disabled="true"
+            className="cursor-not-allowed rounded-xl bg-white/60 px-8 py-3 font-inter text-sm font-bold text-[#B61913]/70 shadow-md"
+          >
+            Withdraw Funds (coming soon)
           </button>
         </div>
         <div className="absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />

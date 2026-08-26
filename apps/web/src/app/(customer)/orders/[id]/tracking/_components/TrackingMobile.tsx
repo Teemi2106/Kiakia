@@ -40,9 +40,12 @@ export function TrackingMobile({
 
   return (
     <div className="relative h-[calc(100vh-136px)] w-full overflow-hidden">
-      {/* Map Layer */}
+      {/* Map Layer — vendor/destination/rider markers and their live
+          movement come from get_order_tracking() + Realtime
+          (0026/0027_*.sql, dispatch is fully built), not from whether a
+          `driver` record is present. */}
       <div className="absolute inset-0">
-        <MapArea variant="mobile" hasRider={Boolean(driver)} />
+        <MapArea variant="mobile" orderId={orderId} status={status} />
       </div>
 
       {/* Back Button */}
@@ -124,9 +127,11 @@ export function TrackingMobile({
           {/* Divider */}
           <div className="mb-4 h-px w-full bg-[#EAE7E7]" />
 
-          {/* Driver Info — a rider isn't assigned until dispatch runs
-              (Phase 3, not built), so this is omitted rather than shown
-              with fabricated details when there's no rider yet. */}
+          {/* Driver Info — dispatch (0019/0023/0026_rider_self_service.sql)
+              is fully built, but a rider may still not be assigned to THIS
+              order yet (e.g. still `placed`/`preparing`), so this is
+              omitted rather than shown with fabricated details when
+              `driver` is unset. */}
           {driver ? (
             <div className="mb-4 flex items-center justify-between rounded-xl border border-[#F0EDED] bg-white p-3 shadow-sm">
               <div className="flex items-center gap-3">

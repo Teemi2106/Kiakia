@@ -1,16 +1,13 @@
 // app/(customer)/profile/_components/MobileHelp.tsx
 "use client";
 
-import { ChevronRight, HelpCircle, MessageSquare } from "lucide-react";
+import { ChevronRight, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
+// "Help Center" (browsable articles) was removed — there's no help-article
+// content in this release, and a link to a non-existent page is worse than
+// no link at all. /support exists as a minimal, honest placeholder.
 const HELP_ITEMS = [
-  {
-    href: "/help",
-    label: "Help Center",
-    description: "Browse our help articles",
-    icon: HelpCircle,
-  },
   {
     href: "/support",
     label: "Contact Support",

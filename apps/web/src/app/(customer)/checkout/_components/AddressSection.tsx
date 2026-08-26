@@ -3,7 +3,9 @@
 
 import { MapPin, Edit2, LocateFixed, Plus, X } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Input } from "@kiakia/ui";
+import { createClient } from "@/lib/supabase/client";
 import type { Address } from "./types";
 
 interface AddressSectionProps {
@@ -19,13 +21,16 @@ export function AddressSection({
   onAddressChange,
   variant = "desktop",
 }: AddressSectionProps) {
+  const router = useRouter();
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     null,
   );
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [showMap, setShowMap] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [showMap] = useState(true);
   const [newAddress, setNewAddress] = useState({
     label: "Home",
     line1: "",
@@ -44,9 +49,11 @@ export function AddressSection({
           lng: position.coords.longitude,
         });
         setLocating(false);
-        // In a real app, you'd reverse geocode these coordinates to get the address
-        // and auto-fill the form fields
-        console.log("Location captured:", position.coords);
+        // Coordinates are captured for the addresses.location geography
+        // column (required, NOT NULL) — they are NOT reverse-geocoded into
+        // the street fields, which the customer types themselves. Adding
+        // reverse geocoding would mean a second Mapbox API surface; not
+        // done here rather than half-done.
       },
       () => {
         setLocationError(
@@ -58,19 +65,51 @@ export function AddressSection({
     );
   };
 
-  const handleSaveAddress = () => {
-    // In a real app, you'd save to Supabase here
-    // For now, we'll use the first saved address or create a mock one
-    const mockAddress: Address = {
-      id: "new-address",
-      label: newAddress.label,
-      line1: newAddress.line1,
-      landmark: newAddress.landmark || null,
-      city: newAddress.city,
-      state: newAddress.state,
-      is_default: false,
-    };
-    onAddressChange(mockAddress);
+  const handleSaveAddress = async () => {
+    if (!newAddress.line1 || !coords) {
+      setSaveError(
+        "Add your address and share your location before saving.",
+      );
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setSaving(false);
+      setSaveError("You need to be signed in to save an address.");
+      return;
+    }
+
+    // location is geography(point,4326): PostGIS WKT is lng-then-lat.
+    const { data: savedAddress, error: insertError } = await supabase
+      .from("addresses")
+      .insert({
+        customer_id: user.id,
+        label: newAddress.label,
+        line1: newAddress.line1,
+        landmark: newAddress.landmark || null,
+        city: newAddress.city,
+        state: newAddress.state,
+        location: `POINT(${coords.lng} ${coords.lat})`,
+      })
+      .select("id, label, line1, landmark, city, state, is_default")
+      .single();
+
+    setSaving(false);
+
+    if (insertError || !savedAddress) {
+      setSaveError("Could not save this address. Please try again.");
+      return;
+    }
+
+    onAddressChange(savedAddress);
     setIsAddingNew(false);
     setNewAddress({
       label: "Home",
@@ -79,6 +118,8 @@ export function AddressSection({
       city: "Abuja",
       state: "FCT",
     });
+    setCoords(null);
+    router.refresh();
   };
 
   const isMobile = variant === "mobile";
@@ -93,6 +134,7 @@ export function AddressSection({
             No address selected
           </p>
           <button
+            type="button"
             onClick={() => setIsAddingNew(true)}
             className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#B61913] px-4 py-2 text-sm font-semibold text-white hover:bg-[#9e1611]"
           >
@@ -107,6 +149,7 @@ export function AddressSection({
             </p>
             {addresses.map((addr) => (
               <button
+                type="button"
                 key={addr.id}
                 onClick={() => onAddressChange(addr)}
                 className="w-full rounded-xl border border-[#E5E2E1] p-3 text-left transition-colors hover:border-[#B61913]"
@@ -137,6 +180,7 @@ export function AddressSection({
             Add New Address
           </h3>
           <button
+            type="button"
             onClick={() => setIsAddingNew(false)}
             className="rounded-full p-1 hover:bg-black/5"
           >
@@ -219,6 +263,7 @@ export function AddressSection({
 
           {/* Location Button */}
           <button
+            type="button"
             onClick={useMyLocation}
             disabled={locating}
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E2E1] bg-[#F6F3F2] px-4 py-3 text-sm font-medium text-[#5B403C] hover:border-[#B61913] disabled:opacity-50"
@@ -239,18 +284,23 @@ export function AddressSection({
             </p>
           )}
 
+          {saveError && <p className="text-xs text-danger">{saveError}</p>}
+
           {/* Save/Cancel Buttons */}
           <div className="flex gap-3 pt-2">
             <button
-              onClick={handleSaveAddress}
-              disabled={!newAddress.line1}
+              type="button"
+              onClick={() => void handleSaveAddress()}
+              disabled={!newAddress.line1 || !coords || saving}
               className="flex-1 rounded-xl bg-[#B61913] px-4 py-2.5 font-inter text-sm font-semibold text-white hover:bg-[#9e1611] disabled:opacity-50"
             >
-              Save Address
+              {saving ? "Saving…" : "Save Address"}
             </button>
             <button
+              type="button"
               onClick={() => setIsAddingNew(false)}
-              className="flex-1 rounded-xl border border-[#E5E2E1] px-4 py-2.5 font-inter text-sm font-medium text-[#5B403C] hover:bg-[#F6F3F2]"
+              disabled={saving}
+              className="flex-1 rounded-xl border border-[#E5E2E1] px-4 py-2.5 font-inter text-sm font-medium text-[#5B403C] hover:bg-[#F6F3F2] disabled:opacity-50"
             >
               Cancel
             </button>
@@ -286,6 +336,7 @@ export function AddressSection({
           )}
         </div>
         <button
+          type="button"
           onClick={() => setIsAddingNew(true)}
           className="rounded-full p-2 hover:bg-black/5"
         >
@@ -324,6 +375,7 @@ export function AddressSection({
           </p>
           {addresses.map((addr) => (
             <button
+              type="button"
               key={addr.id}
               onClick={() => onAddressChange(addr)}
               className={`w-full rounded-xl border p-3 text-left transition-colors ${
@@ -348,6 +400,7 @@ export function AddressSection({
 
       {/* Add New Address Button */}
       <button
+        type="button"
         onClick={() => setIsAddingNew(true)}
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#E4BEB8] py-3 text-sm font-medium text-[#5B403C] hover:border-[#B61913] hover:text-[#B61913]"
       >
@@ -357,6 +410,7 @@ export function AddressSection({
 
       {/* Location Button (if address selected) */}
       <button
+        type="button"
         onClick={useMyLocation}
         disabled={locating}
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E2E1] px-4 py-3 text-sm font-medium text-[#5B403C] hover:border-[#B61913] disabled:opacity-50"

@@ -4,12 +4,9 @@
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { Button } from "@kiakia/ui";
 import { ForkKnifeCrossedIcon } from "lucide-react";
-import { placeOrderAction, type CheckoutFormState } from "@/app/actions/orders";
-import { useActionState } from "react";
+import type { CheckoutFormState } from "@/app/actions/orders";
 import Image from "next/image";
 import type { CartItem, Vendor, PaymentMethod } from "./types";
-
-const initialState = {};
 
 interface OrderSummaryProps {
   vendor: Vendor | null;
@@ -18,6 +15,8 @@ interface OrderSummaryProps {
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
   paymentMethod: PaymentMethod;
+  formState: CheckoutFormState;
+  pending: boolean;
   variant?: "desktop" | "mobile";
 }
 
@@ -28,18 +27,16 @@ export function OrderSummary({
   deliveryNote,
   onDeliveryNoteChange,
   paymentMethod,
+  formState,
+  pending,
   variant = "desktop",
 }: OrderSummaryProps) {
-  const [state, formAction, pending] = useActionState<CheckoutFormState>(
-    placeOrderAction as any,
-    {} as CheckoutFormState,
-  );
   const deliveryFeeKobo = 0; // This would be calculated based on location
   const totalKobo = subtotalKobo + deliveryFeeKobo;
   const isMobile = variant === "mobile";
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
+    <div className="flex h-full flex-col">
       <div className="flex-1 space-y-6">
         {/* Heading */}
         <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
@@ -85,6 +82,7 @@ export function OrderSummary({
             Delivery note (optional)
           </label>
           <textarea
+            name="deliveryNote"
             value={deliveryNote}
             onChange={(e) => onDeliveryNoteChange(e.target.value)}
             rows={2}
@@ -121,9 +119,9 @@ export function OrderSummary({
           </div>
         </div>
 
-        {state.error && <p className="text-sm text-danger">{state.error}</p>}
-
-        <input type="hidden" name="paymentMethod" value={paymentMethod} />
+        {formState.error && (
+          <p className="text-sm text-danger">{formState.error}</p>
+        )}
       </div>
 
       {/* Submit Button */}
@@ -140,6 +138,6 @@ export function OrderSummary({
           By placing your order, you agree to our Terms of Service
         </p>
       )}
-    </form>
+    </div>
   );
 }

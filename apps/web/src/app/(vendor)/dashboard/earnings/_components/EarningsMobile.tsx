@@ -25,8 +25,8 @@ export function EarningsMobile({
 
       {/* Analytics */}
       <div className="space-y-6">
-        <RevenueChart />
-        <PayoutStats />
+        <RevenueChart payouts={payouts} />
+        <PayoutStats payouts={payouts} />
       </div>
 
       {/* Payout History */}

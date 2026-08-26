@@ -10,16 +10,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { formatNaira, koboOf } from "@kiakia/domain";
+import type { SalesDataPoint } from "./types";
 
-const data = [
-  { day: "Mon", sales: 4000 },
-  { day: "Tue", sales: 6500 },
-  { day: "Wed", sales: 5000 },
-  { day: "Thu", sales: 9000 },
-  { day: "Fri", sales: 10000 },
-];
+interface SalesChartProps {
+  data: SalesDataPoint[];
+}
 
-export function SalesChart() {
+export function SalesChart({ data }: SalesChartProps) {
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -41,8 +39,9 @@ export function SalesChart() {
               color: "#FFFFFF",
               fontSize: "12px",
             }}
+            formatter={(value) => [formatNaira(koboOf(Number(value) || 0)), "Sales"]}
           />
-          <Bar dataKey="sales" radius={[4, 4, 0, 0]} fill="#B61913" />
+          <Bar dataKey="salesKobo" radius={[4, 4, 0, 0]} fill="#B61913" />
         </BarChart>
       </ResponsiveContainer>
     </div>

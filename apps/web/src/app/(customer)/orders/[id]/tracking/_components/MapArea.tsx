@@ -1,103 +1,109 @@
-// app/(customer)/tracking/_components/MapArea.tsx
+// app/(customer)/orders/[id]/tracking/_components/MapArea.tsx
 "use client";
+
+import dynamic from "next/dynamic";
+import type { ReactNode } from "react";
+import { Loader2, MapPinOff } from "lucide-react";
+import { isTerminalStatus, type OrderStatus } from "@kiakia/domain";
+import { clientEnv } from "@/lib/env.client";
+import { useOrderTracking } from "./useOrderTracking";
+
+// mapbox-gl touches `window` at import time and cannot be server-rendered.
+// Next 16's own lazy-loading guide is explicit that `ssr: false` is only
+// allowed with `next/dynamic` inside a Client Component (it errors at build
+// time from a Server Component) — MapArea already has the "use client"
+// directive above, so this is the correct boundary: the page
+// (orders/[id]/tracking/page.tsx) stays a Server Component, MapArea is the
+// Client Component wrapper, and MapboxMap.tsx is the actual mapbox-gl-touching
+// module that only ever loads in the browser.
+const MapboxMap = dynamic(() => import("./MapboxMap"), {
+  ssr: false,
+  loading: () => <MapMessage icon={<Loader2 className="size-5 animate-spin" />} message="Loading map…" />,
+});
 
 interface MapAreaProps {
   variant?: "desktop" | "mobile";
-  // Rider live location/ETA needs dispatch (Phase 3, not built yet — see
-  // supabase/migrations/0002_identity.sql) so the rider marker/ETA callout
-  // below is only ever shown when a rider is actually assigned to the
-  // order, and even then only as a static "assigned" indicator, not a real
-  // position — no coordinates are fabricated.
-  hasRider?: boolean;
+  orderId?: string;
+  /** The order's status as known by the page's own server-side read at
+   * render time — used only as a fallback while the live get_order_tracking()
+   * read (below) is still in flight, never as the map's source of truth
+   * once that resolves. */
+  status: OrderStatus;
 }
 
-export function MapArea({ variant = "desktop", hasRider = false }: MapAreaProps) {
+function MapMessage({ icon, message }: { icon?: ReactNode; message: string }) {
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[#F6F3F2] px-6 text-center">
+      {icon}
+      <span className="font-inter text-sm font-medium text-[#5B403C]">{message}</span>
+    </div>
+  );
+}
+
+/**
+ * Renders the live-tracking map: a vendor/pickup marker, a destination
+ * marker, and a rider marker that moves as Realtime pings arrive over
+ * order_rider_locations (supabase/migrations/0026_rider_self_service.sql).
+ * Dispatch is fully built (0019/0023/0026/0028_admin_rider_kyc.sql), so a
+ * live rider position is a real, ordinary state here — not a "needs Phase 3"
+ * placeholder as this file used to claim.
+ *
+ * NEXT_PUBLIC_MAPBOX_TOKEN is optional (no Mapbox account has been
+ * provisioned yet) — with no token this degrades to a neutral "map
+ * unavailable" panel rather than ever attempting to load mapbox-gl. Every
+ * other tracking-page surface (timeline, rider card, delivery code) reads
+ * from page.tsx's own server-side query and works completely independent of
+ * this component.
+ */
+export function MapArea({ variant = "desktop", orderId, status }: MapAreaProps) {
   const isDesktop = variant === "desktop";
 
   return (
     <div className={`relative ${isDesktop ? "flex-1" : "h-full w-full"}`}>
-      {/* Map Background */}
-      <div
-        className={`h-full w-full bg-[#F6F3F2] ${isDesktop ? "" : "absolute inset-0"}`}
-        style={{
-          backgroundImage: "url('/assets/map-placeholder.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-[rgba(96,86,240,0.05)]" />
+      <div className={`h-full w-full bg-[#F6F3F2] ${isDesktop ? "" : "absolute inset-0"}`}>
+        {clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN ? (
+          <TrackedMap orderId={orderId} fallbackStatus={status} />
+        ) : (
+          <MapMessage
+            icon={<MapPinOff className="size-6 text-[#5B403C]" />}
+            message="Live map unavailable"
+          />
+        )}
       </div>
+    </div>
+  );
+}
 
-      {/* Desktop Map Markers */}
-      {isDesktop && (
-        <>
-          {/* Destination Marker */}
-          <div className="absolute left-[56.52%] top-[26.35%]">
-            <div className="relative flex flex-col items-center">
-              <div className="rounded-lg border border-[#E4BEB8] bg-[#FCF9F8] px-3 py-1.5 shadow-lg">
-                <span className="font-inter text-xs font-medium text-[#1C1B1B]">
-                  Home
-                </span>
-              </div>
-              <div className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-b border-r border-[#E4BEB8] bg-[#FCF9F8]" />
-              <div className="mt-2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#E4BEB8] bg-[#FCF9F8] shadow-lg">
-                <div className="h-3 w-2.5 bg-[#5B403C]" />
-              </div>
-            </div>
-          </div>
+function TrackedMap({ orderId, fallbackStatus }: { orderId?: string; fallbackStatus: OrderStatus }) {
+  const tracking = useOrderTracking(orderId);
 
-          {/* Rider Marker — no live position/ETA exists yet (Phase 3), so
-              this is only ever shown as a static "rider assigned"
-              indicator, never with a fabricated distance/time. */}
-          {hasRider && (
-            <div className="absolute left-[34.5%] top-[41.04%]">
-              <div className="relative flex flex-col items-center">
-                <div className="rounded-lg bg-[#B61913] px-3 py-1.5 shadow-lg">
-                  <span className="font-inter text-xs font-bold text-white">
-                    Rider assigned
-                  </span>
-                </div>
-                <div className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#B61913]" />
-                <div className="mt-2 flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#FCF9F8] bg-[#B61913] shadow-lg">
-                  <div className="h-3 w-5 bg-white" />
-                </div>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+  if (tracking.loading) {
+    return <MapMessage icon={<Loader2 className="size-5 animate-spin text-[#5B403C]" />} message="Loading map…" />;
+  }
 
-      {/* Mobile Map Markers */}
-      {!isDesktop && (
-        <>
-          {/* Origin Marker (Restaurant) */}
-          <div className="absolute left-[159.5px] top-[28.19px]">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#B61913] bg-[#FCF9F8] shadow-lg">
-              <div className="h-2.5 w-3.5 bg-[#B61913]" />
-            </div>
-          </div>
+  if (tracking.error) {
+    return (
+      <MapMessage icon={<MapPinOff className="size-6 text-[#5B403C]" />} message="Couldn't load the live map" />
+    );
+  }
 
-          {/* Destination Marker (Home) */}
-          <div className="absolute left-[175px] top-[687.19px]">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#DCD9D9] bg-[#E5E2E1] shadow-lg">
-              <div className="h-3.5 w-4 bg-[#5B403C]" />
-            </div>
-          </div>
+  const effectiveStatus = tracking.status ?? fallbackStatus;
+  const terminal = isTerminalStatus(effectiveStatus);
 
-          {/* Rider Blinker — same "assigned, no fabricated position" rule
-              as the desktop marker above. */}
-          {hasRider && (
-            <div className="absolute left-[151.5px] top-[329.59px]">
-              <div className="relative">
-                <div className="absolute inset-0 animate-ping rounded-full bg-[#B61913] opacity-40" />
-                <div className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#FCF9F8] bg-[#B61913] shadow-lg">
-                  <div className="h-2.5 w-4 bg-white" />
-                </div>
-              </div>
-            </div>
-          )}
-        </>
+  return (
+    <div className="relative h-full w-full">
+      <MapboxMap
+        vendor={tracking.vendor}
+        destination={tracking.destination}
+        // Once an order is terminal, order_rider_locations has already been
+        // cleared server-side (0026's trigger) — never render a stale pin.
+        rider={terminal ? null : tracking.rider}
+      />
+
+      {!terminal && tracking.realtimeStatus === "disconnected" && (
+        <div className="absolute left-1/2 top-4 z-10 -translate-x-1/2 rounded-full bg-[rgba(28,27,27,0.85)] px-3 py-1 font-inter text-xs font-medium text-white shadow-lg">
+          Reconnecting live updates…
+        </div>
       )}
     </div>
   );

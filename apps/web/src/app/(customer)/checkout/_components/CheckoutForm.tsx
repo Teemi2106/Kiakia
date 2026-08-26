@@ -1,7 +1,8 @@
 // app/(customer)/checkout/_components/CheckoutForm.tsx
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
+import { placeOrderAction, type CheckoutFormState } from "@/app/actions/orders";
 import { CheckoutDesktop } from "./CheckoutDesktop";
 import { CheckoutMobile } from "./CheckoutMobile";
 import type { Address, CartItem, Vendor, PaymentMethod } from "./types";
@@ -13,6 +14,8 @@ interface CheckoutFormProps {
   defaultAddress: Address | null;
   subtotalKobo: number;
 }
+
+const initialState: CheckoutFormState = {};
 
 export function CheckoutForm({
   vendor,
@@ -26,6 +29,10 @@ export function CheckoutForm({
   );
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [deliveryNote, setDeliveryNote] = useState("");
+  const [formState, formAction, pending] = useActionState(
+    placeOrderAction,
+    initialState,
+  );
 
   // If no address is selected, use the first available
   const activeAddress = selectedAddress || addresses[0] || null;
@@ -44,6 +51,9 @@ export function CheckoutForm({
           subtotalKobo={subtotalKobo}
           deliveryNote={deliveryNote}
           onDeliveryNoteChange={setDeliveryNote}
+          formAction={formAction}
+          formState={formState}
+          pending={pending}
         />
       </div>
       <div className="lg:hidden">
@@ -58,6 +68,9 @@ export function CheckoutForm({
           subtotalKobo={subtotalKobo}
           deliveryNote={deliveryNote}
           onDeliveryNoteChange={setDeliveryNote}
+          formAction={formAction}
+          formState={formState}
+          pending={pending}
         />
       </div>
     </>

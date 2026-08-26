@@ -152,6 +152,23 @@ export interface VendorRow {
   updated_at: string;
 }
 
+/**
+ * Standalone (same reasoning as OrderRow/VendorRow above) — reused by
+ * register_rider / set_rider_online / approve_rider / reject_rider's return
+ * types (0026_rider_self_service.sql, 0027_rider_kyc_admin_approval.sql).
+ */
+export interface RiderRow {
+  user_id: string;
+  vehicle_type: string | null;
+  plate_number: string | null;
+  kyc_status: "pending" | "approved" | "rejected";
+  is_online: boolean;
+  current_location: string | null;
+  last_ping_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type OrderStatus =
   | "draft"
   | "placed"
@@ -809,6 +826,23 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      order_rider_locations: {
+        Row: {
+          order_id: string;
+          rider_id: string;
+          lat: number;
+          lng: number;
+          updated_at: string;
+        };
+        // Written only by update_rider_location() (SECURITY DEFINER) and
+        // deleted by a trigger on the order's terminal transition — no
+        // authenticated-reachable write path exists at all
+        // (0026_rider_self_service.sql). SELECT is scoped by RLS to the
+        // order's own customer, that order's vendor staff, or an admin.
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: {
       account_balances: {
@@ -1028,6 +1062,161 @@ export interface Database {
           p_actor_id: string;
         };
         Returns: VendorRow;
+      };
+      // register_rider / set_rider_online / update_rider_location /
+      // decline_dispatch_offer / get_order_tracking
+      // (0026_rider_self_service.sql, 0029_order_tracking.sql) — the rider
+      // self-service surface the separate rider mobile app calls directly
+      // with its own JWT. No UI in this repo calls these.
+      register_rider: {
+        Args: {
+          p_vehicle_type: string;
+          p_plate_number: string;
+        };
+        Returns: RiderRow;
+      };
+      set_rider_online: {
+        Args: {
+          p_is_online: boolean;
+        };
+        Returns: RiderRow;
+      };
+      update_rider_location: {
+        Args: {
+          p_lat: number;
+          p_lng: number;
+        };
+        Returns: undefined;
+      };
+      decline_dispatch_offer: {
+        Args: {
+          p_order_id: string;
+        };
+        Returns: {
+          id: string;
+          order_id: string;
+          rider_id: string;
+          status: "offered" | "accepted" | "expired" | "declined";
+          offered_at: string;
+          responded_at: string | null;
+        };
+      };
+      // Locked-contract return shape (0029_order_tracking.sql) — a parallel
+      // frontend-dev pass builds the tracking page against this exact
+      // column set; do not rename/reorder without coordinating.
+      get_order_tracking: {
+        Args: {
+          p_order_id: string;
+        };
+        Returns: {
+          status: string;
+          vendor_lat: number | null;
+          vendor_lng: number | null;
+          destination_lat: number | null;
+          destination_lng: number | null;
+          rider_lat: number | null;
+          rider_lng: number | null;
+          rider_updated_at: string | null;
+        };
+      };
+      // approve_rider / reject_rider (0027_rider_kyc_admin_approval.sql) — mirrors
+      // approve_vendor/reject_vendor above exactly: SECURITY DEFINER,
+      // service_role only, never granted to authenticated. Called
+      // exclusively from an admin Server Action via createAdminClient()
+      // after requireAdminContext() has already verified the caller.
+      approve_rider: {
+        Args: {
+          p_rider_id: string;
+          p_actor_id: string;
+        };
+        Returns: RiderRow;
+      };
+      reject_rider: {
+        Args: {
+          p_rider_id: string;
+          p_actor_id: string;
+        };
+        Returns: RiderRow;
+      };
+      // set_vendor_location (0032_vendor_location_and_rider_reads.sql) —
+      // closes the gap where vendors.location could never be set after
+      // registration, which silently made dispatch_order_to_nearby_riders()
+      // return early and offer the order to nobody. Granted to
+      // `authenticated`; the RPC itself verifies vendor_staff membership.
+      set_vendor_location: {
+        Args: {
+          p_vendor_id: string;
+          p_lat: number;
+          p_lng: number;
+        };
+        Returns: VendorRow;
+      };
+      // get_rider_offer_details (0032) — lets a rider see what a dispatch
+      // offer actually IS before accepting, without broadening `orders` RLS.
+      // Deliberately does NOT expose the customer's delivery_code (that lives
+      // in order_delivery_codes, customer-only — it is the anti-fraud anchor
+      // for escrow release and must never be rider-readable).
+      //
+      // Modelled as a plain object rather than `[]`, same convention as
+      // get_order_tracking above: it is a `returns table` function that yields
+      // at most one row, so callers use `.single()` and cast. Consumed by the
+      // SEPARATE rider app, not by anything in this repo.
+      get_rider_offer_details: {
+        Args: {
+          p_order_id: string;
+        };
+        Returns: {
+          order_code: string;
+          status: string;
+          vendor_name: string;
+          vendor_address_line: string | null;
+          vendor_landmark: string | null;
+          pickup_lat: number | null;
+          pickup_lng: number | null;
+          dropoff_lat: number | null;
+          dropoff_lng: number | null;
+          delivery_address: Json;
+          delivery_note: string | null;
+          item_count: number;
+          total_kobo: number;
+          delivery_fee_kobo: number;
+          distance_m: number | null;
+        };
+      };
+      // get_rider_earnings (0032) — riders could not see their own balances at
+      // all: accounts/ledger_entries have every privilege revoked from
+      // `authenticated` (0007_rls.sql) and account_balances was locked down in
+      // 0024. Unlike the two table-returning functions above, this genuinely
+      // returns MULTIPLE rows (one per account kind), so it is modelled as an
+      // array and callers must NOT use `.single()`.
+      get_rider_earnings: {
+        Args: Record<string, never>;
+        Returns: {
+          account_kind: string;
+          balance_kobo: number;
+        }[];
+      };
+      // refund_order_escrow / admin_reset_delivery_code_attempts
+      // (0031_refund_and_escrow_unwind.sql) — the two paths that un-strand
+      // money. Before 0031, escrow could only ever leave via a successful
+      // delivery, so a cancelled order or an order locked out after 5 wrong
+      // delivery-code attempts held its payment forever. Both are
+      // service_role-only with a real admin/superadmin actor row, same shape
+      // as approve_vendor/approve_rider — never grant to authenticated.
+      refund_order_escrow: {
+        Args: {
+          p_order_id: string;
+          p_actor_id: string;
+          p_reason: string;
+        };
+        Returns: OrderRow;
+      };
+      admin_reset_delivery_code_attempts: {
+        Args: {
+          p_order_id: string;
+          p_actor_id: string;
+        };
+        Returns: OrderRow;
       };
     };
     Enums: {

@@ -3,6 +3,7 @@
 
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import type { CheckoutFormState } from "@/app/actions/orders";
 import { AddressSection } from "./AddressSection";
 import { PaymentSection } from "./PaymentSection";
 import { OrderSummary } from "./OrderSummary";
@@ -19,6 +20,9 @@ interface CheckoutDesktopProps {
   subtotalKobo: number;
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
+  formAction: (formData: FormData) => void;
+  formState: CheckoutFormState;
+  pending: boolean;
 }
 
 export function CheckoutDesktop({
@@ -32,6 +36,9 @@ export function CheckoutDesktop({
   subtotalKobo,
   deliveryNote,
   onDeliveryNoteChange,
+  formAction,
+  formState,
+  pending,
 }: CheckoutDesktopProps) {
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
@@ -48,8 +55,16 @@ export function CheckoutDesktop({
         Checkout
       </h1>
 
-      {/* 3-Column Grid */}
-      <div className="grid grid-cols-3 gap-8">
+      {/* All controls below must live inside this form: placeOrderAction
+          reads addressId, paymentMethod and deliveryNote from its FormData,
+          so AddressSection/PaymentSection/OrderSummary can no longer be
+          form-adjacent siblings. */}
+      <form action={formAction} className="grid grid-cols-3 gap-8">
+        {selectedAddress && (
+          <input type="hidden" name="addressId" value={selectedAddress.id} />
+        )}
+        <input type="hidden" name="paymentMethod" value={paymentMethod} />
+
         {/* Column 1: Address */}
         <AddressSection
           address={selectedAddress}
@@ -71,8 +86,10 @@ export function CheckoutDesktop({
           deliveryNote={deliveryNote}
           onDeliveryNoteChange={onDeliveryNoteChange}
           paymentMethod={paymentMethod}
+          formState={formState}
+          pending={pending}
         />
-      </div>
+      </form>
     </div>
   );
 }

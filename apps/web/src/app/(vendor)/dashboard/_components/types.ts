@@ -17,3 +17,8 @@ export interface Order {
   eta?: string;
   image?: string | null;
 }
+
+export interface SalesDataPoint {
+  day: string;
+  salesKobo: number;
+}

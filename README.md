@@ -5,11 +5,26 @@ on a shared Supabase backend. See [`kiakia-system-architecture.md`](kiakia-syste
 for the full architecture and build plan; this README covers running what's
 currently in the repo.
 
-**Current status:** Phase 0 foundation — repo structure, data model, RLS,
-auth flow, and the shared patterns (Server Actions, the DAL, the domain
-package) that every later feature builds on. No live business logic
-(checkout, dispatch, payouts) yet — see the architecture doc's phase
-breakdown (§21) for what's next.
+**Current status:** the customer and vendor web apps and the full Supabase
+backend are built. Checkout (Monnify), the order state machine, rider
+dispatch, delivery-code verification, escrow release with the three-way
+vendor/rider/platform payout split, refunds/escrow unwind, and a minimal
+admin surface all exist — see `supabase/migrations/` (through `0032`) for
+the authoritative picture.
+
+Two important caveats:
+
+- **The rider app is a separate application, outside this repo.** This repo
+  deliberately contains no rider UI. What it provides is the backend surface
+  that app calls directly via the Supabase client SDK with a rider's own JWT:
+  `register_rider`, `set_rider_online`, `update_rider_location`,
+  `accept_dispatch_offer` / `decline_dispatch_offer`,
+  `get_rider_offer_details`, `get_rider_earnings`, and
+  `verify_delivery_and_release_escrow`.
+- **Payout *execution* is still not built.** Escrow release credits vendor
+  and rider `available` ledger accounts correctly, but nothing pays that
+  money out to a bank account — there is no payout provider integration and
+  no "withdraw" flow. Balances are real; withdrawal is not.
 
 ## Repo layout
 
@@ -96,9 +111,25 @@ pnpm ci          # everything CI runs, in one shot
 **Monnify** instead (project decision, not yet reflected in the doc text).
 The provider-abstraction shape §12 describes is unchanged — `payments.provider`
 is still a checked enum (`monnify` / `flutterwave`), so a future failover
-provider stays a config change. No integration code exists yet (Server
-Action, webhook handler) — only the env vars, CSP allowlist
-(`lib/security/csp.ts`), and schema enum are wired for it.
+provider stays a config change. The integration is built: payment
+initialization in `app/actions/orders.ts`, the client in `lib/monnify.ts`,
+and the webhook at `app/api/webhooks/monnify/route.ts` — which verifies the
+HMAC signature against the *raw* body and then re-verifies the transaction
+against Monnify's own API before capturing, never trusting the payload's
+amount or status.
+
+## Maps
+
+The customer live-tracking map (`/orders/[id]/tracking`) uses Mapbox GL.
+Set `NEXT_PUBLIC_MAPBOX_TOKEN` in `apps/web/.env.local` — get one from
+https://account.mapbox.com/access-tokens/.
+
+The token is **optional**: with it unset the map degrades to a neutral
+"map unavailable" panel and everything else on the tracking page (timeline,
+rider card, delivery code) still works, so `pnpm build` succeeds without it.
+Rider positions reach the browser over Supabase Realtime from the
+`order_rider_locations` table, which stores plain lat/lng — the PostGIS
+`geography` columns are never sent to the client as raw WKB.
 
 ## Security notes
 

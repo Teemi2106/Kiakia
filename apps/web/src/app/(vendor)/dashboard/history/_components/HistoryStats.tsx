@@ -14,6 +14,10 @@ export function HistoryStats({
   cancelled,
   disputed,
 }: HistoryStatsProps) {
+  const total = fulfilled + cancelled + disputed;
+  const shareOf = (count: number) =>
+    total === 0 ? "—" : `${Math.round((count / total) * 1000) / 10}% of orders shown`;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       {/* Fulfilled */}
@@ -22,7 +26,9 @@ export function HistoryStats({
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(23,106,34,0.1)] text-[#176A22]">
             <CheckCircle className="size-5" />
           </div>
-          <span className="text-sm font-medium text-[#176A22]">+12.5%</span>
+          <span className="text-sm font-medium text-[#176A22]">
+            {shareOf(fulfilled)}
+          </span>
         </div>
         <div>
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-[#5B403C]">
@@ -40,7 +46,9 @@ export function HistoryStats({
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(186,26,26,0.1)] text-[#BA1A1A]">
             <XCircle className="size-5" />
           </div>
-          <span className="text-sm font-medium text-[#BA1A1A]">-2.1%</span>
+          <span className="text-sm font-medium text-[#BA1A1A]">
+            {shareOf(cancelled)}
+          </span>
         </div>
         <div>
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-[#5B403C]">
@@ -58,7 +66,9 @@ export function HistoryStats({
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(147,75,0,0.1)] text-[#934B00]">
             <Gavel className="size-5" />
           </div>
-          <span className="text-sm font-medium text-[#934B00]">0.4%</span>
+          <span className="text-sm font-medium text-[#934B00]">
+            {shareOf(disputed)}
+          </span>
         </div>
         <div>
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-[#5B403C]">

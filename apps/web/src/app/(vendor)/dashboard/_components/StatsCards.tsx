@@ -2,15 +2,19 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Lock, Wallet, TrendingUp, CircleDollarSign} from "lucide-react";
+import { Lock, Wallet, TrendingUp } from "lucide-react";
 
 interface StatsCardsProps {
   activeCount: number;
+  escrowKobo: number;
+  availableKobo: number;
   variant?: "desktop" | "mobile";
 }
 
 export function StatsCards({
   activeCount,
+  escrowKobo,
+  availableKobo,
   variant = "desktop",
 }: StatsCardsProps) {
   const isDesktop = variant === "desktop";
@@ -33,7 +37,7 @@ export function StatsCards({
               Escrow Pending
             </p>
             <h3 className="font-sora text-[32px] font-bold leading-10 text-[#934B00]">
-              ₦125,000
+              {formatNaira(koboOf(escrowKobo))}
             </h3>
           </div>
         </div>
@@ -53,7 +57,7 @@ export function StatsCards({
               Released Balance
             </p>
             <h3 className="font-sora text-[32px] font-bold leading-10 text-[#176A22]">
-              ₦450,000
+              {formatNaira(koboOf(availableKobo))}
             </h3>
           </div>
         </div>
@@ -71,7 +75,7 @@ export function StatsCards({
           </div>
           <div className="relative z-10">
             <p className="font-inter text-sm font-medium leading-5 text-white/80">
-              Today's Orders
+              Today&apos;s Orders
             </p>
             <h3 className="font-sora text-[32px] font-bold leading-10">
               {activeCount}
@@ -91,11 +95,11 @@ export function StatsCards({
           Escrow Pending
         </p>
         <p className="font-sora text-[32px] font-bold text-[#934B00]">
-          ₦125,000
+          {formatNaira(koboOf(escrowKobo))}
         </p>
         <div className="mt-4 flex items-center gap-2 text-[#5B403C]">
-          <span className="text-sm">⏱</span>
-          <span className="text-xs">8 orders in transit</span>
+          <Lock className="size-3.5" />
+          <span className="text-xs">Released after delivery confirmation</span>
         </div>
       </div>
 
@@ -105,14 +109,19 @@ export function StatsCards({
           <p className="mb-2 font-inter text-sm font-medium leading-5 text-white/90">
             Released Balance
           </p>
-          <p className="font-sora text-[32px] font-bold">₦450,000</p>
-          <button className="mt-4 rounded-lg bg-white/20 px-4 py-2 text-xs font-bold transition-colors hover:bg-white/30">
-            Withdraw Now
+          <p className="font-sora text-[32px] font-bold">
+            {formatNaira(koboOf(availableKobo))}
+          </p>
+          <button
+            type="button"
+            disabled
+            title="Withdrawals aren't available yet in this release"
+            aria-disabled="true"
+            className="mt-4 cursor-not-allowed rounded-lg bg-white/20 px-4 py-2 text-xs font-bold text-white/70"
+          >
+            Withdraw (coming soon)
           </button>
         </div>
-        <span className="absolute -bottom-4 -right-4 text-9xl opacity-10 group-hover:rotate-12 transition-transform">
-          <CircleDollarSign className="size-8 text-[#5B403C]/40" />
-        </span>
       </div>
 
       {/* Today's Orders */}
@@ -120,7 +129,7 @@ export function StatsCards({
         <div className="flex items-start justify-between">
           <div>
             <p className="mb-2 font-inter text-sm font-medium leading-5 text-[#5B403C]">
-              Today's Orders
+              Today&apos;s Orders
             </p>
             <p className="font-sora text-[32px] font-bold text-[#1C1B1B]">
               {activeCount}
@@ -129,9 +138,6 @@ export function StatsCards({
           <div className="rounded-lg bg-[rgba(53,132,57,0.1)] p-2">
             <TrendingUp className="size-5 text-[#176A22]" />
           </div>
-        </div>
-        <div className="mt-4 flex items-center gap-2 text-[#176A22]">
-          <span className="text-xs font-bold">+12% from yesterday</span>
         </div>
       </div>
     </div>

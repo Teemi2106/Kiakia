@@ -1,7 +1,7 @@
 // app/(customer)/profile/_components/MobileSettings.tsx
 "use client";
 
-import { ChevronRight, MapPin, CreditCard, Bell, Settings } from "lucide-react";
+import { ChevronRight, MapPin, Settings } from "lucide-react";
 import Link from "next/link";
 
 interface Address {
@@ -18,25 +18,16 @@ interface MobileSettingsProps {
   addresses: readonly Address[];
 }
 
-// Give all items a description property (even if placeholder)
+// Only links to pages that actually exist. Payment Methods and
+// Notifications were removed — there's no saved-payment-method or
+// notification-preferences feature in this release, and a link to a
+// non-existent page is worse than no link at all.
 const SETTINGS_ITEMS_BASE = [
   {
     href: "/profile/addresses",
     label: "Saved Addresses",
-    description: "", // Placeholder - will be replaced
+    description: "",
     icon: MapPin,
-  },
-  {
-    href: "/profile/payments",
-    label: "Payment Methods",
-    description: "Manage your payment options",
-    icon: CreditCard,
-  },
-  {
-    href: "/profile/notifications",
-    label: "Notifications",
-    description: "Manage your preferences",
-    icon: Bell,
   },
   {
     href: "/profile/settings",

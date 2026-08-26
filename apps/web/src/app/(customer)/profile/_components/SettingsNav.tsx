@@ -1,27 +1,18 @@
 // app/(customer)/profile/_components/SettingsNav.tsx
 "use client";
 
-import { ChevronRight, MapPin, CreditCard, Bell, Settings } from "lucide-react";
+import { ChevronRight, MapPin, Settings } from "lucide-react";
 import Link from "next/link";
 
+// Only links to pages that actually exist. Payment Methods and
+// Notifications were removed — there's no saved-payment-method or
+// notification-preferences feature in this release.
 const SETTINGS_LINKS = [
   {
     href: "/profile/addresses",
     label: "Saved Addresses",
     icon: MapPin,
     description: "Manage your delivery addresses",
-  },
-  {
-    href: "/profile/payments",
-    label: "Payment Methods",
-    icon: CreditCard,
-    description: "Manage your payment options",
-  },
-  {
-    href: "/profile/notifications",
-    label: "Notifications",
-    icon: Bell,
-    description: "Manage your notification preferences",
   },
   {
     href: "/profile/settings",

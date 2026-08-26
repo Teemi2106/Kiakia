@@ -135,3 +135,49 @@ export async function updateVendorSettingsAction(_prevState: FormState, formData
 
   return { success: true };
 }
+
+/**
+ * set_vendor_location() is SECURITY DEFINER + grant execute to authenticated
+ * (0032_vendor_location_and_rider_reads.sql) — its own vendor_staff
+ * membership check on p_vendor_id (any role tier, same idiom
+ * updateVendorSettingsAction's own check above uses) IS the authorization
+ * boundary, same pattern as register_vendor()/accept_dispatch_offer(). This
+ * action still calls requireVendorContext() itself before shaping the form
+ * into RPC args — reachable by direct POST regardless of which layout
+ * rendered the settings form, same reasoning as every other Server Action
+ * here. Uses the session-scoped client (not the admin client): unlike
+ * updateVendorSettingsAction, this write goes through an RPC that already
+ * re-derives its own authorization server-side, not a bare `vendors` UPDATE
+ * (which RLS revokes from `authenticated` outright, 0007_rls.sql).
+ */
+export async function updateVendorLocationAction(_prevState: FormState, formData: FormData): Promise<FormState> {
+  await requireVendorContext();
+
+  const vendorId = formData.get("vendorId") as string | null;
+  if (!vendorId) return { error: "Missing store." };
+
+  const latRaw = formData.get("lat") as string | null;
+  const lngRaw = formData.get("lng") as string | null;
+  const lat = latRaw ? Number(latRaw) : NaN;
+  const lng = lngRaw ? Number(lngRaw) : NaN;
+
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+    return { error: "Enter a valid latitude between -90 and 90." };
+  }
+  if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+    return { error: "Enter a valid longitude between -180 and 180." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_vendor_location", {
+    p_vendor_id: vendorId,
+    p_lat: lat,
+    p_lng: lng,
+  });
+
+  if (error) {
+    return { error: "Could not update your store location." };
+  }
+
+  return { success: true };
+}

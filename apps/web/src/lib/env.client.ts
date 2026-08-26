@@ -14,6 +14,13 @@ const clientSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
   NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
+  // Mapbox GL access token for the customer live-tracking map (orders/[id]/
+  // tracking). Optional — no Mapbox account has been provisioned yet, and
+  // `pnpm build` must still succeed without it. When absent, the map
+  // component degrades to a neutral "map unavailable" panel rather than
+  // crashing; it never blocks the rest of the tracking page (timeline,
+  // rider card, delivery code all work token-free).
+  NEXT_PUBLIC_MAPBOX_TOKEN: z.string().min(1).optional(),
 });
 
 // Safe parse with better error handling
@@ -23,6 +30,7 @@ function getClientEnv() {
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
   });
 
   if (!result.success) {
@@ -45,6 +53,7 @@ function getClientEnv() {
           "dummy-key-for-development",
         NEXT_PUBLIC_SITE_URL:
           process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+        NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
       };
     }
 

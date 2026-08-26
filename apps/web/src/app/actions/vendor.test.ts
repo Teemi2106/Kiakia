@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ok, queryBuilder, supabaseClientMock } from "@/test/supabase-mock";
+import { fail, ok, queryBuilder, supabaseClientMock } from "@/test/supabase-mock";
 
 const state = {
   session: { userId: "user-1", email: "user-1@example.com", phone: null } as {
@@ -24,7 +24,7 @@ vi.mock("@/lib/auth/active-role", () => ({
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn(() => Promise.resolve(state.client.current)) }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn(() => state.adminClient.current) }));
 
-const { registerVendorAction, updateVendorSettingsAction } = await import("./vendor");
+const { registerVendorAction, updateVendorSettingsAction, updateVendorLocationAction } = await import("./vendor");
 
 function formData(fields: Record<string, string>): FormData {
   const fd = new FormData();
@@ -161,5 +161,71 @@ describe("updateVendorSettingsAction", () => {
 
     const result = await updateVendorSettingsAction({}, formData({ vendorId: "vendor-1", name: "Mama Put Kitchen" }));
     expect(result.error).toBe("Could not save your settings.");
+  });
+});
+
+describe("updateVendorLocationAction", () => {
+  beforeEach(() => {
+    requireVendorContext.mockClear();
+    requireVendorContext.mockImplementation(() => Promise.resolve({ userId: "vendor-staff-1", email: null, phone: null }));
+  });
+
+  it("rejects a missing vendorId without calling the RPC", async () => {
+    const rpc = vi.fn();
+    state.client.current = supabaseClientMock();
+    state.client.current.rpc = rpc as never;
+
+    const result = await updateVendorLocationAction({}, formData({ lat: "9.05", lng: "7.45" }));
+    expect(result.error).toBe("Missing store.");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects an out-of-range latitude without calling the RPC", async () => {
+    const rpc = vi.fn();
+    state.client.current = supabaseClientMock();
+    state.client.current.rpc = rpc as never;
+
+    const result = await updateVendorLocationAction({}, formData({ vendorId: "vendor-1", lat: "91", lng: "7.45" }));
+    expect(result.error).toContain("latitude");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects an out-of-range longitude without calling the RPC", async () => {
+    const rpc = vi.fn();
+    state.client.current = supabaseClientMock();
+    state.client.current.rpc = rpc as never;
+
+    const result = await updateVendorLocationAction({}, formData({ vendorId: "vendor-1", lat: "9.05", lng: "181" }));
+    expect(result.error).toContain("longitude");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects a non-numeric lat/lng without calling the RPC", async () => {
+    const rpc = vi.fn();
+    state.client.current = supabaseClientMock();
+    state.client.current.rpc = rpc as never;
+
+    const result = await updateVendorLocationAction({}, formData({ vendorId: "vendor-1", lat: "not-a-number", lng: "7.45" }));
+    expect(result.error).toContain("latitude");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("calls set_vendor_location with the vendorId and numeric lat/lng on valid input", async () => {
+    const rpc = vi.fn(() => Promise.resolve(ok(null)));
+    state.client.current = supabaseClientMock();
+    state.client.current.rpc = rpc as never;
+
+    const result = await updateVendorLocationAction({}, formData({ vendorId: "vendor-1", lat: "9.05", lng: "7.45" }));
+    expect(result.success).toBe(true);
+    expect(rpc).toHaveBeenCalledWith("set_vendor_location", { p_vendor_id: "vendor-1", p_lat: 9.05, p_lng: 7.45 });
+  });
+
+  it("never leaks a raw database error when the RPC fails (e.g. caller isn't vendor staff on this vendor)", async () => {
+    const rpc = vi.fn(() => Promise.resolve(fail("set_vendor_location: actor ... is not staff on vendor ...")));
+    state.client.current = supabaseClientMock();
+    state.client.current.rpc = rpc as never;
+
+    const result = await updateVendorLocationAction({}, formData({ vendorId: "vendor-not-mine", lat: "9.05", lng: "7.45" }));
+    expect(result.error).toBe("Could not update your store location.");
   });
 });

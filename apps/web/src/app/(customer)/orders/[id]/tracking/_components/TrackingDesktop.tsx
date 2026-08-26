@@ -74,9 +74,11 @@ export function TrackingDesktop({
             {/* Timeline - Pass orderId */}
             <Timeline steps={steps} orderId={orderId} />
 
-            {/* Driver Card — a rider isn't assigned until dispatch runs
-                (Phase 3, not built), so this is omitted rather than shown
-                with fabricated details when there's no rider yet. */}
+            {/* Driver Card — dispatch (0019/0023/0026_rider_self_service.sql)
+                is fully built, but a rider may still not be assigned to
+                THIS order yet (e.g. still `placed`/`preparing`), so this is
+                omitted rather than shown with fabricated details when
+                `driver` is unset. */}
             {driver ? (
               <DriverCard driver={driver} />
             ) : (
@@ -91,9 +93,12 @@ export function TrackingDesktop({
         </div>
       </div>
 
-      {/* Right Side - Map Area */}
+      {/* Right Side - Map Area — vendor/destination/rider markers and their
+          live movement come from get_order_tracking() + Realtime
+          (0026/0027_*.sql, dispatch is fully built), not from whether a
+          `driver` record is present. */}
       <div className="flex-1">
-        <MapArea variant="desktop" hasRider={Boolean(driver)} />
+        <MapArea variant="desktop" orderId={orderId} status={status} />
       </div>
     </div>
   );

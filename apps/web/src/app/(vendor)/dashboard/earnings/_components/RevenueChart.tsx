@@ -1,81 +1,89 @@
 // app/(vendor)/earnings/_components/RevenueChart.tsx
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { formatNaira, koboOf } from "@kiakia/domain";
+import type { Payout } from "./types";
 
-const WEEKLY_DATA = [
-  { day: "Mon", value: 40 },
-  { day: "Tue", value: 65 },
-  { day: "Wed", value: 85 },
-  { day: "Thu", value: 55 },
-  { day: "Fri", value: 95 },
-  { day: "Sat", value: 75 },
-  { day: "Sun", value: 35 },
-];
+const CHART_DAYS = 7;
 
-const MONTHLY_DATA = [
-  { day: "Week 1", value: 45 },
-  { day: "Week 2", value: 70 },
-  { day: "Week 3", value: 90 },
-  { day: "Week 4", value: 60 },
-];
+interface RevenueChartProps {
+  payouts: Payout[];
+}
 
-export function RevenueChart() {
-  const [period, setPeriod] = useState<"week" | "month">("week");
-  const data = period === "week" ? WEEKLY_DATA : MONTHLY_DATA;
+export function RevenueChart({ payouts }: RevenueChartProps) {
+  const data = useMemo(() => {
+    const byDay = new Map<string, number>();
+    const labels: { key: string; label: string }[] = [];
+    for (let i = CHART_DAYS - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      labels.push({ key, label: d.toLocaleDateString("en-US", { weekday: "short" }) });
+      byDay.set(key, 0);
+    }
+
+    for (const payout of payouts) {
+      const key = payout.created_at.slice(0, 10);
+      if (!byDay.has(key)) continue;
+      const signed = payout.direction === "credit" ? payout.amount_kobo : -payout.amount_kobo;
+      byDay.set(key, (byDay.get(key) ?? 0) + signed);
+    }
+
+    return labels.map(({ key, label }) => ({
+      day: label,
+      netKobo: Math.max(byDay.get(key) ?? 0, 0),
+    }));
+  }, [payouts]);
 
   return (
     <div className="rounded-3xl border border-[#E4BEB8] bg-white p-6 shadow-sm md:p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h4 className="font-sora text-xl font-bold text-[#1C1B1B]">
-            {period === "week" ? "Weekly Performance" : "Monthly Performance"}
+            Ledger Activity — Last 7 Days
           </h4>
           <p className="text-sm text-[#5B403C]">
-            {period === "week"
-              ? "Earnings from Jul 10 - Jul 16"
-              : "Earnings by week"}
+            Net credits to your account, from real ledger entries
           </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setPeriod("week")}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              period === "week"
-                ? "bg-[#F0EDED] text-[#1C1B1B]"
-                : "text-[#5B403C] hover:bg-[#F0EDED]"
-            }`}
-          >
-            Week
-          </button>
-          <button
-            onClick={() => setPeriod("month")}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              period === "month"
-                ? "bg-[#F0EDED] text-[#1C1B1B]"
-                : "text-[#5B403C] hover:bg-[#F0EDED]"
-            }`}
-          >
-            Month
-          </button>
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="flex h-48 items-end justify-between gap-3 px-2 md:gap-6">
-        {data.map((item, index) => (
-          <div key={index} className="flex flex-1 flex-col items-center gap-3">
-            <div
-              className={`w-full rounded-t-lg transition-all duration-500 hover:brightness-90 ${
-                index === 2 ? "bg-[#B61913]" : "bg-[#F0EDED]"
-              }`}
-              style={{ height: `${item.value}%` }}
+      <div className="h-48 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis
+              dataKey="day"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: "#5B403C" }}
             />
-            <span className="text-xs font-medium text-[#5B403C]">
-              {item.day}
-            </span>
-          </div>
-        ))}
+            <YAxis hide={true} />
+            <Tooltip
+              cursor={{ fill: "rgba(182, 25, 19, 0.05)" }}
+              contentStyle={{
+                backgroundColor: "#1C1B1B",
+                border: "none",
+                borderRadius: "8px",
+                color: "#FFFFFF",
+                fontSize: "12px",
+              }}
+              formatter={(value) => [formatNaira(koboOf(Number(value) || 0)), "Net"]}
+            />
+            <Bar dataKey="netKobo" radius={[4, 4, 0, 0]} fill="#B61913" />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

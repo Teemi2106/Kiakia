@@ -49,7 +49,7 @@ export function PaymentSection({
           <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
             Payment Method
           </h2>
-          <button className="rounded-full p-2 hover:bg-black/5">
+          <button type="button" className="rounded-full p-2 hover:bg-black/5">
             <Plus className="size-4 text-[#B61913]" />
           </button>
         </div>
@@ -139,6 +139,7 @@ export function PaymentSection({
             </p>
           </div>
           <button
+            type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-black/5"
           >
