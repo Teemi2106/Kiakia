@@ -46,8 +46,8 @@ function RoleTab({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative z-10 flex items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5",
-        "font-inter text-[13px] font-semibold transition-colors duration-200",
+        "relative z-10 flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 sm:px-3.5",
+        "font-inter text-[12px] font-semibold transition-colors duration-200 sm:text-[13px]",
         active ? "text-(--auth-accent)" : "text-kk-cocoa/70 hover:text-kk-ink",
       )}
     >

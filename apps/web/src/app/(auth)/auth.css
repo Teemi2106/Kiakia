@@ -90,6 +90,11 @@
 .kk-field-input:focus ~ .kk-field-label,
 .kk-field-input:not(:placeholder-shown) ~ .kk-field-label {
   transform: translateY(-0.62rem) scale(0.78);
+}
+
+/* Only the *focused* field's label takes the accent. Colouring every filled
+   label made a completed form read as five fields in an error state. */
+.kk-field-input:focus ~ .kk-field-label {
   color: var(--auth-accent);
 }
 

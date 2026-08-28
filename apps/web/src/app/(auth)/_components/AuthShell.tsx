@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { AuthStage } from "./AuthStage";
 import { RoleSwitch } from "./RoleSwitch";
 
@@ -61,28 +61,34 @@ export function AuthShell({
           <div className="kk-dots absolute inset-0 text-kk-cocoa/[0.07] lg:hidden" />
         </div>
 
-        <header className="relative flex h-16 shrink-0 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <header className="relative flex h-16 shrink-0 items-center gap-3 px-4 sm:px-6 lg:px-8">
           <Link
             href={backHref}
             aria-label={backLabel}
-            className="flex size-10 items-center justify-center rounded-full text-kk-ink transition-colors hover:bg-kk-sand"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full text-kk-ink transition-colors hover:bg-kk-sand"
           >
             <ArrowLeft className="size-[18px]" />
           </Link>
 
-          {/* The wordmark is the stage's job on large screens. */}
-          <Link href="/" className="lg:hidden" aria-label="KiaKia home">
+          {/* The wordmark is the stage's job on large screens. logo-mark.png
+              is a wide lockup, so it needs an explicit max-width as well as a
+              height — left unconstrained it ran straight under the role
+              switch on a 390px viewport. */}
+          <Link href="/" className="min-w-0 lg:hidden" aria-label="KiaKia home">
             <Image
               src="/assets/logo-mark.png"
               alt="KiaKia"
               width={120}
               height={40}
               priority
-              className="h-8 w-auto object-contain"
+              /* logo-mark.png ships with a white matte, which reads as a
+                 white card against the cream header. Multiply blends the
+                 matte away without needing a new asset. */
+              className="h-7 w-auto max-w-[104px] object-contain object-left mix-blend-multiply"
             />
           </Link>
 
-          {role ? <RoleSwitch active={role} /> : <span className="size-10 lg:hidden" />}
+          <div className="ml-auto shrink-0">{role ? <RoleSwitch active={role} /> : null}</div>
         </header>
 
         <div className="relative flex flex-1 items-center justify-center px-4 pb-12 pt-2 sm:px-6 lg:px-8">
@@ -112,6 +118,18 @@ export function AuthShell({
                 {footer}
               </div>
             ) : null}
+
+            {/* The stage's trust line, repeated for the ~70% of traffic that
+                never sees the stage. Without this the mobile screens made no
+                mention of escrow at all — the single reason someone hands
+                this app their money. */}
+            <p
+              className="kk-enter mt-7 flex items-start justify-center gap-2 rounded-2xl border border-kk-line/40 bg-white/60 px-4 py-3 text-center font-inter text-[12.5px] leading-5 text-kk-cocoa/80 lg:hidden"
+              style={{ "--kk-delay": "280ms" } as React.CSSProperties}
+            >
+              <ShieldCheck className="mt-px size-4 shrink-0 text-kk-green" />
+              {stage.footnote}
+            </p>
 
             {legal ? (
               <div

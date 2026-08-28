@@ -55,13 +55,18 @@ export function AuthStage({
         alt={altText}
         fill
         sizes="52vw"
-        quality={85}
         priority
-        className="object-cover opacity-25"
+        className="object-cover opacity-[0.18]"
       />
 
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-kk-ink-deep/95 via-kk-ink-deep/80 to-kk-ink-deep/95" />
+        {/* login-image.png and signup-image.png are marketing crops with
+            headline copy burned into their lower third. At any opacity that
+            keeps the photo readable, that text ghosts through and competes
+            with the real headline — so the bottom half gets an opaque scrim
+            rather than a lighter photo. */}
+        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-kk-ink-deep via-kk-ink-deep/90 to-transparent" />
         <div className="kk-grid absolute inset-0 text-white/[0.045]" />
         <div className="kk-blob -left-32 -top-24 size-[520px] bg-(--auth-accent) opacity-40" />
         <div className="kk-blob -right-24 bottom-[-10%] size-[460px] bg-kk-orange/25" />
