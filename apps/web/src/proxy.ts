@@ -32,10 +32,27 @@ export async function proxy(request: NextRequest) {
   const nonce = generateNonce();
   const csp = buildContentSecurityPolicy(nonce, supabaseHost());
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
+  /**
+   * Forwards the request *as it currently stands* to the render, plus the
+   * CSP nonce.
+   *
+   * Rebuilding the headers on every call is the point. This used to hoist a
+   * single `new Headers(request.headers)` snapshot taken before Supabase had
+   * a chance to rotate the session, and reuse that same stale object inside
+   * setAll() below. A Headers copy doesn't track later mutations of
+   * request.cookies, so on any request where the session rotated, the
+   * browser was sent the new cookies while the render was handed the old
+   * ones — it then authenticated with a refresh token Supabase had just
+   * invalidated, failed, and redirected to /login, which bounced straight
+   * back to /home off the browser's valid cookies. See proxy.test.ts.
+   */
+  function forwardRequest() {
+    const headers = new Headers(request.headers);
+    headers.set("x-nonce", nonce);
+    return NextResponse.next({ request: { headers } });
+  }
 
-  let response = NextResponse.next({ request: { headers: requestHeaders } });
+  let response = forwardRequest();
 
   // Skip auth checks during development if env vars are missing
   const isDev = process.env.NODE_ENV === "development";
@@ -68,12 +85,13 @@ export async function proxy(request: NextRequest) {
             }[],
           ) {
             try {
+              // Mutate the incoming request first, so forwardRequest()
+              // below picks the rotated cookies up — request.cookies.set
+              // writes through to request.headers, which is what it reads.
               for (const { name, value } of cookiesToSet) {
                 request.cookies.set(name, value);
               }
-              response = NextResponse.next({
-                request: { headers: requestHeaders },
-              });
+              response = forwardRequest();
               for (const { name, value, options } of cookiesToSet) {
                 response.cookies.set(name, value, options);
               }
