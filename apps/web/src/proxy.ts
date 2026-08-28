@@ -107,7 +107,19 @@ export async function proxy(request: NextRequest) {
     if (requiresAuth(pathname) && !user) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("next", pathname);
-      response = NextResponse.redirect(loginUrl);
+
+      // Carry over whatever setAll() wrote before replacing the response.
+      // Assigning a fresh NextResponse here used to discard those cookies
+      // outright — and when getUser() fails because the refresh token is
+      // dead, what Supabase writes is the *clearing* of the auth cookies.
+      // Dropping that clear left the browser holding a token it could never
+      // refresh, so every later request repeated the same failed refresh and
+      // bounced back here instead of ever settling on a signed-out state.
+      const redirectResponse = NextResponse.redirect(loginUrl);
+      for (const cookie of response.cookies.getAll()) {
+        redirectResponse.cookies.set(cookie);
+      }
+      response = redirectResponse;
     }
   } catch (error) {
     console.error(
