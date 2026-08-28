@@ -1,23 +1,21 @@
 // app/(vendor)/orders/_components/OrderModal.tsx
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import {
-  X,
-  Clock,
-  User,
-  Phone,
-  Info,
-  CheckCircle,
-  Truck,
-  XCircle,
-  Shield,
-  Store,
-  ChevronRight,
-} from "lucide-react";
-import Image from "next/image";
+import { useEffect } from "react";
+import { X, Clock, Info, CheckCircle, Truck, XCircle } from "lucide-react";
 import { formatNaira, koboOf } from "@kiakia/domain";
 import type { Order } from "./types";
+
+/** Every status once a rider is in the loop — the vendor has nothing left to
+ * action; the rider verifies the delivery code with the customer at drop-off
+ * (see fulfillment flow), not the vendor. */
+const RIDER_HANDLING_STATUSES = new Set([
+  "ready_for_pickup",
+  "rider_assigned",
+  "picked_up",
+  "in_transit",
+  "arrived",
+]);
 
 interface OrderModalProps {
   order: Order | null;
@@ -32,37 +30,16 @@ export function OrderModal({
   onClose,
   onStatusChange,
 }: OrderModalProps) {
-  const [code, setCode] = useState(["", "", "", ""]);
-  const inputs = useRef<(HTMLInputElement | null)[]>([]);
-
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
-      setCode(["", "", "", ""]);
     }
     return () => {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
-
-  const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    const newCode = [...code];
-    newCode[index] = value;
-    setCode(newCode);
-
-    if (value && index < 3) {
-      inputs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) {
-      inputs.current[index - 1]?.focus();
-    }
-  };
 
   if (!isOpen || !order) return null;
 
@@ -78,13 +55,13 @@ export function OrderModal({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "placed":
-        return "text-[#934B00]";
+      case "accepted":
       case "preparing":
         return "text-[#934B00]";
-      case "ready_for_pickup":
-        return "text-[#176A22]";
+      case "rejected_by_vendor":
+        return "text-[#BA1A1A]";
       default:
-        return "text-[#934B00]";
+        return "text-[#176A22]";
     }
   };
 
@@ -92,10 +69,24 @@ export function OrderModal({
     switch (status) {
       case "placed":
         return "Incoming";
+      case "accepted":
+        return "Accepted";
       case "preparing":
         return "Preparing";
+      case "rejected_by_vendor":
+        return "Rejected";
       case "ready_for_pickup":
-        return "Ready";
+        return "Ready for pickup";
+      case "rider_assigned":
+        return "Rider assigned";
+      case "picked_up":
+        return "Picked up";
+      case "in_transit":
+        return "On the way";
+      case "arrived":
+        return "Arrived";
+      case "delivered":
+        return "Delivered";
       default:
         return status;
     }
@@ -125,7 +116,7 @@ export function OrderModal({
 
         {/* Modal Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-32">
-          {/* Status & Timer */}
+          {/* Status */}
           <div className="flex items-center justify-between p-4 bg-[#F0EDED] rounded-2xl">
             <div>
               <p className="font-inter text-xs font-medium uppercase tracking-[0.6px] text-[#5B403C]">
@@ -139,12 +130,15 @@ export function OrderModal({
             </div>
             <div className="text-right">
               <p className="font-inter text-xs font-medium uppercase tracking-[0.6px] text-[#5B403C]">
-                Est. Prep Time
+                Placed At
               </p>
               <div className="flex items-center justify-end gap-2">
                 <Clock className="size-5 text-[#934B00]" />
-                <span className="font-inter text-2xl font-bold text-[#934B00]">
-                  {order.eta || "25:00"}
+                <span className="font-inter text-lg font-bold text-[#934B00]">
+                  {new Date(order.created_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </span>
               </div>
             </div>
@@ -165,9 +159,11 @@ export function OrderModal({
                 <p className="font-inter font-bold text-[#1C1B1B]">
                   {order.customer_name || "Customer"}
                 </p>
-                <p className="font-inter text-sm font-semibold text-[#5B403C]">
-                  {order.customer_phone || "+234 800 000 0000"}
-                </p>
+                {order.customer_phone && (
+                  <p className="font-inter text-sm font-semibold text-[#5B403C]">
+                    {order.customer_phone}
+                  </p>
+                )}
               </div>
             </div>
           </section>
@@ -204,28 +200,32 @@ export function OrderModal({
 
             {/* Totals */}
             <div className="mt-6 pt-6 border-t border-[#E4BEB8] space-y-3">
-              <div className="flex justify-between">
-                <span className="font-inter text-sm font-semibold text-[#5B403C]">
-                  Subtotal
-                </span>
-                <span className="font-inter font-medium text-[#1C1B1B]">
-                  {formatNaira(koboOf(order.total_kobo))}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-inter text-sm font-semibold text-[#5B403C]">
-                  Delivery Fee
-                </span>
-                <span className="font-inter font-medium text-[#1C1B1B]">
-                  {formatNaira(koboOf(120000))}
-                </span>
-              </div>
+              {order.subtotal_kobo !== undefined && (
+                <div className="flex justify-between">
+                  <span className="font-inter text-sm font-semibold text-[#5B403C]">
+                    Subtotal
+                  </span>
+                  <span className="font-inter font-medium text-[#1C1B1B]">
+                    {formatNaira(koboOf(order.subtotal_kobo))}
+                  </span>
+                </div>
+              )}
+              {order.delivery_fee_kobo !== undefined && (
+                <div className="flex justify-between">
+                  <span className="font-inter text-sm font-semibold text-[#5B403C]">
+                    Delivery Fee
+                  </span>
+                  <span className="font-inter font-medium text-[#1C1B1B]">
+                    {formatNaira(koboOf(order.delivery_fee_kobo))}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between pt-3 border-t border-[#E4BEB8]">
                 <span className="font-inter text-lg font-bold text-[#1C1B1B]">
                   Total
                 </span>
                 <span className="font-sora text-2xl font-bold text-[#B61913]">
-                  {formatNaira(koboOf(order.total_kobo + 120000))}
+                  {formatNaira(koboOf(order.total_kobo))}
                 </span>
               </div>
             </div>
@@ -246,58 +246,21 @@ export function OrderModal({
             </section>
           )}
 
-          {/* Courier Assignment */}
-          <section className="border-2 border-[#E4BEB8] rounded-2xl p-4 bg-[#FCF9F8]">
-            <p className="font-inter text-xs font-medium text-[#5B403C] mb-3">
-              COURIER ASSIGNED
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#E5E2E1] flex items-center justify-center">
-                <User className="size-4 text-[#1C1B1B]" />
-              </div>
-              <div className="flex-1">
-                <p className="font-inter font-bold text-sm text-[#1C1B1B]">
-                  Gokada Express
-                </p>
-                <p className="font-inter text-[10px] font-bold uppercase text-[#176A22]">
-                  5 MINS AWAY
-                </p>
-              </div>
-              <button className="p-2 text-[#B61913] hover:bg-[#B61913]/5 rounded-full">
-                <Phone className="size-4" />
-              </button>
-            </div>
-          </section>
-
-          {/* Escrow Verification Code */}
-          <section className="border-2 border-[#E4BEB8] rounded-2xl p-4 md:p-6 bg-[#FCF9F8] space-y-4">
-            <div className="flex items-center gap-2">
-              <Shield className="size-5 text-[#B61913]" />
-              <h4 className="font-inter text-sm font-semibold uppercase tracking-[1.4px] text-[#5B403C]">
-                Escrow Release Code
-              </h4>
-            </div>
-            <div className="flex justify-center gap-3 md:gap-4">
-              {code.map((digit, index) => (
-                <input
-                  key={index}
-                  ref={(el) => {
-                    inputs.current[index] = el;
-                  }}
-                  type="text"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleCodeChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 border-[#906F6B] bg-white text-center font-sora text-3xl md:text-4xl font-extrabold text-[#1C1B1B] focus:border-[#B61913] focus:outline-none transition-all"
-                  placeholder="-"
-                />
-              ))}
-            </div>
-            <p className="font-inter text-xs font-medium text-center text-[#5B403C]">
-              Enter the 4-digit code provided by the driver to release funds.
-            </p>
-          </section>
+          {/* Rider handoff */}
+          {RIDER_HANDLING_STATUSES.has(order.status) && (
+            <section className="border-2 border-[#E4BEB8] rounded-2xl p-4 bg-[#FCF9F8] text-center">
+              <Truck className="mx-auto size-5 text-[#5B403C]" />
+              <p className="mt-2 font-inter text-sm font-bold text-[#1C1B1B]">
+                {order.status === "ready_for_pickup"
+                  ? "Waiting for a rider to be assigned…"
+                  : "On its way to the customer"}
+              </p>
+              <p className="mt-1 font-inter text-xs text-[#5B403C]">
+                The rider verifies the delivery code with the customer at
+                drop-off — nothing left for you to do here.
+              </p>
+            </section>
+          )}
         </div>
 
         {/* Modal Actions Footer */}
@@ -339,11 +302,6 @@ export function OrderModal({
               <CheckCircle className="size-5" />
               Mark Ready for Pickup
             </button>
-          )}
-          {order.status === "ready_for_pickup" && (
-            <p className="text-center text-sm text-[#5B403C]">
-              Waiting for a rider to be assigned…
-            </p>
           )}
         </div>
       </div>

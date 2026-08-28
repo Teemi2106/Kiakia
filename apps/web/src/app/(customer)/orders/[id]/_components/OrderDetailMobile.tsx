@@ -23,7 +23,7 @@ export function OrderDetailMobile({
   const router = useRouter();
 
   return (
-    <div className="flex min-h-screen flex-col pt-20 pb-8 bg-[#FCF9F8]">
+    <div className="flex min-h-screen flex-col bg-kk-cream pb-8 pt-4">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-[#FCF9F8] px-4 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
         <div className="flex items-center gap-4">

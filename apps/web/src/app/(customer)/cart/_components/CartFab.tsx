@@ -24,10 +24,12 @@ export function CartFab() {
     <button
       onClick={openCart}
       aria-label={`Open cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`}
-      className="fixed bottom-20 right-4 z-30 flex size-14 items-center justify-center rounded-full bg-[#B61913] text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_4px_6px_-4px_rgba(0,0,0,0.2)] transition-transform hover:scale-105 hover:bg-[#9e1611] active:scale-95 sm:bottom-6 sm:right-6"
+      // Clears the bottom tab bar, which is now visible right up to `lg` —
+      // at `sm:bottom-6` this used to sit on top of it on tablets.
+      className="fixed bottom-20 right-4 z-30 flex size-14 items-center justify-center rounded-full bg-kk-red text-white shadow-[0_14px_28px_-10px_rgba(182,25,19,0.7)] transition-transform hover:scale-105 hover:bg-kk-red-deep active:scale-95 lg:bottom-6 lg:right-6"
     >
       <ShoppingCart className="size-6" />
-      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#FE8E27] px-1 font-inter text-[11px] font-bold text-[#653200]">
+      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-kk-orange px-1 font-inter text-[11px] font-bold text-kk-orange-deep">
         {itemCount > 99 ? "99+" : itemCount}
       </span>
     </button>

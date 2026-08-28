@@ -1,8 +1,6 @@
 // app/(customer)/orders/history/page.tsx
-import { formatNaira, koboOf } from "@kiakia/domain";
-import { Card, EmptyState, OrderStatusBadge } from "@kiakia/ui";
+import { EmptyState } from "@kiakia/ui";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { OrderHistoryDesktop } from "./_components/OrderHistoryDesktop";
@@ -30,18 +28,26 @@ export default async function OrderHistoryPage() {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  const orders = realOrders;
+  const orders = realOrders ?? [];
+  const orderIds = orders.map((o) => o.id);
+  const vendorIds = [...new Set(orders.map((o) => o.vendor_id))];
 
-  const vendorIds = [...new Set((orders ?? []).map((o) => o.vendor_id))];
-  const { data: realVendors } = vendorIds.length
-    ? await supabase.from("vendors").select("id, name").in("id", vendorIds)
-    : { data: [] };
+  const [{ data: realVendors }, { data: itemRows }] = await Promise.all([
+    vendorIds.length
+      ? supabase.from("vendors").select("id, name, logo_url").in("id", vendorIds)
+      : Promise.resolve({ data: [] }),
+    orderIds.length
+      ? supabase.from("order_items").select("order_id").in("order_id", orderIds)
+      : Promise.resolve({ data: [] }),
+  ]);
   const vendors = realVendors ?? [];
-  // Couldn't add profile img because type of vendor is not defined in the supabase query, so I just added name for now.
-  const vendorName = (id: string) =>
-    vendors?.find((v) => v.id === id)?.name ?? "Vendor";
 
-  if (!orders || orders.length === 0) {
+  const itemCountByOrderId = new Map<string, number>();
+  for (const row of itemRows ?? []) {
+    itemCountByOrderId.set(row.order_id, (itemCountByOrderId.get(row.order_id) ?? 0) + 1);
+  }
+
+  if (orders.length === 0) {
     return (
       <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
         <h1 className="text-xl font-semibold text-ink">Order History</h1>
@@ -55,13 +61,18 @@ export default async function OrderHistoryPage() {
     );
   }
 
+  const ordersWithItemCount = orders.map((order) => ({
+    ...order,
+    item_count: itemCountByOrderId.get(order.id) ?? 0,
+  }));
+
   return (
     <>
       <div className="hidden lg:block">
-        <OrderHistoryDesktop orders={orders} vendors={vendors} />
+        <OrderHistoryDesktop orders={ordersWithItemCount} vendors={vendors} />
       </div>
       <div className="lg:hidden">
-        <OrderHistoryMobile orders={orders} vendors={vendors} />
+        <OrderHistoryMobile orders={ordersWithItemCount} vendors={vendors} />
       </div>
     </>
   );

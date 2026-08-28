@@ -10,14 +10,16 @@
 -- What follows is a clearly-synthetic square so local development has
 -- something to test area-containment checkout logic against.
 
-insert into service_areas (name, polygon, is_active, base_delivery_fee_kobo, per_km_fee_kobo, free_above_kobo)
+insert into service_areas (name, polygon, is_active, base_delivery_fee_kobo, per_km_fee_kobo, free_above_kobo, rider_base_fee_kobo, rider_per_km_fee_kobo)
 values (
   'Synthetic Dev Area (not a real launch polygon)',
   st_geogfromtext('POLYGON((7.4 9.0, 7.5 9.0, 7.5 9.1, 7.4 9.1, 7.4 9.0))'),
   true,
-  50000,  -- ₦500 base delivery fee
-  15000,  -- ₦150 per km
-  1000000 -- free delivery above ₦10,000
+  50000,  -- ₦500 base delivery fee (customer-facing, vendor -> customer leg only)
+  15000,  -- ₦150 per km (customer-facing)
+  1000000, -- free delivery above ₦10,000
+  50000,  -- ₦500 base rider fee (0044) — same placeholder posture as above, no real unit-economics decision yet
+  15000   -- ₦150 per km rider fee, over the rider's FULL trip (pickup + dropoff), unlike the customer-facing rate
 );
 
 -- ---------------------------------------------------------------------------

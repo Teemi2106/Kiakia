@@ -13,6 +13,7 @@ interface CheckoutFormProps {
   addresses: Address[];
   defaultAddress: Address | null;
   subtotalKobo: number;
+  walletBalanceKobo: number;
 }
 
 const initialState: CheckoutFormState = {};
@@ -23,6 +24,7 @@ export function CheckoutForm({
   addresses,
   defaultAddress,
   subtotalKobo,
+  walletBalanceKobo,
 }: CheckoutFormProps) {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(
     defaultAddress,
@@ -49,6 +51,7 @@ export function CheckoutForm({
           paymentMethod={paymentMethod}
           onPaymentMethodChange={setPaymentMethod}
           subtotalKobo={subtotalKobo}
+          walletBalanceKobo={walletBalanceKobo}
           deliveryNote={deliveryNote}
           onDeliveryNoteChange={setDeliveryNote}
           formAction={formAction}
@@ -66,6 +69,7 @@ export function CheckoutForm({
           paymentMethod={paymentMethod}
           onPaymentMethodChange={setPaymentMethod}
           subtotalKobo={subtotalKobo}
+          walletBalanceKobo={walletBalanceKobo}
           deliveryNote={deliveryNote}
           onDeliveryNoteChange={setDeliveryNote}
           formAction={formAction}

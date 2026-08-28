@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { computeDeliveryFee, computePlacementFees, computeServiceFee } from "./delivery.js";
+import {
+  computeDeliveryFee,
+  computePlacementFees,
+  computeRiderFee,
+  computeServiceFee,
+} from "./delivery.js";
 import { koboOf } from "./money.js";
 
 describe("computeServiceFee", () => {
@@ -46,6 +51,46 @@ describe("computeDeliveryFee", () => {
 
   it("rejects a negative distance", () => {
     expect(() => computeDeliveryFee({ ...base, distanceM: -1 })).toThrow(RangeError);
+  });
+});
+
+describe("computeRiderFee", () => {
+  const base = {
+    riderBaseFeeKobo: koboOf(50_000),
+    riderPerKmFeeKobo: koboOf(15_000),
+  };
+
+  it("charges base fee only when both legs sum under 1km", () => {
+    expect(computeRiderFee({ ...base, pickupDistanceM: 400, dropoffDistanceM: 400 })).toBe(
+      50_000 + 15_000,
+    );
+  });
+
+  it("sums the pickup and dropoff legs before rounding up to the next km", () => {
+    // 900m pickup + 1_300m dropoff = 2_200m -> ceil to 3km.
+    expect(computeRiderFee({ ...base, pickupDistanceM: 900, dropoffDistanceM: 1_300 })).toBe(
+      50_000 + 15_000 * 3,
+    );
+  });
+
+  it("still pays the rider when dropoff distance is 0 (e.g. a waived-fee order)", () => {
+    // Unlike computeDeliveryFee, there is no free-above waiver here — the
+    // rider is paid for the pickup leg regardless of the customer's fee.
+    expect(computeRiderFee({ ...base, pickupDistanceM: 2_000, dropoffDistanceM: 0 })).toBe(
+      50_000 + 15_000 * 2,
+    );
+  });
+
+  it("rejects a negative pickup distance", () => {
+    expect(() =>
+      computeRiderFee({ ...base, pickupDistanceM: -1, dropoffDistanceM: 0 }),
+    ).toThrow(RangeError);
+  });
+
+  it("rejects a negative dropoff distance", () => {
+    expect(() =>
+      computeRiderFee({ ...base, pickupDistanceM: 0, dropoffDistanceM: -1 }),
+    ).toThrow(RangeError);
   });
 });
 

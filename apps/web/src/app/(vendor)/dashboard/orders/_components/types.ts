@@ -12,6 +12,8 @@ export interface Order {
   id: string;
   code: string;
   status: string;
+  subtotal_kobo?: number;
+  delivery_fee_kobo?: number;
   total_kobo: number;
   created_at: string;
   customer_name?: string;

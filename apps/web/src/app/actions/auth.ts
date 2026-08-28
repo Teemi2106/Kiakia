@@ -125,9 +125,16 @@ export async function loginAction(_prevState: FormState, formData: FormData): Pr
     return { error: "Incorrect email or password." };
   }
 
-  // Logging in through the customer form is an explicit "I want customer
-  // mode" signal — resets any lingering vendor mode from a previous session
-  // in this browser (e.g. a shared device, or switching accounts).
+  // A vendor-role account lands in vendor mode from *any* login entry
+  // point, not just /vendor/login — the customer surface stays one
+  // explicit switchToCustomerAction() away (see app/actions/session.ts),
+  // it's never the default for an account that also holds a vendor role.
+  const roles = await getRoles();
+  if (hasRole(roles, ...VENDOR_ROLES)) {
+    await setActiveRole("vendor");
+    redirect("/dashboard");
+  }
+
   await setActiveRole("customer");
   redirect("/home");
 }

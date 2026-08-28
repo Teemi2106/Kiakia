@@ -23,7 +23,7 @@ export function StatsCards({
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Escrow Pending */}
-        <div className="flex flex-col justify-between rounded-xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+        <div className="flex flex-col justify-between rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
           <div className="mb-4 flex items-center justify-between">
             <span className="rounded-xl bg-[rgba(147,75,0,0.1)] p-3 text-[#934B00]">
               <Lock className="size-6" />
@@ -43,7 +43,7 @@ export function StatsCards({
         </div>
 
         {/* Released Balance */}
-        <div className="flex flex-col justify-between rounded-xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+        <div className="flex flex-col justify-between rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
           <div className="mb-4 flex items-center justify-between">
             <span className="rounded-xl bg-[rgba(23,106,34,0.1)] p-3 text-[#176A22]">
               <Wallet className="size-6" />
@@ -63,7 +63,7 @@ export function StatsCards({
         </div>
 
         {/* Today's Orders */}
-        <div className="relative flex flex-col justify-between overflow-hidden rounded-xl bg-[#B61913] p-6 text-white shadow-lg">
+        <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#B61913] p-6 text-white shadow-lg">
           <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
           <div className="relative z-10 mb-4 flex items-center justify-between">
             <span className="rounded-xl bg-white/20 p-3 text-white">
@@ -90,7 +90,7 @@ export function StatsCards({
   return (
     <div className="grid grid-cols-1 gap-4">
       {/* Escrow Pending */}
-      <div className="rounded-xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-all hover:shadow-lg">
+      <div className="rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-all hover:shadow-lg">
         <p className="mb-2 font-inter text-sm font-medium leading-5 text-[#5B403C]">
           Escrow Pending
         </p>
@@ -104,7 +104,7 @@ export function StatsCards({
       </div>
 
       {/* Released Balance */}
-      <div className="relative overflow-hidden rounded-xl bg-[#B61913] p-6 text-white shadow-md transition-all hover:shadow-lg group">
+      <div className="relative overflow-hidden rounded-2xl bg-[#B61913] p-6 text-white shadow-md transition-all hover:shadow-lg group">
         <div className="relative z-10">
           <p className="mb-2 font-inter text-sm font-medium leading-5 text-white/90">
             Released Balance
@@ -125,7 +125,7 @@ export function StatsCards({
       </div>
 
       {/* Today's Orders */}
-      <div className="rounded-xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-all hover:shadow-lg">
+      <div className="rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-all hover:shadow-lg">
         <div className="flex items-start justify-between">
           <div>
             <p className="mb-2 font-inter text-sm font-medium leading-5 text-[#5B403C]">

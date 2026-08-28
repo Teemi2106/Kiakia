@@ -2,68 +2,40 @@
 "use client";
 
 import { cn } from "@kiakia/ui";
-import { useState, useEffect } from "react";
 
 interface CategoryNavProps {
-  categories: readonly { id: string; name: string }[]; // Add readonly
+  categories: readonly { id: string; name: string }[];
+  activeId: string;
+  onSelect: (id: string) => void;
 }
 
-export function CategoryNav({ categories }: CategoryNavProps) {
-  const [activeId, setActiveId] = useState<string>(categories[0]?.id || "");
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id.replace("category-", ""));
-            break;
-          }
-        }
-      },
-      { rootMargin: "-100px 0px -50% 0px", threshold: 0 },
-    );
-
-    const sections = document.querySelectorAll("[id^='category-']");
-    sections.forEach((section) => observer.observe(section));
-
-    return () => {
-      sections.forEach((section) => observer.unobserve(section));
-    };
-  }, [categories]);
-
-  const handleClick = (id: string) => {
-    setActiveId(id);
-    const element = document.getElementById(`category-${id}`);
-    if (element) {
-      const offset = 100;
-      const top =
-        element.getBoundingClientRect().top + window.pageYOffset - offset;
-      window.scrollTo({ top, behavior: "smooth" });
-    }
-  };
-
+/** A filter tab bar, not a scroll-spy — selecting a tab (or "All") narrows
+ * which category sections render below, matching the reference's
+ * underlined-active-tab behavior rather than jumping the page to an anchor. */
+export function CategoryNav({ categories, activeId, onSelect }: CategoryNavProps) {
   if (categories.length === 0) return null;
 
+  const tabs = [{ id: "all", name: "All" }, ...categories];
+
   return (
-    <div className="sticky top-[56px] z-30 bg-[rgba(252,249,248,0.95)] backdrop-blur-sm sm:top-[63px]">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex gap-4 overflow-x-auto border-b border-[#E5E2E1] py-3 sm:gap-6 [-webkit-overflow-scrolling:touch]">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => handleClick(category.id)}
-              className={cn(
-                "whitespace-nowrap font-inter text-sm font-semibold transition-colors",
-                activeId === category.id
-                  ? "border-b-2 border-[#B61913] text-[#B61913]"
-                  : "text-[#5B403C] hover:text-[#1C1B1B]",
-              )}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
+    <div className="sticky top-[56px] z-30 border-b border-[#E5E2E1] bg-[rgba(252,249,248,0.95)] backdrop-blur-sm sm:top-[63px]">
+      <div className="flex gap-6 overflow-x-auto px-1 [-webkit-overflow-scrolling:touch]">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onSelect(tab.id)}
+            aria-current={activeId === tab.id}
+            className={cn(
+              "shrink-0 whitespace-nowrap border-b-2 px-1 py-3 font-inter text-sm font-semibold transition-colors",
+              activeId === tab.id
+                ? "border-[#B61913] text-[#B61913]"
+                : "border-transparent text-[#5B403C] hover:text-[#1C1B1B]",
+            )}
+          >
+            {tab.name}
+          </button>
+        ))}
       </div>
     </div>
   );

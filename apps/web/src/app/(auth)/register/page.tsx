@@ -1,5 +1,5 @@
 // app/register/page.tsx
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import ImagePane from "../_components/ImagePane";
 import { MobileLayout } from "./components/MobileLayout";
 import { DesktopLayout } from "./components/DesktopLayout";

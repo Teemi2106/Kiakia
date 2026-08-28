@@ -1,0 +1,443 @@
+/*
+ * Marketing-only presentation layer: keyframes, textures and composite
+ * effects that would be noise as Tailwind utilities. Imported by
+ * (marketing)/layout.tsx, so it never ships with the customer/vendor apps.
+ *
+ * Everything animated here is switched off wholesale under
+ * prefers-reduced-motion at the bottom of the file - the page must read
+ * exactly the same standing still.
+ */
+
+/* ---------------------------------------------------------------- reveal */
+/* Paired with <Reveal>, which flips data-shown from an IntersectionObserver.
+   The hidden state is keyed off data-shown="false", which only React sets on
+   mount - so a JS failure, a crawler, or a no-JS visitor still sees the whole
+   page rather than a column of invisible sections. */
+.kk-reveal[data-shown="false"] {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.kk-reveal {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--kk-delay, 0ms);
+}
+
+/* Above-the-fold entrance. Deliberately CSS-only rather than <Reveal>: the
+   hero must paint on first frame instead of waiting for hydration, so its
+   stagger can't depend on an IntersectionObserver. */
+.kk-enter {
+  animation: kk-enter 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--kk-delay, 0ms);
+}
+
+@keyframes kk-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------- texture */
+.kk-dots {
+  background-image: radial-gradient(currentColor 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.kk-grid {
+  background-image:
+    linear-gradient(to right, currentColor 1px, transparent 1px),
+    linear-gradient(to bottom, currentColor 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Soft off-canvas colour wash behind the hero and the dark sections. */
+.kk-blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(72px);
+  pointer-events: none;
+}
+
+/* -------------------------------------------------------------- headline */
+/* The rotating noun in the hero headline.
+ *
+ * A crossfading stack, not a vertical scroller. The obvious implementation —
+ * translateY(-100%) per word — is wrong here: a percentage translate resolves
+ * against the *list's* own height, which is every word stacked, so one step
+ * jumped the whole column off-screen and only the first word ever showed.
+ * Absolutely positioning each word in the same spot sidesteps slot-height
+ * arithmetic entirely, and lets descenders hang without being clipped.
+ *
+ * The sizer is the widest word, rendered invisibly to hold the inline box, so
+ * whatever follows the rotator never reflows mid-cycle.
+ */
+.kk-rotator {
+  position: relative;
+  display: inline-block;
+}
+
+.kk-rotator-sizer {
+  visibility: hidden;
+}
+
+.kk-rotator-viewport {
+  position: absolute;
+  inset: 0;
+}
+
+.kk-rotator-word {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  opacity: 0;
+  animation: kk-word 11s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation-delay: var(--kk-delay, 0ms);
+}
+
+/* One word is fading out exactly while the next fades in, so the slot is
+   never empty. Delays are one fifth of the duration apart. */
+@keyframes kk-word {
+  0% {
+    opacity: 0;
+    transform: translateY(0.3em) rotate(2deg);
+  }
+  6%,
+  20% {
+    opacity: 1;
+    transform: none;
+  }
+  26%,
+  100% {
+    opacity: 0;
+    transform: translateY(-0.26em) rotate(-2deg);
+  }
+}
+
+/* Hand-drawn underline under the rotator: draws itself once on load. */
+.kk-underline path {
+  stroke-dasharray: 340;
+  stroke-dashoffset: 340;
+  animation: kk-draw 1.1s 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes kk-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- motion */
+.kk-float {
+  animation: kk-float 6s ease-in-out infinite;
+  animation-delay: var(--kk-delay, 0ms);
+}
+
+@keyframes kk-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+/* Live indicator: a dot with an expanding ring. */
+.kk-ping::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: currentColor;
+  animation: kk-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes kk-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  75%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+/* Rider progress rail in the hero tracking card. */
+.kk-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-kk-orange), var(--color-kk-red));
+  transform-origin: left center;
+  animation: kk-progress 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes kk-progress {
+  0% {
+    transform: scaleX(0.08);
+  }
+  70%,
+  100% {
+    transform: scaleX(0.82);
+  }
+}
+
+/* ----------------------------------------------------------------- speed */
+/* Motion streaks trailing the oversized "Kia kia" wordmark. */
+.kk-streak {
+  animation: kk-streak 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: var(--kk-delay, 0ms);
+  transform-origin: right center;
+}
+
+@keyframes kk-streak {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px) scaleX(0.25);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(36px) scaleX(1.35);
+  }
+}
+
+/* The marker that runs the length of the dispatch track. `left` rather than
+   a transform because the distance is the track's width, not the marker's. */
+.kk-runner {
+  animation: kk-runner 6s cubic-bezier(0.5, 0, 0.2, 1) infinite;
+}
+
+@keyframes kk-runner {
+  0%,
+  4% {
+    left: 0%;
+  }
+  86%,
+  100% {
+    left: 100%;
+  }
+}
+
+/* Track fill chasing the marker. */
+.kk-runner-fill {
+  animation: kk-runner-fill 6s cubic-bezier(0.5, 0, 0.2, 1) infinite;
+  transform-origin: left center;
+}
+
+@keyframes kk-runner-fill {
+  0%,
+  4% {
+    transform: scaleX(0);
+  }
+  86%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+/* ---------------------------------------------------------------- ticker */
+.kk-marquee {
+  display: flex;
+  width: max-content;
+  animation: kk-marquee 38s linear infinite;
+}
+
+.kk-marquee-reverse {
+  animation-direction: reverse;
+}
+
+@keyframes kk-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---------------------------------------------------------------- escrow */
+/* The four escrow digits land one after another, hold, then clear with the
+   rest of the loop. */
+.kk-digit {
+  animation: kk-digit-in 8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation-delay: var(--kk-delay, 0ms);
+}
+
+@keyframes kk-digit-in {
+  0%,
+  2% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.85);
+  }
+  10%,
+  86% {
+    opacity: 1;
+    transform: none;
+  }
+  94%,
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+}
+
+/* "Payment released" stamp - slams in once the last digit has landed. */
+.kk-stamp {
+  animation: kk-stamp 8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
+@keyframes kk-stamp {
+  0%,
+  42% {
+    opacity: 0;
+    transform: rotate(-14deg) scale(1.5);
+  }
+  52%,
+  84% {
+    opacity: 1;
+    transform: rotate(-8deg) scale(1);
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: rotate(-8deg) scale(1);
+  }
+}
+
+/* ------------------------------------------------------------- connector */
+/* Dashed track behind the three how-it-works steps, dashes crawling from
+   step one toward step three. */
+.kk-track {
+  background-image: linear-gradient(90deg, currentColor 55%, transparent 55%);
+  background-size: 14px 2px;
+  background-repeat: repeat-x;
+  animation: kk-track 1.4s linear infinite;
+}
+
+@keyframes kk-track {
+  to {
+    background-position: 14px 0;
+  }
+}
+
+/* ---------------------------------------------------------------- polish */
+/* Light sweep across a button on hover. */
+.kk-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.kk-shine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -70%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.35), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: -1;
+}
+
+.kk-shine:hover::before,
+.kk-shine:focus-visible::before {
+  left: 130%;
+}
+
+/* Native <details> disclosure, with the marker replaced by a rotating plus. */
+.kk-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.kk-faq summary {
+  list-style: none;
+}
+
+.kk-faq[open] .kk-faq-chevron {
+  transform: rotate(45deg);
+}
+
+/* ------------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .kk-reveal[data-shown="false"] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .kk-rotator-word,
+  .kk-underline path,
+  .kk-enter,
+  .kk-float,
+  .kk-ping::after,
+  .kk-progress::after,
+  .kk-marquee,
+  .kk-streak,
+  .kk-runner,
+  .kk-runner-fill,
+  .kk-digit,
+  .kk-stamp,
+  .kk-track {
+    animation: none !important;
+  }
+
+  .kk-underline path {
+    stroke-dashoffset: 0;
+  }
+
+  /* With the cycle stopped, settle on the first word and the finished states. */
+  .kk-rotator-word {
+    opacity: 0;
+    transform: none;
+  }
+
+  .kk-rotator-word:first-child {
+    opacity: 1;
+  }
+
+  .kk-digit,
+  .kk-stamp {
+    opacity: 1;
+    transform: none;
+  }
+
+  .kk-progress::after {
+    transform: scaleX(0.82);
+  }
+
+  .kk-enter {
+    opacity: 1;
+    transform: none;
+  }
+
+  .kk-streak {
+    opacity: 1;
+    transform: none;
+  }
+
+  .kk-runner {
+    left: 100%;
+  }
+
+  .kk-runner-fill {
+    transform: scaleX(1);
+  }
+
+  .kk-shine::before {
+    display: none;
+  }
+}

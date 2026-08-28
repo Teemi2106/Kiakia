@@ -1,27 +1,31 @@
-// k6 load test: apps/web/src/app/api/webhooks/monnify/route.ts under a
-// flood of traffic with INVALID signatures — a public payment webhook is a
-// realistic target for scanners/fuzzers hammering it with garbage, and it
-// must reject that traffic cheaply (401, no DB hit, no crash) rather than
-// degrade. This is deliberately the hostile-traffic scenario, not the
-// happy path: a genuine successful capture needs a real Monnify sandbox
-// transaction and a matching pre-placed order per request, which isn't
-// something this script can manufacture at load-test volume. To load-test
-// the happy path yourself: pre-seed N draft orders with matching
+// k6 load test: the `monnify-webhook` Supabase Edge Function
+// (supabase/functions/monnify-webhook/index.ts — a Next.js Route Handler
+// originally, moved out so this webhook stays reachable independent of the
+// Next.js app's own deploy/rollback state) under a flood of traffic with
+// INVALID signatures — a public payment webhook is a realistic target for
+// scanners/fuzzers hammering it with garbage, and it must reject that
+// traffic cheaply (401, no DB hit, no crash) rather than degrade. This is
+// deliberately the hostile-traffic scenario, not the happy path: a genuine
+// successful capture needs a real Monnify sandbox transaction and a
+// matching pre-placed order per request, which isn't something this script
+// can manufacture at load-test volume. To load-test the happy path
+// yourself: pre-seed N draft orders with matching
 // `payments.idempotency_key` rows, obtain N real Monnify sandbox
 // transaction references, and sign each payload with your real
-// MONNIFY_API_SECRET (see lib/monnify.ts's verifyWebhookSignature).
+// MONNIFY_API_SECRET (see the function's own verifyWebhookSignature).
 //
 // NOT executable in this sandbox: no k6 binary, no reachable deployment.
 //
 //   k6 run load/webhook-resilience.js
-//   k6 run -e TARGET_URL=https://staging.kiakia.app load/webhook-resilience.js
+//   k6 run -e TARGET_URL=http://127.0.0.1:54321 load/webhook-resilience.js   # supabase functions serve
+//   k6 run -e TARGET_URL=https://<project-ref>.supabase.co load/webhook-resilience.js
 
 import http from "k6/http";
 import { check, sleep } from "k6";
 import { Rate } from "k6/metrics";
 
-const TARGET_URL = __ENV.TARGET_URL || "http://localhost:3000";
-const WEBHOOK_PATH = "/api/webhooks/monnify";
+const TARGET_URL = __ENV.TARGET_URL || "http://127.0.0.1:54321";
+const WEBHOOK_PATH = "/functions/v1/monnify-webhook";
 
 const unexpectedStatusRate = new Rate("unexpected_status");
 

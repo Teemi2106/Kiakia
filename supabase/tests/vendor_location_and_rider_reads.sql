@@ -14,10 +14,15 @@
 -- must never be usable to read the customer's delivery_code — the direct
 -- order_delivery_codes RLS boundary from 0022 must still hold for a rider,
 -- untouched by this migration; (5) get_rider_earnings() must only ever
--- return the CALLING rider's own balance, never another rider's.
+-- return the CALLING rider's own balance, never another rider's; (6) as of
+-- 0044_rider_fee_by_distance.sql, get_rider_offer_details()'s new
+-- pickup_distance_m/rider_fee_estimate_kobo columns must degrade to NULL
+-- rather than raise when the data they need is incomplete — this is an
+-- advisory estimate, not something that should ever block a rider from
+-- reading an offer.
 
 begin;
-select plan(14);
+select plan(16);
 
 select tests.create_supabase_user('customer_a');
 select tests.create_supabase_user('vendor_owner_a');
@@ -146,6 +151,24 @@ select is(
   (select item_count from get_rider_offer_details('00000000-0000-7000-8000-000000000051'::uuid)),
   0,
   'item_count reflects order_items (none inserted in this fixture, so 0)'
+);
+
+-- 0044's estimate columns are advisory-only and NULL-tolerant: this order
+-- has no service_area_id set (the fixture above never set one), so even
+-- though both the vendor's location (set via set_vendor_location above) and
+-- rider_a's current_location are present, the estimate stays NULL rather
+-- than raising — proving get_rider_offer_details() never blocks a rider
+-- from reading offer details just because this advisory data is
+-- incomplete.
+select is(
+  (select pickup_distance_m from get_rider_offer_details('00000000-0000-7000-8000-000000000051'::uuid)),
+  null,
+  'pickup_distance_m is NULL when the order has no service_area_id (0044, advisory-only)'
+);
+select is(
+  (select rider_fee_estimate_kobo from get_rider_offer_details('00000000-0000-7000-8000-000000000051'::uuid)),
+  null,
+  'rider_fee_estimate_kobo is NULL for the same reason (0044, advisory-only)'
 );
 
 -- The delivery-code anti-fraud boundary (0022) must remain untouched: a

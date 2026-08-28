@@ -113,10 +113,18 @@ The provider-abstraction shape §12 describes is unchanged — `payments.provide
 is still a checked enum (`monnify` / `flutterwave`), so a future failover
 provider stays a config change. The integration is built: payment
 initialization in `app/actions/orders.ts`, the client in `lib/monnify.ts`,
-and the webhook at `app/api/webhooks/monnify/route.ts` — which verifies the
-HMAC signature against the *raw* body and then re-verifies the transaction
-against Monnify's own API before capturing, never trusting the payload's
-amount or status.
+and the webhook as the `monnify-webhook` Supabase Edge Function
+(`supabase/functions/monnify-webhook/`) — a Route Handler in the Next.js app
+originally, moved out so it stays reachable independent of this app's own
+deploy/rollback state. It verifies the HMAC signature against the *raw*
+body and then re-verifies the transaction against Monnify's own API before
+capturing, never trusting the payload's amount or status. Deploy it with
+`supabase functions deploy monnify-webhook`, and set its secrets first —
+`supabase secrets set MONNIFY_API_KEY=... MONNIFY_API_SECRET=... MONNIFY_BASE_URL=...`
+(`SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` are injected automatically). As a
+defense-in-depth backstop for a delayed/misconfigured webhook, the order
+detail page (`orders/[id]/page.tsx`) also re-verifies and captures a
+still-pending payment whenever the customer's browser lands back there.
 
 ## Maps
 

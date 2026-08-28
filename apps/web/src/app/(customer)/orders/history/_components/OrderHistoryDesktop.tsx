@@ -2,6 +2,7 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
+import type { OrderStatus } from "@kiakia/domain";
 import { OrderStatusBadge } from "@kiakia/ui";
 import Link from "next/link";
 import Image from "next/image";
@@ -14,6 +15,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+const PAGE_SIZE = 10;
+
 interface Order {
   id: string;
   code: string;
@@ -21,12 +24,13 @@ interface Order {
   total_kobo: number;
   vendor_id: string;
   created_at: string;
+  item_count: number;
 }
 
 interface Vendor {
   id: string;
   name: string;
-  profile_image?: string | null;
+  logo_url?: string | null;
 }
 
 interface OrderHistoryDesktopProps {
@@ -41,37 +45,15 @@ export function OrderHistoryDesktop({
   vendors,
 }: OrderHistoryDesktopProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [page, setPage] = useState(1);
 
   const getVendorName = (id: string) =>
     vendors?.find((v) => v.id === id)?.name ?? "Vendor";
+  const getVendorLogo = (id: string) => vendors?.find((v) => v.id === id)?.logo_url;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "delivered":
-        return "bg-[rgba(23,106,34,0.1)] text-[#176A22]";
-      case "cancelled_by_customer":
-      case "cancelled_by_platform":
-        return "bg-[rgba(186,26,26,0.1)] text-[#BA1A1A]";
-      case "rejected_by_vendor":
-        return "bg-[rgba(186,26,26,0.1)] text-[#BA1A1A]";
-      default:
-        return "bg-[rgba(254,142,39,0.1)] text-[#934B00]";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "delivered":
-        return "Delivered";
-      case "cancelled_by_customer":
-        return "Cancelled";
-      case "cancelled_by_platform":
-        return "Cancelled";
-      case "rejected_by_vendor":
-        return "Rejected";
-      default:
-        return status;
-    }
+  const selectFilter = (filter: FilterType) => {
+    setActiveFilter(filter);
+    setPage(1);
   };
 
   // Filter logic
@@ -118,6 +100,13 @@ export function OrderHistoryDesktop({
     { label: "Rejected", value: "rejected" },
   ];
 
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageOrders = filteredOrders.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-15">
       {/* Header */}
@@ -136,7 +125,8 @@ export function OrderHistoryDesktop({
           {filters.map((filter) => (
             <button
               key={filter.value}
-              onClick={() => setActiveFilter(filter.value)}
+              type="button"
+              onClick={() => selectFilter(filter.value)}
               className={`rounded-lg border px-4 py-2 font-inter text-sm font-semibold transition-colors ${
                 activeFilter === filter.value
                   ? "border-[#B61913] bg-[#B61913] text-white"
@@ -161,9 +151,8 @@ export function OrderHistoryDesktop({
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredOrders.map((order) => {
-            const statusColor = getStatusColor(order.status);
-            const statusLabel = getStatusLabel(order.status);
+          {pageOrders.map((order) => {
+            const logoUrl = getVendorLogo(order.vendor_id);
 
             return (
               <div
@@ -173,21 +162,19 @@ export function OrderHistoryDesktop({
                 {/* Left Section */}
                 <div className="flex items-center gap-4">
                   {/* Image */}
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[#F0EDED]">
-                    <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-2xl text-[#5B403C]/20">
-                      {/* uncomment when you have added profile image */}
-                      {/* {vendorProfileImageUrl ? (
-                        <Image
-                          src={vendorProfileImageUrl || ""}
-                          alt={vendorName}
-                        />
-                      ) : (
-                        <span className="text-6xl">
-                          <ForkKnifeCrossedIcon />
-                        </span>
-                      )} */}
-                      <ForkKnifeCrossedIcon className="size-6 text-[#5B403C]" />
-                    </div>
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[#F0EDED]">
+                    {logoUrl ? (
+                      <Image
+                        src={logoUrl}
+                        alt={getVendorName(order.vendor_id)}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-[#5B403C]/40">
+                        <ForkKnifeCrossedIcon className="size-6" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Details */}
@@ -196,11 +183,7 @@ export function OrderHistoryDesktop({
                       <h3 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
                         {getVendorName(order.vendor_id)}
                       </h3>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${statusColor}`}
-                      >
-                        {statusLabel}
-                      </span>
+                      <OrderStatusBadge status={order.status as OrderStatus} />
                     </div>
                     <p className="font-inter text-sm text-[#5B403C]">
                       {order.code} •{" "}
@@ -212,7 +195,8 @@ export function OrderHistoryDesktop({
                     </p>
                     <div className="mt-1 flex items-center gap-4">
                       <span className="flex items-center gap-1 text-xs text-[#5B403C]">
-                        <BoxIcon className="size-3 text-[#5B403C]" /> 3 items
+                        <BoxIcon className="size-3 text-[#5B403C]" />{" "}
+                        {order.item_count} {order.item_count === 1 ? "item" : "items"}
                       </span>
                       <span className="flex items-center gap-1 text-xs text-[#5B403C]">
                         <CurrencyIcon className="size-3 text-[#5B403C]" />{" "}
@@ -230,7 +214,10 @@ export function OrderHistoryDesktop({
                   >
                     Details
                   </Link>
-                  <button className="rounded-xl bg-[#B61913] px-6 py-2 font-inter text-sm font-semibold text-white shadow-sm hover:bg-[#9e1611]">
+                  <button
+                    type="button"
+                    className="rounded-xl bg-[#B61913] px-6 py-2 font-inter text-sm font-semibold text-white shadow-sm hover:bg-[#9e1611]"
+                  >
                     Reorder
                   </button>
                 </div>
@@ -240,27 +227,42 @@ export function OrderHistoryDesktop({
         </div>
       )}
 
-      {/* Pagination */}
-      {filteredOrders.length > 0 && (
+      {/* Pagination — real, derived from the actual filtered result count
+          (at most 50 orders are ever loaded per page.tsx's own `.limit(50)`),
+          never a placeholder page count. */}
+      {filteredOrders.length > PAGE_SIZE && (
         <div className="mt-8 flex justify-center">
           <nav className="flex items-center gap-2">
-            <button className="flex h-10 w-10 items-center justify-center rounded-full opacity-50">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="flex h-10 w-10 items-center justify-center rounded-full disabled:opacity-40 hover:enabled:bg-[#F0EDED]"
+              aria-label="Previous page"
+            >
               <ChevronLeft className="size-4 text-[#5B403C]" />
             </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-[#B61913] text-white">
-              1
-            </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-[#5B403C]">
-              2
-            </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-[#5B403C]">
-              3
-            </button>
-            <span className="text-[#5B403C]">...</span>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-[#5B403C]">
-              8
-            </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => setPage(pageNumber)}
+                className={`flex h-10 w-10 items-center justify-center rounded-full font-inter text-sm font-semibold ${
+                  pageNumber === currentPage
+                    ? "bg-[#B61913] text-white"
+                    : "text-[#5B403C] hover:bg-[#F0EDED]"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="flex h-10 w-10 items-center justify-center rounded-full disabled:opacity-40 hover:enabled:bg-[#F0EDED]"
+              aria-label="Next page"
+            >
               <ChevronRight className="size-4 text-[#5B403C]" />
             </button>
           </nav>

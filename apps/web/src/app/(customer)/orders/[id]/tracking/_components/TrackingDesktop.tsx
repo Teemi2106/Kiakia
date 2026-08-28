@@ -33,11 +33,14 @@ export function TrackingDesktop({
   const isLive = !isTrackingTerminal(status) && status !== "delivered";
 
   return (
-    <div className="flex h-screen">
+    // Sized against the viewport minus the fixed customer chrome, which
+    // (customer)/layout.tsx publishes as --kk-nav-h/--kk-tabbar-h. `h-screen`
+    // here used to overflow the page by exactly the header's height.
+    <div className="flex h-[calc(100vh-var(--kk-nav-h,0px)-var(--kk-tabbar-h,0px))]">
       {/* Left Sidebar - Details Panel */}
-      <div className="w-[420px] shrink-0 border-r border-[#E4BEB8] bg-[#FCF9F8] shadow-[8px_0px_24px_rgba(26,26,26,0.05)]">
+      <div className="flex w-[420px] shrink-0 flex-col border-r border-[#E4BEB8] bg-[#FCF9F8] shadow-[8px_0px_24px_rgba(26,26,26,0.05)]">
         {/* Header Status */}
-        <div className="border-b border-[#F6F3F2] p-4 pb-6">
+        <div className="shrink-0 border-b border-[#F6F3F2] p-4 pb-6">
           <div className="mb-1 flex items-center justify-between">
             <span className="font-inter text-xs font-semibold uppercase tracking-[0.7px] text-[#5B403C]">
               Order #{orderCode}
@@ -60,7 +63,9 @@ export function TrackingDesktop({
         </div>
 
         {/* Scrollable Content */}
-        <div className="h-[calc(100vh-141px)] overflow-y-auto p-6">
+        {/* Fills whatever the header block leaves, rather than a hard-coded
+            100vh-141px that assumed one particular header height. */}
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
           <div className="space-y-8">
             {/* Delivery Code — the rider needs this to confirm delivery
                 (verify_delivery_and_release_escrow), so it's shown while the
@@ -97,7 +102,8 @@ export function TrackingDesktop({
           live movement come from get_order_tracking() + Realtime
           (0026/0027_*.sql, dispatch is fully built), not from whether a
           `driver` record is present. */}
-      <div className="flex-1">
+      {/* min-w-0 so the map column can actually shrink; MapArea fills it. */}
+      <div className="min-w-0 flex-1">
         <MapArea variant="desktop" orderId={orderId} status={status} />
       </div>
     </div>

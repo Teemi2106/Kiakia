@@ -1,44 +1,54 @@
 // app/(vendor)/settings/_components/OperatingHours.tsx
 "use client";
 
-import { useState } from "react";
-import { Calendar } from "lucide-react";
+import { useActionState, useState } from "react";
+import { Clock } from "lucide-react";
+import { Button } from "@kiakia/ui";
+import { updateVendorOperatingHoursAction, type FormState } from "@/app/actions/vendor";
+import type { DayHours, VendorSettings } from "./types";
 
-interface DaySchedule {
-  day: string;
-  open: string;
-  close: string;
-  active: boolean;
+const DAY_LABELS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+const DEFAULT_OPENS_AT = "09:00";
+const DEFAULT_CLOSES_AT = "21:00";
+
+function defaultDayHours(day: number): DayHours {
+  return { day, isOpen: true, opensAt: DEFAULT_OPENS_AT, closesAt: DEFAULT_CLOSES_AT };
 }
 
-const DEFAULT_SCHEDULE: DaySchedule[] = [
-  { day: "Mon - Fri", open: "08:00", close: "22:00", active: true },
-  { day: "Saturday", open: "09:00", close: "23:00", active: true },
-  { day: "Sunday", open: "00:00", close: "00:00", active: false },
-];
+/** Seeds a stable 7-entry (Sun..Sat) array from whatever the store has saved
+ * so far — `vendor.operatingHours` is null until the vendor has ever saved
+ * hours, in which case every day defaults to a sensible open schedule. */
+function seedHours(existing: DayHours[] | null): DayHours[] {
+  if (!existing) return Array.from({ length: 7 }, (_, day) => defaultDayHours(day));
+  const byDay = new Map(existing.map((entry) => [entry.day, entry]));
+  return Array.from({ length: 7 }, (_, day) => byDay.get(day) ?? defaultDayHours(day));
+}
 
-export function OperatingHours() {
-  const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
+const initialState: FormState = {};
 
-  const toggleActive = (index: number) => {
-    const newSchedule = [...schedule];
-    newSchedule[index].active = !newSchedule[index].active;
-    setSchedule(newSchedule);
-  };
+export function OperatingHours({ vendor }: { vendor: VendorSettings }) {
+  const [state, formAction, pending] = useActionState(updateVendorOperatingHoursAction, initialState);
+  const [hours, setHours] = useState<DayHours[]>(() => seedHours(vendor.operatingHours));
 
-  const updateTime = (
-    index: number,
-    field: "open" | "close",
-    value: string,
-  ) => {
-    const newSchedule = [...schedule];
-    newSchedule[index][field] = value;
-    setSchedule(newSchedule);
-  };
+  function updateDay(day: number, patch: Partial<DayHours>) {
+    setHours((prev) => prev.map((entry) => (entry.day === day ? { ...entry, ...patch } : entry)));
+  }
 
   return (
-    <div className="rounded-xl border border-[#E4BEB8] bg-white p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <form action={formAction} className="rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
+      <input type="hidden" name="vendorId" value={vendor.id} />
+      <input type="hidden" name="operatingHours" value={JSON.stringify(hours)} />
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
             Operating Hours
@@ -47,85 +57,91 @@ export function OperatingHours() {
             Set when your kitchen is open for orders.
           </p>
         </div>
-        <button className="rounded-xl bg-[#B61913] px-6 py-2 font-inter text-sm font-medium text-white transition-colors hover:bg-[#9e1611]">
+        <Button type="submit" loading={pending}>
           Save Changes
-        </button>
+        </Button>
       </div>
 
-      <div className="space-y-4">
-        {schedule.map((day, index) => (
+      <div className="space-y-3">
+        {hours.map((entry) => (
           <div
-            key={day.day}
-            className={`flex flex-wrap items-center justify-between gap-4 rounded-xl p-4 ${
-              day.active
-                ? "bg-[#F6F3F2]"
-                : "bg-[rgba(246,243,242,0.5)] opacity-70"
+            key={entry.day}
+            className={`flex flex-wrap items-center justify-between gap-4 rounded-xl p-4 transition-colors ${
+              entry.isOpen ? "bg-[#F6F3F2]" : "bg-[#F6F3F2]/50"
             }`}
           >
-            <div className="flex min-w-[120px] items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(182,25,19,0.1)] text-[#B61913]">
-                <Calendar className="size-5" />
+            <div className="flex min-w-[140px] items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#B61913]/10 text-[#B61913]">
+                <Clock className="size-5" />
               </div>
               <span className="font-inter text-sm font-medium text-[#1C1B1B]">
-                {day.day}
+                {DAY_LABELS[entry.day]}
               </span>
             </div>
 
             <div className="flex items-center gap-4">
               <div className="flex flex-col">
-                <label className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#5B403C]">
+                <label
+                  htmlFor={`opensAt-${entry.day}`}
+                  className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#5B403C]"
+                >
                   Opens
                 </label>
                 <input
+                  id={`opensAt-${entry.day}`}
                   type="time"
-                  value={day.open}
-                  onChange={(e) => updateTime(index, "open", e.target.value)}
-                  disabled={!day.active}
+                  value={entry.opensAt}
+                  onChange={(e) => updateDay(entry.day, { opensAt: e.target.value })}
+                  disabled={!entry.isOpen}
                   className="rounded-lg border border-[#E4BEB8] bg-white p-2 font-inter text-sm focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20 disabled:opacity-50"
                 />
               </div>
               <span className="text-[#5B403C]">to</span>
               <div className="flex flex-col">
-                <label className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#5B403C]">
+                <label
+                  htmlFor={`closesAt-${entry.day}`}
+                  className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#5B403C]"
+                >
                   Closes
                 </label>
                 <input
+                  id={`closesAt-${entry.day}`}
                   type="time"
-                  value={day.close}
-                  onChange={(e) => updateTime(index, "close", e.target.value)}
-                  disabled={!day.active}
+                  value={entry.closesAt}
+                  onChange={(e) => updateDay(entry.day, { closesAt: e.target.value })}
+                  disabled={!entry.isOpen}
                   className="rounded-lg border border-[#E4BEB8] bg-white p-2 font-inter text-sm focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20 disabled:opacity-50"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <label className="flex cursor-pointer items-center gap-2">
               <span
                 className={`rounded-full px-3 py-1 text-xs font-bold ${
-                  day.active
-                    ? "bg-[rgba(23,106,34,0.1)] text-[#176A22]"
-                    : "bg-[rgba(186,26,26,0.1)] text-[#BA1A1A]"
+                  entry.isOpen
+                    ? "bg-[#176A22]/10 text-[#176A22]"
+                    : "bg-[#BA1A1A]/10 text-[#BA1A1A]"
                 }`}
               >
-                {day.active ? "ACTIVE" : "INACTIVE"}
+                {entry.isOpen ? "OPEN" : "CLOSED"}
               </span>
-              <button
-                onClick={() => toggleActive(index)}
-                className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors focus:outline-none"
-                style={{
-                  backgroundColor: day.active ? "#176A22" : "#F0EDED",
-                }}
-              >
-                <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                    day.active ? "translate-x-5" : "translate-x-0.5"
-                  }`}
+              <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
+                <input
+                  type="checkbox"
+                  checked={entry.isOpen}
+                  onChange={() => updateDay(entry.day, { isOpen: !entry.isOpen })}
+                  className="peer sr-only"
                 />
-              </button>
-            </div>
+                <span className="absolute inset-0 rounded-full bg-[#F0EDED] transition-colors peer-checked:bg-[#176A22]" />
+                <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+              </span>
+            </label>
           </div>
         ))}
       </div>
-    </div>
+
+      {state.error && <p className="mt-4 text-sm text-[#BA1A1A]">{state.error}</p>}
+      {state.success && <p className="mt-4 text-sm text-[#176A22]">Saved.</p>}
+    </form>
   );
 }

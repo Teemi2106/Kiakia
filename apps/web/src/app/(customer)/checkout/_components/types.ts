@@ -7,6 +7,8 @@ export interface Address {
   readonly city: string;
   readonly state: string;
   readonly is_default: boolean;
+  readonly location_lat: number | null;
+  readonly location_lng: number | null;
 }
 
 export interface CartItem {
@@ -20,6 +22,10 @@ export interface Vendor {
   readonly name: string;
   readonly min_order_kobo: number;
   ProfileImage?: string | null;
+  readonly location_lat: number | null;
+  readonly location_lng: number | null;
 }
 
-export type PaymentMethod = "card" | "cash";
+// "wallet" is only ever offerable when the customer actually has a
+// balance — see PaymentSection. "cash" is listed but not selectable.
+export type PaymentMethod = "card" | "wallet" | "cash";

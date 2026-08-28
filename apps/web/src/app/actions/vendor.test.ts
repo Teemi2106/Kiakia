@@ -32,7 +32,7 @@ function formData(fields: Record<string, string>): FormData {
   return fd;
 }
 
-const VALID_VENDOR_FORM = { name: "Mama Put Kitchen", category: "food", addressLine: "1 Test Street" };
+const VALID_VENDOR_FORM = { name: "Mama Put Kitchen", category: "food", addressLine: "1 Test Street", state: "Oyo" };
 
 describe("registerVendorAction", () => {
   beforeEach(() => {

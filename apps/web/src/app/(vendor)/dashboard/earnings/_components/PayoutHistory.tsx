@@ -2,7 +2,7 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Download } from "lucide-react";
+import { Download, Receipt } from "lucide-react";
 import type { Payout } from "./types";
 
 interface PayoutHistoryProps {
@@ -49,45 +49,52 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
         <h4 className="font-sora text-xl font-bold text-[#1C1B1B]">
           Payout History
         </h4>
-        <button className="flex items-center gap-1 text-sm font-medium text-[#B61913] hover:underline">
+        <button
+          type="button"
+          className="flex items-center gap-1 text-sm font-medium text-[#B61913] transition-colors hover:underline"
+        >
           <Download className="size-4" />
           Download CSV
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-[#F6F3F2]">
-            <tr>
-              <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
-                Reference
-              </th>
-              <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
-                Date
-              </th>
-              <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
-                Type
-              </th>
-              <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
-                Amount
-              </th>
-              <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[rgba(228,190,184,0.3)]">
-            {payouts.length === 0 ? (
+      {payouts.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-[#F6F3F2] text-[#B61913]">
+            <Receipt className="size-6" />
+          </div>
+          <p className="font-sora text-base font-bold text-[#1C1B1B]">
+            No payouts yet
+          </p>
+          <p className="max-w-sm text-sm text-[#5B403C]">
+            Ledger entries will appear here once an order is delivered and
+            settled into your account.
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-[#F6F3F2]">
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-6 py-12 text-center text-[#5B403C]"
-                >
-                  No payouts yet
-                </td>
+                <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
+                  Reference
+                </th>
+                <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
+                  Date
+                </th>
+                <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
+                  Type
+                </th>
+                <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
+                  Amount
+                </th>
+                <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
+                  Status
+                </th>
               </tr>
-            ) : (
-              payouts.map((payout) => (
+            </thead>
+            <tbody className="divide-y divide-[rgba(228,190,184,0.3)]">
+              {payouts.map((payout) => (
                 <tr
                   key={payout.id}
                   className="transition-colors hover:bg-[#F6F3F2]"
@@ -116,15 +123,18 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
                     </span>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {payouts.length > 0 && (
         <div className="border-t border-[#E4BEB8] bg-[#F6F3F2] px-6 py-4 text-center">
-          <button className="text-sm font-medium text-[#5B403C] transition-colors hover:text-[#B61913]">
+          <button
+            type="button"
+            className="text-sm font-medium text-[#5B403C] transition-colors hover:text-[#B61913]"
+          >
             View All Transactions
           </button>
         </div>

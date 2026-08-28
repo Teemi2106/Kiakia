@@ -6,8 +6,19 @@ import { VendorMenu } from "./_components/VendorMenu";
 import type {
   MenuCategory,
   MenuItem,
+  VendorDayHours,
   VendorSummary,
 } from "./_components/types";
+
+const OPERATING_HOURS_DAY_COUNT = 7;
+
+/** opening_hours defaults to '{}' until a vendor has ever saved hours — only
+ * trust it as real data once it's actually the 7-entry array the vendor
+ * settings form writes (see (vendor)/dashboard/settings' identical guard). */
+function parseOperatingHours(raw: unknown): VendorDayHours[] | null {
+  if (!Array.isArray(raw) || raw.length !== OPERATING_HOURS_DAY_COUNT) return null;
+  return raw as VendorDayHours[];
+}
 
 export default async function VendorPage({
   params,
@@ -20,7 +31,7 @@ export default async function VendorPage({
   const { data: vendorRow } = await supabase
     .from("vendors")
     .select(
-      "id, name, slug, category, description, banner_url, rating_avg, rating_count, avg_prep_mins, is_accepting_orders, min_order_kobo, status",
+      "id, name, slug, category, description, banner_url, logo_url, rating_avg, rating_count, avg_prep_mins, is_accepting_orders, min_order_kobo, delivery_radius_m, opening_hours, status",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -36,11 +47,14 @@ export default async function VendorPage({
     category: vendorRow.category,
     description: vendorRow.description,
     bannerUrl: vendorRow.banner_url,
+    logoUrl: vendorRow.logo_url,
     ratingAvg: vendorRow.rating_avg,
     ratingCount: vendorRow.rating_count,
     avgPrepMins: vendorRow.avg_prep_mins,
     isAcceptingOrders: vendorRow.is_accepting_orders,
     minOrderKobo: vendorRow.min_order_kobo,
+    deliveryRadiusM: vendorRow.delivery_radius_m,
+    operatingHours: parseOperatingHours(vendorRow.opening_hours),
   };
 
   const [{ data: categoryRows }, { data: itemRows }] = await Promise.all([

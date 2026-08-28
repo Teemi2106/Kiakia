@@ -1,58 +1,34 @@
 // app/(customer)/cart/_components/CartMobile.tsx
 "use client";
 
-import { ChevronLeft, MapPin } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { removeCartItem, updateCartItemQty } from "@/lib/cart";
+import { formatCartItemOptions, type CartLineItem } from "@/lib/cart";
 import { CartItem } from "./CartItem";
 import { PromoCode } from "./PromoCode";
 import { OrderSummary } from "./OrderSummary";
 import { DeliveryInfo } from "./DeliveryInfo";
 
 interface CartMobileProps {
-  items: any[];
+  items: CartLineItem[];
   vendor: { id: string; name: string };
   onClose: () => void;
-  onUpdate?: () => void; // Add this
+  pendingId: string | null;
+  onQtyChange: (id: string, qty: number) => void;
+  onRemove: (id: string) => void;
+  onClearAll: () => void;
 }
 
 export function CartMobile({
   items,
-  vendor,
+  // kept in the prop contract for parity with CartDesktop/future vendor-name display, not currently rendered
+  vendor: _vendor,
   onClose,
-  onUpdate,
+  pendingId,
+  onQtyChange,
+  onRemove,
+  onClearAll,
 }: CartMobileProps) {
-  const router = useRouter();
-  const [pendingId, setPendingId] = useState<string | null>(null);
-
-  async function changeQty(id: string, qty: number) {
-    if (qty < 0) return;
-    setPendingId(id);
-    await updateCartItemQty(id, qty);
-    // Refresh the cart data
-    onUpdate?.();
-    router.refresh();
-    setPendingId(null);
-  }
-
-  async function remove(id: string) {
-    setPendingId(id);
-    await removeCartItem(id);
-    onUpdate?.();
-    router.refresh();
-    setPendingId(null);
-  }
-
-  async function clearAll() {
-    for (const item of items) {
-      await removeCartItem(item.id);
-    }
-    onUpdate?.();
-    router.refresh();
-  }
-
   const totalKobo = items.reduce((sum, item) => sum + item.line_total_kobo, 0);
 
   return (
@@ -78,7 +54,7 @@ export function CartMobile({
               </h1>
             </div>
             <button
-              onClick={clearAll}
+              onClick={onClearAll}
               className="font-inter text-sm font-semibold text-[#B61913] hover:underline"
             >
               Clear
@@ -104,11 +80,10 @@ export function CartMobile({
                   price={item.unit_price_kobo}
                   total={item.line_total_kobo}
                   qty={item.qty}
-                  image={item.image_url}
-                  options={item.options}
+                  options={formatCartItemOptions(item.options_snapshot)}
                   pending={pendingId === item.id}
-                  onQtyChange={changeQty}
-                  onRemove={remove}
+                  onQtyChange={onQtyChange}
+                  onRemove={onRemove}
                   variant="mobile"
                 />
               ))}

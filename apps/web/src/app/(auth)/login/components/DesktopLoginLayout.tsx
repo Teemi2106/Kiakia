@@ -24,7 +24,7 @@ export function DesktopLoginLayout() {
         {/* Desktop Footer */}
         <div className="mt-6 space-y-4">
           <p className="text-center font-inter text-base leading-6 text-[#5B403C]">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/register"
               className="font-semibold text-[#B61913] underline"

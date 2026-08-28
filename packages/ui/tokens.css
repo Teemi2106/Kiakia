@@ -45,9 +45,36 @@
   --radius-pill: 999px;
   --radius-control: 0.625rem;
 
-  /* Type */
-  --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  /* Type — Sora for display, Inter for text. Both are loaded by the web
+   * app's root layout via next/font as `--font-sora-face` /
+   * `--font-inter-face`; registering them here is what makes Tailwind emit
+   * the `font-sora` / `font-inter` utilities the screens already use. The
+   * `-face` suffix on the next/font side matters: a theme token may not
+   * reference a custom property of its own name (a self-referencing custom
+   * property is invalid at computed-value time and the var() fallback is
+   * *not* applied), so the two layers need distinct names. */
+  --font-sans: var(--font-inter-face, ui-sans-serif, system-ui, sans-serif);
+  --font-sora: var(--font-sora-face, ui-sans-serif, system-ui, sans-serif);
+  --font-inter: var(--font-inter-face, ui-sans-serif, system-ui, sans-serif);
   --font-mono: var(--font-geist-mono, ui-monospace, monospace);
+
+  /* Literal brand hexes from the Figma file. The oklch `brand-*` ramp above
+   * is the semantic scale for product UI; these are the exact values the
+   * marketing site and the Figma-derived screens paint with, named so they
+   * stop being copy-pasted hex strings. */
+  --color-kk-red: #b61913;
+  --color-kk-red-deep: #7a0f0b;
+  --color-kk-red-soft: #ffe9e6;
+  --color-kk-orange: #fe8e27;
+  --color-kk-orange-deep: #934b00;
+  --color-kk-green: #176a22;
+  --color-kk-mint: #a3f69d;
+  --color-kk-ink: #1c1b1b;
+  --color-kk-ink-deep: #120d0c;
+  --color-kk-cocoa: #5b403c;
+  --color-kk-cream: #fcf9f8;
+  --color-kk-sand: #f6f3f2;
+  --color-kk-line: #e4beb8;
 }
 
 /**

@@ -1,6 +1,8 @@
 // app/(vendor)/earnings/page.tsx
 import { getVendorForCurrentUser, requireVendorContext } from "@/lib/auth/dal";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { computeVendorPendingEscrowKobo } from "@/lib/vendor-escrow";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EarningsDesktop } from "./_components/EarningsDesktop";
@@ -29,6 +31,7 @@ export default async function VendorEarningsPage() {
   const vendor = await getVendorForCurrentUser();
   if (!vendor) notFound();
 
+  const supabase = await createClient();
   const admin = createAdminClient();
 
   const { data: accounts, error: accountsError } = await admin
@@ -61,16 +64,12 @@ export default async function VendorEarningsPage() {
         b.account_id ===
         (accounts ?? []).find((a) => a.kind === "available")?.id,
     );
-  const pending =
-    (accounts ?? []).find((a) => a.kind === "pending_payout") &&
-    (balances ?? []).find(
-      (b) =>
-        b.account_id ===
-        (accounts ?? []).find((a) => a.kind === "pending_payout")?.id,
-    );
 
   const availableKobo = available?.balance_kobo ?? 0;
-  const pendingKobo = pending?.balance_kobo ?? 0;
+  // No vendor-scoped `pending_payout` account is ever created (see
+  // lib/vendor-escrow.ts's header) — derived from live orders instead of a
+  // ledger balance that's always zero.
+  const pendingKobo = await computeVendorPendingEscrowKobo(supabase, admin, vendor.id, vendor.commission_bps);
 
   const { data: realPayouts, error: payoutsError } = accountIds.length
     ? await admin

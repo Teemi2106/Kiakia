@@ -2,11 +2,13 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
+import type { OrderStatus } from "@kiakia/domain";
 import { OrderStatusBadge } from "@kiakia/ui";
 import { MapPin, Phone, Clock, ForkKnifeCrossedIcon } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Order } from "./types";
+import { timeAgo } from "./timeAgo";
 
 interface FeaturedOrderProps {
   order: Order;
@@ -23,19 +25,6 @@ export function FeaturedOrder({
     if (!items || items.length === 0) return "No items";
     return items.map((item) => `${item.qty}x ${item.name}`).join(", ");
   };
-
-  const getETA = (status: string) => {
-    switch (status) {
-      case "out_for_delivery":
-        return { label: "Estimated delivery", time: "15-20 min" };
-      case "preparing":
-        return { label: "Estimated prep time", time: "25-30 min" };
-      default:
-        return { label: "Estimated time", time: "30 min" };
-    }
-  };
-
-  const eta = getETA(order.status);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E5E2E1] bg-white">
@@ -60,7 +49,7 @@ export function FeaturedOrder({
           </div>
           <div className="absolute left-4 top-4">
             <OrderStatusBadge
-              status={order.status as any}
+              status={order.status as OrderStatus}
               className="bg-white/90 backdrop-blur-sm px-3"
             />
           </div>
@@ -80,31 +69,17 @@ export function FeaturedOrder({
             <p className="mt-1 font-inter text-base text-[#5B403C]">
               {getItemsSummary(order.items)}
             </p>
-            <div className="mt-4 flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Clock className="size-4 text-[#dab510]" />
-                <span className="font-inter text-sm font-semibold text-[#000000]">
-                  {eta.label}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-inter text-sm font-semibold text-[#000000]">
-                  {eta.time}
-                </span>
-              </div>
+            <div className="mt-4 flex items-center gap-2">
+              <Clock className="size-4 text-[#934B00]" />
+              <span className="font-inter text-sm font-semibold text-[#1C1B1B]">
+                Ordered {timeAgo(order.created_at)}
+              </span>
             </div>
-            <div className="mt-4 flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <MapPin className="size-4 text-[#d1351d]" />
-                <span className="font-inter text-sm font-semibold text-[#000000]">
-                  Delivering to :
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-inter text-sm font-semibold text-[#000000]">
-                  {order.Location || "No location provided"}
-                </span>
-              </div>
+            <div className="mt-3 flex items-start gap-2">
+              <MapPin className="mt-0.5 size-4 shrink-0 text-[#B61913]" />
+              <span className="font-inter text-sm text-[#5B403C]">
+                {order.delivery_address ?? "No delivery address on file"}
+              </span>
             </div>
           </div>
 

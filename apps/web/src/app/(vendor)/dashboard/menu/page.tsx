@@ -1,7 +1,7 @@
 // app/(vendor)/menu/page.tsx
 import { getVendorForCurrentUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
-import { EmptyState, buttonVariants } from "@kiakia/ui";
+import { Plus, Utensils } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MenuDesktop } from "./_components/MenuDesktop";
@@ -35,29 +35,32 @@ export default async function VendorMenuPage() {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
+      <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-ink">Menu Management</h1>
+          <h1 className="font-sora text-2xl font-bold text-[#1C1B1B]">
+            Menu Management
+          </h1>
           <Link
             href="/dashboard/menu/items/new"
-            className={buttonVariants({ variant: "primary", size: "sm" })}
+            className="flex items-center gap-2 rounded-xl bg-[#B61913] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#9e1611]"
           >
-            + New Item
+            <Plus className="size-4" />
+            New Item
           </Link>
         </div>
-        <div className="mt-6">
-          <EmptyState
-            title="No menu items yet"
-            description="Add your first item to start accepting orders."
-            action={
-              <Link
-                href="/dashboard/menu/items/new"
-                className={buttonVariants({ variant: "primary" })}
-              >
-                Add item
-              </Link>
-            }
-          />
+        <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E4BEB8] bg-white p-12 text-center">
+          <Utensils className="size-8 text-[#5B403C]/30" />
+          <p className="font-medium text-[#1C1B1B]">No menu items yet</p>
+          <p className="max-w-sm text-sm text-[#5B403C]">
+            Add your first item to start accepting orders.
+          </p>
+          <Link
+            href="/dashboard/menu/items/new"
+            className="mt-2 flex items-center gap-2 rounded-xl bg-[#B61913] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#9e1611]"
+          >
+            <Plus className="size-4" />
+            Add item
+          </Link>
         </div>
       </div>
     );
@@ -70,6 +73,7 @@ export default async function VendorMenuPage() {
           items={items}
           categories={categories}
           vendorId={vendor.id}
+          isAcceptingOrders={vendor.is_accepting_orders}
         />
       </div>
       <div className="lg:hidden">
@@ -77,6 +81,7 @@ export default async function VendorMenuPage() {
           items={items}
           categories={categories}
           vendorId={vendor.id}
+          isAcceptingOrders={vendor.is_accepting_orders}
         />
       </div>
     </>

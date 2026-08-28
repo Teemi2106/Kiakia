@@ -18,6 +18,7 @@ interface CheckoutDesktopProps {
   paymentMethod: PaymentMethod;
   onPaymentMethodChange: (method: PaymentMethod) => void;
   subtotalKobo: number;
+  walletBalanceKobo: number;
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
   formAction: (formData: FormData) => void;
@@ -34,6 +35,7 @@ export function CheckoutDesktop({
   paymentMethod,
   onPaymentMethodChange,
   subtotalKobo,
+  walletBalanceKobo,
   deliveryNote,
   onDeliveryNoteChange,
   formAction,
@@ -70,12 +72,19 @@ export function CheckoutDesktop({
           address={selectedAddress}
           addresses={addresses}
           onAddressChange={onAddressChange}
+          vendorLocation={
+            vendor?.location_lat != null && vendor?.location_lng != null
+              ? { lat: vendor.location_lat, lng: vendor.location_lng }
+              : null
+          }
         />
 
         {/* Column 2: Payment */}
         <PaymentSection
           paymentMethod={paymentMethod}
           onPaymentMethodChange={onPaymentMethodChange}
+          walletBalanceKobo={walletBalanceKobo}
+          subtotalKobo={subtotalKobo}
         />
 
         {/* Column 3: Order Summary */}

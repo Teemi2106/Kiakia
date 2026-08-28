@@ -9,7 +9,7 @@ export interface OrderDetail {
   service_fee_kobo: number;
   discount_kobo: number;
   total_kobo: number;
-  delivery_address: any;
+  delivery_address: unknown;
   delivery_note: string | null;
   delivery_code: string | null;
   vendor_id: string;
@@ -17,7 +17,7 @@ export interface OrderDetail {
 
 export interface Vendor {
   name: string;
-  profile_image_url?: string | null;
+  logo_url?: string | null;
 }
 
 export interface OrderItem {

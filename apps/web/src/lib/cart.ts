@@ -18,6 +18,30 @@ export interface CartOptionSelection {
   readonly priceDeltaKobo: number;
 }
 
+/** Canonical cart_items row shape — shared by the drawer (CartDrawer) and
+ * the dedicated /cart page (CartPageView) so both stay in sync instead of
+ * maintaining two near-identical, drift-prone interfaces. */
+export interface CartLineItem {
+  readonly id: string;
+  readonly menu_item_id: string | null;
+  readonly name_snapshot: string;
+  readonly unit_price_kobo: number;
+  readonly qty: number;
+  readonly options_snapshot: unknown; // see formatCartItemOptions() below
+  readonly line_total_kobo: number;
+}
+
+/** cart_items has no image column and no plain "options" string column —
+ * only `options_snapshot` (this shape). Formats it for display; returns
+ * undefined for a plain item with no customization. */
+export function formatCartItemOptions(snapshot: unknown): string | undefined {
+  if (!Array.isArray(snapshot) || snapshot.length === 0) return undefined;
+  const names = (snapshot as Partial<CartOptionSelection>[])
+    .map((o) => o?.name)
+    .filter((name): name is string => Boolean(name));
+  return names.length > 0 ? names.join(", ") : undefined;
+}
+
 export interface AddToCartInput {
   readonly vendorId: string;
   readonly menuItemId: string;

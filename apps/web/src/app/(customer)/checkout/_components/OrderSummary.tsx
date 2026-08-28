@@ -14,6 +14,9 @@ interface OrderSummaryProps {
   subtotalKobo: number;
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
+  // Kept in the prop shape for when a second payment method actually ships
+  // (see PaymentSection); the submit button below no longer branches on it
+  // since Card is the only method placeOrderAction supports today.
   paymentMethod: PaymentMethod;
   formState: CheckoutFormState;
   pending: boolean;
@@ -26,7 +29,7 @@ export function OrderSummary({
   subtotalKobo,
   deliveryNote,
   onDeliveryNoteChange,
-  paymentMethod,
+  paymentMethod: _paymentMethod,
   formState,
   pending,
   variant = "desktop",
@@ -128,9 +131,9 @@ export function OrderSummary({
       <Button
         type="submit"
         loading={pending}
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#B61913] py-4 font-inter text-sm font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#9e1611]"
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#B61913] py-4 font-inter text-sm font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#9e1611] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Pay with {paymentMethod === "card" ? "Card" : "Cash on Delivery"} →
+        Pay with Card →
       </Button>
 
       {isMobile && (

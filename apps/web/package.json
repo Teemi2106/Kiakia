@@ -31,6 +31,7 @@
     "@kiakia/config": "workspace:*",
     "@playwright/test": "^1.49.0",
     "@tailwindcss/postcss": "^4",
+    "@types/geojson": "^7946.0.14",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

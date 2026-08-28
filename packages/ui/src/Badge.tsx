@@ -6,14 +6,14 @@ import { cn } from "./cn";
 export type BadgeTone = "neutral" | "positive" | "warning" | "danger";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-pill px-15 py-2 text-xs font-medium",
+  "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium",
   {
     variants: {
       tone: {
-        neutral: "bg-surface-sunken text-ink-muted",
-        positive: "bg-positive-surface text-positive",
-        warning: "bg-warning-surface text-warning",
-        danger: "bg-danger-surface text-danger",
+        neutral: "bg-[#F0EDED] text-[#5B403C]",
+        positive: "bg-[#DFF3DC] text-[#176A22]",
+        warning: "bg-[#FFDCC5] text-[#934B00]",
+        danger: "bg-[#FFDAD5] text-[#BA1A1A]",
       } satisfies Record<BadgeTone, string>,
     },
     defaultVariants: { tone: "neutral" },

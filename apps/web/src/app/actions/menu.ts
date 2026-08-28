@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireVendorContext } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { uploadVendorImage } from "@/lib/storage/vendor-media";
 import { InvalidMoneyError, nairaToKobo } from "@kiakia/domain";
 
 export interface FormState {
@@ -98,6 +99,29 @@ export async function deleteCategoryAction(vendorId: string, categoryId: string)
 // ---------------------------------------------------------------------------
 // Menu items (+ nested option groups/options)
 // ---------------------------------------------------------------------------
+
+/**
+ * A file input with nothing selected still submits an empty `File` (name
+ * "", size 0) rather than `null` — `instanceof File && size > 0` is the
+ * actual "did the vendor pick a new photo" check. When they didn't, keep
+ * whatever `image_url` the item already had (the form resubmits it via a
+ * hidden `currentImageUrl` field so editing other fields doesn't clear the
+ * photo).
+ */
+type ResolveImageUrlResult = { ok: true; url: string | null } | { ok: false; error: string };
+
+async function resolveImageUrl(vendorId: string, formData: FormData): Promise<ResolveImageUrlResult> {
+  const file = formData.get("image");
+  const currentImageUrl = (formData.get("currentImageUrl") as string | null) || null;
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: true, url: currentImageUrl };
+  }
+
+  const uploaded = await uploadVendorImage(vendorId, "menu", file);
+  if (!uploaded.ok) return { ok: false, error: uploaded.error };
+  return { ok: true, url: uploaded.url };
+}
 
 interface OptionGroupInput {
   name: string;
@@ -203,6 +227,10 @@ export async function createMenuItemAction(_prevState: FormState, formData: Form
   await assertVendorStaff(vendorId);
 
   const categoryId = (formData.get("categoryId") as string | null) || null;
+
+  const imageResult = await resolveImageUrl(vendorId, formData);
+  if (!imageResult.ok) return { error: imageResult.error };
+
   const admin = createAdminClient();
 
   const { data: item, error } = await admin
@@ -212,7 +240,7 @@ export async function createMenuItemAction(_prevState: FormState, formData: Form
       category_id: categoryId,
       name: name.trim(),
       description: (formData.get("description") as string | null) || null,
-      image_url: (formData.get("imageUrl") as string | null) || null,
+      image_url: imageResult.url,
       price_kobo: Math.round(priceNaira * 100),
       is_available: formData.get("isAvailable") === "on",
     })
@@ -246,13 +274,16 @@ export async function updateMenuItemAction(_prevState: FormState, formData: Form
   const { data: existing } = await admin.from("menu_items").select("id").eq("id", itemId).eq("vendor_id", vendorId).maybeSingle();
   if (!existing) return { error: "Menu item not found." };
 
+  const imageResult = await resolveImageUrl(vendorId, formData);
+  if (!imageResult.ok) return { error: imageResult.error };
+
   const { error } = await admin
     .from("menu_items")
     .update({
       category_id: categoryId,
       name: name.trim(),
       description: (formData.get("description") as string | null) || null,
-      image_url: (formData.get("imageUrl") as string | null) || null,
+      image_url: imageResult.url,
       price_kobo: Math.round(priceNaira * 100),
       is_available: formData.get("isAvailable") === "on",
     })

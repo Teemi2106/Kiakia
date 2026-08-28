@@ -3,7 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import type { CartLineItem } from "@/lib/cart";
 import { useCart } from "./CartProvider";
+import { useOptimisticCartMutations } from "./useOptimisticCartMutations";
 import { X } from "lucide-react";
 import { CartDesktop } from "./CartDesktop";
 import { CartMobile } from "./CartMobile";
@@ -15,70 +17,81 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose, onUpdate }: CartDrawerProps) {
-  const [items, setItems] = useState<any[]>([]);
-  const [vendor, setVendor] = useState<{ id: string; name: string } | null>(
-    null,
-  );
+  const [items, setItems] = useState<CartLineItem[]>([]);
+  const [vendor, setVendor] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const { refreshKey } = useCart();
+  const { refreshCart } = useCart();
 
+  // Pure fetch, no setState — called both from the mount/open effect below
+  // and from the optimistic-mutation hook's error-recovery path. Kept
+  // state-free so the effect can do its own inline setState instead of
+  // passing a state-setting function reference into it, which is what
+  // tripped `react-hooks/set-state-in-effect` here previously (same fix as
+  // VendorMenu.tsx's fetchCartLines this session).
+  async function fetchCartData(): Promise<{ items: CartLineItem[]; vendor: { id: string; name: string } | null }> {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { items: [], vendor: null };
+
+    const { data: cart } = await supabase
+      .from("carts")
+      .select("id, vendor_id")
+      .eq("customer_id", user.id)
+      .eq("status", "open")
+      .maybeSingle();
+    if (!cart || !cart.vendor_id) return { items: [], vendor: null };
+
+    const [{ data: vendorData }, { data: cartItems }] = await Promise.all([
+      supabase.from("vendors").select("id, name").eq("id", cart.vendor_id).single(),
+      supabase.from("cart_items").select("id, menu_item_id, name_snapshot, unit_price_kobo, qty, options_snapshot, line_total_kobo").eq("cart_id", cart.id),
+    ]);
+
+    return { items: cartItems ?? [], vendor: vendorData ?? null };
+  }
+
+  // Fetch on every open (not just the first), since the cart can genuinely
+  // change while the drawer is closed (e.g. adding an item from a vendor
+  // page) — but never re-block on the full-screen spinner for it: `loading`
+  // only starts true and is only ever set false, once, on the very first
+  // fetch. Every later reopen silently refreshes `items`/`vendor` into the
+  // background without hiding what's already on screen. This also no
+  // longer depends on refreshKey — quantity changes are applied
+  // optimistically (see useOptimisticCartMutations), so a mutation no
+  // longer re-runs this effect at all, which is what used to make every
+  // +/- tap block on "Loading your cart..." instead of feeling instant.
   useEffect(() => {
     if (!isOpen) return;
-
-    async function fetchCart() {
-      setLoading(true);
-      const supabase = createClient();
-
-      // Get the current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      // Get the open cart
-      const { data: cart } = await supabase
-        .from("carts")
-        .select("id, vendor_id")
-        .eq("customer_id", user.id)
-        .eq("status", "open")
-        .maybeSingle();
-
-      if (!cart || !cart.vendor_id) {
-        setItems([]);
-        setVendor(null);
-        setLoading(false);
-        return;
-      }
-
-      // Get vendor details
-      const { data: vendorData } = await supabase
-        .from("vendors")
-        .select("id, name")
-        .eq("id", cart.vendor_id)
-        .single();
-
-      // Get cart items
-      const { data: cartItems } = await supabase
-        .from("cart_items")
-        .select(
-          "id, menu_item_id, name_snapshot, unit_price_kobo, qty, options_snapshot, line_total_kobo",
-        )
-        .eq("cart_id", cart.id);
-
-      setItems(cartItems || []);
-      setVendor(vendorData || null);
+    let cancelled = false;
+    fetchCartData().then(({ items: fetched, vendor: fetchedVendor }) => {
+      if (cancelled) return;
+      setItems(fetched);
+      setVendor(fetchedVendor);
       setLoading(false);
-    }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
-    fetchCart();
-  }, [isOpen, refreshKey]); // Re-fetch when cart opens or refreshKey changes
+  const { pendingId, changeQty, remove, clearAll } = useOptimisticCartMutations(items, setItems, {
+    // Silent re-fetch after a failed mutation — no spinner, just corrects
+    // local state back to whatever the server actually has.
+    onError: async () => {
+      const { items: fetched, vendor: fetchedVendor } = await fetchCartData();
+      setItems(fetched);
+      setVendor(fetchedVendor);
+    },
+    onMutated: () => {
+      refreshCart(); // syncs the header badge/CartFab count
+      onUpdate?.();
+    },
+  });
 
   if (!isOpen) return null;
 
-  // Show loading state
+  // Show loading state (only ever true on the first open, see the effect above)
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80">
@@ -135,19 +148,17 @@ export function CartDrawer({ isOpen, onClose, onUpdate }: CartDrawerProps) {
   return (
     <>
       <div className="hidden md:block">
-        <CartDesktop
-          items={items}
-          vendor={vendor}
-          onClose={onClose}
-          onUpdate={onUpdate}
-        />
+        <CartDesktop items={items} vendor={vendor} onClose={onClose} pendingId={pendingId} onQtyChange={changeQty} onRemove={remove} />
       </div>
       <div className="md:hidden">
         <CartMobile
           items={items}
           vendor={vendor}
           onClose={onClose}
-          onUpdate={onUpdate}
+          pendingId={pendingId}
+          onQtyChange={changeQty}
+          onRemove={remove}
+          onClearAll={clearAll}
         />
       </div>
     </>

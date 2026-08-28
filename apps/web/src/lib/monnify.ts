@@ -145,6 +145,72 @@ export async function verifyTransaction(transactionReference: string): Promise<T
   );
 }
 
+export type MonnifyRefundStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
+
+export interface RefundResult {
+  refundReference: string;
+  transactionReference: string;
+  refundReason: string;
+  customerNote: string;
+  refundAmount: number; // Naira, same gotcha as everywhere else in this file
+  refundStatus: MonnifyRefundStatus;
+  refundType: string;
+  createdOn: string;
+  completedOn: string | null;
+  comment: string | null;
+}
+
+export interface InitiateRefundInput {
+  transactionReference: string;
+  /** Caller's own idempotency anchor — reuse the same string across retries
+   * (this app uses "<order.code>-refund") so a retried call can never
+   * become a second, separate refund at Monnify's end. */
+  refundReference: string;
+  refundAmountKobo: number;
+  /** Max 64 chars per Monnify's contract — truncated here, not at call sites. */
+  refundReason: string;
+  /** Shown on the customer's bank credit alert — max 16 chars per Monnify's contract. */
+  customerNote: string;
+}
+
+/**
+ * Initiates an actual refund at Monnify — money leaving the platform's
+ * Monnify balance back to the customer, not just a KiaKia-internal ledger
+ * entry (that's `_unwind_order_escrow_ledger()`/refund_order_escrow(),
+ * which only reverses our own books and cannot reach Monnify's API at all —
+ * Postgres has no HTTP client here). Endpoint/request/response shape
+ * confirmed against Monnify's own docs (developers.monnify.com/docs/collections/refunds)
+ * and a real third-party client's source, not assumed from memory —
+ * `refundStatus` is still worth reconfirming against a live sandbox refund
+ * before this is trusted in production, same discipline this file's own
+ * header applies to the amount-unit gotcha.
+ */
+export async function initiateRefund(input: InitiateRefundInput): Promise<RefundResult> {
+  return monnifyFetch<RefundResult>("/api/v1/refunds/initiate-refund", {
+    method: "POST",
+    body: JSON.stringify({
+      transactionReference: input.transactionReference,
+      refundReference: input.refundReference,
+      refundAmount: koboToNaira(koboOf(input.refundAmountKobo)),
+      refundReason: input.refundReason.slice(0, 64),
+      customerNote: input.customerNote.slice(0, 16),
+    }),
+  });
+}
+
+/**
+ * Polls a previously-initiated refund's current status by the SAME
+ * refundReference initiateRefund() was called with — Monnify's refund
+ * completion is asynchronous (PENDING/IN_PROGRESS at initiation time), this
+ * is how a caller finds out later whether it actually completed.
+ * Not yet called from anywhere in this app (no polling job exists), but
+ * kept alongside initiateRefund() since it shares the same client/gotchas
+ * and any future retry/reconciliation job will need it.
+ */
+export async function getRefundStatus(refundReference: string): Promise<RefundResult> {
+  return monnifyFetch<RefundResult>(`/api/v1/refunds/${encodeURIComponent(refundReference)}`);
+}
+
 /**
  * Maps Monnify's payment-method vocabulary to ours
  * (`orders.payment_method` / `payments.channel`: 'card' | 'bank_transfer' |
@@ -166,21 +232,11 @@ export function mapMonnifyPaymentMethod(paymentMethod: string | null): "card" | 
   }
 }
 
-/**
- * Verifies the `monnify-signature` header: HMAC-SHA512(rawBody, apiSecret),
- * hex digest, timing-safe compared. Must run on the raw request body, not a
- * re-serialized JSON.parse(...) of it — whitespace/key-order differences
- * would break the hash.
- */
-export async function verifyWebhookSignature(rawBody: string, signatureHeader: string | null): Promise<boolean> {
-  if (!signatureHeader) return false;
-
-  const { createHmac, timingSafeEqual } = await import("node:crypto");
-  const expected = createHmac("sha512", serverEnv.MONNIFY_API_SECRET).update(rawBody).digest("hex");
-
-  const expectedBuffer = Buffer.from(expected, "hex");
-  const actualBuffer = Buffer.from(signatureHeader, "hex");
-  if (expectedBuffer.length !== actualBuffer.length) return false;
-
-  return timingSafeEqual(expectedBuffer, actualBuffer);
-}
+// verifyWebhookSignature() used to live here — it moved to
+// supabase/functions/monnify-webhook/index.ts (a Web Crypto port, since
+// Deno's edge runtime is the only place that HMAC check still runs) when
+// the Monnify webhook itself moved from a Next.js Route Handler to a
+// Supabase Edge Function, for independent uptime. Nothing in this app
+// verifies that signature anymore — the order detail page's fallback
+// capture (orders/[id]/page.tsx) re-verifies the transaction itself
+// against Monnify's API, which needs no signature at all.

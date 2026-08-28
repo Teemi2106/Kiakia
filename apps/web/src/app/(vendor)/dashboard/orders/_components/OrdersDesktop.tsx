@@ -30,7 +30,6 @@ export function OrdersDesktop({ orders, onStatusChange }: OrdersDesktopProps) {
           orders={orders}
           selectedOrder={selectedOrder}
           onSelectOrder={(order) => setSelectedId(order.id)}
-          variant="desktop"
         />
       </section>
 

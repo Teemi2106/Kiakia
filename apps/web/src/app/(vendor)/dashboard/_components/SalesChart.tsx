@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { formatNaira, koboOf } from "@kiakia/domain";
+import { ChartBar } from "lucide-react";
 import type { SalesDataPoint } from "./types";
 
 interface SalesChartProps {
@@ -18,6 +19,22 @@ interface SalesChartProps {
 }
 
 export function SalesChart({ data }: SalesChartProps) {
+  const hasSales = data.some((point) => point.salesKobo > 0);
+
+  if (!hasSales) {
+    return (
+      <div className="flex h-48 w-full flex-col items-center justify-center gap-2 text-center">
+        <span className="flex size-10 items-center justify-center rounded-full bg-white text-[#5B403C]">
+          <ChartBar className="size-5" />
+        </span>
+        <p className="text-sm font-medium text-[#1C1B1B]">No sales yet this week</p>
+        <p className="max-w-[220px] text-xs text-[#5B403C]">
+          Completed orders from the last 7 days will show up here.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">

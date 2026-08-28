@@ -64,13 +64,15 @@ export interface OrderRow {
   service_fee_kobo: number;
   discount_kobo: number;
   total_kobo: number;
-  payment_method: "card" | "bank_transfer" | "ussd" | null;
+  payment_method: "card" | "bank_transfer" | "ussd" | "wallet" | null;
   payment_status: "pending" | "paid" | "failed" | "refunded";
   promo_code: string | null;
   delivery_address: Json;
   delivery_location: string;
   delivery_note: string | null;
   distance_m: number | null;
+  rider_fee_kobo: number;
+  rider_pickup_distance_m: number | null;
   placed_at: string | null;
   accepted_at: string | null;
   ready_at: string | null;
@@ -135,7 +137,10 @@ export interface VendorRow {
   category: string;
   address_line: string | null;
   landmark: string | null;
+  state: string | null;
   location: string | null;
+  location_lat: number | null;
+  location_lng: number | null;
   logo_url: string | null;
   banner_url: string | null;
   status: "pending" | "active" | "suspended";
@@ -188,6 +193,34 @@ export type OrderStatus =
 export interface Database {
   public: {
     Tables: {
+      notifications: {
+        Row: {
+          id: string;
+          customer_id: string;
+          order_id: string | null;
+          title: string;
+          body: string;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          order_id?: string | null;
+          title: string;
+          body: string;
+          is_read?: boolean;
+        };
+        Update: {
+          id?: string;
+          customer_id?: string;
+          order_id?: string | null;
+          title?: string;
+          body?: string;
+          is_read?: boolean;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;
@@ -246,6 +279,8 @@ export interface Database {
           city: string;
           state: string;
           location: string;
+          location_lat: number | null;
+          location_lng: number | null;
           is_default: boolean;
           created_at: string;
         };
@@ -258,6 +293,8 @@ export interface Database {
           city?: string;
           state?: string;
           location: string;
+          location_lat?: number | null;
+          location_lng?: number | null;
           is_default?: boolean;
         };
         Update: {
@@ -269,6 +306,8 @@ export interface Database {
           city?: string;
           state?: string;
           location?: string;
+          location_lat?: number | null;
+          location_lng?: number | null;
           is_default?: boolean;
         };
         Relationships: [];
@@ -314,6 +353,14 @@ export interface Database {
           base_delivery_fee_kobo: number;
           per_km_fee_kobo: number;
           free_above_kobo: number | null;
+          // rider_base_fee_kobo/rider_per_km_fee_kobo (0044) are
+          // column-REVOKEd from anon/authenticated — internal payout
+          // economics, not customer-facing. Present here for service_role
+          // callers only; a real generator run against RLS-aware grants
+          // would still list them (column grants aren't RLS), so this
+          // matches what `supabase gen types` would actually emit.
+          rider_base_fee_kobo: number;
+          rider_per_km_fee_kobo: number;
           launched_at: string | null;
           created_at: string;
         };
@@ -325,6 +372,8 @@ export interface Database {
           base_delivery_fee_kobo: number;
           per_km_fee_kobo: number;
           free_above_kobo?: number | null;
+          rider_base_fee_kobo?: number;
+          rider_per_km_fee_kobo?: number;
           launched_at?: string | null;
         };
         Update: {
@@ -335,6 +384,8 @@ export interface Database {
           base_delivery_fee_kobo?: number;
           per_km_fee_kobo?: number;
           free_above_kobo?: number | null;
+          rider_base_fee_kobo?: number;
+          rider_per_km_fee_kobo?: number;
           launched_at?: string | null;
         };
         Relationships: [];
@@ -350,7 +401,10 @@ export interface Database {
           category: string;
           address_line: string | null;
           landmark: string | null;
+          state: string | null;
           location: string | null;
+          location_lat: number | null;
+          location_lng: number | null;
           logo_url: string | null;
           banner_url: string | null;
           status: "pending" | "active" | "suspended";
@@ -376,7 +430,10 @@ export interface Database {
           category?: string;
           address_line?: string | null;
           landmark?: string | null;
+          state?: string | null;
           location?: string | null;
+          location_lat?: number | null;
+          location_lng?: number | null;
           logo_url?: string | null;
           banner_url?: string | null;
           status?: "pending" | "active" | "suspended";
@@ -400,7 +457,10 @@ export interface Database {
           category?: string;
           address_line?: string | null;
           landmark?: string | null;
+          state?: string | null;
           location?: string | null;
+          location_lat?: number | null;
+          location_lng?: number | null;
           logo_url?: string | null;
           banner_url?: string | null;
           status?: "pending" | "active" | "suspended";
@@ -624,13 +684,15 @@ export interface Database {
           service_fee_kobo: number;
           discount_kobo: number;
           total_kobo: number;
-          payment_method: "card" | "bank_transfer" | "ussd" | null;
+          payment_method: "card" | "bank_transfer" | "ussd" | "wallet" | null;
           payment_status: "pending" | "paid" | "failed" | "refunded";
           promo_code: string | null;
           delivery_address: Json;
           delivery_location: string;
           delivery_note: string | null;
           distance_m: number | null;
+          rider_fee_kobo: number;
+          rider_pickup_distance_m: number | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -660,7 +722,7 @@ export interface Database {
           service_fee_kobo?: number;
           discount_kobo?: number;
           total_kobo: number;
-          payment_method?: "card" | "bank_transfer" | "ussd" | null;
+          payment_method?: "card" | "bank_transfer" | "ussd" | "wallet" | null;
           payment_status?: "pending" | "paid" | "failed" | "refunded";
           promo_code?: string | null;
           delivery_address: Json;
@@ -713,9 +775,9 @@ export interface Database {
       accounts: {
         Row: {
           id: string;
-          owner_type: "platform" | "vendor" | "rider";
+          owner_type: "platform" | "vendor" | "rider" | "customer";
           owner_id: string | null;
-          kind: "escrow" | "available" | "pending_payout" | "revenue" | "gateway";
+          kind: "escrow" | "available" | "pending_payout" | "revenue" | "gateway" | "wallet";
           currency: "NGN";
           created_at: string;
         };
@@ -762,6 +824,13 @@ export interface Database {
           status: "pending" | "success" | "failed" | "refunded";
           raw: Json;
           idempotency_key: string;
+          // Monnify's OWN refund state (0043_monnify_refund_tracking.sql) —
+          // distinct from `status`/orders.payment_status = 'refunded', which
+          // only mean KiaKia's internal ledger was reversed. Set by the app
+          // layer (lib/monnify-refund.ts) after actually calling Monnify's
+          // initiate-refund API, never by a SQL function.
+          refund_reference: string | null;
+          refund_status: "pending" | "completed" | "failed" | null;
           created_at: string;
         };
         // The only ledger-adjacent table inserted directly via the JS admin
@@ -788,10 +857,16 @@ export interface Database {
           status?: "pending" | "success" | "failed" | "refunded";
           raw?: Json;
           idempotency_key: string;
+          refund_reference?: string | null;
+          refund_status?: "pending" | "completed" | "failed" | null;
         };
         Update: {
           provider_ref?: string;
           amount_kobo?: number;
+          // Deliberately exposed here (unlike `status` above) — the app
+          // layer is the only writer of these two, via lib/monnify-refund.ts.
+          refund_reference?: string | null;
+          refund_status?: "pending" | "completed" | "failed" | null;
         };
         Relationships: [];
       };
@@ -875,13 +950,15 @@ export interface Database {
           service_fee_kobo: number;
           discount_kobo: number;
           total_kobo: number;
-          payment_method: "card" | "bank_transfer" | "ussd" | null;
+          payment_method: "card" | "bank_transfer" | "ussd" | "wallet" | null;
           payment_status: "pending" | "paid" | "failed" | "refunded";
           promo_code: string | null;
           delivery_address: Json;
           delivery_location: string;
           delivery_note: string | null;
           distance_m: number | null;
+          rider_fee_kobo: number;
+          rider_pickup_distance_m: number | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -915,13 +992,15 @@ export interface Database {
           service_fee_kobo: number;
           discount_kobo: number;
           total_kobo: number;
-          payment_method: "card" | "bank_transfer" | "ussd" | null;
+          payment_method: "card" | "bank_transfer" | "ussd" | "wallet" | null;
           payment_status: "pending" | "paid" | "failed" | "refunded";
           promo_code: string | null;
           delivery_address: Json;
           delivery_location: string;
           delivery_note: string | null;
           distance_m: number | null;
+          rider_fee_kobo: number;
+          rider_pickup_distance_m: number | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -945,6 +1024,7 @@ export interface Database {
           p_landmark?: string | null;
           p_location?: string | null;
           p_service_area_id?: string | null;
+          p_state?: string | null;
         };
         Returns: {
           id: string;
@@ -956,7 +1036,10 @@ export interface Database {
           category: string;
           address_line: string | null;
           landmark: string | null;
+          state: string | null;
           location: string | null;
+          location_lat: number | null;
+          location_lng: number | null;
           logo_url: string | null;
           banner_url: string | null;
           status: "pending" | "active" | "suspended";
@@ -996,13 +1079,15 @@ export interface Database {
           service_fee_kobo: number;
           discount_kobo: number;
           total_kobo: number;
-          payment_method: "card" | "bank_transfer" | "ussd" | null;
+          payment_method: "card" | "bank_transfer" | "ussd" | "wallet" | null;
           payment_status: "pending" | "paid" | "failed" | "refunded";
           promo_code: string | null;
           delivery_address: Json;
           delivery_location: string;
           delivery_note: string | null;
           distance_m: number | null;
+          rider_fee_kobo: number;
+          rider_pickup_distance_m: number | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -1181,6 +1266,14 @@ export interface Database {
           total_kobo: number;
           delivery_fee_kobo: number;
           distance_m: number | null;
+          // pickup_distance_m/rider_fee_estimate_kobo (0044) — a live,
+          // non-authoritative estimate of the rider's own trip pay, NULL
+          // whenever the rider's current_location, the vendor's location,
+          // or the order's service area rates are missing. The
+          // authoritative number is orders.rider_fee_kobo, set by
+          // accept_dispatch_offer() at accept time.
+          pickup_distance_m: number | null;
+          rider_fee_estimate_kobo: number | null;
         };
       };
       // get_rider_earnings (0032) — riders could not see their own balances at
@@ -1208,8 +1301,42 @@ export interface Database {
           p_order_id: string;
           p_actor_id: string;
           p_reason: string;
+          /** 0045_customer_wallet.sql — defaults to "wallet" server-side. */
+          p_destination?: "wallet" | "gateway";
         };
         Returns: OrderRow;
+      };
+
+      // The customer wallet (0045_customer_wallet.sql). pay_order_from_wallet
+      // and both read functions are granted to `authenticated` — unlike every
+      // other money RPC here — because they act only on the caller's own
+      // wallet and re-derive the caller, the amount and the balance
+      // server-side from auth.uid().
+      pay_order_from_wallet: {
+        Args: {
+          p_order_id: string;
+        };
+        Returns: OrderRow;
+      };
+      get_wallet_balance: {
+        // Deliberately argument-less: there is no parameter that could point
+        // it at another user's wallet.
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      get_wallet_transactions: {
+        Args: {
+          p_limit?: number;
+        };
+        Returns: {
+          created_at: string;
+          direction: "debit" | "credit";
+          amount_kobo: number;
+          entry_type: string;
+          order_id: string | null;
+          order_code: string | null;
+          description: string | null;
+        }[];
       };
       admin_reset_delivery_code_attempts: {
         Args: {

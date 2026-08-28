@@ -2,11 +2,13 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
+import type { OrderStatus } from "@kiakia/domain";
 import { OrderStatusBadge } from "@kiakia/ui";
-import { ForkKnifeCrossedIcon } from "lucide-react";
+import { Clock, ForkKnifeCrossedIcon } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Order } from "./types";
+import { timeAgo } from "./timeAgo";
 
 interface PreparingOrderProps {
   order: Order;
@@ -22,17 +24,6 @@ export function PreparingOrder({
   const getItemsSummary = (items?: Array<{ name: string; qty: number }>) => {
     if (!items || items.length === 0) return "No items";
     return items.map((item) => `${item.qty}x ${item.name}`).join(", ");
-  };
-
-  const getProgress = (status: string) => {
-    switch (status) {
-      case "out_for_delivery":
-        return 66;
-      case "preparing":
-        return 33;
-      default:
-        return 0;
-    }
   };
 
   return (
@@ -64,7 +55,7 @@ export function PreparingOrder({
             <p className="font-inter text-xs text-[#5B403C]">{order.code}</p>
           </div>
         </div>
-        <OrderStatusBadge className="px-3" status={order.status as any} />
+        <OrderStatusBadge className="px-3" status={order.status as OrderStatus} />
       </div>
 
       <div className="mt-4">
@@ -73,19 +64,11 @@ export function PreparingOrder({
         </p>
       </div>
 
-      <div className="mt-4">
-        <div className="flex items-center justify-between">
-          <span className="font-inter text-xs text-[#5B403C]">Progress</span>
-          <span className="font-inter text-xs font-semibold text-[#934B00]">
-            {getProgress(order.status)}%
-          </span>
-        </div>
-        <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-[#E5E2E1]">
-          <div
-            className="h-full rounded-full bg-[#934B00]"
-            style={{ width: `${getProgress(order.status)}%` }}
-          />
-        </div>
+      <div className="mt-4 flex items-center gap-2 rounded-lg bg-[#F6F3F2] px-3 py-2">
+        <Clock className="size-4 text-[#934B00]" />
+        <span className="font-inter text-xs font-semibold text-[#934B00]">
+          Ordered {timeAgo(order.created_at)}
+        </span>
       </div>
 
       <div className="mt-6 flex items-center justify-between border-t border-[#EAE7E7] pt-4">

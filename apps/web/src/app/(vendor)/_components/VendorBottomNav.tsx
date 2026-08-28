@@ -49,7 +49,13 @@ export function VendorBottomNav() {
   const pathname = usePathname();
   return (
     <div className="sm:hidden">
-      <BottomNav items={ITEMS} activeHref={pathname} LinkComponent={Link} />
+      <BottomNav
+        items={ITEMS}
+        activeHref={pathname}
+        LinkComponent={Link}
+        activeBgClassName="bg-[#B61913]"
+        activeTextClassName="text-white"
+      />
     </div>
   );
 }

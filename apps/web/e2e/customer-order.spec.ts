@@ -4,10 +4,12 @@ import { e2eEnv, loginAs } from "./fixtures";
 // Golden path: login -> browse -> add an item to cart -> checkout. Stops at
 // the "Pay with Monnify" submit rather than following it through Monnify's
 // hosted checkout — a real payment capture depends on Monnify's sandbox UI
-// and our webhook, which is Vitest-covered separately
-// (src/app/api/webhooks/monnify/route.test.ts). This proves the app-side
-// half of the flow actually works end-to-end against a real Supabase
-// project: real auth, real RLS-scoped cart writes, real place_order() call.
+// and the `monnify-webhook` Supabase Edge Function
+// (supabase/functions/monnify-webhook/), which lives outside this Next.js
+// app and isn't something a Playwright run against the app can exercise.
+// This proves the app-side half of the flow actually works end-to-end
+// against a real Supabase project: real auth, real RLS-scoped cart writes,
+// real place_order() call.
 test.describe("customer: browse to checkout", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, e2eEnv.customerEmail, e2eEnv.customerPassword);

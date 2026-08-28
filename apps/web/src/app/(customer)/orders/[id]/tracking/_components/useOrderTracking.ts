@@ -51,18 +51,31 @@ const INITIAL_STATE: OrderTrackingState = {
   realtimeStatus: "connecting",
 };
 
+const FIRST_RETRY_MS = 2_000;
+const MAX_RETRY_MS = 30_000;
+
 /**
  * Loads the tracking map's initial snapshot via get_order_tracking()
- * (supabase/migrations/0027_order_tracking.sql) and then keeps it live over
+ * (supabase/migrations/0029_order_tracking.sql) and then keeps it live over
  * Supabase Realtime on `orders` + `order_rider_locations`
  * (0026_rider_self_service.sql). Dispatch (0019/0023/0026/0028) is fully
- * built, so a live rider position is an expected, real state here — not a
- * "phase 3, not built yet" placeholder.
+ * built, so a live rider position is an expected, real state here.
  *
  * A terminal order (delivered/cancelled/rejected/failed) never opens a
  * Realtime channel at all: 0026's own trigger already deleted its
  * order_rider_locations row and the order will never transition again, so
  * there is nothing left to subscribe to.
+ *
+ * Two things keep this genuinely live rather than merely started-live:
+ *
+ * 1. A dropped channel is retried with backoff. Without it, one
+ *    CHANNEL_ERROR left the map frozen on the last position it happened to
+ *    receive, under a "Reconnecting…" hint that was never going to become
+ *    true — worse than an obviously broken map, because it looks current.
+ * 2. Every re-connection, and every return to a backgrounded tab, re-reads
+ *    the snapshot. Realtime does not replay what was missed while the socket
+ *    was down, and phones suspend sockets aggressively — reconnecting
+ *    without a resync silently resumes from a stale rider position.
  */
 export function useOrderTracking(orderId: string | undefined): OrderTrackingState {
   const [state, setState] = useState<OrderTrackingState>(INITIAL_STATE);
@@ -71,19 +84,23 @@ export function useOrderTracking(orderId: string | undefined): OrderTrackingStat
     // Note: this hook is only ever mounted under a fixed `orders/[id]/tracking`
     // route param, so `orderId` changing without a full remount isn't a real
     // path — no reset-to-INITIAL_STATE call here. Every setState call below
-    // (including the `!orderId` guard) lives inside the async `run()`
-    // function, never directly in this synchronous effect body — matching
-    // CartProvider.tsx's own effect shape, since react-hooks/set-state-in-effect
-    // flags a setState call made synchronously in an effect's own body.
+    // lives inside an async function or a callback, never directly in this
+    // synchronous effect body — matching CartProvider.tsx's own effect shape,
+    // since react-hooks/set-state-in-effect flags a setState call made
+    // synchronously in an effect's own body.
     let cancelled = false;
     const supabase = createClient();
     let channel: ReturnType<typeof supabase.channel> | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let retryAttempt = 0;
 
-    async function run() {
-      if (!orderId) {
-        setState((s) => ({ ...s, loading: false, error: true }));
-        return;
-      }
+    /**
+     * Reads the authoritative current state. Returns the order's status so
+     * callers can decide whether a subscription is still worth opening, or
+     * null if the read failed.
+     */
+    async function loadSnapshot(isInitial: boolean): Promise<OrderStatus | null> {
+      if (!orderId) return null;
 
       const { data: rawData, error } = await supabase
         .rpc("get_order_tracking", { p_order_id: orderId })
@@ -100,29 +117,70 @@ export function useOrderTracking(orderId: string | undefined): OrderTrackingStat
       // to here rather than a hand-duplicated local type.
       const data = rawData as GetOrderTrackingRow | null;
 
-      if (cancelled) return;
+      if (cancelled) return null;
 
       if (error || !data) {
-        setState((s) => ({ ...s, loading: false, error: true }));
-        return;
+        // A failed *resync* must not blank out a map that is otherwise
+        // working — only the very first read can put this into the error
+        // state the map renders as "Couldn't load the live map".
+        if (isInitial) setState((s) => ({ ...s, loading: false, error: true }));
+        return null;
       }
 
-      const initialStatus = data.status as OrderStatus;
+      const status = data.status as OrderStatus;
 
       setState((s) => ({
         ...s,
         loading: false,
         error: false,
-        status: initialStatus,
+        status,
         vendor: toLatLng(data.vendor_lat, data.vendor_lng),
         destination: toLatLng(data.destination_lat, data.destination_lng),
         rider: toLatLng(data.rider_lat, data.rider_lng),
       }));
 
-      if (isTerminalStatus(initialStatus)) return;
+      return status;
+    }
+
+    function scheduleRetry() {
+      if (cancelled || retryTimer) return;
+      // 2s, 4s, 8s, 16s, then every 30s. Deliberately does NOT flip
+      // realtimeStatus back to "connecting": the map's hint should stay up
+      // for as long as the data is actually stale, not blink off on a
+      // reconnect attempt that may itself fail.
+      const delay = Math.min(FIRST_RETRY_MS * 2 ** retryAttempt, MAX_RETRY_MS);
+      retryAttempt += 1;
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        void openChannel(false);
+      }, delay);
+    }
+
+    async function openChannel(isFirstAttempt: boolean) {
+      if (cancelled || !orderId) return;
+
+      // A reconnect has to start from the truth, not from wherever the last
+      // surviving event left the map.
+      if (!isFirstAttempt) {
+        const status = await loadSnapshot(false);
+        if (cancelled) return;
+        // The order finished while we were disconnected — nothing left to
+        // subscribe to, and the map is now showing its final state.
+        if (status && isTerminalStatus(status)) return;
+      }
+
+      // Await removal of any stale same-topic channel — left over from a
+      // StrictMode double-invoked run of this effect, or from the drop we
+      // are recovering from. See NotificationsButton.tsx's identical guard
+      // for why: supabase.channel() dedupes by topic and would otherwise
+      // hand back an already-subscribed channel, and .on() throws on those.
+      const topic = `order-tracking-${orderId}`;
+      const stale = supabase.getChannels().find((c) => c.topic === `realtime:${topic}`);
+      if (stale) await supabase.removeChannel(stale);
+      if (cancelled) return;
 
       channel = supabase
-        .channel(`order-tracking-${orderId}`)
+        .channel(topic)
         .on<OrderRow>(
           "postgres_changes",
           { event: "*", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
@@ -163,21 +221,48 @@ export function useOrderTracking(orderId: string | undefined): OrderTrackingStat
           // Any other transient value along the way is left as "connecting",
           // never flashed as a disconnect.
           if (subscribeStatus === "SUBSCRIBED") {
+            retryAttempt = 0;
             setState((s) => ({ ...s, realtimeStatus: "connected" }));
+            // Catch up on anything that happened while the channel was down.
+            if (!isFirstAttempt) void loadSnapshot(false);
           } else if (
             subscribeStatus === "TIMED_OUT" ||
             subscribeStatus === "CHANNEL_ERROR" ||
             subscribeStatus === "CLOSED"
           ) {
             setState((s) => ({ ...s, realtimeStatus: "disconnected" }));
+            scheduleRetry();
           }
         });
     }
 
-    void run();
+    // A backgrounded tab's socket is routinely suspended and silently
+    // resumed, so coming back to the page is the other moment the drawn
+    // position is most likely to be behind reality.
+    function onVisibilityChange() {
+      if (document.visibilityState !== "visible" || cancelled || !channel) return;
+      void loadSnapshot(false);
+    }
+
+    async function start() {
+      if (!orderId) {
+        setState((s) => ({ ...s, loading: false, error: true }));
+        return;
+      }
+
+      const status = await loadSnapshot(true);
+      if (cancelled || !status || isTerminalStatus(status)) return;
+
+      await openChannel(true);
+      if (!cancelled) document.addEventListener("visibilitychange", onVisibilityChange);
+    }
+
+    void start();
 
     return () => {
       cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       if (channel) supabase.removeChannel(channel);
     };
   }, [orderId]);

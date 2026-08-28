@@ -36,9 +36,22 @@ export default async function CustomerLayout({
 
   return (
     <CartProvider>
-      <div className="flex min-h-screen flex-col bg-[#FCF9F8]">
+      {/* CustomerTopNav is `fixed` and CustomerBottomNav is `fixed`, so
+          neither takes up space in the flow — <main> has to be inset by both
+          or they sit on top of the page. That offset lives here, once, rather
+          than being re-derived as a magic `pt-` on every customer page: it
+          was missing from all of them except /home (which had a pt-20 that
+          was right for the desktop bar and ~50px short of the stacked mobile
+          one), so the first line of most screens rendered underneath the
+          header.
+
+          --kk-nav-h must equal CustomerTopNav's real height: 56px identity
+          row + 84px address/search row + 1px border below `lg`, and a single
+          72px row + 1px border at `lg` and up. --kk-tabbar-h matches
+          BottomNav's h-16, which disappears at the same `lg` breakpoint. */}
+      <div className="flex min-h-screen flex-col bg-kk-cream [--kk-nav-h:141px] [--kk-tabbar-h:4rem] lg:[--kk-nav-h:73px] lg:[--kk-tabbar-h:0px]">
         <CustomerTopNav canSwitchToVendor={canSwitchToVendor} />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 pt-(--kk-nav-h) pb-(--kk-tabbar-h)">{children}</main>
         <CustomerBottomNav />
       </div>
     </CartProvider>

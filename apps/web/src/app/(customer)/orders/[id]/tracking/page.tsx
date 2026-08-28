@@ -95,7 +95,11 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
     .maybeSingle();
 
   const [{ data: vendorRow }, { count: itemCount }, riderRows] = await Promise.all([
-    supabase.from("vendors").select("name").eq("id", order.vendor_id).maybeSingle(),
+    supabase
+      .from("vendors")
+      .select("name, logo_url")
+      .eq("id", order.vendor_id)
+      .maybeSingle(),
     supabase
       .from("order_items")
       .select("id", { count: "exact", head: true })
@@ -118,6 +122,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
   const vendor: Vendor = {
     name: vendorRow?.name ?? "Vendor",
     itemCount: itemCount ?? 0,
+    logoUrl: vendorRow?.logo_url ?? undefined,
   };
 
   // rider_id is a real FK, but no Server Action in this app assigns one yet
@@ -148,7 +153,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
 
   return (
     <>
-      <div className="hidden pt-6 lg:block">
+      <div className="hidden lg:block">
         <TrackingDesktop
           steps={steps}
           driver={driver}

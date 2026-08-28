@@ -1,5 +1,5 @@
 // app/login/page.tsx
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import ImagePane from "../_components/ImagePane";
 import { MobileLoginLayout } from "./components/MobileLoginLayout";
 import { DesktopLoginLayout } from "./components/DesktopLoginLayout";

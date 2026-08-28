@@ -2,9 +2,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Utensils } from "lucide-react";
-import { AvailabilityToggle } from "./MenuItemRowActions";
+import { Pencil, Utensils } from "lucide-react";
+import { AvailabilityToggle, DeleteItemButton } from "./MenuItemRowActions";
 import type { MenuItem } from "./types";
 
 interface MenuCardProps {
@@ -19,7 +20,7 @@ export function MenuCard({
   onToggleAvailability,
 }: MenuCardProps) {
   return (
-    <div className="flex cursor-pointer flex-col overflow-hidden rounded-xl border border-[#E4BEB8] bg-white transition-all hover:shadow-lg active:scale-[0.98]">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#E4BEB8] bg-white shadow-sm transition-all hover:shadow-lg">
       {/* Image */}
       <div className="relative h-48 w-full overflow-hidden bg-[#F0EDED]">
         {item.image_url ? (
@@ -34,14 +35,21 @@ export function MenuCard({
             <Utensils className="size-12 text-[#5B403C]/30" />
           </div>
         )}
+        <Link
+          href={`/dashboard/menu/items/${item.id}/edit`}
+          className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-white/90 text-[#5B403C] shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-[#B61913]"
+          aria-label="Edit item"
+        >
+          <Pencil className="size-4" />
+        </Link>
       </div>
 
       {/* Content */}
       <div className="flex flex-1 flex-col justify-between p-4">
         <div>
-          <div className="mb-1 flex items-start justify-between">
+          <div className="mb-1 flex items-start justify-between gap-2">
             <h3 className="font-inter font-bold text-[#1C1B1B]">{item.name}</h3>
-            <span className="font-bold text-[#B61913]">
+            <span className="shrink-0 font-bold text-[#B61913]">
               {formatNaira(koboOf(item.price_kobo))}
             </span>
           </div>
@@ -58,7 +66,7 @@ export function MenuCard({
           >
             {item.is_available ? "In Stock" : "Out of Stock"}
           </span>
-          <div onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1">
             <AvailabilityToggle
               vendorId={vendorId}
               itemId={item.id}
@@ -67,6 +75,7 @@ export function MenuCard({
                 onToggleAvailability(item.id, isAvailable)
               }
             />
+            <DeleteItemButton vendorId={vendorId} itemId={item.id} />
           </div>
         </div>
       </div>

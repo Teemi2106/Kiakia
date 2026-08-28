@@ -14,6 +14,7 @@ interface OrderCardProps {
 
 export function OrderCard({ order, isActive, onClick }: OrderCardProps) {
   const getTimeAgo = (date: string) => {
+    // eslint-disable-next-line react-hooks/purity -- relative "time ago" display genuinely needs the current wall-clock time; not used for anything correctness-sensitive
     const diff = Date.now() - new Date(date).getTime();
     const minutes = Math.floor(diff / 60000);
     if (minutes < 1) return "Just now";
@@ -23,17 +24,26 @@ export function OrderCard({ order, isActive, onClick }: OrderCardProps) {
 
   return (
     <div
-      className={`p-4 rounded-xl cursor-pointer transition-all ${
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick(order)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(order);
+        }
+      }}
+      className={`cursor-pointer rounded-xl p-4 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B61913] ${
         isActive
           ? "bg-[rgba(218,53,41,0.05)] border-2 border-[#B61913]"
-          : "bg-white border border-[#E4BEB8] hover:border-[#B61913]/40"
+          : "bg-white border border-[#E4BEB8] hover:border-[#B61913]/40 hover:shadow-sm"
       }`}
-      onClick={() => onClick(order)}
     >
       <div className="flex justify-between items-start mb-2">
         <div>
           <span className="text-sm font-bold text-[#5B403C]">{order.code}</span>
-          <h3 className="font-sora text-lg font-bold text-[#1C1B1B]">
+          <h3 className="flex items-center gap-1.5 font-sora text-lg font-bold text-[#1C1B1B]">
+            <User className="size-4 text-[#5B403C]/50" />
             {order.customer_name || "Customer"}
           </h3>
         </div>
@@ -44,7 +54,10 @@ export function OrderCard({ order, isActive, onClick }: OrderCardProps) {
           {order.items?.length || 0} Items •{" "}
           {formatNaira(koboOf(order.total_kobo))}
         </span>
-        <span className="text-sm italic">{getTimeAgo(order.created_at)}</span>
+        <span className="flex items-center gap-1 text-sm italic">
+          <Clock className="size-3.5" />
+          {getTimeAgo(order.created_at)}
+        </span>
       </div>
     </div>
   );

@@ -24,6 +24,15 @@ export interface BottomNavProps {
    * prefetching/transitions; defaults to a plain `<a>` otherwise.
    */
   readonly LinkComponent?: ComponentType<LinkComponentProps>;
+  /**
+   * Active-tab pill background + text color, as Tailwind arbitrary-value
+   * classes (e.g. `bg-[#B61913]`/`text-white`). Defaults to the customer
+   * surface's orange — the vendor surface passes its own red brand color
+   * rather than this component silently applying the customer's accent
+   * everywhere it's reused (§6: shared across surfaces, not one brand).
+   */
+  readonly activeBgClassName?: string;
+  readonly activeTextClassName?: string;
 }
 
 const DefaultLink: ComponentType<LinkComponentProps> = ({
@@ -41,6 +50,8 @@ export function BottomNav({
   items,
   activeHref,
   LinkComponent = DefaultLink,
+  activeBgClassName = "bg-[#FE8E27]",
+  activeTextClassName = "text-[#653200]",
 }: BottomNavProps) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-10 flex h-16 items-center bg-[#F0EDED] px-[18.75px] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)] rounded-t-xl pb-[env(safe-area-inset-bottom)]">
@@ -52,25 +63,13 @@ export function BottomNav({
             href={item.href}
             className={cn(
               "flex flex-1 flex-col items-center justify-center transition-all",
-              active
-                ? "h-11 rounded-full bg-[#FE8E27] px-4 py-1"
-                : "h-[38px] px-2 py-0",
+              active ? cn("h-11 rounded-full px-4 py-1", activeBgClassName) : "h-[38px] px-2 py-0",
             )}
           >
-            <span
-              className={cn(
-                "flex items-center justify-center",
-                active ? "text-[#653200]" : "text-[#5B403C]",
-              )}
-            >
+            <span className={cn("flex items-center justify-center", active ? activeTextClassName : "text-[#5B403C]")}>
               {item.icon}
             </span>
-            <span
-              className={cn(
-                "text-xs font-medium leading-4",
-                active ? "text-[#653200]" : "text-[#5B403C]",
-              )}
-            >
+            <span className={cn("text-xs font-medium leading-4", active ? activeTextClassName : "text-[#5B403C]")}>
               {item.label}
             </span>
           </LinkComponent>

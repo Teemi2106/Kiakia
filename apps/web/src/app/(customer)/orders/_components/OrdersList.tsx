@@ -12,13 +12,25 @@ interface OrdersListProps {
   vendors: Vendor[];
 }
 
+// The order lifecycle (packages/domain/src/order-state-machine.ts) has nine
+// non-terminal statuses, not two — this page only ever had two buckets to
+// put them in, so every status besides the literal "in_transit"/"preparing"
+// (placed, accepted, ready_for_pickup, rider_assigned, picked_up, arrived)
+// used to fall through and render in NEITHER column, making an order that
+// was very much active look like there were no active orders at all.
+// Bucketed by whether a rider is actually involved yet: pre-rider statuses
+// go to "Preparing" (kitchen-side, links to the plain order detail page —
+// see PreparingOrder.tsx), rider-assigned-onward statuses go to "In
+// transit" (links to the live tracking map — see FeaturedOrder.tsx).
+const PREPARING_STATUSES = new Set(["placed", "accepted", "preparing", "ready_for_pickup"]);
+const IN_TRANSIT_STATUSES = new Set(["rider_assigned", "picked_up", "in_transit", "arrived"]);
+
 export function OrdersList({ orders, vendors }: OrdersListProps) {
   const getVendorName = (id: string) =>
     vendors?.find((v) => v.id === id)?.name ?? "Vendor";
 
-  // Split orders by status - using correct OrderStatus values
-  const inTransit = orders.filter((o) => o.status === "in_transit"); // Changed from "out_for_delivery"
-  const preparing = orders.filter((o) => o.status === "preparing");
+  const inTransit = orders.filter((o) => IN_TRANSIT_STATUSES.has(o.status));
+  const preparing = orders.filter((o) => PREPARING_STATUSES.has(o.status));
 
   return (
     <div className="space-y-8">
@@ -34,8 +46,7 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
                   order={order}
                   vendorName={getVendorName(order.vendor_id)}
                   vendorProfileImageUrl={
-                    vendors?.find((v) => v.id === order.vendor_id)
-                      ?.profile_image_url
+                    vendors?.find((v) => v.id === order.vendor_id)?.logo_url
                   }
                 />
               ))
@@ -57,8 +68,7 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
                   order={order}
                   vendorName={getVendorName(order.vendor_id)}
                   vendorProfileImageUrl={
-                    vendors?.find((v) => v.id === order.vendor_id)
-                      ?.profile_image_url
+                    vendors?.find((v) => v.id === order.vendor_id)?.logo_url
                   }
                 />
               ))
@@ -91,7 +101,7 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
             order={order}
             vendorName={getVendorName(order.vendor_id)}
             vendorProfileImageUrl={
-              vendors?.find((v) => v.id === order.vendor_id)?.profile_image_url
+              vendors?.find((v) => v.id === order.vendor_id)?.logo_url
             }
           />
         ))}

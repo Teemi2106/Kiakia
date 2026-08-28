@@ -1,8 +1,7 @@
 // app/(vendor)/history/page.tsx
 import { getVendorForCurrentUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
-import { formatNaira, koboOf } from "@kiakia/domain";
-import { Card, EmptyState, OrderStatusBadge } from "@kiakia/ui";
+import { PackageSearch } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -46,10 +45,26 @@ export default async function VendorHistoryPage() {
 
   if (orders.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
-        <h1 className="text-xl font-semibold text-ink">Order History</h1>
-        <div className="mt-6">
-          <EmptyState title="No past orders yet" />
+      <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-[#E4BEB8] bg-white px-6 py-16 text-center shadow-sm">
+          <div className="flex size-14 items-center justify-center rounded-full bg-[#F6F3F2] text-[#B61913]">
+            <PackageSearch className="size-7" />
+          </div>
+          <div>
+            <h2 className="font-sora text-lg font-bold text-[#1C1B1B]">
+              No past orders yet
+            </h2>
+            <p className="mt-1 max-w-sm text-sm text-[#5B403C]">
+              Completed, cancelled, and rejected orders will show up here once
+              you&apos;ve fulfilled your first delivery.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/orders"
+            className="mt-2 rounded-xl bg-[#B61913] px-6 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#9e1611] active:scale-95"
+          >
+            View active orders
+          </Link>
         </div>
       </div>
     );

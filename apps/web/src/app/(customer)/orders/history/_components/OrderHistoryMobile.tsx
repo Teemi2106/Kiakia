@@ -2,10 +2,14 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
+import type { OrderStatus } from "@kiakia/domain";
 import { OrderStatusBadge } from "@kiakia/ui";
 import { Filter, X, ForkKnifeCrossedIcon, RefreshCcwIcon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
+
+const PAGE_SIZE = 10;
 
 interface Order {
   id: string;
@@ -14,11 +18,13 @@ interface Order {
   total_kobo: number;
   vendor_id: string;
   created_at: string;
+  item_count: number;
 }
 
 interface Vendor {
   id: string;
   name: string;
+  logo_url?: string | null;
 }
 
 interface OrderHistoryMobileProps {
@@ -34,38 +40,11 @@ export function OrderHistoryMobile({
 }: OrderHistoryMobileProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const getVendorName = (id: string) =>
     vendors?.find((v) => v.id === id)?.name ?? "Vendor";
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "delivered":
-        return "bg-[#E8F5E9] text-[#1B5E20]";
-      case "cancelled_by_customer":
-      case "cancelled_by_platform":
-        return "bg-[#FFEBEE] text-[#B71C1C]";
-      case "rejected_by_vendor":
-        return "bg-[#FFEBEE] text-[#B71C1C]";
-      default:
-        return "bg-[#FFF3E0] text-[#E65100]";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "delivered":
-        return "Delivered";
-      case "cancelled_by_customer":
-        return "Cancelled";
-      case "cancelled_by_platform":
-        return "Cancelled";
-      case "rejected_by_vendor":
-        return "Rejected";
-      default:
-        return status;
-    }
-  };
+  const getVendorLogo = (id: string) => vendors?.find((v) => v.id === id)?.logo_url;
 
   // Filter logic
   const getFilteredOrders = () => {
@@ -86,6 +65,7 @@ export function OrderHistoryMobile({
   };
 
   const filteredOrders = getFilteredOrders();
+  const visibleOrders = filteredOrders.slice(0, visibleCount);
 
   const getFilterLabel = (filter: FilterType) => {
     switch (filter) {
@@ -110,11 +90,13 @@ export function OrderHistoryMobile({
   const handleFilterSelect = (filter: FilterType) => {
     setActiveFilter(filter);
     setShowFilterDropdown(false);
+    setVisibleCount(PAGE_SIZE);
   };
 
   const clearFilter = () => {
     setActiveFilter("all");
     setShowFilterDropdown(false);
+    setVisibleCount(PAGE_SIZE);
   };
 
   return (
@@ -133,6 +115,7 @@ export function OrderHistoryMobile({
         </div>
         <div className="relative">
           <button
+            type="button"
             onClick={() => setShowFilterDropdown(!showFilterDropdown)}
             className="flex items-center gap-1 rounded-lg bg-[#F0EDED] px-3 py-2 font-inter text-sm font-semibold text-[#5B403C]"
           >
@@ -151,6 +134,7 @@ export function OrderHistoryMobile({
               {filters.map((filter) => (
                 <button
                   key={filter.value}
+                  type="button"
                   onClick={() => handleFilterSelect(filter.value)}
                   className={`flex w-full items-center justify-between px-4 py-3 text-left font-inter text-sm transition-colors hover:bg-[#FCF9F8] ${
                     activeFilter === filter.value
@@ -166,6 +150,7 @@ export function OrderHistoryMobile({
               ))}
               {activeFilter !== "all" && (
                 <button
+                  type="button"
                   onClick={clearFilter}
                   className="flex w-full items-center gap-2 border-t border-[#E4BEB8] px-4 py-3 text-left font-inter text-sm text-[#5B403C] hover:bg-[#FCF9F8]"
                 >
@@ -191,12 +176,11 @@ export function OrderHistoryMobile({
             </p>
           </div>
         ) : (
-          filteredOrders.map((order) => {
-            const statusColor = getStatusColor(order.status);
-            const statusLabel = getStatusLabel(order.status);
+          visibleOrders.map((order) => {
             const isCancelled =
               order.status === "cancelled_by_customer" ||
               order.status === "cancelled_by_platform";
+            const logoUrl = getVendorLogo(order.vendor_id);
 
             return (
               <div
@@ -206,17 +190,19 @@ export function OrderHistoryMobile({
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-[#E5E2E1] p-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 overflow-hidden rounded-lg bg-[#F0EDED]">
-                      <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-xl">
-                        {/* {Profile_Image ? (  uncomment when you have the vendor profile image URL
-                          <Image src={Profile_Image || ""} alt={vendorName} />
-                        ) : (
-                          <span className="text-6xl">
-                            <ForkKnifeCrossedIcon />
-                          </span>
-                        )} */}
-                        <ForkKnifeCrossedIcon />
-                      </div>
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#F0EDED]">
+                      {logoUrl ? (
+                        <Image
+                          src={logoUrl}
+                          alt={getVendorName(order.vendor_id)}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-[#5B403C]/40">
+                          <ForkKnifeCrossedIcon className="size-5" />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-inter text-sm font-bold text-[#1C1B1B]">
@@ -234,11 +220,7 @@ export function OrderHistoryMobile({
                       </p>
                     </div>
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${statusColor}`}
-                  >
-                    {statusLabel}
-                  </span>
+                  <OrderStatusBadge status={order.status as OrderStatus} />
                 </div>
 
                 {/* Footer */}
@@ -250,7 +232,9 @@ export function OrderHistoryMobile({
                         {formatNaira(koboOf(order.total_kobo))}
                       </span>
                     </p>
-                    <p className="font-inter text-xs text-[#5B403C]">3 items</p>
+                    <p className="font-inter text-xs text-[#5B403C]">
+                      {order.item_count} {order.item_count === 1 ? "item" : "items"}
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <Link
@@ -260,6 +244,7 @@ export function OrderHistoryMobile({
                       Details
                     </Link>
                     <button
+                      type="button"
                       className={`flex items-center gap-1 rounded-lg px-4 py-2 font-inter text-sm font-semibold text-white shadow-sm ${
                         isCancelled
                           ? "bg-[#FE8E27] text-[#653200]"
@@ -276,10 +261,17 @@ export function OrderHistoryMobile({
           })
         )}
 
-        {/* Load More */}
-        {filteredOrders.length > 0 && (
+        {/* Load More — reveals more of the already-fetched, real result set
+            (page.tsx's own `.limit(50)`), never implies data beyond that. */}
+        {visibleOrders.length < filteredOrders.length && (
           <div className="flex justify-center py-6">
-            <button className="h-8 w-8 rounded-full border-2 border-[#E4BEB8]"></button>
+            <button
+              type="button"
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              className="rounded-full border-2 border-[#E4BEB8] px-6 py-2 font-inter text-sm font-semibold text-[#5B403C] hover:bg-[#F0EDED]"
+            >
+              Load more
+            </button>
           </div>
         )}
       </div>

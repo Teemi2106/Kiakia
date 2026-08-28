@@ -3,10 +3,11 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { Utensils } from "lucide-react";
 import { buttonVariants, cn } from "@kiakia/ui";
 import { MenuFilters } from "./MenuFilters";
 import { MenuTable } from "./MenuTable";
-import { AddCategoryForm } from "./CategoryControls";
+import { CategoryManager } from "./CategoryControls";
 import { toggleItemAvailabilityAction } from "@/app/actions/menu";
 import type { MenuItem, Category } from "./types";
 
@@ -14,14 +15,14 @@ interface MenuDesktopProps {
   items: MenuItem[];
   categories: Category[];
   vendorId: string;
-  onEditItem?: (item: MenuItem) => void;
+  isAcceptingOrders: boolean;
 }
 
 export function MenuDesktop({
   items: initialItems,
   categories,
   vendorId,
-  onEditItem,
+  isAcceptingOrders,
 }: MenuDesktopProps) {
   const [items, setItems] = useState(initialItems);
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,22 +32,19 @@ export function MenuDesktop({
     return categories.map((c) => c.name);
   }, [categories]);
 
-  const getCategoryIdFromName = (categoryName: string) => {
-    const category = categories.find((c) => c.name === categoryName);
-    return category?.id || null;
-  };
-
   const filteredItems = useMemo(() => {
+    const activeCategoryId =
+      activeFilter === "all"
+        ? null
+        : (categories.find((c) => c.name === activeFilter)?.id ?? null);
+
     return items.filter((item) => {
       const matchesSearch = item.name
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
-      let matchesFilter = true;
-      if (activeFilter !== "all") {
-        const categoryId = getCategoryIdFromName(activeFilter);
-        matchesFilter = item.category_id === categoryId;
-      }
+      const matchesFilter =
+        activeFilter === "all" || item.category_id === activeCategoryId;
 
       return matchesSearch && matchesFilter;
     });
@@ -77,16 +75,28 @@ export function MenuDesktop({
           />
         </div>
 
-        <div className="col-span-4 relative overflow-hidden rounded-2xl bg-[#176A22] p-6 text-white">
+        <div
+          className={cn(
+            "col-span-4 relative overflow-hidden rounded-2xl p-6 text-white",
+            isAcceptingOrders ? "bg-[#176A22]" : "bg-[#5B403C]",
+          )}
+        >
           <div className="relative z-10">
             <p className="text-sm font-medium opacity-90">Kitchen Status</p>
             <h3 className="mt-1 font-sora text-2xl font-bold">
-              Live &amp; Active
+              {isAcceptingOrders ? "Live & Active" : "Closed"}
             </h3>
           </div>
           <div className="relative z-10 mt-4 flex items-center gap-2">
-            <span className="h-3 w-3 animate-pulse rounded-full bg-white" />
-            <span className="text-sm font-medium">Accepting Orders</span>
+            <span
+              className={cn(
+                "h-3 w-3 rounded-full bg-white",
+                isAcceptingOrders && "animate-pulse",
+              )}
+            />
+            <span className="text-sm font-medium">
+              {isAcceptingOrders ? "Accepting Orders" : "Not Accepting Orders"}
+            </span>
           </div>
           <span className="absolute -right-4 -bottom-4 text-9xl opacity-10 rotate-12">
             🍽️
@@ -115,12 +125,17 @@ export function MenuDesktop({
         </div>
 
         {filteredItems.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="text-[#5B403C]">No menu items found</p>
+          <div className="flex flex-col items-center gap-2 p-12 text-center">
+            <Utensils className="size-8 text-[#5B403C]/30" />
+            <p className="font-medium text-[#1C1B1B]">No menu items found</p>
+            <p className="text-sm text-[#5B403C]">
+              Try a different search or filter.
+            </p>
           </div>
         ) : (
           <MenuTable
             items={filteredItems}
+            categories={categories}
             vendorId={vendorId}
             onToggleAvailability={handleToggleAvailability}
           />
@@ -130,19 +145,11 @@ export function MenuDesktop({
           <p className="text-sm text-[#5B403C]">
             Showing {filteredItems.length} of {items.length} items
           </p>
-          <div className="flex gap-2">
-            <button className="rounded-lg border border-[#E4BEB8] p-2 transition-colors hover:bg-[#F0EDED]">
-              <span className="text-sm">←</span>
-            </button>
-            <button className="rounded-lg border border-[#E4BEB8] p-2 transition-colors hover:bg-[#F0EDED]">
-              <span className="text-sm">→</span>
-            </button>
-          </div>
         </div>
       </div>
 
       <div className="mt-6">
-        <AddCategoryForm vendorId={vendorId} />
+        <CategoryManager vendorId={vendorId} categories={categories} />
       </div>
     </div>
   );

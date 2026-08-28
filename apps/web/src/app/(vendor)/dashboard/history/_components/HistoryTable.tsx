@@ -1,7 +1,7 @@
 // app/(vendor)/history/_components/HistoryTable.tsx
 "use client";
 
-import { formatNaira, koboOf } from "@kiakia/domain";
+import { formatNaira, koboOf, type OrderStatus } from "@kiakia/domain";
 import { OrderStatusBadge } from "@kiakia/ui";
 import { MoreVertical } from "lucide-react";
 import type { Order } from "./types";
@@ -11,20 +11,6 @@ interface HistoryTableProps {
 }
 
 export function HistoryTable({ orders }: HistoryTableProps) {
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "delivered":
-        return "Fulfilled";
-      case "cancelled_by_customer":
-      case "cancelled_by_platform":
-        return "Cancelled";
-      case "rejected_by_vendor":
-        return "Rejected";
-      default:
-        return status;
-    }
-  };
-
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
@@ -83,10 +69,14 @@ export function HistoryTable({ orders }: HistoryTableProps) {
                 {formatNaira(koboOf(order.total_kobo))}
               </td>
               <td className="px-6 py-5">
-                <OrderStatusBadge status={order.status as any} />
+                <OrderStatusBadge status={order.status as OrderStatus} />
               </td>
               <td className="px-6 py-5 text-right">
-                <button className="rounded-lg p-2 transition-colors hover:bg-[#F0EDED]">
+                <button
+                  type="button"
+                  aria-label="More actions"
+                  className="rounded-lg p-2 transition-colors hover:bg-[#F0EDED]"
+                >
                   <MoreVertical className="size-5 text-[#5B403C]" />
                 </button>
               </td>

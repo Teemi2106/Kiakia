@@ -48,7 +48,7 @@ export function OrderDetailDesktop({
           <OrderSummaryDetails
             items={items}
             order={order}
-            vendorImage={vendor?.profile_image_url}
+            vendorImage={vendor?.logo_url}
           />
         </div>
       </div>

@@ -2,11 +2,13 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
+import type { OrderStatus } from "@kiakia/domain";
 import { OrderStatusBadge } from "@kiakia/ui";
-import { Clock, MapPin, Truck, ForkKnifeCrossedIcon, Car } from "lucide-react";
+import { Clock, MapPin, Truck, ForkKnifeCrossedIcon } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Order } from "./types";
+import { timeAgo } from "./timeAgo";
 
 interface MobileOrderCardProps {
   order: Order;
@@ -35,44 +37,24 @@ export function MobileOrderCard({
     }
   };
 
-  const getETA = (status: string) => {
-    switch (status) {
-      case "in_transit":
-        return { label: "Estimated delivery", time: "15-20 min" };
-      case "preparing":
-        return { label: "Estimated prep time", time: "25-30 min" };
-      default:
-        return { label: "Estimated time", time: "30 min" };
-    }
-  };
-  const getIcon = (status: string) => {
-    switch (status) {
-      case "in_transit":
-        return <Truck className="size-3.5" />;
-      case "preparing":
-        return <Clock className="size-3.5" />;
-      default:
-        return null;
-    }
-  };
-
-  const eta = getETA(order.status);
-
   return (
     <div className="rounded-xl border border-[#E4BEB8] bg-white p-4">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 overflow-hidden rounded-full border border-[#EAE7E7] bg-[#F0EDED]">
-            <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-xl">
-              {vendorProfileImageUrl ? (
-                <Image src={vendorProfileImageUrl || ""} alt={vendorName} />
-              ) : (
-                <span className="text-6xl">
-                  <ForkKnifeCrossedIcon />
-                </span>
-              )}
-            </div>
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-[#EAE7E7] bg-[#F0EDED]">
+            {vendorProfileImageUrl ? (
+              <Image
+                src={vendorProfileImageUrl}
+                alt={vendorName}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-[#5B403C]/40">
+                <ForkKnifeCrossedIcon className="size-5" />
+              </div>
+            )}
           </div>
           <div>
             <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
@@ -83,8 +65,8 @@ export function MobileOrderCard({
         </div>
         <OrderStatusBadge
           className="px-3"
-          status={order.status as any}
-          Icon={getIcon(order.status)}
+          status={order.status as OrderStatus}
+          Icon={getStatusIcon(order.status)}
         />
       </div>
 
@@ -100,19 +82,19 @@ export function MobileOrderCard({
         </div>
       </div>
 
-      {/* ETA */}
+      {/* Time since order was placed — honest, not a fabricated ETA */}
       <div className="flex items-center gap-3 rounded-lg bg-[#F6F3F2] p-3">
         <div
-          className={`rounded-full p-2 ${order.status === "in_transit" ? "bg-[#358439]" : "bg-[#FE8E27]"}`}
+          className={`rounded-full p-2 text-white ${order.status === "in_transit" ? "bg-[#358439]" : "bg-[#FE8E27]"}`}
         >
-          {getStatusIcon(order.status)}
+          {getStatusIcon(order.status) ?? <Clock className="size-3.5" />}
         </div>
         <div>
-          <p className="font-inter text-xs text-[#5B403C]">{eta.label}</p>
+          <p className="font-inter text-xs text-[#5B403C]">Ordered</p>
           <p
-            className={`font-sora text-xl font-bold ${order.status === "in_transit" ? "text-[#358439]" : "text-[#000000]"}`}
+            className={`font-sora text-xl font-bold ${order.status === "in_transit" ? "text-[#358439]" : "text-[#1C1B1B]"}`}
           >
-            {eta.time}
+            {timeAgo(order.created_at)}
           </p>
         </div>
       </div>
@@ -125,7 +107,10 @@ export function MobileOrderCard({
         >
           View Details
         </Link>
-        <button className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B61913] py-2.5 font-inter text-sm font-semibold text-white shadow-sm">
+        <button
+          type="button"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B61913] py-2.5 font-inter text-sm font-semibold text-white shadow-sm"
+        >
           <MapPin className="size-3" />
           Track Order
         </button>

@@ -4,7 +4,7 @@
 import { StatsCards } from "./StatsCards";
 import { IncomingOrders } from "./IncomingOrders";
 import { SalesChart } from "./SalesChart";
-import { ChartBar } from "lucide-react";
+import { ChartBar, Inbox } from "lucide-react";
 import Link from "next/link";
 import type { Vendor, Order, SalesDataPoint } from "./types";
 
@@ -51,8 +51,16 @@ export function DashboardDesktop({
           </div>
 
           {orders.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[#E4BEB8] bg-white p-8 text-center text-sm text-[#5B403C]">
-              No incoming orders right now.
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#E4BEB8] bg-white p-10 text-center">
+              <span className="flex size-12 items-center justify-center rounded-full bg-[#FCF9F8] text-[#5B403C]">
+                <Inbox className="size-6" />
+              </span>
+              <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+                No incoming orders right now
+              </p>
+              <p className="max-w-sm text-sm text-[#5B403C]">
+                New orders will show up here the moment a customer checks out.
+              </p>
             </div>
           ) : (
             <IncomingOrders orders={orders} variant="desktop" />
@@ -70,7 +78,7 @@ export function DashboardDesktop({
 
             <Link
               href="/dashboard/earnings"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#934B00] py-3 font-bold text-white transition-all hover:brightness-110"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#934B00] py-3 font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#934B00]/40"
             >
               <ChartBar className="size-4" /> View Detailed Reports
             </Link>

@@ -16,11 +16,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/settings": "Store Settings",
 };
 
-interface VendorTopNavProps {
-  onMenuClick?: () => void;
-}
-
-export function VendorTopNav({ onMenuClick }: VendorTopNavProps) {
+export function VendorTopNav() {
   const pathname = usePathname();
 
   // Get the current page title
@@ -46,7 +42,14 @@ export function VendorTopNav({ onMenuClick }: VendorTopNavProps) {
   const pageTitle = getPageTitle();
 
   return (
-    <nav className="fixed left-3 top-0 z-40 w-full bg-surface shadow-[0px_1px_2px_rgba(0,0,0,0.05)] md:left-64 md:w-[calc(100%-256px)]">
+    // `sm:left-64`/`sm:w-[calc(100%-256px)]` must match VendorSidebar's
+    // rendered width (w-64 = 256px) AND its visibility breakpoint (`sm:flex`)
+    // — this nav is position:fixed so it escapes the flex layout that
+    // otherwise auto-offsets the main content column from the sidebar.
+    // Previously this was `md:left-64` against a `sm:flex` w-56 sidebar,
+    // which overlapped the sidebar between the sm/md breakpoints and left a
+    // 32px gap above md — keep both in sync if either changes.
+    <nav className="fixed left-0 top-0 z-40 w-full border-b border-[#E4BEB8] bg-white shadow-[0px_1px_2px_rgba(0,0,0,0.05)] sm:left-64 sm:w-[calc(100%-256px)]">
       <div className="flex h-14 items-center justify-between px-4 sm:h-[63px] sm:px-6">
         {/* Left Section - Title */}
         <div className="flex items-center gap-2">
@@ -61,7 +64,7 @@ export function VendorTopNav({ onMenuClick }: VendorTopNavProps) {
           <form action={switchToCustomerAction}>
             <button
               type="submit"
-              className="flex items-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-medium text-[#5B403C] hover:bg-black/5 sm:px-3"
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-medium text-[#5B403C] transition-colors hover:bg-[#FCF9F8] hover:text-[#1C1B1B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40 sm:px-3"
               aria-label="Switch to customer view"
               title="Switch to customer view"
             >
@@ -72,7 +75,7 @@ export function VendorTopNav({ onMenuClick }: VendorTopNavProps) {
 
           {/* Notifications */}
           <button
-            className="relative rounded-full p-2 hover:bg-black/5"
+            className="relative rounded-full p-2 transition-colors hover:bg-[#FCF9F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40"
             aria-label="Notifications"
           >
             <Bell className="size-5 text-[#5B403C] sm:size-5" />
@@ -82,7 +85,7 @@ export function VendorTopNav({ onMenuClick }: VendorTopNavProps) {
           {/* Profile Avatar - vendor mode has no /profile route (customer-only); store settings is the equivalent here */}
           <Link
             href="/dashboard/settings"
-            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#E5E2E1] hover:border-[#E23B2E] sm:h-10 sm:w-10"
+            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#E5E2E1] transition-colors hover:border-[#B61913] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40 sm:h-10 sm:w-10"
           >
             <User className="size-4 text-[#5B403C] sm:size-5" />
           </Link>

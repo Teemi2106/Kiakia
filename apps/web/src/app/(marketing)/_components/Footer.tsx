@@ -1,104 +1,109 @@
-// components/marketing/Footer.tsx
+// app/(marketing)/_components/Footer.tsx
 import Image from "next/image";
 import Link from "next/link";
+import { Lock, Zap } from "lucide-react";
 
-const FOOTER_LINKS = [
-  "Privacy Policy",
-  "Terms of Service",
-  "Become a Vendor",
-  "Help Center",
-  "Safety & Escrow",
+const COLUMNS = [
+  {
+    heading: "Ordering",
+    links: [
+      { label: "How it works", href: "/#how-it-works" },
+      { label: "Escrow & your money", href: "/#escrow" },
+      { label: "Questions", href: "/#faq" },
+      { label: "Create an account", href: "/register" },
+      { label: "Log in", href: "/login" },
+    ],
+  },
+  {
+    heading: "Partners",
+    links: [
+      { label: "Become a vendor", href: "/vendor/register" },
+      { label: "Vendor login", href: "/vendor/login" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { label: "Support", href: "/support" },
+      { label: "Privacy policy", href: "/privacy" },
+      { label: "Terms of service", href: "/terms" },
+    ],
+  },
 ] as const;
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer id="footer" className="bg-white px-4 py-12 sm:px-6 sm:py-12">
-      <div className="mx-auto max-w-7xl">
-        {/* Desktop Footer */}
-        <div className="hidden flex-row items-start justify-between sm:flex">
-          {/* Left: Logo + Copyright on same row */}
-          <div className="flex items-center gap-6">
-            <Image
-              src="/assets/logo-full.png"
-              alt="KiaKia — Fast. Fresh. Reliable."
-              width={140}
-              height={58}
-              className="h-8 w-25"
-            />
+    <footer id="footer" className="relative overflow-hidden bg-kk-ink-deep px-4 pb-10 pt-16 sm:px-6 sm:pb-12 sm:pt-20 lg:px-8">
+      <div aria-hidden="true" className="kk-grid pointer-events-none absolute inset-0 text-white/5" />
+
+      <div className="relative mx-auto max-w-7xl">
+        <div className="grid gap-12 md:grid-cols-[1.3fr_repeat(3,1fr)] md:gap-8">
+          <div>
+            {/* The logo asset is drawn on a light plate, so it gets a cream
+                chip rather than sitting directly on the dark ground. */}
+            <Link href="/" className="inline-flex rounded-2xl bg-kk-cream px-4 py-3">
+              <Image
+                src="/assets/logo-mark.png"
+                alt="KiaKia"
+                width={1104}
+                height={247}
+                className="h-7 w-auto"
+              />
+            </Link>
+            <p className="mt-6 max-w-xs font-inter text-[15px] leading-7 text-white/55">
+              Food and goods from the shops around you — with your payment held safe until the
+              moment it reaches your hand.
+            </p>
+            <div className="mt-6 flex flex-col gap-2.5 font-inter text-[13px] text-white/45">
+              <span className="inline-flex items-center gap-2">
+                <Zap className="size-4 text-kk-red" />
+                Kia kia — quick quick
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <Lock className="size-4 text-kk-mint" />
+                Escrow-protected payments
+              </span>
+            </div>
           </div>
 
-          {/* Right: Links spread out */}
-          <div className="flex gap-16">
-            <div className="flex flex-col gap-4">
-              <p className="font-inter text-base leading-6 text-[#5B403C]">
-                © {currentYear} KiaKia Food Delivery. Fast. Fresh. Reliable.
-              </p>
-            </div>
-            <div className="flex flex-col gap-4">
-              <Link
-                href="#"
-                className="font-inter text-base text-[#5B403C] hover:text-ink"
-              >
-                Privacy Policy
-              </Link>
-              <Link
-                href="#"
-                className="font-inter text-base text-[#5B403C] hover:text-ink"
-              >
-                Terms of Service
-              </Link>
-            </div>
-            <div className="flex flex-col gap-4">
-              <Link
-                href="/vendor/register"
-                className="font-inter text-base text-[#5B403C] hover:text-ink"
-              >
-                Become a Vendor
-              </Link>
-              <Link
-                href="#"
-                className="font-inter text-base text-[#5B403C] hover:text-ink"
-              >
-                Help Center
-              </Link>
-            </div>
-            <div className="flex flex-col gap-4">
-              <Link
-                href="#"
-                className="font-inter text-base text-[#5B403C] hover:text-ink"
-              >
-                Safety &amp; Escrow
-              </Link>
-            </div>
-          </div>
+          {COLUMNS.map((column) => (
+            <nav key={column.heading} aria-label={column.heading}>
+              <h2 className="font-inter text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+                {column.heading}
+              </h2>
+              <ul className="mt-5 space-y-3.5">
+                {column.links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="group inline-flex items-center font-inter text-[15px] text-white/70 transition-colors hover:text-white"
+                    >
+                      <span className="mr-0 h-px w-0 bg-kk-red transition-all duration-300 group-hover:mr-2 group-hover:w-4" />
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+                {column.heading === "Partners" && (
+                  <li className="font-inter text-[15px] text-white/25">
+                    Rider sign-up
+                    <span className="ml-2 rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest">
+                      soon
+                    </span>
+                  </li>
+                )}
+              </ul>
+            </nav>
+          ))}
         </div>
 
-        {/* Mobile Footer */}
-        <div className="flex flex-col gap-8 sm:hidden">
-          {/* Logo at top */}
-          <Image
-            src="/assets/logo-full.png"
-            alt="KiaKia — Fast. Fresh. Reliable."
-            width={140}
-            height={58}
-            className="h-12 w-auto"
-          />
-
-          <div className="flex flex-col gap-4">
-            {FOOTER_LINKS.map((link) => (
-              <Link
-                key={link}
-                href="#"
-                className="font-inter text-base text-[#5B403C] hover:text-ink"
-              >
-                {link}
-              </Link>
-            ))}
-          </div>
-          <p className="font-inter text-base leading-6 text-[#5B403C]">
+        <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-7 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-inter text-[13px] text-white/40">
             © {currentYear} KiaKia Food Delivery. Fast. Fresh. Reliable.
+          </p>
+          <p className="font-inter text-[13px] text-white/40">
+            Your money moves when your food does.
           </p>
         </div>
       </div>

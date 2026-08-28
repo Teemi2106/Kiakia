@@ -2,6 +2,7 @@
 import { getVendorForCurrentUser, requireVendorContext } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { computeVendorPendingEscrowKobo } from "@/lib/vendor-escrow";
 import { EmptyState } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -96,7 +97,7 @@ export default async function VendorDashboardPage() {
     throw new Error(balancesError.message);
   }
 
-  const balanceForKind = (kind: "escrow" | "available") => {
+  const balanceForKind = (kind: "available") => {
     const account = (accounts ?? []).find((a) => a.kind === kind);
     if (!account) return 0;
     return (
@@ -104,7 +105,10 @@ export default async function VendorDashboardPage() {
     );
   };
 
-  const escrowKobo = balanceForKind("escrow");
+  // No vendor-scoped `escrow` account is ever created (see
+  // lib/vendor-escrow.ts's header) — derived from live orders instead of a
+  // ledger balance that's always zero.
+  const escrowKobo = await computeVendorPendingEscrowKobo(supabase, admin, vendor.id, vendor.commission_bps);
   const availableKobo = balanceForKind("available");
 
   const salesWindowStart = new Date();

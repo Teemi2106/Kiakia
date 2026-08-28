@@ -7,30 +7,39 @@ import { formatNaira, koboOf } from "@kiakia/domain";
 import { Pencil, Utensils } from "lucide-react";
 import { AvailabilityToggle, DeleteItemButton } from "./MenuItemRowActions";
 
-import type { MenuItem } from "./types";
+import type { Category, MenuItem } from "./types";
 
 interface MenuTableProps {
   items: MenuItem[];
+  categories: Category[];
   vendorId: string;
   onToggleAvailability: (itemId: string, isAvailable: boolean) => void;
 }
 
+const CATEGORY_COLORS = [
+  "bg-[#FFDCC5] text-[#703800]",
+  "bg-[#FFDAD5] text-[#930004]",
+  "bg-[#DFF3DC] text-[#176A22]",
+  "bg-[#E4D9FF] text-[#5B21B6]",
+  "bg-[#D6EFFF] text-[#0B5A8A]",
+];
+
 export function MenuTable({
   items,
+  categories,
   vendorId,
   onToggleAvailability,
 }: MenuTableProps) {
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "Rice":
-        return "bg-[#FFDCC5] text-[#703800]";
-      case "Swallow":
-        return "bg-[#FFDAD5] text-[#930004]";
-      case "Sides":
-        return "bg-[#A3F69D] text-[#005313]";
-      default:
-        return "bg-[#F0EDED] text-[#5B403C]";
-    }
+  const getCategoryLabel = (categoryId: string | null) => {
+    if (!categoryId) return "Uncategorized";
+    return categories.find((c) => c.id === categoryId)?.name ?? "Uncategorized";
+  };
+
+  const getCategoryColor = (categoryId: string | null) => {
+    if (!categoryId) return "bg-[#F0EDED] text-[#5B403C]";
+    const index = categories.findIndex((c) => c.id === categoryId);
+    if (index === -1) return "bg-[#F0EDED] text-[#5B403C]";
+    return CATEGORY_COLORS[index % CATEGORY_COLORS.length];
   };
 
   return (
@@ -94,10 +103,10 @@ export function MenuTable({
               <td className="px-6 py-4">
                 <span
                   className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${getCategoryColor(
-                    item.category_id || "Other",
+                    item.category_id,
                   )}`}
                 >
-                  {item.category_id || "Other"}
+                  {getCategoryLabel(item.category_id)}
                 </span>
               </td>
 
@@ -125,7 +134,7 @@ export function MenuTable({
                 <div className="flex items-center justify-end gap-2">
                   <Link
                     href={`/dashboard/menu/items/${item.id}/edit`}
-                    className="rounded-lg p-2 text-[#5B403C] transition-colors hover:text-[#B61913]"
+                    className="rounded-lg p-2 text-[#5B403C] transition-colors hover:bg-[#F0EDED] hover:text-[#B61913]"
                     aria-label="Edit item"
                   >
                     <Pencil className="size-4" />

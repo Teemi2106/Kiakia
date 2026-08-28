@@ -5,6 +5,7 @@ import Link from "next/link";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { OrdersList } from "./_components/OrdersList";
+import type { Order } from "./_components/types";
 
 export const metadata: Metadata = { title: "Orders" };
 
@@ -16,27 +17,67 @@ const TERMINAL_STATUSES = [
   "cancelled_by_platform",
 ] as const;
 
+interface DeliveryAddress {
+  line1?: string;
+  landmark?: string;
+  city?: string;
+  state?: string;
+}
+
+/** Same shape/convention as the vendor dashboard's orders list — jsonb
+ * {line1, landmark, city, state} (0032_vendor_location_and_rider_reads.sql). */
+function formatAddress(address: unknown): string | undefined {
+  const a = address as DeliveryAddress | null;
+  if (!a?.line1) return undefined;
+  const parts = [a.line1, a.landmark ? `near ${a.landmark}` : null, a.city, a.state].filter(
+    Boolean,
+  );
+  return parts.join(", ");
+}
+
 export default async function ActiveOrdersPage() {
   const session = await verifySession();
   const supabase = await createClient();
 
   const { data: realOrders } = await supabase
     .from("orders")
-    .select("id, code, status, total_kobo, vendor_id, created_at")
+    .select("id, code, status, total_kobo, vendor_id, created_at, delivery_address")
     .eq("customer_id", session.userId)
     .not("status", "in", `(${TERMINAL_STATUSES.join(",")})`)
     .order("created_at", { ascending: false });
 
-  const orders = realOrders;
+  const rawOrders = realOrders ?? [];
 
-  const vendorIds = [...new Set((orders ?? []).map((o) => o.vendor_id))];
-  const { data: realVendors } = vendorIds.length
-    ? await supabase.from("vendors").select("id, name").in("id", vendorIds)
-    : { data: [] };
+  const vendorIds = [...new Set(rawOrders.map((o) => o.vendor_id))];
+  const orderIds = rawOrders.map((o) => o.id);
+
+  const [{ data: realVendors }, { data: itemRows }] = await Promise.all([
+    vendorIds.length
+      ? supabase.from("vendors").select("id, name, logo_url").in("id", vendorIds)
+      : Promise.resolve({ data: [] }),
+    orderIds.length
+      ? supabase.from("order_items").select("order_id, name_snapshot, qty").in("order_id", orderIds)
+      : Promise.resolve({ data: [] }),
+  ]);
   const vendors = realVendors ?? [];
 
-  const vendorName = (id: string) =>
-    vendors?.find((v) => v.id === id)?.name ?? "Vendor";
+  const itemsByOrderId = new Map<string, Array<{ name: string; qty: number }>>();
+  for (const row of itemRows ?? []) {
+    const list = itemsByOrderId.get(row.order_id) ?? [];
+    list.push({ name: row.name_snapshot, qty: row.qty });
+    itemsByOrderId.set(row.order_id, list);
+  }
+
+  const orders: Order[] = rawOrders.map((order) => ({
+    id: order.id,
+    code: order.code,
+    status: order.status,
+    total_kobo: order.total_kobo,
+    vendor_id: order.vendor_id,
+    created_at: order.created_at,
+    delivery_address: formatAddress(order.delivery_address),
+    items: itemsByOrderId.get(order.id) ?? [],
+  }));
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-12">
@@ -50,7 +91,7 @@ export default async function ActiveOrdersPage() {
         </p>
       </div>
 
-      {!orders || orders.length === 0 ? (
+      {orders.length === 0 ? (
         <div className="mt-8">
           <EmptyState
             title="No active orders"

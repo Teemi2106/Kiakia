@@ -33,6 +33,20 @@ const nextConfig: NextConfig = {
   // Raw-TS workspace packages, no build step per §6's monorepo layout.
   transpilePackages: ["@kiakia/domain", "@kiakia/db", "@kiakia/ui"],
 
+  // Default is 1MB, too small for a menu-item photo or store banner
+  // upload — the actual size cap (5MB) is enforced app-side in
+  // lib/storage/vendor-media.ts and by the storage bucket itself (0036);
+  // this just needs enough headroom to let that check run instead of the
+  // request being rejected before it does. Still nested under
+  // `experimental` in this Next version despite the stable-looking docs —
+  // node_modules/next/dist/server/config-shared.d.ts is the source of
+  // truth, not the docs snippet, per AGENTS.md.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
+
   images: {
     // §14: vendor banners must be small, exact-size AVIF/WebP — never a
     // wildcard remote pattern that would let any URL be optimized through

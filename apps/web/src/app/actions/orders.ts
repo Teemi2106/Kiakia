@@ -238,6 +238,31 @@ export async function placeOrderAction(
     return { error: "We couldn't place your order. Please try again." };
   }
 
+  // Wallet checkout never touches Monnify: pay_order_from_wallet()
+  // (0045_customer_wallet.sql) moves the total straight from the customer's
+  // wallet into escrow and takes the order draft -> placed, so there is no
+  // provider redirect to send them through. The RPC re-derives the caller,
+  // the amount and the balance server-side, so a tampered form field can
+  // only ever fail this call, never overspend a wallet.
+  if (formData.get("paymentMethod") === "wallet") {
+    const { error: walletError } = await supabase.rpc("pay_order_from_wallet", {
+      p_order_id: order.id,
+    });
+
+    if (walletError) {
+      // The order is already placed as a draft, so this is recoverable
+      // rather than fatal — the order's own page offers a card retry.
+      console.error("pay_order_from_wallet failed", walletError);
+      return {
+        error: walletError.message.includes("does not cover")
+          ? "Your wallet balance no longer covers this order. Pay by card instead."
+          : "We couldn't pay for this order from your wallet. Please try again, or pay by card.",
+      };
+    }
+
+    redirect(`/orders/${order.id}`);
+  }
+
   let checkoutUrl: string;
   try {
     checkoutUrl = await initializePaymentForOrder(session, order);
@@ -297,6 +322,7 @@ export async function retryPaymentAction(orderId: string): Promise<void> {
   redirect(checkoutUrl);
 }
 
+
 /**
  * Vendor-side status advance (accept/reject/preparing/ready_for_pickup) —
  * a thin wrapper around the transition_order() RPC, which already IS the
@@ -326,6 +352,14 @@ export async function advanceOrderAction(orderId: string, toStatus: OrderStatus)
   if (error) {
     throw new Error(error.message);
   }
+
+  // No Monnify call here any more. transition_order()'s automatic unwind
+  // (0041, retargeted by 0045_customer_wallet.sql) now credits the
+  // customer's wallet instead of platform:gateway, so the money never left
+  // KiaKia and there is nothing to ask the provider to send back — the
+  // refund is complete the moment that transition commits. A customer who
+  // specifically wants it back on their card goes through
+  // refundOrderEscrowAction with destination "gateway", which still does.
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");

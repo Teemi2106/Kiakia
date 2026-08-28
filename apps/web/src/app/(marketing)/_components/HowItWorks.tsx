@@ -1,125 +1,85 @@
-// components/marketing/HowItWorks.tsx
-import { cn } from "@kiakia/ui";
-import Image from "next/image";
-import type { LucideIcon } from "lucide-react";
+// app/(marketing)/_components/HowItWorks.tsx
+import { KeyRound, Search, Wallet } from "lucide-react";
+import { Reveal } from "./Reveal";
 
-type IconType = LucideIcon | string;
-
-const STEPS: Array<{
-  title: string;
-  description: string;
-  icon: IconType;
-  accent: string;
-  circleAccent: string;
-}> = [
+const STEPS = [
   {
-    title: "Discover local flavors",
-    description:
-      "Browse hundreds of local restaurants and hidden gems right in your neighborhood.",
-    icon: "/assets/step1-icon.png",
-    accent: "bg-[rgba(182,25,19,0.1)] text-[#B61913]",
-    circleAccent: "bg-[rgba(182,25,19,0.1)]",
+    n: "01",
+    title: "Pick your spot",
+    body: "Browse the kitchens and shops actually near you. Real menus, real prices, live opening hours — no ghost listings.",
+    icon: Search,
+    tint: "text-kk-red",
   },
   {
-    title: "Pay securely via escrow",
-    description:
-      "Your money is held safely in escrow until you confirm your food arrived as ordered.",
-    icon: "/assets/step2-icon.png",
-    accent: "bg-[rgba(254,142,39,0.2)] text-[#934B00]",
-    circleAccent: "bg-[rgba(254,142,39,0.1)]",
+    n: "02",
+    title: "Pay into escrow",
+    body: "Check out by card or transfer. KiaKia holds the money while the vendor cooks — they see the order, not the cash.",
+    icon: Wallet,
+    tint: "text-kk-orange-deep",
   },
   {
-    title: "Share code to release",
-    description:
-      "Give the vendor your unique 4-digit code to instantly release payment upon delivery.",
-    icon: "/assets/step3-icon.png",
-    accent: "bg-[rgba(53,132,57,0.2)] text-[#176A22]",
-    circleAccent: "bg-[rgba(23,106,34,0.1)]",
+    n: "03",
+    title: "Share your code",
+    body: "A rider brings it over. Read out your 4-digit code at the door, and that single act releases the payout to the vendor.",
+    icon: KeyRound,
+    tint: "text-kk-green",
   },
 ] as const;
 
-// Helper component to render either PNG or Lucide icon
-function StepIcon({ icon, className }: { icon: IconType; className?: string }) {
-  if (typeof icon === "string") {
-    // It's a PNG image path
-    return (
-      <div className="relative size-6">
-        <Image src={icon} alt="Step icon" fill className="object-contain" />
-      </div>
-    );
-  }
-
-  // It's a Lucide icon component
-  const IconComponent = icon;
-  return <IconComponent className={cn("size-6", className)} />;
-}
-
 export function HowItWorks() {
   return (
-    <section
-      id="how-it-works"
-      className="bg-[#FCF9F8] px-4 py-8 sm:px-6 sm:py-24"
-    >
+    <section id="how-it-works" className="scroll-mt-24 bg-kk-sand px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-6 flex flex-col items-center gap-2 sm:mb-16">
-          <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B] sm:text-[32px] sm:leading-10 sm:tracking-[-0.32px]">
-            How KiaKia Works
-          </h2>
-          <p className="max-w-[426px] text-center font-inter text-base text-[#5B403C]">
-            Simple, secure, and fast. The modern way to order food.
+        <Reveal>
+          <div className="max-w-3xl">
+            <p className="flex items-center gap-3 font-inter text-[11px] font-semibold uppercase tracking-[0.28em] text-kk-red">
+              <span className="h-px w-8 bg-kk-red/50" />
+              How it works
+            </p>
+            <h2 className="mt-5 font-sora text-[clamp(2rem,4.6vw,3.25rem)] font-extrabold leading-[1.03] tracking-[-0.03em] text-kk-ink">
+              Three steps. One code.
+              <br className="hidden sm:block" /> Zero trust required.
+            </h2>
+            <p className="mt-5 max-w-xl font-inter text-lg leading-8 text-kk-cocoa">
+              You never have to take anyone&apos;s word for it — not ours, not the vendor&apos;s,
+              not the rider&apos;s. The money simply cannot move until the food has.
+            </p>
+          </div>
+        </Reveal>
+
+        <div className="relative mt-16 grid gap-12 md:mt-20 md:grid-cols-3 md:gap-8">
+          {/* Dashed track linking the three icon tiles on wide screens. */}
+          <div
+            aria-hidden="true"
+            className="kk-track absolute left-[10%] right-[10%] top-9 hidden h-0.5 text-kk-line md:block"
+          />
+
+          {STEPS.map((step, i) => (
+            <Reveal key={step.n} delay={i * 130} className="relative">
+              <div className="flex flex-col items-start">
+                <span className="relative z-10 flex size-[72px] items-center justify-center rounded-3xl bg-white shadow-[0_18px_35px_-20px_rgba(28,27,27,0.5)] ring-1 ring-kk-line/70">
+                  <step.icon className={`size-7 ${step.tint}`} />
+                  <span className="absolute -right-2.5 -top-2.5 flex size-8 items-center justify-center rounded-full bg-kk-ink font-sora text-[11px] font-bold tracking-wide text-white ring-4 ring-kk-sand">
+                    {step.n}
+                  </span>
+                </span>
+                <h3 className="mt-7 font-sora text-2xl font-bold tracking-tight text-kk-ink">
+                  {step.title}
+                </h3>
+                <p className="mt-3 max-w-sm font-inter text-[15px] leading-7 text-kk-cocoa">
+                  {step.body}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        <Reveal delay={120}>
+          <p className="mt-16 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-dashed border-kk-line bg-white/60 px-5 py-4 font-inter text-sm text-kk-cocoa">
+            <span className="font-semibold text-kk-ink">Order never showed up?</span>
+            The money never left escrow. There is nothing to chase down and no one to argue with.
           </p>
-        </div>
-
-        {/* Mobile: Horizontal Scroll */}
-        <div className="flex gap-4 overflow-x-auto pb-4 sm:hidden [-webkit-overflow-scrolling:touch]">
-          {STEPS.map((step, i) => (
-            <div
-              key={step.title}
-              className="min-w-[280px] rounded-2xl border border-[#E4BEB8] bg-white p-5 shadow-sm"
-            >
-              <div
-                className={cn(
-                  "mb-4 flex h-12 w-12 items-center justify-center rounded-xl",
-                  step.accent,
-                )}
-              >
-                <StepIcon icon={step.icon} />
-              </div>
-              <h3 className="font-inter text-sm font-semibold leading-5 tracking-[0.14px] text-[#1C1B1B]">
-                {i + 1}. {step.title}
-              </h3>
-              <p className="mt-1 font-inter text-base leading-[22px] text-[#5B403C]">
-                {step.description}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Desktop: Grid */}
-        <div className="hidden grid-cols-3 gap-8 sm:grid">
-          {STEPS.map((step, i) => (
-            <div
-              key={step.title}
-              className="flex flex-col items-center rounded-2xl border border-[#F0EDED] bg-white px-6 pb-12 pt-6"
-            >
-              <div
-                className={cn(
-                  "mb-6 flex h-16 w-16 items-center justify-center rounded-full",
-                  step.circleAccent,
-                )}
-              >
-                <StepIcon icon={step.icon} className="text-[#B61913]" />
-              </div>
-              <h3 className="mb-2 font-sora text-2xl font-semibold text-[#1C1B1B]">
-                {i + 1}. {step.title}
-              </h3>
-              <p className="max-w-[315px] text-center font-inter text-base leading-6 text-[#5B403C]">
-                {step.description}
-              </p>
-            </div>
-          ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   );

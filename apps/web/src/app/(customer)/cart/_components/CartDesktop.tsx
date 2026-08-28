@@ -5,42 +5,29 @@ import { formatNaira, koboOf } from "@kiakia/domain";
 import { Button } from "@kiakia/ui";
 import { X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { removeCartItem, updateCartItemQty } from "@/lib/cart";
+import { formatCartItemOptions, type CartLineItem } from "@/lib/cart";
 import { CartItem } from "./CartItem";
 import { PromoCode } from "./PromoCode";
 import { OrderSummary } from "./OrderSummary";
 
 interface CartDesktopProps {
-  items: any[];
+  items: CartLineItem[];
   vendor: { id: string; name: string };
   onClose: () => void;
-  onUpdate?: () => void; // Add this
+  pendingId: string | null;
+  onQtyChange: (id: string, qty: number) => void;
+  onRemove: (id: string) => void;
 }
 
 export function CartDesktop({
   items,
-  vendor,
+  // kept in the prop contract for parity with CartMobile/future vendor-name display, not currently rendered
+  vendor: _vendor,
   onClose,
-  onUpdate,
+  pendingId,
+  onQtyChange,
+  onRemove,
 }: CartDesktopProps) {
-  const [pendingId, setPendingId] = useState<string | null>(null);
-
-  async function changeQty(id: string, qty: number) {
-    if (qty < 0) return;
-    setPendingId(id);
-    await updateCartItemQty(id, qty);
-    onUpdate?.(); // Refresh data
-    setPendingId(null);
-  }
-
-  async function remove(id: string) {
-    setPendingId(id);
-    await removeCartItem(id);
-    onUpdate?.(); // Refresh data
-    setPendingId(null);
-  }
-
   const totalKobo = items.reduce((sum, item) => sum + item.line_total_kobo, 0);
   const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
 
@@ -84,11 +71,10 @@ export function CartDesktop({
                   price={item.unit_price_kobo}
                   total={item.line_total_kobo}
                   qty={item.qty}
-                  image={item.image_url}
-                  options={item.options}
+                  options={formatCartItemOptions(item.options_snapshot)}
                   pending={pendingId === item.id}
-                  onQtyChange={changeQty}
-                  onRemove={remove}
+                  onQtyChange={onQtyChange}
+                  onRemove={onRemove}
                   variant="desktop"
                 />
                 {index < items.length - 1 && (

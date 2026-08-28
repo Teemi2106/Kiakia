@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Card, Input } from "@kiakia/ui";
+import { Button, Input } from "@kiakia/ui";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -52,43 +53,63 @@ export function ProfileInfo({
   }
 
   return (
-    <Card className="mt-4">
-      <div className="flex items-center gap-3">
-        <div className="flex size-14 items-center justify-center rounded-full bg-brand-100 text-lg font-semibold text-brand-700">
+    <div className="mt-6 rounded-2xl border border-[#E5E2E1] bg-white p-6 shadow-sm">
+      <div className="flex items-center gap-4">
+        <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#FFDCC5] font-sora text-lg font-bold text-[#934B00]">
           {name.trim().charAt(0).toUpperCase() || "?"}
         </div>
         <div>
-          <p className="font-medium text-ink">{name || "Add your name"}</p>
+          <p className="font-sora text-lg font-semibold text-[#1C1B1B]">{name || "Add your name"}</p>
           {memberSince && (
-            <p className="text-xs text-ink-muted">
+            <p className="font-inter text-xs text-[#5B403C]">
               Member since {new Date(memberSince).toLocaleDateString("en-NG", { month: "long", year: "numeric" })}
             </p>
           )}
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-3">
+      <div className="mt-6 flex flex-col gap-4">
         <div>
-          <label htmlFor="fullName" className="text-xs font-medium text-ink-muted">
+          <label htmlFor="fullName" className="font-inter text-xs font-semibold uppercase tracking-wide text-[#5B403C]">
             Full name
           </label>
-          <Input id="fullName" value={name} onChange={(e) => onNameChange(e.target.value)} className="mt-1 w-full" />
+          <Input
+            id="fullName"
+            value={name}
+            onChange={(e) => onNameChange(e.target.value)}
+            className="mt-1.5 w-full rounded-xl border-[#E5E2E1] font-inter text-sm text-[#1C1B1B] focus:border-[#B61913]"
+          />
         </div>
         <div>
-          <label className="text-xs font-medium text-ink-muted">Email</label>
-          <p className="mt-1 text-sm text-ink">{email}</p>
+          <label className="font-inter text-xs font-semibold uppercase tracking-wide text-[#5B403C]">Email</label>
+          <p className="mt-1.5 rounded-xl border border-[#E5E2E1] bg-[#FCF9F8] px-3 py-2.5 font-inter text-sm text-[#5B403C]">
+            {email}
+          </p>
         </div>
         {phone && (
           <div>
-            <label className="text-xs font-medium text-ink-muted">Phone</label>
-            <p className="mt-1 text-sm text-ink">{phone}</p>
+            <label className="font-inter text-xs font-semibold uppercase tracking-wide text-[#5B403C]">Phone</label>
+            <p className="mt-1.5 rounded-xl border border-[#E5E2E1] bg-[#FCF9F8] px-3 py-2.5 font-inter text-sm text-[#5B403C]">
+              {phone}
+            </p>
           </div>
         )}
-        {error && <p className="text-xs text-red-600">{error}</p>}
-        <Button onClick={() => void save()} loading={saving} variant="secondary" className="self-start">
-          {saved ? "Saved ✓" : "Save changes"}
+        {error && <p className="font-inter text-xs font-medium text-[#BA1A1A]">{error}</p>}
+        <Button
+          onClick={() => void save()}
+          loading={saving}
+          className="self-start rounded-xl bg-[#B61913] px-5 font-inter text-sm font-semibold text-white hover:bg-[#9A1410]"
+        >
+          {saved ? (
+            <>
+              <Check className="size-4" />
+              Saved
+            </>
+          ) : (
+            "Save changes"
+          )}
         </Button>
       </div>
-    </Card>
+    </div>
   );
 }

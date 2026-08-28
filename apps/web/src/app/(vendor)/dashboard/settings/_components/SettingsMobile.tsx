@@ -48,11 +48,11 @@ export function SettingsMobile({ vendor }: SettingsMobileProps) {
   const renderSubScreen = () => {
     switch (activeSubScreen) {
       case "hours":
-        return <OperatingHours />;
+        return <OperatingHours vendor={vendor} />;
       case "delivery":
-        return <DeliveryZone />;
+        return <DeliveryZone vendor={vendor} />;
       case "staff":
-        return <StaffMembers />;
+        return <StaffMembers vendor={vendor} />;
       case "general":
         return <GeneralSettings vendor={vendor} />;
       default:

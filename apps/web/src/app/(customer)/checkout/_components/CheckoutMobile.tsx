@@ -18,6 +18,7 @@ interface CheckoutMobileProps {
   paymentMethod: PaymentMethod;
   onPaymentMethodChange: (method: PaymentMethod) => void;
   subtotalKobo: number;
+  walletBalanceKobo: number;
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
   formAction: (formData: FormData) => void;
@@ -34,6 +35,7 @@ export function CheckoutMobile({
   paymentMethod,
   onPaymentMethodChange,
   subtotalKobo,
+  walletBalanceKobo,
   deliveryNote,
   onDeliveryNoteChange,
   formAction,
@@ -66,51 +68,48 @@ export function CheckoutMobile({
         <input type="hidden" name="paymentMethod" value={paymentMethod} />
         {/* Step 1: Delivery Address */}
         <div className="rounded-2xl border border-[#E5E2E1] bg-white p-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(182,25,19,0.1)] text-sm font-semibold text-[#B61913]">
-                1
-              </div>
-              <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
-                Delivery Address
-              </h2>
+          {/* No "Change" shortcut here — AddressSection already renders its
+              own edit affordance once an address is selected, and adding a
+              second control that does nothing (as this one previously did)
+              would be misleading. */}
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(182,25,19,0.1)] text-sm font-semibold text-[#B61913]">
+              1
             </div>
-            <button
-              type="button"
-              className="font-inter text-sm font-semibold text-[#B61913] hover:underline"
-            >
-              Change
-            </button>
+            <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+              Delivery Address
+            </h2>
           </div>
           <AddressSection
             address={selectedAddress}
             addresses={addresses}
             onAddressChange={onAddressChange}
+            vendorLocation={
+              vendor?.location_lat != null && vendor?.location_lng != null
+                ? { lat: vendor.location_lat, lng: vendor.location_lng }
+                : null
+            }
             variant="mobile"
           />
         </div>
 
         {/* Step 2: Payment Method */}
         <div className="rounded-2xl border border-[#E5E2E1] bg-white p-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(182,25,19,0.1)] text-sm font-semibold text-[#B61913]">
-                2
-              </div>
-              <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
-                Payment Method
-              </h2>
+          {/* No "Change" shortcut — Card is the only supported method right
+              now, so there's nothing to switch to yet (see PaymentSection). */}
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(182,25,19,0.1)] text-sm font-semibold text-[#B61913]">
+              2
             </div>
-            <button
-              type="button"
-              className="font-inter text-sm font-semibold text-[#B61913] hover:underline"
-            >
-              Change
-            </button>
+            <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+              Payment Method
+            </h2>
           </div>
           <PaymentSection
             paymentMethod={paymentMethod}
             onPaymentMethodChange={onPaymentMethodChange}
+            walletBalanceKobo={walletBalanceKobo}
+            subtotalKobo={subtotalKobo}
             variant="mobile"
           />
         </div>

@@ -43,7 +43,7 @@
 -- below).
 
 begin;
-select plan(14);
+select plan(16);
 
 select tests.create_supabase_user('customer_a');
 select tests.create_supabase_user('vendor_owner_a');
@@ -62,15 +62,22 @@ insert into riders (user_id, is_online) values
 -- 50000, service_fee 10000, discount 0, total 560000, commission_bps 1500
 -- (15%): commission = round(500000*0.15) = 75000; vendor = 425000;
 -- rider = 50000; platform = 560000 - 425000 - 50000 = 85000.
+--
+-- rider_fee_kobo is set explicitly to 50000 here (same value delivery_fee_
+-- kobo happens to have) — this order is seeded directly at 'arrived',
+-- bypassing accept_dispatch_offer() (0044) entirely, so nothing else would
+-- ever populate this column. As of 0044, verify_delivery_and_release_escrow()
+-- reads rider_fee_kobo, not delivery_fee_kobo, for the rider's payout share
+-- — see this migration's file header for why the two are now independent.
 -- ---------------------------------------------------------------------------
 
-insert into orders (id, customer_id, vendor_id, rider_id, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_location, arrived_at)
+insert into orders (id, customer_id, vendor_id, rider_id, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, rider_fee_kobo, delivery_address, delivery_location, arrived_at)
 values (
   '00000000-0000-7000-8000-000000000051',
   tests.get_supabase_uid('customer_a'),
   '00000000-0000-7000-8000-000000000050',
   tests.get_supabase_uid('rider_a'),
-  'arrived', 'paid', 500000, 50000, 10000, 0, 560000,
+  'arrived', 'paid', 500000, 50000, 10000, 0, 560000, 50000,
   '{"line1": "1 Test Street"}'::jsonb,
   st_geogfromtext('POINT(7.45 9.05)'),
   now() - interval '10 minutes'
@@ -152,7 +159,7 @@ select is(
 select is(
   (select balance_kobo from account_balances ab join accounts a on a.id = ab.account_id where a.owner_type = 'rider' and a.owner_id = tests.get_supabase_uid('rider_a')),
   50000::bigint,
-  'the rider is credited exactly the order''s delivery_fee_kobo'
+  'the rider is credited exactly the order''s rider_fee_kobo (0044 — independent of delivery_fee_kobo)'
 );
 
 select is(
@@ -182,6 +189,59 @@ select is(
   (select count(*)::int from ledger_entries le join transactions t on t.id = le.transaction_id where t.order_id = '00000000-0000-7000-8000-000000000051' and t.kind = 'escrow_release'),
   4,
   'a duplicate release call does not create a second set of ledger entries'
+);
+
+-- ---------------------------------------------------------------------------
+-- 0044 regression test — a free-delivery order (delivery_fee_kobo = 0,
+-- e.g. subtotal >= service_areas.free_above_kobo) must still pay the rider
+-- via rider_fee_kobo. Before 0044, this order's rider would have been
+-- credited exactly delivery_fee_kobo, i.e. 0 — a real delivery done for
+-- free. Order 055: subtotal 1200000, delivery_fee 0 (waived), service_fee
+-- 24000, discount 0, total 1224000; rider_fee_kobo set to 65000 (what
+-- accept_dispatch_offer() would have computed from distance, independent
+-- of the waiver); commission_bps 1500: commission = round(1200000*0.15) =
+-- 180000; vendor = 1020000; platform = 1224000 - 1020000 - 65000 = 139000.
+-- ---------------------------------------------------------------------------
+
+select tests.authenticate_as_service_role();
+insert into orders (id, customer_id, vendor_id, rider_id, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, rider_fee_kobo, delivery_address, delivery_location, arrived_at)
+values (
+  '00000000-0000-7000-8000-000000000055',
+  tests.get_supabase_uid('customer_a'),
+  '00000000-0000-7000-8000-000000000050',
+  tests.get_supabase_uid('rider_a'),
+  'arrived', 'paid', 1200000, 0, 24000, 0, 1224000, 65000,
+  '{"line1": "1 Test Street"}'::jsonb,
+  st_geogfromtext('POINT(7.45 9.05)'),
+  now() - interval '10 minutes'
+);
+insert into order_delivery_codes (order_id, code) values ('00000000-0000-7000-8000-000000000055', '5555');
+
+insert into transactions (id, kind, reference, order_id, description)
+values (
+  '00000000-0000-7000-8000-000000000155',
+  'payment_capture', 'KK-ESCROW-TEST-055', '00000000-0000-7000-8000-000000000055',
+  'Test fixture: simulated payment capture for order 055 (free-delivery order)'
+);
+insert into ledger_entries (transaction_id, account_id, direction, amount_kobo, entry_type, order_id)
+select '00000000-0000-7000-8000-000000000155', a.id, 'debit', 1224000, 'payment_capture', '00000000-0000-7000-8000-000000000055'
+from accounts a where a.owner_type = 'platform' and a.owner_id is null and a.kind = 'escrow';
+insert into ledger_entries (transaction_id, account_id, direction, amount_kobo, entry_type, order_id)
+select '00000000-0000-7000-8000-000000000155', a.id, 'credit', 1224000, 'payment_capture', '00000000-0000-7000-8000-000000000055'
+from accounts a where a.owner_type = 'platform' and a.owner_id is null and a.kind = 'escrow';
+
+select tests.authenticate_as('rider_a');
+select ok(
+  (select r.code_matched and (r.order_row).status = 'delivered'
+   from verify_delivery_and_release_escrow('00000000-0000-7000-8000-000000000055'::uuid, '5555') r),
+  'a free-delivery order (delivery_fee_kobo = 0) still releases escrow successfully'
+);
+
+select tests.authenticate_as_service_role();
+select is(
+  (select balance_kobo from account_balances ab join accounts a on a.id = ab.account_id where a.owner_type = 'rider' and a.owner_id = tests.get_supabase_uid('rider_a')),
+  50000::bigint + 65000::bigint,
+  'the rider is paid rider_fee_kobo (65000) on a free-delivery order — the fee waiver does not zero their pay (0044''s whole point). 50000 is rider_a''s existing balance from order 051 above.'
 );
 
 -- ---------------------------------------------------------------------------

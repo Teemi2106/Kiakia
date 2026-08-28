@@ -1,251 +1,467 @@
-// app/(auth)/customer/home/page.tsx
-import { Badge, Card, cn } from "@kiakia/ui";
-import { Star, Utensils, Coffee, Beef, Fish, Pizza, Salad } from "lucide-react";
+// app/(customer)/home/page.tsx
+import { EmptyState } from "@kiakia/ui";
+import { haversineDistanceM, TERMINAL_STATUSES, type OrderStatus } from "@kiakia/domain";
+import { Store } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { ActiveOrderCard, type ActiveOrder } from "./_components/ActiveOrderCard";
+import { CategoryChips } from "./_components/CategoryChips";
+import { FeaturedCarousel, type FeaturedVendor } from "./_components/FeaturedCarousel";
+import { FilterChips, type HomeSearchParams } from "./_components/FilterChips";
+import { HomeGreeting } from "./_components/HomeGreeting";
+import { SectionHeading } from "./_components/SectionHeading";
+import { VendorCard, type VendorCardVendor } from "./_components/VendorCard";
+import { isVendorOpenNow } from "./_lib/opening-hours";
 
 export const metadata: Metadata = { title: "Home" };
 
-const CATEGORIES = [
-  "Jollof",
-  "Soups",
-  "Swallow",
-  "Grills",
-  "Sides",
-  "Drinks",
-] as const;
+const VENDOR_COLUMNS =
+  "id, name, slug, category, avg_prep_mins, rating_avg, rating_count, banner_url, is_accepting_orders, opening_hours, state, location_lat, location_lng";
 
-// Category icons for mobile
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  Jollof: <Utensils className="size-5 text-[#B61913]" />,
-  Soups: <Coffee className="size-5 text-[#934B00]" />,
-  Swallow: <Beef className="size-5 text-[#176A22]" />,
-  Grills: <Fish className="size-5 text-[#B61913]" />,
-  Sides: <Pizza className="size-5 text-[#934B00]" />,
-  Drinks: <Salad className="size-5 text-[#B61913]" />,
-};
+// Same set the /orders page filters on, taken from the state machine itself
+// rather than re-listed here — the two must never drift.
+const TERMINAL_STATUS_LIST = Array.from(TERMINAL_STATUSES).join(",");
+
+/** Attaches distanceM (customer -> vendor) to each row when the customer's own
+ * coordinates are known, then sorts nearest-first — falls back to leaving the
+ * given order untouched (e.g. rating/name) when either side's coordinates are
+ * missing, rather than fabricating a distance or an arbitrary order. */
+function withDistanceSorted<T extends VendorCardVendor>(
+  vendors: T[],
+  customer: { lat: number; lng: number } | null,
+): T[] {
+  if (!customer) return vendors;
+
+  const withDistance = vendors.map((v) => ({
+    ...v,
+    distanceM:
+      v.location_lat != null && v.location_lng != null
+        ? haversineDistanceM(customer, { lat: v.location_lat, lng: v.location_lng })
+        : null,
+  }));
+
+  return withDistance.sort((a, b) => {
+    if (a.distanceM == null && b.distanceM == null) return 0;
+    if (a.distanceM == null) return 1; // unknown-location vendors sort last, never first
+    if (b.distanceM == null) return -1;
+    return a.distanceM - b.distanceM;
+  });
+}
+
+/** "Timi Adeyemi" -> "Timi". Empty/whitespace names give null so the greeting
+ * falls back to the un-named form rather than rendering a stray comma. */
+function firstNameOf(fullName: string | null | undefined): string | null {
+  const first = (fullName ?? "").trim().split(/\s+/)[0];
+  return first || null;
+}
 
 export default async function CustomerHomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<HomeSearchParams>;
 }) {
-  const { q, category } = await searchParams;
-
-  // Real Supabase query
+  const { q, category, open, quick, sort } = await searchParams;
+  const session = await verifySession();
   const supabase = await createClient();
-  let query = supabase
-    .from("vendors")
-    .select(
-      "id, name, slug, category, avg_prep_mins, rating_avg, rating_count, banner_url, is_accepting_orders",
-    )
-    .eq("status", "active")
-    .order("rating_avg", { ascending: false })
-    .limit(30);
 
-  if (q) query = query.ilike("name", `%${q}%`);
-  if (category) query = query.eq("category", category);
+  // Everything that depends on nothing but the session goes out together.
+  // The customer's own state/coordinates come from their default (or first)
+  // saved address — the same "deliver to" address the top nav shows
+  // (CustomerTopNav.tsx's useDefaultAddressLabel). Vendors outside this state
+  // are excluded outright below, and the rest are ordered nearest-first by
+  // these coordinates. A customer with no saved address yet has no basis to
+  // filter/sort on — every vendor still shows, unfiltered, rather than an
+  // empty page.
+  const [{ data: customerAddress }, { data: profile }, { data: activeOrderRows }] =
+    await Promise.all([
+      supabase
+        .from("addresses")
+        .select("state, location_lat, location_lng")
+        .eq("customer_id", session.userId)
+        .order("is_default", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase.from("profiles").select("full_name").eq("id", session.userId).maybeSingle(),
+      // Live orders, newest first. Capped because only the newest is shown in
+      // full — the rest are a count linking to /orders.
+      supabase
+        .from("orders")
+        .select("id, code, status, total_kobo, vendor_id")
+        .eq("customer_id", session.userId)
+        .not("status", "in", `(${TERMINAL_STATUS_LIST})`)
+        .order("created_at", { ascending: false })
+        .limit(10),
+    ]);
 
-  const { data: vendors } = await query;
+  const customerState = customerAddress?.state?.trim() || null;
+  const customerCoords =
+    customerAddress?.location_lat != null && customerAddress?.location_lng != null
+      ? { lat: customerAddress.location_lat, lng: customerAddress.location_lng }
+      : null;
+  const firstName = firstNameOf(profile?.full_name);
 
-  return (
-    <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-20 sm:px-6">
-      {/* Hero Banner - Desktop */}
-      <div className="relative mb-8 hidden h-[392px] overflow-hidden rounded-2xl border border-[#E5E2E1] bg-[#F6F3F2] sm:block">
-        <div className="absolute inset-0">
-          <div
-            className="h-full w-full bg-cover bg-center opacity-90"
-            style={{ backgroundImage: "url('/assets/hero-banner.png')" }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FCF9F8] via-[rgba(252,249,248,0.8)] to-transparent" />
-        </div>
-        <div className="relative flex h-full flex-col justify-center px-12 py-10">
-          <Badge className="mb-4 w-fit bg-[#FE8E27] text-[#653200] hover:bg-[#FE8E27]">
-            <span className="text-xs p-2 font-bold uppercase tracking-[0.6px]">
-              Limited Time Offer
-            </span>
-          </Badge>
-          <h1 className="max-w-[257px] font-sora text-[48px] font-extrabold leading-[56px] tracking-[-0.96px] text-[#1C1B1B]">
-            20% off Jollof Rice
-          </h1>
-          <p className="mt-2 text-[18px] leading-7 text-[#5B403C]">
-            Use code{" "}
-            <span className="rounded-md bg-[#E5E2E1] px-2 py-0.5 font-semibold text-[#1C1B1B]">
-              JOLLOF20
-            </span>{" "}
-            at checkout
-          </p>
-          {/* <Link
-            href="/vendors"
-            className="mt-4 flex w-fit items-center gap-2 rounded-xl bg-[#E23B2E] px-6 py-3 font-inter text-sm font-semibold text-white hover:bg-[#c42a1f]"
-          >
-            Order Now
-          </Link> */}
-        </div>
-        {/* Carousel dots (visual only) */}
-        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-          <span className="h-2 w-8 rounded-full bg-[#E23B2E]" />
-          <span className="h-2 w-2 rounded-full bg-[#E5E2E1]" />
-          <span className="h-2 w-2 rounded-full bg-[#E5E2E1]" />
-        </div>
-      </div>
+  const liveOrders = activeOrderRows ?? [];
+  const newestLiveOrder = liveOrders[0] ?? null;
 
-      {/* Mobile Promo Banner */}
-      <div className="relative mt-4 mb-6 h-[160px] pb-10 w-full overflow-hidden rounded-xl shadow-sm sm:hidden">
-        <div
-          className="h-full w-full bg-cover bg-center"
-          style={{ backgroundImage: "url('/assets/hero-banner.png')" }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4">
-          <Badge className="mb-2 bg-[#FE8E27] text-[#653200] hover:bg-[#FE8E27]">
-            <span className="text-[10px] p-1 font-bold uppercase tracking-[0.5px]">
-              Limited Time Offer
-            </span>
-          </Badge>
-          <h2 className="font-sora text-[28px] font-bold leading-[34px] text-white">
-            20% off Jollof Rice
-          </h2>
-          <p className="text-sm text-white/90">Use code JOLLOF20</p>
-        </div>
-      </div>
+  // Category chips are real vendor data (vendors.category, set at onboarding
+  // from a fixed list — see app/onboarding/_components/VendorOnboardingForm.tsx)
+  // rather than the multi-vertical tabs Chowdeck shows (Restaurants/Shops/
+  // Pharmacies) — KiaKia ships food only, so this row is per-cuisine, not
+  // per-vertical. Distinct values are derived here since there aren't many
+  // vendors yet and PostgREST has no DISTINCT. Scoped to the customer's own
+  // state for the same reason the vendor lists below are: a category only
+  // available from an out-of-state vendor shouldn't appear as choosable here.
+  let categoryQuery = supabase.from("vendors").select("category").eq("status", "active");
+  if (customerState) categoryQuery = categoryQuery.ilike("state", customerState);
 
-      {/* Categories Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B] sm:text-2xl">
-            Categories
-          </h2>
-          {category && (
-            <Link
-              href="/home"
-              className="font-inter text-sm font-semibold text-[#B61913] hover:underline"
-            >
-              Clear filter
-            </Link>
-          )}
-        </div>
+  // Resolved alongside the category list so the live-order card costs no
+  // extra round trip.
+  const liveOrderVendorQuery = newestLiveOrder
+    ? supabase.from("vendors").select("name").eq("id", newestLiveOrder.vendor_id).maybeSingle()
+    : Promise.resolve({ data: null });
 
-        {/* Desktop: Text-based pills */}
-        <div className="mt-4 hidden gap-3 overflow-x-auto pb-2 sm:flex sm:gap-3">
-          {CATEGORIES.map((c) => (
-            <Link
-              key={c}
-              href={`/home?category=${encodeURIComponent(c)}`}
-              className={cn(
-                "shrink-0 rounded-full px-6 py-2 font-inter text-sm font-semibold leading-5 tracking-[0.14px]",
-                category === c
-                  ? "bg-[#DA3529] text-[#FFFBFF]"
-                  : "border border-[#E5E2E1] bg-[#EAE7E7] text-[#5B403C] hover:bg-[#ddd9d9]",
-              )}
-            >
-              {c}
-            </Link>
-          ))}
-        </div>
+  const isFiltered = Boolean(q || category || open === "1" || quick === "1" || sort === "rating");
 
-        {/* Mobile: Icon-based scrollable categories */}
-        <div className="mt-4 flex gap-4 overflow-x-auto pb-2 sm:hidden [-webkit-overflow-scrolling:touch]">
-          {CATEGORIES.map((c) => (
-            <Link
-              key={c}
-              href={`/home?category=${encodeURIComponent(c)}`}
-              className="flex shrink-0 flex-col items-center gap-2"
-            >
-              <div
-                className={cn(
-                  "flex h-16 w-16 items-center justify-center rounded-2xl shadow-sm transition-colors",
-                  category === c
-                    ? "bg-[#DA3529]"
-                    : "bg-[#F0EDED] hover:bg-[#e5e2e2]",
-                )}
+  // Default browse state: a "Top rated" strip plus the full vendor list,
+  // honestly labeled — neither is editorially curated, "Top rated" is a
+  // straight rating_avg sort and "All vendors" is nearest-first.
+  if (!isFiltered) {
+    let topRatedQuery = supabase
+      .from("vendors")
+      .select(VENDOR_COLUMNS)
+      .eq("status", "active")
+      .gt("rating_count", 0);
+    let allVendorsQuery = supabase.from("vendors").select(VENDOR_COLUMNS).eq("status", "active");
+    if (customerState) {
+      topRatedQuery = topRatedQuery.ilike("state", customerState);
+      allVendorsQuery = allVendorsQuery.ilike("state", customerState);
+    }
+    topRatedQuery = topRatedQuery
+      .order("rating_avg", { ascending: false })
+      .order("rating_count", { ascending: false })
+      .limit(8);
+    // Ordered by name here only as the query's own tiebreaker/pre-sort — the
+    // real customer-facing order (nearest first) is applied below by
+    // withDistanceSorted() once results are back.
+    allVendorsQuery = allVendorsQuery.order("name", { ascending: true }).limit(30);
+
+    const [
+      { data: categoryRows },
+      { data: liveOrderVendor },
+      { data: topRated },
+      { data: allVendorsRaw },
+      { data: dishRows },
+    ] = await Promise.all([
+      categoryQuery,
+      liveOrderVendorQuery,
+      topRatedQuery,
+      allVendorsQuery,
+      // A wide, unordered pool of real menu-item photos — deduped to one
+      // per vendor below, then cross-checked against real active vendors.
+      // No FK embed here (menu_items -> vendors), matching this codebase's
+      // established pattern of two plain queries + a JS join rather than
+      // a PostgREST embed, e.g. the vendor settings staff list.
+      supabase
+        .from("menu_items")
+        .select("id, name, image_url, vendor_id")
+        .eq("is_available", true)
+        .not("image_url", "is", null)
+        .limit(60),
+    ]);
+
+    const categories = distinctCategories(categoryRows);
+    const topRatedVendors = (topRated ?? []) as VendorCardVendor[];
+    const topRatedIds = new Set(topRatedVendors.map((v) => v.id));
+    const allVendors = withDistanceSorted(
+      ((allVendorsRaw ?? []) as VendorCardVendor[]).filter((v) => !topRatedIds.has(v.id)),
+      customerCoords,
+    );
+    const hasAnyVendors = topRatedVendors.length > 0 || allVendors.length > 0;
+
+    const vendorById = new Map<string, VendorCardVendor>(
+      [...topRatedVendors, ...allVendors].map((v) => [v.id, v]),
+    );
+    const featuredVendorIds = new Set<string>();
+    const featured: FeaturedVendor[] = [];
+    for (const dish of dishRows ?? []) {
+      if (!dish.image_url || !dish.vendor_id || featuredVendorIds.has(dish.vendor_id)) continue;
+      const vendor = vendorById.get(dish.vendor_id);
+      if (!vendor) continue; // not in the active/top-rated pool fetched above
+      featuredVendorIds.add(dish.vendor_id);
+      featured.push({ vendor, dishName: dish.name, dishImageUrl: dish.image_url });
+      if (featured.length >= 10) break;
+    }
+
+    return (
+      <HomeShell
+        firstName={firstName}
+        activeOrder={toActiveOrder(newestLiveOrder, liveOrderVendor?.name ?? null)}
+        otherActiveCount={Math.max(liveOrders.length - 1, 0)}
+        categories={categories}
+        activeCategory={category}
+        homeSearchParams={{ q, category, open, quick, sort }}
+      >
+        {!hasAnyVendors ? (
+          <EmptyState
+            className="border-kk-line/70 bg-white/70 py-14"
+            title="No kitchens open to you yet"
+            description="Vendors are still coming on board in your area. Add or update your delivery address if you've moved — the list is scoped to where you're delivering."
+            action={
+              <Link
+                href="/profile/addresses"
+                className="font-inter text-sm font-semibold text-kk-red hover:underline"
               >
-                <div className={category === c ? "text-white" : ""}>
-                  {CATEGORY_ICONS[c] || (
-                    <Utensils className="size-5 text-[#5B403C]" />
-                  )}
-                </div>
-              </div>
-              <span
-                className={cn(
-                  "font-inter text-xs font-medium leading-4 text-[#5B403C]",
-                  category === c && "font-semibold text-[#DA3529]",
-                )}
-              >
-                {c}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Nearby Vendors */}
-      <div>
-        <div className="flex items-center justify-between">
-          <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
-            Nearby Favorites
-          </h2>
-        </div>
-
-        {!vendors || vendors.length === 0 ? (
-          <p className="mt-4 text-sm text-[#5B403C]">
-            No vendors match{q ? ` "${q}"` : ""}
-            {category ? ` in ${category}` : ""} yet.
-          </p>
-        ) : (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {vendors.map((vendor) => (
-              <Link key={vendor.id} href={`/vendors/${vendor.slug}`}>
-                <Card className="overflow-hidden border border-[#E5E2E1] p-0 transition-shadow hover:shadow-md">
-                  <div
-                    className="h-[160px] w-full bg-[#EAE7E7] bg-cover bg-center"
-                    style={
-                      vendor.banner_url
-                        ? { backgroundImage: `url(${vendor.banner_url})` }
-                        : {
-                            backgroundImage:
-                              "url('/assets/vendor-placeholder.png')",
-                          }
-                    }
-                  />
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-sora text-lg font-bold text-[#1C1B1B]">
-                        {vendor.name}
-                      </h3>
-                      {vendor.rating_count > 0 && (
-                        <span className="flex shrink-0 items-center gap-1 rounded-full bg-[rgba(252,249,248,0.9)] px-2 py-0.5 text-xs font-bold text-[#1C1B1B] backdrop-blur-sm">
-                          <Star className="size-3 fill-[#FE8E27] text-[#FE8E27]" />
-                          {vendor.rating_avg.toFixed(1)}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1 font-inter text-sm capitalize text-[#5B403C]">
-                      {vendor.category || "Various"}
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Badge
-                        tone={
-                          vendor.is_accepting_orders ? "positive" : "neutral"
-                        }
-                        className="text-xs"
-                      >
-                        {vendor.is_accepting_orders
-                          ? `~${vendor.avg_prep_mins || 15} min prep`
-                          : "Currently closed"}
-                      </Badge>
-                      <span className="text-xs text-[#5B403C]">
-                        {vendor.rating_count}{" "}
-                        {vendor.rating_count === 1 ? "review" : "reviews"}
-                      </span>
-                    </div>
-                  </div>
-                </Card>
+                Check your address
               </Link>
-            ))}
+            }
+          />
+        ) : (
+          <div className="space-y-12">
+            {featured.length > 0 && (
+              <section>
+                <SectionHeading
+                  title="Featured dishes"
+                  hint="Real photos from vendors' own menus."
+                />
+                <FeaturedCarousel items={featured} />
+              </section>
+            )}
+
+            {topRatedVendors.length > 0 && (
+              <section>
+                <SectionHeading
+                  title="Top rated"
+                  count={topRatedVendors.length}
+                  hint="Sorted by customer rating — not a paid placement."
+                />
+                <VendorGrid vendors={topRatedVendors} />
+              </section>
+            )}
+
+            {allVendors.length > 0 && (
+              <section>
+                <SectionHeading
+                  title="All vendors"
+                  count={allVendors.length}
+                  hint={
+                    customerCoords
+                      ? "Nearest to your delivery address first."
+                      : "Add a delivery address to sort these by distance."
+                  }
+                />
+                <VendorGrid vendors={allVendors} />
+              </section>
+            )}
           </div>
         )}
+      </HomeShell>
+    );
+  }
+
+  // Filtered/search/chip state: one flat, honestly-labeled result list.
+  // A search matches either the vendor's own name OR one of its menu item
+  // names — "jollof" should surface every vendor that sells jollof, not
+  // just a vendor literally named "Jollof". No FK embed (menu_items ->
+  // vendors) for this, same reasoning as the Featured carousel above: two
+  // plain queries + a JS-side id union, matching this codebase's
+  // established pattern instead of a PostgREST embed.
+  const [{ data: categoryRows }, { data: liveOrderVendor }, matchedVendorIds] = await Promise.all([
+    categoryQuery,
+    liveOrderVendorQuery,
+    resolveSearchMatches(supabase, q),
+  ]);
+  const categories = distinctCategories(categoryRows);
+
+  let vendors: VendorCardVendor[] = [];
+  // An empty match set means the search matched nothing at all — skip the
+  // query outright rather than passing `.in("id", [])` through to
+  // PostgREST, which some clients turn into an always-false-but-still-a-
+  // real-query filter; short-circuiting is simpler and avoids relying on
+  // that behavior.
+  if (!q || (matchedVendorIds && matchedVendorIds.length > 0)) {
+    let vendorQuery = supabase.from("vendors").select(VENDOR_COLUMNS).eq("status", "active");
+    if (customerState) vendorQuery = vendorQuery.ilike("state", customerState);
+    if (matchedVendorIds) vendorQuery = vendorQuery.in("id", matchedVendorIds);
+    if (category) vendorQuery = vendorQuery.eq("category", category);
+    if (quick === "1") vendorQuery = vendorQuery.lte("avg_prep_mins", 30);
+    // Ordered by rating when explicitly asked for; otherwise by name here as
+    // just the query's own tiebreaker/pre-sort — nearest-first (below, via
+    // withDistanceSorted()) is the real default customer-facing order.
+    vendorQuery =
+      sort === "rating"
+        ? vendorQuery
+            .order("rating_avg", { ascending: false })
+            .order("rating_count", { ascending: false })
+        : vendorQuery.order("name", { ascending: true });
+    // "Open now" can't be expressed as a single PostgREST filter (it depends
+    // on the current day/time against a jsonb schedule), so fetch a larger
+    // pool and filter in JS, then cap to the same page size as the default view.
+    vendorQuery = vendorQuery.limit(open === "1" ? 100 : 30);
+
+    const { data: vendorRows } = await vendorQuery;
+    vendors = (vendorRows ?? []) as VendorCardVendor[];
+    if (open === "1") vendors = vendors.filter(isVendorOpenNow);
+    if (sort !== "rating") vendors = withDistanceSorted(vendors, customerCoords);
+    vendors = vendors.slice(0, 30);
+  }
+
+  return (
+    <HomeShell
+      firstName={firstName}
+      activeOrder={toActiveOrder(newestLiveOrder, liveOrderVendor?.name ?? null)}
+      otherActiveCount={Math.max(liveOrders.length - 1, 0)}
+      categories={categories}
+      activeCategory={category}
+      homeSearchParams={{ q, category, open, quick, sort }}
+    >
+      <SectionHeading
+        title={q ? `Results for “${q}”` : "Filtered vendors"}
+        count={vendors.length}
+        hint={
+          sort === "rating" ? "Highest rated first." : "Nearest to your delivery address first."
+        }
+        action={
+          <Link
+            href="/home"
+            className="inline-flex items-center gap-1.5 rounded-full border border-kk-line/70 bg-white px-3.5 py-2 font-inter text-xs font-semibold text-kk-cocoa transition-colors hover:border-kk-red/40 hover:text-kk-red"
+          >
+            Clear filters
+          </Link>
+        }
+      />
+
+      {vendors.length === 0 ? (
+        <EmptyState
+          className="border-kk-line/70 bg-white/70 py-14"
+          title="Nothing matched that"
+          description={`No vendors match your filters${q ? ` for “${q}”` : ""}. Try a different search, or drop a filter or two.`}
+          action={
+            <Link
+              href="/home"
+              className="font-inter text-sm font-semibold text-kk-red hover:underline"
+            >
+              Clear filters
+            </Link>
+          }
+        />
+      ) : (
+        <VendorGrid vendors={vendors} />
+      )}
+    </HomeShell>
+  );
+}
+
+/** Distinct, alphabetised vendor categories from a raw `select("category")`. */
+function distinctCategories(rows: Array<{ category: string | null }> | null): string[] {
+  return Array.from(new Set((rows ?? []).map((row) => row.category).filter(Boolean) as string[])).sort(
+    (a, b) => a.localeCompare(b),
+  );
+}
+
+/** Vendor ids whose own name, or one of whose menu items, matches `q`. Null
+ * when there is no search term at all — which is different from "matched
+ * nothing", the empty array. */
+async function resolveSearchMatches(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  q: string | undefined,
+): Promise<string[] | null> {
+  if (!q) return null;
+
+  const [{ data: nameMatches }, { data: dishMatches }] = await Promise.all([
+    supabase.from("vendors").select("id").eq("status", "active").ilike("name", `%${q}%`),
+    supabase
+      .from("menu_items")
+      .select("vendor_id")
+      .eq("is_available", true)
+      .ilike("name", `%${q}%`),
+  ]);
+
+  return Array.from(
+    new Set<string>([
+      ...(nameMatches ?? []).map((v) => v.id),
+      ...(dishMatches ?? []).map((m) => m.vendor_id).filter((id): id is string => Boolean(id)),
+    ]),
+  );
+}
+
+function toActiveOrder(
+  row: { id: string; code: string; status: string; total_kobo: number } | null,
+  vendorName: string | null,
+): ActiveOrder | null {
+  if (!row) return null;
+  return {
+    id: row.id,
+    code: row.code,
+    status: row.status as OrderStatus,
+    total_kobo: row.total_kobo,
+    vendorName,
+  };
+}
+
+function VendorGrid({ vendors }: { vendors: VendorCardVendor[] }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {vendors.map((vendor) => (
+        <VendorCard key={vendor.id} vendor={vendor} />
+      ))}
+    </div>
+  );
+}
+
+function HomeShell({
+  firstName,
+  activeOrder,
+  otherActiveCount,
+  categories,
+  activeCategory,
+  homeSearchParams,
+  children,
+}: {
+  firstName: string | null;
+  activeOrder: ActiveOrder | null;
+  otherActiveCount: number;
+  categories: string[];
+  activeCategory?: string;
+  homeSearchParams: HomeSearchParams;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mx-auto w-full max-w-7xl flex-1 px-4 pb-12 pt-5 sm:px-6 sm:pb-16 sm:pt-8">
+      <HomeGreeting firstName={firstName} />
+
+      {activeOrder && (
+        <div className="mt-4">
+          <ActiveOrderCard order={activeOrder} otherActiveCount={otherActiveCount} />
+        </div>
+      )}
+
+      {/* Browse controls. Grouped into one panel so the category rail and the
+          filter chips read as a single toolbar rather than two loose rows. */}
+      <div className="mt-9 space-y-4">
+        <div className="flex items-center gap-3">
+          <Store className="size-4 shrink-0 text-kk-red" />
+          <h2 className="font-inter text-[11px] font-semibold uppercase tracking-[0.22em] text-kk-cocoa">
+            Browse
+          </h2>
+          <span aria-hidden="true" className="h-px flex-1 bg-kk-line/70" />
+        </div>
+        <CategoryChips
+          categories={categories}
+          activeCategory={activeCategory}
+          preserveParams={{
+            q: homeSearchParams.q,
+            open: homeSearchParams.open,
+            quick: homeSearchParams.quick,
+            sort: homeSearchParams.sort,
+          }}
+        />
+        <FilterChips searchParams={homeSearchParams} />
+      </div>
+
+      <div id="vendor-results" className="mt-10 scroll-mt-40 lg:scroll-mt-24">
+        {children}
       </div>
     </div>
   );

@@ -2,8 +2,9 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Clock, Utensils } from "lucide-react";
+import { ChevronRight, Clock, Utensils } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import type { Order } from "./types";
 
 interface IncomingOrdersProps {
@@ -47,9 +48,10 @@ export function IncomingOrders({
     return (
       <div className="space-y-4">
         {orders.map((order) => (
-          <div
+          <Link
             key={order.id}
-            className="flex items-center gap-4 rounded-xl border border-[#E4BEB8] bg-white p-4 transition-colors hover:border-[#B61913] cursor-pointer group"
+            href={`/dashboard/orders/${order.id}`}
+            className="group flex items-center gap-4 rounded-2xl border border-[#E4BEB8] bg-white p-4 transition-colors hover:border-[#B61913] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40"
           >
             {/* Image */}
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F0EDED]">
@@ -70,7 +72,7 @@ export function IncomingOrders({
             {/* Details */}
             <div className="flex-1">
               <div className="flex items-start justify-between">
-                <h4 className="font-inter font-bold text-[#1C1B1B] group-hover:text-[#B61913] transition-colors">
+                <h4 className="font-inter font-bold text-[#1C1B1B] transition-colors group-hover:text-[#B61913]">
                   {order.items || "Order items"}
                 </h4>
                 <span className="font-inter text-xs font-medium leading-4 text-[#5B403C]">
@@ -91,15 +93,13 @@ export function IncomingOrders({
             </div>
 
             {/* Right Side */}
-            <div className="text-right">
+            <div className="flex items-center gap-3">
               <p className="font-bold text-[#1C1B1B]">
                 {formatNaira(koboOf(order.total_kobo))}
               </p>
-              <button className="mt-2 font-inter text-sm font-bold text-[#B61913]">
-                Ready
-              </button>
+              <ChevronRight className="size-4 text-[#5B403C] transition-transform group-hover:translate-x-0.5 group-hover:text-[#B61913]" />
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     );
@@ -110,9 +110,10 @@ export function IncomingOrders({
     <div className="relative w-full overflow-x-auto pb-4 hide-scrollbar">
       <div className="flex gap-4 w-max">
         {orders.map((order) => (
-          <div
+          <Link
             key={order.id}
-            className="w-[280px] shrink-0 overflow-hidden rounded-2xl border border-[#E4BEB8] bg-white shadow-sm transition-all hover:shadow-md"
+            href={`/dashboard/orders/${order.id}`}
+            className="w-[280px] shrink-0 overflow-hidden rounded-2xl border border-[#E4BEB8] bg-white shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40"
           >
             <div className="relative h-32 w-full overflow-hidden bg-[#F0EDED]">
               {order.image ? (
@@ -141,16 +142,12 @@ export function IncomingOrders({
                 </span>
               </div>
               <p className="mb-4 text-xs text-[#5B403C]">{order.code}</p>
-              <div className="flex gap-2">
-                <button className="flex-1 rounded-xl bg-[#B61913] py-2 text-xs font-bold text-white active:scale-95 transition-transform">
-                  Accept
-                </button>
-                <button className="rounded-xl border-2 border-[#E4BEB8] px-4 py-2 text-xs font-bold text-[#1C1B1B] active:scale-95 transition-transform">
-                  Decline
-                </button>
+              <div className="flex items-center justify-between rounded-xl bg-[#FCF9F8] px-3 py-2 text-xs font-bold text-[#B61913]">
+                Manage order
+                <ChevronRight className="size-3.5" />
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

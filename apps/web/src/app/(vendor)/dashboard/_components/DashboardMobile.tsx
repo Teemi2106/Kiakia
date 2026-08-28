@@ -4,6 +4,7 @@
 import { StatsCards } from "./StatsCards";
 import { IncomingOrders } from "./IncomingOrders";
 import { KitchenStatus } from "./KitchenStatus";
+import { Inbox } from "lucide-react";
 import Link from "next/link";
 import type { Vendor, Order } from "./types";
 
@@ -56,8 +57,16 @@ export function DashboardMobile({
           </Link>
         </div>
         {orders.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[#E4BEB8] bg-white p-6 text-center text-sm text-[#5B403C]">
-            No incoming orders right now.
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#E4BEB8] bg-white p-8 text-center">
+            <span className="flex size-11 items-center justify-center rounded-full bg-[#FCF9F8] text-[#5B403C]">
+              <Inbox className="size-5" />
+            </span>
+            <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+              No incoming orders right now
+            </p>
+            <p className="text-xs text-[#5B403C]">
+              New orders will show up here the moment a customer checks out.
+            </p>
           </div>
         ) : (
           <IncomingOrders orders={orders} variant="mobile" />

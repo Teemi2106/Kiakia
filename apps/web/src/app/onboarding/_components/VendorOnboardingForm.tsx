@@ -53,6 +53,14 @@ export function VendorOnboardingForm() {
         <Input id="addressLine" name="addressLine" required className="mt-1 w-full" />
       </div>
       <div>
+        <label htmlFor="state" className="text-sm font-medium text-ink">
+          State
+        </label>
+        {/* Free-typed, same as the customer address form's State field — customers
+            in a different state than this value will never see this store listed. */}
+        <Input id="state" name="state" required placeholder="e.g. Oyo" className="mt-1 w-full" />
+      </div>
+      <div>
         <label htmlFor="landmark" className="text-sm font-medium text-ink">
           Landmark (optional)
         </label>

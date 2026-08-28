@@ -2,7 +2,10 @@
 import { retryPaymentAction } from "@/app/actions/orders";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapMonnifyPaymentMethod, verifyTransaction } from "@/lib/monnify";
 import { formatNaira, koboOf } from "@kiakia/domain";
+import type { Json } from "@kiakia/db";
 import {
   Button,
   Card,
@@ -19,6 +22,63 @@ import { OrderDetailMobile } from "./_components/OrderDetailMobile";
 
 export const metadata: Metadata = { title: "Order" };
 
+/**
+ * The Monnify webhook (supabase/functions/monnify-webhook, a Supabase Edge
+ * Function — publicly reachable independent of this Next.js app's own
+ * deploy/rollback state) is the source of truth for capturing a payment.
+ * But it's still a server-to-server call Monnify makes on its own schedule
+ * — it can be delayed, or never configured/reachable in a given
+ * environment. This is the fallback half of the same "never rely on one
+ * path" discipline: whenever the customer's browser lands back here on a
+ * still-unpaid order (Monnify's redirectUrl, or just a manual refresh),
+ * re-verify directly against Monnify's API and capture if it's actually
+ * paid — same §6.3 rule the webhook already follows ("never trust a
+ * webhook payload alone — re-check with the provider directly"), just
+ * triggered by the redirect instead of the webhook. capture_payment() is
+ * idempotent on payments.status = 'success' (0010_capture_payment.sql), so
+ * this can never double-capture even if the webhook lands moments later or
+ * earlier.
+ */
+async function tryCapturePendingPayment(orderId: string, orderCode: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data: payment } = await admin
+    .from("payments")
+    .select("status, provider, provider_ref")
+    .eq("idempotency_key", orderCode)
+    .maybeSingle();
+
+  if (!payment || payment.status === "success" || !payment.provider_ref) return false;
+
+  let verified;
+  try {
+    verified = await verifyTransaction(payment.provider_ref);
+  } catch (error) {
+    // Monnify unreachable/erroring — leave the order as pending; the retry
+    // button and/or a future webhook delivery are still there as fallbacks.
+    console.error("tryCapturePendingPayment: verifyTransaction failed", error);
+    return false;
+  }
+
+  if (verified.paymentStatus !== "PAID" && verified.paymentStatus !== "OVERPAID") return false;
+
+  const { error } = await admin.rpc("capture_payment", {
+    p_order_id: orderId,
+    p_provider: payment.provider,
+    p_provider_ref: verified.transactionReference,
+    p_amount_kobo: Math.round(verified.amountPaid * 100), // Monnify's amountPaid is in Naira — see lib/monnify.ts header
+    p_raw: verified as unknown as Json,
+    p_idempotency_key: orderCode,
+    p_channel: mapMonnifyPaymentMethod(verified.paymentMethod),
+  });
+
+  if (error) {
+    console.error("tryCapturePendingPayment: capture_payment failed", error);
+    return false;
+  }
+
+  return true;
+}
+
 export default async function OrderDetailPage({
   params,
 }: {
@@ -28,15 +88,24 @@ export default async function OrderDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: orderRow } = await supabase
-    .from("orders")
-    .select(
-      "id, code, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_note, vendor_id",
-    )
-    .eq("id", id)
-    .maybeSingle();
+  const ORDER_COLUMNS =
+    "id, code, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_note, vendor_id";
+
+  let { data: orderRow } = await supabase.from("orders").select(ORDER_COLUMNS).eq("id", id).maybeSingle();
 
   if (!orderRow) notFound();
+
+  // See tryCapturePendingPayment()'s own comment: this is the redirect-back
+  // fallback for the Monnify webhook, which can't reach this app at all in
+  // local dev. Only attempted for an order actually still awaiting payment,
+  // so a normal already-paid order never pays the extra Monnify round trip.
+  if (orderRow.status === "draft" && orderRow.payment_status === "pending") {
+    const captured = await tryCapturePendingPayment(orderRow.id, orderRow.code);
+    if (captured) {
+      const { data: refreshed } = await supabase.from("orders").select(ORDER_COLUMNS).eq("id", id).maybeSingle();
+      if (refreshed) orderRow = refreshed;
+    }
+  }
 
   // delivery_code lives in its own table now (order_delivery_codes,
   // supabase/migrations/0022_delivery_code_off_orders.sql), RLS-scoped to
@@ -47,7 +116,11 @@ export default async function OrderDetailPage({
   // naturally returns no row, so `code` below is undefined for them — that
   // is the fix, not an oversight.
   const [{ data: vendor }, { data: items }, { data: deliveryCodeRow }] = await Promise.all([
-    supabase.from("vendors").select("name").eq("id", orderRow.vendor_id).maybeSingle(),
+    supabase
+      .from("vendors")
+      .select("name, logo_url")
+      .eq("id", orderRow.vendor_id)
+      .maybeSingle(),
     supabase
       .from("order_items")
       .select("id, name_snapshot, qty, line_total_kobo")

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminContext } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requestMonnifyRefundForOrder } from "@/lib/monnify-refund";
 
 /**
  * approve_vendor(p_vendor_id, p_actor_id) / reject_vendor(p_vendor_id, p_actor_id)
@@ -103,19 +104,45 @@ export async function rejectRiderAction(riderId: string): Promise<void> {
  * (surfaced here as a thrown Error) if it already has been, so no double
  * payout is possible even if this action is invoked more than once from a
  * stale admin UI.
+ *
+ * `destination` decides where the money lands. "wallet" (the default) is
+ * instant and free: the RPC credits the customer's KiaKia wallet from
+ * escrow and there is nothing further to do. "gateway" is the old
+ * behaviour, for a customer who has actually asked for their money back on
+ * the card they paid with — that RPC only reverses KiaKia's own internal
+ * ledger, since Postgres has no HTTP client here, so the real request to
+ * Monnify happens right after, from this Server Action. See
+ * requestMonnifyRefundForOrder()'s own header for why it's best-effort and
+ * idempotent.
  */
-export async function refundOrderEscrowAction(orderId: string, reason: string): Promise<void> {
+/** Where a refunded order's money should land — see refundOrderEscrowAction. */
+export type RefundDestination = "wallet" | "gateway";
+
+export async function refundOrderEscrowAction(
+  orderId: string,
+  reason: string,
+  destination: RefundDestination = "wallet",
+): Promise<void> {
   const session = await requireAdminContext();
   const admin = createAdminClient();
 
-  const { error } = await admin.rpc("refund_order_escrow", {
+  const { data: order, error } = await admin.rpc("refund_order_escrow", {
     p_order_id: orderId,
     p_actor_id: session.userId,
     p_reason: reason,
+    p_destination: destination,
   });
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  // Only a 'gateway' refund has anything left to do at the provider. A
+  // wallet refund is already complete — the RPC credited the customer's
+  // wallet from escrow, and the money never left KiaKia's custody, so
+  // asking Monnify to send it back too would refund the same order twice.
+  if (destination === "gateway" && order) {
+    await requestMonnifyRefundForOrder(order.code);
   }
 
   revalidatePath("/admin/orders");

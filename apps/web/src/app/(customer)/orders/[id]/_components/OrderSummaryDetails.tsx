@@ -30,16 +30,19 @@ export function OrderSummaryDetails({
             key={item.id}
             className="flex items-center gap-4 rounded-xl border border-[#E5E2E1] p-4"
           >
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F0EDED]">
-              <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-2xl text-[#5B403C]/20">
-                {vendorImage ? (
-                  <Image src={vendorImage || ""} alt={"profile pic"} />
-                ) : (
-                  <span className="text-6xl">
-                    <ForkKnifeCrossedIcon />
-                  </span>
-                )}
-              </div>
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F0EDED]">
+              {vendorImage ? (
+                <Image
+                  src={vendorImage}
+                  alt={item.name_snapshot}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-[#5B403C]/40">
+                  <ForkKnifeCrossedIcon className="size-6" />
+                </div>
+              )}
             </div>
             <div className="flex flex-1 items-center justify-between">
               <div>

@@ -5,13 +5,16 @@ import { MapPin, Edit2, LocateFixed, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@kiakia/ui";
+import type { LatLng } from "@kiakia/domain";
 import { createClient } from "@/lib/supabase/client";
+import { CheckoutMapArea } from "./CheckoutMapArea";
 import type { Address } from "./types";
 
 interface AddressSectionProps {
   address: Address | null;
   addresses: Address[];
   onAddressChange: (address: Address) => void;
+  vendorLocation: LatLng | null;
   variant?: "desktop" | "mobile";
 }
 
@@ -19,6 +22,7 @@ export function AddressSection({
   address,
   addresses,
   onAddressChange,
+  vendorLocation,
   variant = "desktop",
 }: AddressSectionProps) {
   const router = useRouter();
@@ -99,7 +103,9 @@ export function AddressSection({
         state: newAddress.state,
         location: `POINT(${coords.lng} ${coords.lat})`,
       })
-      .select("id, label, line1, landmark, city, state, is_default")
+      .select(
+        "id, label, line1, landmark, city, state, is_default, location_lat, location_lng",
+      )
       .single();
 
     setSaving(false);
@@ -279,9 +285,7 @@ export function AddressSection({
             <p className="text-xs text-danger">{locationError}</p>
           )}
           {coords && (
-            <p className="text-xs text-[#5B403C]">
-              📍 Coordinates: {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
-            </p>
+            <CheckoutMapArea vendor={vendorLocation} destination={coords} />
           )}
 
           {saveError && <p className="text-xs text-danger">{saveError}</p>}
@@ -344,27 +348,16 @@ export function AddressSection({
         </button>
       </div>
 
-      {/* Map Placeholder */}
+      {/* Map: vendor pin, delivery pin, and the distance between them */}
       {showMap && (
-        <div className="relative overflow-hidden rounded-xl border border-[#E4BEB8]">
-          <div className="aspect-[4/3] w-full bg-[#E5E2E1]">
-            <div className="flex h-full items-center justify-center">
-              <div className="text-center">
-                <MapPin className="mx-auto size-8 text-[#5B403C]/40" />
-                <p className="mt-2 text-sm text-[#5B403C]">Map view</p>
-                <p className="text-xs text-[#5B403C]/60">
-                  {address?.line1}, {address?.city}
-                </p>
-                {coords && (
-                  <p className="mt-1 text-xs text-[#5B403C]/40">
-                    📍 {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-        </div>
+        <CheckoutMapArea
+          vendor={vendorLocation}
+          destination={
+            address?.location_lat != null && address?.location_lng != null
+              ? { lat: address.location_lat, lng: address.location_lng }
+              : coords
+          }
+        />
       )}
 
       {/* Change Address (if multiple) */}

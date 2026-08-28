@@ -21,11 +21,11 @@ export function SettingsDesktop({ vendor }: SettingsDesktopProps) {
       case "general":
         return <GeneralSettings vendor={vendor} />;
       case "hours":
-        return <OperatingHours />;
+        return <OperatingHours vendor={vendor} />;
       case "delivery":
-        return <DeliveryZone />;
+        return <DeliveryZone vendor={vendor} />;
       case "staff":
-        return <StaffMembers />;
+        return <StaffMembers vendor={vendor} />;
       default:
         return <GeneralSettings vendor={vendor} />;
     }

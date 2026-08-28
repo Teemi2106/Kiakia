@@ -24,8 +24,10 @@ const ITEMS: readonly BottomNavItem[] = [
 export function CustomerBottomNav() {
   const pathname = usePathname();
 
+  // `lg`, not `sm`: CustomerTopNav only grows its own destination links at
+  // `lg`, so a tablet would otherwise have no way to reach Orders/History.
   return (
-    <div className="block sm:hidden">
+    <div className="block lg:hidden">
       <BottomNav items={ITEMS} activeHref={pathname} LinkComponent={Link} />
     </div>
   );

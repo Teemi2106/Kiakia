@@ -27,7 +27,7 @@ export default async function CheckoutPage() {
     await Promise.all([
       supabase
         .from("vendors")
-        .select("name, min_order_kobo")
+        .select("name, min_order_kobo, location_lat, location_lng")
         .eq("id", cart.vendor_id)
         .single(),
       supabase
@@ -36,7 +36,9 @@ export default async function CheckoutPage() {
         .eq("cart_id", cart.id),
       supabase
         .from("addresses")
-        .select("id, label, line1, landmark, city, state, is_default")
+        .select(
+          "id, label, line1, landmark, city, state, is_default, location_lat, location_lng",
+        )
         .eq("customer_id", session.userId)
         .order("is_default", { ascending: false }),
     ]);
@@ -54,6 +56,12 @@ export default async function CheckoutPage() {
   const defaultAddress =
     addresses?.find((a) => a.is_default) ?? addresses?.[0] ?? null;
 
+  // get_wallet_balance() (0045_customer_wallet.sql) answers only for
+  // auth.uid() and takes no arguments, so there is nothing to scope here.
+  // A failed read is a zero balance, not a broken checkout — the wallet
+  // option simply doesn't appear, and card checkout is unaffected.
+  const { data: walletBalanceKobo } = await supabase.rpc("get_wallet_balance");
+
   return (
     <CheckoutForm
       vendor={vendor}
@@ -61,6 +69,7 @@ export default async function CheckoutPage() {
       addresses={addresses ?? []}
       defaultAddress={defaultAddress}
       subtotalKobo={subtotalKobo}
+      walletBalanceKobo={walletBalanceKobo ?? 0}
     />
   );
 }

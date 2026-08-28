@@ -2,10 +2,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Utensils } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@kiakia/ui";
 import { MenuCard } from "./MenuCard";
 import { MenuFilters } from "./MenuFilters";
+import { CategoryManager } from "./CategoryControls";
 import type { MenuItem, Category } from "./types";
 import { toggleItemAvailabilityAction } from "@/app/actions/menu";
 
@@ -13,14 +15,14 @@ interface MenuMobileProps {
   items: MenuItem[];
   categories: Category[];
   vendorId: string;
-  onEditItem?: (item: MenuItem) => void;
+  isAcceptingOrders: boolean;
 }
 
 export function MenuMobile({
   items: initialItems,
   categories,
   vendorId,
-  onEditItem,
+  isAcceptingOrders,
 }: MenuMobileProps) {
   const [items, setItems] = useState(initialItems);
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,14 +33,13 @@ export function MenuMobile({
     return categories.map((c) => c.name);
   }, [categories]);
 
-  // Get category ID from name
-  const getCategoryIdFromName = (categoryName: string) => {
-    const category = categories.find((c) => c.name === categoryName);
-    return category?.id || null;
-  };
-
   // Filter items based on search and category
   const filteredItems = useMemo(() => {
+    const activeCategoryId =
+      activeFilter === "all"
+        ? null
+        : (categories.find((c) => c.name === activeFilter)?.id ?? null);
+
     return items.filter((item) => {
       // Search filter
       const matchesSearch = item.name
@@ -46,11 +47,8 @@ export function MenuMobile({
         .includes(searchQuery.toLowerCase());
 
       // Category filter
-      let matchesFilter = true;
-      if (activeFilter !== "all") {
-        const categoryId = getCategoryIdFromName(activeFilter);
-        matchesFilter = item.category_id === categoryId;
-      }
+      const matchesFilter =
+        activeFilter === "all" || item.category_id === activeCategoryId;
 
       return matchesSearch && matchesFilter;
     });
@@ -91,9 +89,35 @@ export function MenuMobile({
 
   return (
     <div className="p-4 pb-24">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="font-sora text-2xl font-bold text-[#1C1B1B]">Menu</h1>
+          <p className="text-sm text-[#5B403C]">
+            {items.length} item{items.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <span
+          className={cn(
+            "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold",
+            isAcceptingOrders
+              ? "bg-[#176A22]/10 text-[#176A22]"
+              : "bg-[#5B403C]/10 text-[#5B403C]",
+          )}
+        >
+          <span
+            className={cn(
+              "h-2 w-2 rounded-full",
+              isAcceptingOrders ? "bg-[#176A22] animate-pulse" : "bg-[#5B403C]",
+            )}
+          />
+          {isAcceptingOrders ? "Accepting Orders" : "Closed"}
+        </span>
+      </div>
+
       {/* Filters */}
       <MenuFilters
-        categories={["All", ...categoryNames]}
+        categories={categoryNames}
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
         onSearch={setSearchQuery}
@@ -125,10 +149,18 @@ export function MenuMobile({
         ))}
 
         {filteredItems.length === 0 && (
-          <div className="py-12 text-center">
-            <p className="text-[#5B403C]">No menu items found</p>
+          <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E4BEB8] py-12 text-center">
+            <Utensils className="size-8 text-[#5B403C]/30" />
+            <p className="font-medium text-[#1C1B1B]">No menu items found</p>
+            <p className="text-sm text-[#5B403C]">
+              Try a different search or filter.
+            </p>
           </div>
         )}
+      </div>
+
+      <div className="mt-8">
+        <CategoryManager vendorId={vendorId} categories={categories} />
       </div>
 
       {/* FAB - Add New Item */}

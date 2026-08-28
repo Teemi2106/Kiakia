@@ -120,13 +120,26 @@ describe("loginAction", () => {
     expect(result.error).toBe("Incorrect email or password.");
   });
 
-  it("redirects to /home on success", async () => {
+  it("redirects to /home on success for an account with no vendor role", async () => {
+    getRoles.mockResolvedValueOnce([]);
     mockClient.current = supabaseClientMock({
       auth: { signInWithPassword: vi.fn(() => Promise.resolve({ error: null })) },
     });
     await expect(loginAction({}, formData({ email: "ada@example.com", password: "abcd1234" }))).rejects.toThrow(
       "NEXT_REDIRECT:/home",
     );
+    expect(setActiveRole).toHaveBeenCalledWith("customer");
+  });
+
+  it("redirects to /dashboard on success for an account that holds a vendor role", async () => {
+    getRoles.mockResolvedValueOnce(["vendor_owner"]);
+    mockClient.current = supabaseClientMock({
+      auth: { signInWithPassword: vi.fn(() => Promise.resolve({ error: null })) },
+    });
+    await expect(loginAction({}, formData({ email: "ada@example.com", password: "abcd1234" }))).rejects.toThrow(
+      "NEXT_REDIRECT:/dashboard",
+    );
+    expect(setActiveRole).toHaveBeenCalledWith("vendor");
   });
 });
 

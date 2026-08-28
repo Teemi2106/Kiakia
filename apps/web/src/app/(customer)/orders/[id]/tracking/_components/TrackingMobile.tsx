@@ -39,7 +39,7 @@ export function TrackingMobile({
   const router = useRouter();
 
   return (
-    <div className="relative h-[calc(100vh-136px)] w-full overflow-hidden">
+    <div className="relative h-[calc(100vh-var(--kk-nav-h,0px)-var(--kk-tabbar-h,0px))] w-full overflow-hidden">
       {/* Map Layer — vendor/destination/rider markers and their live
           movement come from get_order_tracking() + Realtime
           (0026/0027_*.sql, dispatch is fully built), not from whether a

@@ -1,14 +1,17 @@
 // app/(marketing)/privacy/page.tsx
 import type { Metadata } from "next";
+import { getMarketingAccount } from "@/lib/auth/marketing-account";
 import { Header } from "../_components/Header";
 import { Footer } from "../_components/Footer";
 
 export const metadata: Metadata = { title: "Privacy Policy" };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const account = await getMarketingAccount();
+
   return (
-    <main className="flex min-h-screen flex-col bg-white">
-      <Header />
+    <main className="flex min-h-screen flex-col bg-kk-cream">
+      <Header account={account} />
       <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
         <div className="mb-8 rounded-xl border border-dashed border-[#E4BEB8] bg-[#FCF9F8] p-4 text-sm text-[#5B403C]">
           <strong>Placeholder page.</strong> This is not a real Privacy

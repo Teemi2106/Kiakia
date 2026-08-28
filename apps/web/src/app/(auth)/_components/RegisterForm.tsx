@@ -110,6 +110,9 @@ export function RegisterForm({ action = registerAction }: RegisterFormProps) {
               )}
             </button>
           </div>
+          <p className="mt-1.5 text-xs text-ink-muted">
+            At least 8 characters, with one letter and one number.
+          </p>
         </div>
 
         <div>

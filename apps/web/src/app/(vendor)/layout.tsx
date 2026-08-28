@@ -19,11 +19,17 @@ export default async function VendorLayout({
 
   return (
     <div className="flex flex-1 overflow-x-hidden max-w-full">
-      {vendor && <VendorSidebar vendorName={vendor.name} />}
+      {vendor && (
+        <VendorSidebar
+          vendorName={vendor.name}
+          bannerUrl={vendor.banner_url}
+          status={vendor.status}
+        />
+      )}
       <div>
         <VendorTopNav />
       </div>
-      <div className="flex flex-1 flex-col pb-16 sm:pb-0 min-w-0 max-w-full">
+      <div className="flex flex-1 flex-col pb-16 pt-14 sm:pb-0 sm:pt-[63px] min-w-0 max-w-full">
         {vendor && vendor.status !== "active" && (
           <div className="border-b border-warning bg-warning-surface px-4 py-2 text-center text-xs font-medium text-warning">
             Your store is{" "}

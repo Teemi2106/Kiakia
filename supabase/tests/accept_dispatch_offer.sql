@@ -18,9 +18,15 @@
 -- description) — the 2-arg form used in an earlier draft of this file
 -- treats the second argument as an expected-message MATCH (pgTAP), not a
 -- free-text description, so it silently asserted the wrong thing.
+--
+-- As of 0044_rider_fee_by_distance.sql, accept_dispatch_offer() also
+-- computes orders.rider_fee_kobo from the accepting rider's own location,
+-- the vendor's location, and the order's service_area_id — so this
+-- fixture now seeds a service_areas row and references it, and asserts
+-- the computed fee below.
 
 begin;
-select plan(7);
+select plan(8);
 
 select tests.create_supabase_user('customer_a');
 select tests.create_supabase_user('vendor_owner_a');
@@ -34,6 +40,16 @@ values (
   tests.get_supabase_uid('vendor_owner_a'),
   'Test Vendor', 'test-vendor-dispatch', 'active', true,
   st_geogfromtext('POINT(7.5 9.5)'), 1500
+);
+
+-- Needed by accept_dispatch_offer() (0044) to compute rider_fee_kobo — the
+-- rate values mirror supabase/seed.sql's dev placeholders.
+insert into service_areas (id, name, polygon, is_active, base_delivery_fee_kobo, per_km_fee_kobo, rider_base_fee_kobo, rider_per_km_fee_kobo)
+values (
+  '00000000-0000-7000-8000-000000000042',
+  'Test Service Area',
+  st_geogfromtext('POLYGON((7.4 9.0, 7.6 9.0, 7.6 9.6, 7.4 9.6, 7.4 9.0))'),
+  true, 50000, 15000, 50000, 15000
 );
 
 -- rider_a and rider_b are both online AND kyc-approved — the baseline
@@ -52,11 +68,12 @@ insert into riders (user_id, is_online, current_location, kyc_status) values
 -- already at the target status), same convention other tests in this suite
 -- use (e.g. supabase/tests/transition_order.sql seeding orders directly at
 -- a target status rather than driving the whole state machine).
-insert into orders (id, customer_id, vendor_id, status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_location)
+insert into orders (id, customer_id, vendor_id, service_area_id, status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_location)
 values (
   '00000000-0000-7000-8000-000000000041',
   tests.get_supabase_uid('customer_a'),
   '00000000-0000-7000-8000-000000000040',
+  '00000000-0000-7000-8000-000000000042',
   'ready_for_pickup', 500000, 50000, 10000, 0, 560000,
   '{"line1": "1 Test Street"}'::jsonb,
   st_geogfromtext('POINT(7.45 9.05)')
@@ -104,6 +121,18 @@ select is(
   (select rider_id from orders where id = '00000000-0000-7000-8000-000000000041'),
   tests.get_supabase_uid('rider_a'),
   'orders.rider_id is set to the accepting rider'
+);
+
+-- rider_a and the vendor share the exact same point in this fixture (both
+-- POINT(7.5 9.5)), so the pickup leg is ~0m; distance_m is unset (NULL,
+-- coalesced to 0) on this directly-seeded order, so the dropoff leg is also
+-- 0 -> rider_fee_kobo is exactly rider_base_fee_kobo (50000), proving the
+-- fee is actually being computed from the service area's rider rates
+-- rather than left at its 0 default.
+select is(
+  (select rider_fee_kobo from orders where id = '00000000-0000-7000-8000-000000000041'),
+  50000::bigint,
+  'accept_dispatch_offer computes rider_fee_kobo from the service area''s rider rates (0044)'
 );
 
 select is(
