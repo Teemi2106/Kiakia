@@ -1,12 +1,12 @@
-// components/LoginForm.tsx
 "use client";
 
 import { loginAction, type FormState } from "@/app/actions/auth";
-import { Button, Input } from "@kiakia/ui";
+import { Lock, Mail } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
+import { AuthField, AuthPasswordField } from "./AuthField";
+import { AuthError, AuthSubmit } from "./AuthFeedback";
 import { OAuthButtons } from "./OAuthButtons";
-import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 
 const initialState: FormState = {};
 
@@ -17,78 +17,43 @@ interface LoginFormProps {
 
 export function LoginForm({ action = loginAction }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
-  const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <>
-      <form action={formAction} className="flex flex-col gap-3">
-        <div>
-          <label htmlFor="email" className="text-sm font-medium text-ink">
-            Email Address
-          </label>
-          <div className="relative mt-1">
-            <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted" />
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="hello@example.com"
-              autoComplete="email"
-              required
-              className="w-full pl-9"
-            />
-          </div>
+    <div className="rounded-3xl border border-kk-line/50 bg-white/80 p-6 shadow-[0_24px_60px_-40px_rgba(28,27,27,0.45)] backdrop-blur-sm sm:p-7">
+      <form action={formAction} className="flex flex-col gap-4">
+        <AuthError message={state.error} />
+
+        <AuthField
+          name="email"
+          type="email"
+          label="Email address"
+          icon={Mail}
+          autoComplete="email"
+          autoFocus
+          required
+        />
+
+        <AuthPasswordField
+          name="password"
+          label="Password"
+          icon={Lock}
+          autoComplete="current-password"
+          required
+        />
+
+        <div className="-mt-1 flex justify-end">
+          <Link
+            href="/forgot-password"
+            className="font-inter text-[13px] font-semibold text-kk-cocoa/80 underline-offset-4 transition-colors hover:text-(--auth-accent) hover:underline"
+          >
+            Forgot password?
+          </Link>
         </div>
 
-        <div>
-          <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-sm font-medium text-ink">
-              Password
-            </label>
-            <Link
-              href="/forgot-password"
-              className="text-xs font-medium text-[#B61913] hover:underline"
-            >
-              Forgot Password?
-            </Link>
-          </div>
-          <div className="relative mt-1">
-            <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted" />
-            <Input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              required
-              className="w-full pl-9 pr-9"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? (
-                <EyeOff className="size-4" />
-              ) : (
-                <Eye className="size-4" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {state.error && <p className="text-sm text-danger">{state.error}</p>}
-
-        <Button
-          type="submit"
-          loading={pending}
-          className="mt-1 w-full gap-2 flex items-center justify-center"
-        >
-          <span>Sign In</span>
-          <ArrowRight className="size-4 shrink-0" />
-        </Button>
+        <AuthSubmit pending={pending}>Sign in</AuthSubmit>
       </form>
+
       <OAuthButtons />
-    </>
+    </div>
   );
 }

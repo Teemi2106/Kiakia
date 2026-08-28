@@ -5,7 +5,7 @@ import {
   toggleItemAvailabilityAction,
 } from "@/app/actions/menu";
 import { Loader2, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface AvailabilityToggleProps {
   vendorId: string;
@@ -72,30 +72,49 @@ export function DeleteItemButton({
   itemId: string;
 }) {
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 4000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   async function handleDelete() {
     if (pending) return;
     setPending(true);
+    setError(null);
     try {
-      await deleteMenuItemAction(vendorId, itemId);
+      const result = await deleteMenuItemAction(vendorId, itemId);
+      if (result.error) setError(result.error);
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => void handleDelete()}
-      disabled={pending}
-      className="rounded-lg p-2 text-[#5B403C] transition-colors hover:bg-[#FFDAD5] hover:text-[#BA1A1A] disabled:cursor-not-allowed disabled:opacity-50"
-      aria-label="Delete item"
-    >
-      {pending ? (
-        <Loader2 className="size-4 animate-spin" />
-      ) : (
-        <Trash2 className="size-4" />
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        onClick={() => void handleDelete()}
+        disabled={pending}
+        className="rounded-lg p-2 text-[#5B403C] transition-colors hover:bg-[#FFDAD5] hover:text-[#BA1A1A] disabled:cursor-not-allowed disabled:opacity-50"
+        aria-label="Delete item"
+      >
+        {pending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Trash2 className="size-4" />
+        )}
+      </button>
+      {error && (
+        <span
+          role="alert"
+          className="absolute right-0 top-full z-10 mt-1 w-56 rounded-lg bg-[#BA1A1A] px-3 py-2 text-left text-xs font-medium text-white shadow-lg"
+        >
+          {error}
+        </span>
       )}
-    </button>
+    </span>
   );
 }

@@ -1,5 +1,4 @@
 import { getVendorForCurrentUser } from "@/lib/auth/dal";
-import { createClient } from "@/lib/supabase/server";
 import { ChevronLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -11,13 +10,6 @@ export const metadata: Metadata = { title: "New Menu Item" };
 export default async function NewMenuItemPage() {
   const vendor = await getVendorForCurrentUser();
   if (!vendor) notFound();
-
-  const supabase = await createClient();
-  const { data: categories } = await supabase
-    .from("menu_categories")
-    .select("id, name")
-    .eq("vendor_id", vendor.id)
-    .order("sort_order");
 
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 lg:px-6">
@@ -35,7 +27,7 @@ export default async function NewMenuItemPage() {
         Add a dish to your menu so customers can order it.
       </p>
       <div className="mt-6 rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
-        <MenuItemForm vendorId={vendor.id} categories={categories ?? []} />
+        <MenuItemForm vendorId={vendor.id} />
       </div>
     </div>
   );

@@ -499,21 +499,21 @@ export interface Database {
         Row: {
           id: string;
           vendor_id: string;
-          name: string;
+          category_key: string;
           sort_order: number;
           is_active: boolean;
         };
         Insert: {
           id?: string;
           vendor_id: string;
-          name: string;
+          category_key: string;
           sort_order?: number;
           is_active?: boolean;
         };
         Update: {
           id?: string;
           vendor_id?: string;
-          name?: string;
+          category_key?: string;
           sort_order?: number;
           is_active?: boolean;
         };

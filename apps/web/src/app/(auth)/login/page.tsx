@@ -1,8 +1,7 @@
-// app/login/page.tsx
 import type { Metadata } from "next";
-import ImagePane from "../_components/ImagePane";
-import { MobileLoginLayout } from "./components/MobileLoginLayout";
-import { DesktopLoginLayout } from "./components/DesktopLoginLayout";
+import { AuthLegal, AuthShell, AuthSwap } from "../_components/AuthShell";
+import { LiveOrderCard } from "../_components/AuthStage";
+import { LoginForm } from "../_components/LoginForm";
 
 export const metadata: Metadata = {
   title: "Sign in to your account",
@@ -10,27 +9,39 @@ export const metadata: Metadata = {
     "Log in to KiaKia to continue enjoying high-velocity food delivery with zero compromises on quality.",
   openGraph: {
     title: "Sign in | KiaKia",
-    description:
-      "Log in to KiaKia to continue enjoying high-velocity food delivery.",
+    description: "Log in to KiaKia to continue enjoying high-velocity food delivery.",
     images: ["/assets/login-image.png"],
   },
 };
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col bg-[#FCF9F8] lg:flex-row">
-      {/* Desktop Image Pane (hidden on mobile) */}
-      <ImagePane
-        imageSrc="/assets/login-image.png"
-        altText="A KiaKia customer enjoying a freshly delivered meal"
-        heading="Welcome Back."
-        subheading="Log in to continue enjoying high-velocity food delivery with zero compromises on quality."
-      />
-
-      <div className="flex flex-1 flex-col bg-[#FCF9F8] lg:w-1/2 lg:items-center lg:justify-center lg:bg-transparent">
-        <MobileLoginLayout />
-        <DesktopLoginLayout />
-      </div>
-    </main>
+    <AuthShell
+      backHref="/"
+      backLabel="Back to home"
+      role="customer"
+      stage={{
+        imageSrc: "/assets/login-image.png",
+        altText: "A KiaKia customer enjoying a freshly delivered meal",
+        eyebrow: "Fast. Fresh. Reliable.",
+        heading: (
+          <>
+            Your next meal
+            <br />
+            is already moving.
+          </>
+        ),
+        subheading:
+          "Sign in to pick up where you left off — saved addresses, repeat orders, and a rider you can watch close in live.",
+        panel: <LiveOrderCard />,
+        footnote: "Every order is escrow-protected until the code at your door releases it.",
+      }}
+      title="Welcome back"
+      subtitle="Enter your details to get back to fast, reliable delivery."
+      footer={<AuthSwap prompt="New to KiaKia?" href="/register" cta="Create an account" />}
+      legal={<AuthLegal verb="signing in," />}
+    >
+      <LoginForm />
+    </AuthShell>
   );
 }

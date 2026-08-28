@@ -1,6 +1,6 @@
 // app/(customer)/home/page.tsx
 import { EmptyState } from "@kiakia/ui";
-import { haversineDistanceM, TERMINAL_STATUSES, type OrderStatus } from "@kiakia/domain";
+import { haversineDistanceM, MEAL_CATEGORIES, TERMINAL_STATUSES, type MealCategoryPreset, type OrderStatus } from "@kiakia/domain";
 import { Store } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -105,18 +105,21 @@ export default async function CustomerHomePage({
   const liveOrders = activeOrderRows ?? [];
   const newestLiveOrder = liveOrders[0] ?? null;
 
-  // Category chips are real vendor data (vendors.category, set at onboarding
-  // from a fixed list — see app/onboarding/_components/VendorOnboardingForm.tsx)
-  // rather than the multi-vertical tabs Chowdeck shows (Restaurants/Shops/
-  // Pharmacies) — KiaKia ships food only, so this row is per-cuisine, not
-  // per-vertical. Distinct values are derived here since there aren't many
-  // vendors yet and PostgREST has no DISTINCT. Scoped to the customer's own
-  // state for the same reason the vendor lists below are: a category only
-  // available from an out-of-state vendor shouldn't appear as choosable here.
-  let categoryQuery = supabase.from("vendors").select("category").eq("status", "active");
-  if (customerState) categoryQuery = categoryQuery.ilike("state", customerState);
+  // Category chips are the same fixed preset list menu items are grouped
+  // under (MEAL_CATEGORIES — see packages/domain/src/meal-categories.ts),
+  // not vendors.category (each vendor's own single self-declared cuisine
+  // tag, still shown on their card/sidebar but no longer what Browse
+  // filters by). A vendor's cuisine tag and what's actually on their menu
+  // can disagree — an "African" vendor might still sell banana bread — so
+  // filtering by what customers can actually order here is what matches
+  // "Bakery" to that vendor, not their unrelated cuisine label. Always the
+  // full list, not just categories with a match in the customer's state —
+  // an empty category is still worth showing as a browsable filter (it
+  // just yields an honest "nothing here yet" result).
+  const categories = MEAL_CATEGORIES;
 
-  // Resolved alongside the category list so the live-order card costs no
+  // Left as a promise (not awaited here) so it's batched into the
+  // Promise.all() calls below alongside the vendor queries, costing no
   // extra round trip.
   const liveOrderVendorQuery = newestLiveOrder
     ? supabase.from("vendors").select("name").eq("id", newestLiveOrder.vendor_id).maybeSingle()
@@ -148,13 +151,11 @@ export default async function CustomerHomePage({
     allVendorsQuery = allVendorsQuery.order("name", { ascending: true }).limit(30);
 
     const [
-      { data: categoryRows },
       { data: liveOrderVendor },
       { data: topRated },
       { data: allVendorsRaw },
       { data: dishRows },
     ] = await Promise.all([
-      categoryQuery,
       liveOrderVendorQuery,
       topRatedQuery,
       allVendorsQuery,
@@ -171,7 +172,6 @@ export default async function CustomerHomePage({
         .limit(60),
     ]);
 
-    const categories = distinctCategories(categoryRows);
     const topRatedVendors = (topRated ?? []) as VendorCardVendor[];
     const topRatedIds = new Set(topRatedVendors.map((v) => v.id));
     const allVendors = withDistanceSorted(
@@ -267,24 +267,26 @@ export default async function CustomerHomePage({
   // vendors) for this, same reasoning as the Featured carousel above: two
   // plain queries + a JS-side id union, matching this codebase's
   // established pattern instead of a PostgREST embed.
-  const [{ data: categoryRows }, { data: liveOrderVendor }, matchedVendorIds] = await Promise.all([
-    categoryQuery,
+  const [{ data: liveOrderVendor }, matchedVendorIds, categoryMatch] = await Promise.all([
     liveOrderVendorQuery,
     resolveSearchMatches(supabase, q),
+    resolveCategoryMatches(supabase, category),
   ]);
-  const categories = distinctCategories(categoryRows);
+  // Both resolvers return null when their own filter isn't active, so this
+  // collapses to "whichever one filter is active" unless both are — in
+  // which case a vendor must satisfy both (search AND category).
+  const idFilter = intersectOrSingle(matchedVendorIds, categoryMatch?.vendorIds ?? null);
 
   let vendors: VendorCardVendor[] = [];
-  // An empty match set means the search matched nothing at all — skip the
-  // query outright rather than passing `.in("id", [])` through to
+  // A non-null-but-empty idFilter means an active filter matched nothing —
+  // skip the query outright rather than passing `.in("id", [])` through to
   // PostgREST, which some clients turn into an always-false-but-still-a-
   // real-query filter; short-circuiting is simpler and avoids relying on
   // that behavior.
-  if (!q || (matchedVendorIds && matchedVendorIds.length > 0)) {
+  if (!idFilter || idFilter.length > 0) {
     let vendorQuery = supabase.from("vendors").select(VENDOR_COLUMNS).eq("status", "active");
     if (customerState) vendorQuery = vendorQuery.ilike("state", customerState);
-    if (matchedVendorIds) vendorQuery = vendorQuery.in("id", matchedVendorIds);
-    if (category) vendorQuery = vendorQuery.eq("category", category);
+    if (idFilter) vendorQuery = vendorQuery.in("id", idFilter);
     if (quick === "1") vendorQuery = vendorQuery.lte("avg_prep_mins", 30);
     // Ordered by rating when explicitly asked for; otherwise by name here as
     // just the query's own tiebreaker/pre-sort — nearest-first (below, via
@@ -307,6 +309,21 @@ export default async function CustomerHomePage({
     vendors = vendors.slice(0, 30);
   }
 
+  // The actual dishes behind a category chip, not just which vendors carry
+  // them — capped, and only from vendors that survived every other active
+  // filter (quick/open/sort), since a dish from a vendor no longer in
+  // `vendors` above would be a dead link disguised as a result.
+  const vendorById = new Map(vendors.map((v) => [v.id, v]));
+  const categoryDishes: FeaturedVendor[] = [];
+  if (categoryMatch) {
+    for (const dish of categoryMatch.dishes) {
+      const vendor = vendorById.get(dish.vendorId);
+      if (!vendor) continue;
+      categoryDishes.push({ vendor, dishName: dish.name, dishImageUrl: dish.imageUrl });
+      if (categoryDishes.length >= 24) break;
+    }
+  }
+
   return (
     <HomeShell
       firstName={firstName}
@@ -316,48 +333,118 @@ export default async function CustomerHomePage({
       activeCategory={category}
       homeSearchParams={{ q, category, open, quick, sort }}
     >
-      <SectionHeading
-        title={q ? `Results for “${q}”` : "Filtered vendors"}
-        count={vendors.length}
-        hint={
-          sort === "rating" ? "Highest rated first." : "Nearest to your delivery address first."
-        }
-        action={
-          <Link
-            href="/home"
-            className="inline-flex items-center gap-1.5 rounded-full border border-kk-line/70 bg-white px-3.5 py-2 font-inter text-xs font-semibold text-kk-cocoa transition-colors hover:border-kk-red/40 hover:text-kk-red"
-          >
-            Clear filters
-          </Link>
-        }
-      />
+      <div className="space-y-12">
+        {categoryDishes.length > 0 && (
+          <section>
+            <SectionHeading
+              title="Dishes"
+              count={categoryDishes.length}
+              hint="Real photos from vendors' own menus."
+            />
+            <FeaturedCarousel items={categoryDishes} />
+          </section>
+        )}
 
-      {vendors.length === 0 ? (
-        <EmptyState
-          className="border-kk-line/70 bg-white/70 py-14"
-          title="Nothing matched that"
-          description={`No vendors match your filters${q ? ` for “${q}”` : ""}. Try a different search, or drop a filter or two.`}
-          action={
-            <Link
-              href="/home"
-              className="font-inter text-sm font-semibold text-kk-red hover:underline"
-            >
-              Clear filters
-            </Link>
-          }
-        />
-      ) : (
-        <VendorGrid vendors={vendors} />
-      )}
+        <section>
+          <SectionHeading
+            title={q ? `Results for “${q}”` : "Filtered vendors"}
+            count={vendors.length}
+            hint={
+              sort === "rating" ? "Highest rated first." : "Nearest to your delivery address first."
+            }
+            action={
+              <Link
+                href="/home"
+                className="inline-flex items-center gap-1.5 rounded-full border border-kk-line/70 bg-white px-3.5 py-2 font-inter text-xs font-semibold text-kk-cocoa transition-colors hover:border-kk-red/40 hover:text-kk-red"
+              >
+                Clear filters
+              </Link>
+            }
+          />
+
+          {vendors.length === 0 ? (
+            <EmptyState
+              className="border-kk-line/70 bg-white/70 py-14"
+              title="Nothing matched that"
+              description={`No vendors match your filters${q ? ` for “${q}”` : ""}. Try a different search, or drop a filter or two.`}
+              action={
+                <Link
+                  href="/home"
+                  className="font-inter text-sm font-semibold text-kk-red hover:underline"
+                >
+                  Clear filters
+                </Link>
+              }
+            />
+          ) : (
+            <VendorGrid vendors={vendors} />
+          )}
+        </section>
+      </div>
     </HomeShell>
   );
 }
 
-/** Distinct, alphabetised vendor categories from a raw `select("category")`. */
-function distinctCategories(rows: Array<{ category: string | null }> | null): string[] {
-  return Array.from(new Set((rows ?? []).map((row) => row.category).filter(Boolean) as string[])).sort(
-    (a, b) => a.localeCompare(b),
-  );
+interface CategoryDish {
+  readonly vendorId: string;
+  readonly name: string;
+  readonly imageUrl: string;
+}
+
+interface CategoryMatch {
+  /** Every vendor with at least one available item in this category, used
+   * to narrow the vendor list. */
+  readonly vendorIds: string[];
+  /** The subset of those items that have a photo — enough to actually show
+   * "the foods", not just which vendors carry them. */
+  readonly dishes: readonly CategoryDish[];
+}
+
+/** Null when no category filter is active — different from "matched
+ * nothing" (vendorIds: []). Two plain queries + a JS-side join
+ * (menu_categories -> menu_items), matching this codebase's established
+ * pattern (see resolveSearchMatches below) rather than a PostgREST embed.
+ * Deliberately item-driven, not vendors.category — see this file's
+ * `categories` comment for why. */
+async function resolveCategoryMatches(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  categoryKey: string | undefined,
+): Promise<CategoryMatch | null> {
+  if (!categoryKey) return null;
+
+  const { data: categoryRows } = await supabase
+    .from("menu_categories")
+    .select("id")
+    .eq("category_key", categoryKey)
+    .eq("is_active", true);
+
+  const categoryIds = (categoryRows ?? []).map((c) => c.id);
+  if (categoryIds.length === 0) return { vendorIds: [], dishes: [] };
+
+  const { data: itemRows } = await supabase
+    .from("menu_items")
+    .select("vendor_id, name, image_url")
+    .in("category_id", categoryIds)
+    .eq("is_available", true);
+
+  const rows = itemRows ?? [];
+  return {
+    vendorIds: Array.from(new Set(rows.map((r) => r.vendor_id))),
+    dishes: rows
+      .filter((r): r is typeof r & { image_url: string } => Boolean(r.image_url))
+      .map((r) => ({ vendorId: r.vendor_id, name: r.name, imageUrl: r.image_url })),
+  };
+}
+
+/** Combines two optional id filters into one: both non-null means a vendor
+ * must satisfy both (intersection); either alone passes through unchanged;
+ * neither active gives null (no filter at all). */
+function intersectOrSingle(a: string[] | null, b: string[] | null): string[] | null {
+  if (a && b) {
+    const bSet = new Set(b);
+    return a.filter((id) => bSet.has(id));
+  }
+  return a ?? b;
 }
 
 /** Vendor ids whose own name, or one of whose menu items, matches `q`. Null
@@ -422,7 +509,7 @@ function HomeShell({
   firstName: string | null;
   activeOrder: ActiveOrder | null;
   otherActiveCount: number;
-  categories: string[];
+  categories: readonly MealCategoryPreset[];
   activeCategory?: string;
   homeSearchParams: HomeSearchParams;
   children: React.ReactNode;

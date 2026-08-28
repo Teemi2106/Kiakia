@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ok, queryBuilder, supabaseClientMock } from "@/test/supabase-mock";
+import { fail, ok, queryBuilder, supabaseClientMock } from "@/test/supabase-mock";
 
 const state = {
   session: { userId: "vendor-staff-1", email: null, phone: null } as {
@@ -42,25 +42,38 @@ beforeEach(() => {
 });
 
 describe("createCategoryAction", () => {
-  it("rejects an empty name without checking staff membership", async () => {
-    const result = await createCategoryAction({}, formData({ vendorId: MY_VENDOR, name: "  " }));
+  it("rejects a missing category without checking staff membership", async () => {
+    const result = await createCategoryAction({}, formData({ vendorId: MY_VENDOR, categoryKey: "" }));
+    expect(result.error).toBeTruthy();
+    expect(requireVendorContext).not.toHaveBeenCalled();
+  });
+
+  it("rejects a category key that isn't one of the fixed presets", async () => {
+    const result = await createCategoryAction({}, formData({ vendorId: MY_VENDOR, categoryKey: "made-up-key" }));
     expect(result.error).toBeTruthy();
     expect(requireVendorContext).not.toHaveBeenCalled();
   });
 
   it("refuses a caller who doesn't staff the given vendor", async () => {
     state.client.current = supabaseClientMock({ from: { vendor_staff: queryBuilder(ok(null)) } });
-    await expect(createCategoryAction({}, formData({ vendorId: "someone-elses-vendor", name: "Soups" }))).rejects.toThrow(
-      "You don't have access to this store.",
-    );
+    await expect(
+      createCategoryAction({}, formData({ vendorId: "someone-elses-vendor", categoryKey: "soups" })),
+    ).rejects.toThrow("You don't have access to this store.");
   });
 
   it("creates the category scoped to the caller's own vendor", async () => {
     const insert = vi.fn(() => queryBuilder(ok(null)));
     state.adminClient.current = { from: vi.fn(() => ({ insert })) } as never;
-    const result = await createCategoryAction({}, formData({ vendorId: MY_VENDOR, name: "Soups" }));
+    const result = await createCategoryAction({}, formData({ vendorId: MY_VENDOR, categoryKey: "soups" }));
     expect(result.error).toBeUndefined();
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ vendor_id: MY_VENDOR, name: "Soups" }));
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ vendor_id: MY_VENDOR, category_key: "soups" }));
+  });
+
+  it("surfaces a friendly error when the vendor already added that preset (unique violation)", async () => {
+    const insert = vi.fn(() => queryBuilder(fail("duplicate key", "23505")));
+    state.adminClient.current = { from: vi.fn(() => ({ insert })) } as never;
+    const result = await createCategoryAction({}, formData({ vendorId: MY_VENDOR, categoryKey: "soups" }));
+    expect(result.error).toBe("You've already added that category.");
   });
 });
 
@@ -138,6 +151,35 @@ describe("updateMenuItemAction (cross-vendor IDOR)", () => {
     await expect(updateMenuItemAction({}, formData(VALID_FIELDS))).rejects.toThrow("NEXT_REDIRECT:/dashboard/menu");
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ name: "Jollof Rice", price_kobo: 250000 }));
   });
+
+  it("re-categorizes an existing item to a preset the vendor hasn't used before", async () => {
+    const update = vi.fn(() => ({ eq: vi.fn(() => Promise.resolve({ error: null })) }));
+    let menuItemsCall = 0;
+    state.adminClient.current = {
+      from: vi.fn((table: string) => {
+        if (table === "menu_items") {
+          menuItemsCall += 1;
+          if (menuItemsCall === 1) {
+            return { select: vi.fn(() => ({ eq: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: () => Promise.resolve(ok({ id: "item-1" })) })) })) })) };
+          }
+          return { update };
+        }
+        if (table === "menu_categories") {
+          return {
+            select: vi.fn(() => ({ eq: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: () => Promise.resolve(ok(null)) })) })) })),
+            insert: vi.fn(() => ({ select: vi.fn(() => ({ single: () => Promise.resolve(ok({ id: "cat-swallow" })) })) })),
+          };
+        }
+        if (table === "option_groups") return queryBuilder(ok(null));
+        throw new Error(`unexpected table ${table}`);
+      }),
+    } as never;
+
+    await expect(
+      updateMenuItemAction({}, formData({ ...VALID_FIELDS, categoryKey: "swallow" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/dashboard/menu");
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ category_id: "cat-swallow" }));
+  });
 });
 
 describe("deleteMenuItemAction / toggleItemAvailabilityAction (cross-vendor IDOR)", () => {
@@ -149,6 +191,42 @@ describe("deleteMenuItemAction / toggleItemAvailabilityAction (cross-vendor IDOR
   it("toggleItemAvailabilityAction refuses an item belonging to a different vendor", async () => {
     state.adminClient.current = supabaseClientMock({ from: { menu_items: queryBuilder(ok(null)) } });
     await expect(toggleItemAvailabilityAction(MY_VENDOR, "someone-elses-item", true)).rejects.toThrow("Menu item not found.");
+  });
+
+  it("deleteMenuItemAction deletes an item the caller's vendor owns", async () => {
+    const del = vi.fn(() => ({ eq: vi.fn(() => Promise.resolve(ok(null))) }));
+    let call = 0;
+    state.adminClient.current = {
+      from: vi.fn((table: string) => {
+        expect(table).toBe("menu_items");
+        call += 1;
+        if (call === 1) {
+          return { select: vi.fn(() => ({ eq: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: () => Promise.resolve(ok({ id: "item-1" })) })) })) })) };
+        }
+        return { delete: del };
+      }),
+    } as never;
+
+    const result = await deleteMenuItemAction(MY_VENDOR, "item-1");
+    expect(result.error).toBeUndefined();
+    expect(del).toHaveBeenCalled();
+  });
+
+  it("deleteMenuItemAction surfaces a friendly error instead of silently no-op'ing when the item has order history (FK violation)", async () => {
+    let call = 0;
+    state.adminClient.current = {
+      from: vi.fn((table: string) => {
+        expect(table).toBe("menu_items");
+        call += 1;
+        if (call === 1) {
+          return { select: vi.fn(() => ({ eq: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: () => Promise.resolve(ok({ id: "item-1" })) })) })) })) };
+        }
+        return { delete: vi.fn(() => ({ eq: vi.fn(() => Promise.resolve(fail("update or delete on table violates foreign key constraint", "23503"))) })) };
+      }),
+    } as never;
+
+    const result = await deleteMenuItemAction(MY_VENDOR, "item-1");
+    expect(result.error).toBe("This item has order history and can't be deleted. Mark it unavailable instead.");
   });
 
   it("toggleItemAvailabilityAction succeeds for an item the caller's vendor owns", async () => {
@@ -191,6 +269,65 @@ describe("createMenuItemAction", () => {
     await expect(
       createMenuItemAction({}, formData({ vendorId: MY_VENDOR, name: "Rice", priceNaira: "2500" })),
     ).rejects.toThrow("NEXT_REDIRECT:/dashboard/menu");
+  });
+
+  it("reuses the vendor's existing category row for a preset key instead of creating a duplicate", async () => {
+    const categoriesInsert = vi.fn();
+    const menuItemsInsert = vi.fn(() => ({ select: vi.fn(() => ({ single: () => Promise.resolve(ok({ id: "new-item" })) })) }));
+    state.adminClient.current = {
+      from: vi.fn((table: string) => {
+        if (table === "menu_categories") {
+          return { select: vi.fn(() => ({ eq: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: () => Promise.resolve(ok({ id: "cat-drinks" })) })) })) })), insert: categoriesInsert };
+        }
+        if (table === "menu_items") return { insert: menuItemsInsert };
+        if (table === "option_groups") return queryBuilder(ok(null));
+        throw new Error(`unexpected table ${table}`);
+      }),
+    } as never;
+
+    await expect(
+      createMenuItemAction({}, formData({ vendorId: MY_VENDOR, name: "Coke", priceNaira: "500", categoryKey: "drinks" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/dashboard/menu");
+
+    expect(menuItemsInsert).toHaveBeenCalledWith(expect.objectContaining({ category_id: "cat-drinks" }));
+    expect(categoriesInsert).not.toHaveBeenCalled();
+  });
+
+  it("creates the vendor's category row on demand the first time a preset is picked on an item", async () => {
+    const menuItemsInsert = vi.fn(() => ({ select: vi.fn(() => ({ single: () => Promise.resolve(ok({ id: "new-item" })) })) }));
+    state.adminClient.current = {
+      from: vi.fn((table: string) => {
+        if (table === "menu_categories") {
+          return {
+            select: vi.fn(() => ({ eq: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: () => Promise.resolve(ok(null)) })) })) })),
+            insert: vi.fn(() => ({ select: vi.fn(() => ({ single: () => Promise.resolve(ok({ id: "cat-new" })) })) })),
+          };
+        }
+        if (table === "menu_items") return { insert: menuItemsInsert };
+        if (table === "option_groups") return queryBuilder(ok(null));
+        throw new Error(`unexpected table ${table}`);
+      }),
+    } as never;
+
+    await expect(
+      createMenuItemAction({}, formData({ vendorId: MY_VENDOR, name: "Coke", priceNaira: "500", categoryKey: "drinks" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/dashboard/menu");
+
+    expect(menuItemsInsert).toHaveBeenCalledWith(expect.objectContaining({ category_id: "cat-new" }));
+  });
+
+  it("rejects a category key that isn't one of the fixed presets, without touching menu_items at all", async () => {
+    state.adminClient.current = {
+      from: vi.fn((table: string) => {
+        throw new Error(`unexpected table ${table}`);
+      }),
+    } as never;
+
+    const result = await createMenuItemAction(
+      {},
+      formData({ vendorId: MY_VENDOR, name: "Coke", priceNaira: "500", categoryKey: "made-up-key" }),
+    );
+    expect(result.error).toBe("Choose a valid category.");
   });
 
   it("S4: writes option groups using the form's actual priceDeltaNaira field, converted to kobo via nairaToKobo", async () => {

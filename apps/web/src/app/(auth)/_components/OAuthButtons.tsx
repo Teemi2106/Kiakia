@@ -1,48 +1,49 @@
-import { Button } from "@kiakia/ui";
-
 /**
- * Matches the Figma "OR CONTINUE WITH" Google/Apple buttons — rendered
+ * The "OR CONTINUE WITH" Google/Apple pair from the Figma screens, rendered
  * disabled. Wiring real OAuth needs a Google/Apple OAuth app + client
  * credentials configured in the Supabase dashboard, which don't exist for
  * this project yet; shipping enabled buttons that error on click would be
  * worse than not having them.
+ *
+ * They stay in the redesign for the same reason they were drawn: the divider
+ * gives the form a natural end, and the pair marks where social sign-in will
+ * land so its arrival isn't a layout change. `disabled` + the "coming soon"
+ * line keep the promise honest.
  */
 export function OAuthButtons() {
   return (
     <div className="mt-6">
       <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-[rgba(228,190,184,0.6)]" />
-        <span className="font-inter text-xs font-medium uppercase tracking-[0.6px] text-[#5B403C]">
+        <div className="h-px flex-1 bg-kk-line/50" />
+        <span className="font-inter text-[10px] font-semibold uppercase tracking-[0.2em] text-kk-cocoa/55">
           Or continue with
         </span>
-        <div className="h-px flex-1 bg-[rgba(228,190,184,0.6)]" />
+        <div className="h-px flex-1 bg-kk-line/50" />
       </div>
+
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <Button
-          type="button"
-          variant="secondary"
-          disabled
-          title="Coming soon"
-          className="h-[50px] gap-2 rounded-xl border border-[#E4BEB8] bg-white font-inter text-sm font-semibold tracking-[0.14px] text-[#1C1B1B] disabled:opacity-60"
-        >
-          <GoogleIcon />
-          Google
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled
-          title="Coming soon"
-          className="h-[50px] gap-2 rounded-xl border border-[#E4BEB8] bg-white font-inter text-sm font-semibold tracking-[0.14px] text-[#1C1B1B] disabled:opacity-60"
-        >
-          <AppleIcon />
-          Apple
-        </Button>
+        <OAuthButton label="Google" icon={<GoogleIcon />} />
+        <OAuthButton label="Apple" icon={<AppleIcon />} />
       </div>
-      <p className="mt-3 text-center font-inter text-xs text-[rgba(91,64,60,0.7)]">
+
+      <p className="mt-3.5 text-center font-inter text-[11px] text-kk-cocoa/55">
         Social sign-in is coming soon — use email and password for now.
       </p>
     </div>
+  );
+}
+
+function OAuthButton({ label, icon }: { label: string; icon: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      disabled
+      title="Coming soon"
+      className="flex h-12 items-center justify-center gap-2.5 rounded-2xl border border-kk-line/70 bg-white font-inter text-sm font-semibold text-kk-ink opacity-55"
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 

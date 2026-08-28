@@ -1,0 +1,257 @@
+/*
+ * Auth presentation layer — keyframes, textures and composite effects for
+ * /login, /register, /forgot-password, /reset-password and the two /vendor
+ * entry points. Imported by (auth)/layout.tsx and vendor/layout.tsx, so it
+ * never ships with the customer or vendor apps proper.
+ *
+ * Deliberately a sibling of (marketing)/marketing.css rather than an import
+ * of it: the two share four primitives (blob, dots, enter, shine) and
+ * nothing else, and marketing.css carries ~300 lines of hero/marquee/faq
+ * keyframes that would be dead weight on a sign-in screen. The shared four
+ * are duplicated here verbatim on purpose — the routes never coexist, so
+ * there is no cascade to reconcile.
+ *
+ * Everything animated is switched off wholesale under prefers-reduced-motion
+ * at the bottom of the file: the screens must read exactly the same standing
+ * still.
+ */
+
+/* ----------------------------------------------------------------- theme */
+/*
+ * One accent triple, swapped per audience. Every accented surface in the
+ * auth components paints with these vars rather than a literal hex, which is
+ * what lets a single <AuthShell>/<LoginForm>/<AuthField> tree serve both the
+ * customer (KiaKia red) and the vendor (deep amber) without a `variant`
+ * prop threading down through every leaf.
+ */
+[data-auth] {
+  --auth-accent: var(--color-kk-red);
+  --auth-accent-deep: var(--color-kk-red-deep);
+  --auth-accent-glow: 182 25 19;
+}
+
+[data-auth="vendor"] {
+  --auth-accent: var(--color-kk-orange-deep);
+  --auth-accent-deep: #6d3800;
+  --auth-accent-glow: 254 142 39;
+}
+
+/* -------------------------------------------------------------- entrance */
+/* CSS-only rather than an IntersectionObserver: an auth screen is entirely
+   above the fold and must paint on the first frame, not after hydration. */
+.kk-enter {
+  animation: kk-enter 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--kk-delay, 0ms);
+}
+
+@keyframes kk-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------- texture */
+.kk-dots {
+  background-image: radial-gradient(currentColor 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.kk-grid {
+  background-image:
+    linear-gradient(to right, currentColor 1px, transparent 1px),
+    linear-gradient(to bottom, currentColor 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.kk-blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(72px);
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------------- field */
+/*
+ * Floating label. The label is a sibling *after* the input in source order
+ * so it can be driven by :focus and :placeholder-shown without JS — which
+ * means the "is this field filled?" question is answered by the browser,
+ * including for autofill and for a back-button restore, where React state
+ * would have been wrong.
+ *
+ * The input therefore carries placeholder=" " (a single space): an empty
+ * placeholder attribute does not match :placeholder-shown consistently, and
+ * a real placeholder would sit under the resting label.
+ */
+.kk-field-input:focus ~ .kk-field-label,
+.kk-field-input:not(:placeholder-shown) ~ .kk-field-label {
+  transform: translateY(-0.62rem) scale(0.78);
+  color: var(--auth-accent);
+}
+
+.kk-field-label {
+  transform-origin: left center;
+  transition:
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.18s ease;
+}
+
+/* Chrome/Safari paint their own autofill background over ours; the inset
+   shadow trick is the only way to keep the field on-palette. */
+.kk-field-input:-webkit-autofill,
+.kk-field-input:-webkit-autofill:hover,
+.kk-field-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-kk-ink);
+  -webkit-box-shadow: 0 0 0 40px var(--color-kk-cream) inset;
+  caret-color: var(--color-kk-ink);
+}
+
+/* ------------------------------------------------------------ live stage */
+/* Rider progress rail in the stage's order card. */
+.kk-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-kk-orange), var(--color-kk-red));
+  transform-origin: left center;
+  animation: kk-progress 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes kk-progress {
+  0% {
+    transform: scaleX(0.08);
+  }
+  70%,
+  100% {
+    transform: scaleX(0.82);
+  }
+}
+
+/* Live indicator: a dot with an expanding ring. */
+.kk-ping::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: currentColor;
+  animation: kk-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes kk-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  75%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.kk-float {
+  animation: kk-float 6s ease-in-out infinite;
+  animation-delay: var(--kk-delay, 0ms);
+}
+
+@keyframes kk-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* The four escrow digits land one after another, hold, then clear. */
+.kk-digit {
+  animation: kk-digit-in 8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation-delay: var(--kk-delay, 0ms);
+}
+
+@keyframes kk-digit-in {
+  0%,
+  2% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.85);
+  }
+  10%,
+  86% {
+    opacity: 1;
+    transform: none;
+  }
+  94%,
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+}
+
+/* ---------------------------------------------------------------- polish */
+/* Light sweep across the submit button on hover. */
+.kk-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.kk-shine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -70%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.35), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: -1;
+}
+
+.kk-shine:hover::before,
+.kk-shine:focus-visible::before {
+  left: 130%;
+}
+
+/* The pill that slides behind the active half of the customer/vendor
+   switch. Position is driven by --kk-switch-x on the track. */
+.kk-switch-thumb {
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(var(--kk-switch-x, 0));
+}
+
+/* ------------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .kk-enter,
+  .kk-float,
+  .kk-ping::after,
+  .kk-progress::after,
+  .kk-digit {
+    animation: none !important;
+  }
+
+  .kk-enter,
+  .kk-digit {
+    opacity: 1;
+    transform: none;
+  }
+
+  .kk-progress::after {
+    transform: scaleX(0.82);
+  }
+
+  .kk-field-label,
+  .kk-switch-thumb {
+    transition: none;
+  }
+
+  .kk-shine::before {
+    display: none;
+  }
+}

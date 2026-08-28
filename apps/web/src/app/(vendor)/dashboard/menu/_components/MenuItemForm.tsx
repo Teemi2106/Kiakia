@@ -1,15 +1,11 @@
 "use client";
 
 import { createMenuItemAction, updateMenuItemAction, type FormState } from "@/app/actions/menu";
+import { MEAL_CATEGORIES } from "@kiakia/domain";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { useActionState, useState } from "react";
 import type { ChangeEvent } from "react";
 import { OptionGroupsBuilder, type OptionGroupState } from "./OptionGroupsBuilder";
-
-interface Category {
-  readonly id: string;
-  readonly name: string;
-}
 
 interface ExistingItem {
   readonly id: string;
@@ -17,7 +13,11 @@ interface ExistingItem {
   readonly description: string | null;
   readonly imageUrl: string | null;
   readonly priceKobo: number;
-  readonly categoryId: string | null;
+  /** The preset key (MEAL_CATEGORIES) of the item's current category, or
+   * null when uncategorized — not menu_categories.id, since that row may
+   * not exist yet for a preset the vendor hasn't picked before (see
+   * resolveCategoryId in actions/menu.ts, which creates it on save). */
+  readonly categoryKey: string | null;
   readonly isAvailable: boolean;
   readonly optionGroups: readonly OptionGroupState[];
 }
@@ -29,11 +29,9 @@ const initialState: FormState = {};
 
 export function MenuItemForm({
   vendorId,
-  categories,
   existingItem,
 }: {
   vendorId: string;
-  categories: readonly Category[];
   existingItem?: ExistingItem;
 }) {
   const action = existingItem ? updateMenuItemAction : createMenuItemAction;
@@ -145,19 +143,19 @@ export function MenuItemForm({
 
         {/* Category */}
         <div>
-          <label htmlFor="categoryId" className="text-sm font-semibold text-[#1C1B1B]">
+          <label htmlFor="categoryKey" className="text-sm font-semibold text-[#1C1B1B]">
             Category
           </label>
           <select
-            id="categoryId"
-            name="categoryId"
-            defaultValue={existingItem?.categoryId ?? ""}
+            id="categoryKey"
+            name="categoryKey"
+            defaultValue={existingItem?.categoryKey ?? ""}
             className={inputClass}
           >
             <option value="">Uncategorized</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
+            {MEAL_CATEGORIES.map((preset) => (
+              <option key={preset.key} value={preset.key}>
+                {preset.label}
               </option>
             ))}
           </select>

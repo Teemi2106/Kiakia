@@ -6,7 +6,7 @@ import { requireVendorContext } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { uploadVendorImage } from "@/lib/storage/vendor-media";
-import { InvalidMoneyError, nairaToKobo } from "@kiakia/domain";
+import { InvalidMoneyError, isMealCategoryKey, nairaToKobo } from "@kiakia/domain";
 
 export interface FormState {
   readonly error?: string;
@@ -59,6 +59,42 @@ async function assertCategoryOwnedByVendor(
   if (!data) throw new Error("Category not found.");
 }
 
+/**
+ * Menu items pick a category by preset key (MEAL_CATEGORIES), not by
+ * menu_categories.id — the vendor's own row for that preset is found or
+ * created here, so choosing e.g. "Drinks" on an item works immediately even
+ * if the vendor has never visited CategoryManager. This also closes a gap
+ * where a raw categoryId used to be written straight to menu_items with no
+ * check it actually belonged to this vendor.
+ */
+async function resolveCategoryId(
+  admin: ReturnType<typeof createAdminClient>,
+  vendorId: string,
+  categoryKey: string | null,
+): Promise<{ id: string | null } | { error: string }> {
+  if (!categoryKey) return { id: null };
+  if (!isMealCategoryKey(categoryKey)) return { error: "Choose a valid category." };
+
+  const { data: existingCategory } = await admin
+    .from("menu_categories")
+    .select("id")
+    .eq("vendor_id", vendorId)
+    .eq("category_key", categoryKey)
+    .maybeSingle();
+
+  if (existingCategory) return { id: existingCategory.id };
+
+  const { data: newCategory, error } = await admin
+    .from("menu_categories")
+    .insert({ vendor_id: vendorId, category_key: categoryKey })
+    .select("id")
+    .single();
+
+  if (error || !newCategory) return { error: "Could not save the item's category." };
+
+  return { id: newCategory.id };
+}
+
 async function assertMenuItemOwnedByVendor(
   admin: ReturnType<typeof createAdminClient>,
   vendorId: string,
@@ -74,14 +110,20 @@ async function assertMenuItemOwnedByVendor(
 
 export async function createCategoryAction(_prevState: FormState, formData: FormData): Promise<FormState> {
   const vendorId = formData.get("vendorId") as string | null;
-  const name = formData.get("name") as string | null;
-  if (!vendorId || !name?.trim()) return { error: "Enter a category name." };
+  const categoryKey = formData.get("categoryKey") as string | null;
+  if (!vendorId || !categoryKey || !isMealCategoryKey(categoryKey)) {
+    return { error: "Choose a category." };
+  }
 
   await assertVendorStaff(vendorId);
 
   const admin = createAdminClient();
-  const { error } = await admin.from("menu_categories").insert({ vendor_id: vendorId, name: name.trim() });
-  if (error) return { error: "Could not create category." };
+  const { error } = await admin.from("menu_categories").insert({ vendor_id: vendorId, category_key: categoryKey });
+  if (error) {
+    // menu_categories_vendor_category_key_unique — the vendor already added this preset.
+    if (error.code === "23505") return { error: "You've already added that category." };
+    return { error: "Could not create category." };
+  }
 
   revalidatePath("/dashboard/menu");
   return {};
@@ -226,18 +268,20 @@ export async function createMenuItemAction(_prevState: FormState, formData: Form
 
   await assertVendorStaff(vendorId);
 
-  const categoryId = (formData.get("categoryId") as string | null) || null;
+  const admin = createAdminClient();
+
+  const categoryKey = (formData.get("categoryKey") as string | null) || null;
+  const categoryResult = await resolveCategoryId(admin, vendorId, categoryKey);
+  if ("error" in categoryResult) return { error: categoryResult.error };
 
   const imageResult = await resolveImageUrl(vendorId, formData);
   if (!imageResult.ok) return { error: imageResult.error };
-
-  const admin = createAdminClient();
 
   const { data: item, error } = await admin
     .from("menu_items")
     .insert({
       vendor_id: vendorId,
-      category_id: categoryId,
+      category_id: categoryResult.id,
       name: name.trim(),
       description: (formData.get("description") as string | null) || null,
       image_url: imageResult.url,
@@ -268,11 +312,14 @@ export async function updateMenuItemAction(_prevState: FormState, formData: Form
 
   await assertVendorStaff(vendorId);
 
-  const categoryId = (formData.get("categoryId") as string | null) || null;
   const admin = createAdminClient();
 
   const { data: existing } = await admin.from("menu_items").select("id").eq("id", itemId).eq("vendor_id", vendorId).maybeSingle();
   if (!existing) return { error: "Menu item not found." };
+
+  const categoryKey = (formData.get("categoryKey") as string | null) || null;
+  const categoryResult = await resolveCategoryId(admin, vendorId, categoryKey);
+  if ("error" in categoryResult) return { error: categoryResult.error };
 
   const imageResult = await resolveImageUrl(vendorId, formData);
   if (!imageResult.ok) return { error: imageResult.error };
@@ -280,7 +327,7 @@ export async function updateMenuItemAction(_prevState: FormState, formData: Form
   const { error } = await admin
     .from("menu_items")
     .update({
-      category_id: categoryId,
+      category_id: categoryResult.id,
       name: name.trim(),
       description: (formData.get("description") as string | null) || null,
       image_url: imageResult.url,
@@ -298,12 +345,24 @@ export async function updateMenuItemAction(_prevState: FormState, formData: Form
   redirect("/dashboard/menu");
 }
 
-export async function deleteMenuItemAction(vendorId: string, itemId: string): Promise<void> {
+export async function deleteMenuItemAction(vendorId: string, itemId: string): Promise<{ error?: string }> {
   await assertVendorStaff(vendorId);
   const admin = createAdminClient();
   await assertMenuItemOwnedByVendor(admin, vendorId, itemId);
-  await admin.from("menu_items").delete().eq("id", itemId);
+  const { error } = await admin.from("menu_items").delete().eq("id", itemId);
+  if (error) {
+    // order_items.menu_item_id has no ON DELETE clause (0004_ordering.sql) —
+    // deliberately: an order is a historical receipt (see menu_items' own
+    // table comment), so an item that's actually been ordered can never be
+    // hard-deleted without corrupting a customer's past receipt. Toggling
+    // is_available (AvailabilityToggle) is the correct way to retire it.
+    if (error.code === "23503") {
+      return { error: "This item has order history and can't be deleted. Mark it unavailable instead." };
+    }
+    return { error: "Could not delete this item. Please try again." };
+  }
   revalidatePath("/dashboard/menu");
+  return {};
 }
 
 export async function toggleItemAvailabilityAction(vendorId: string, itemId: string, isAvailable: boolean): Promise<void> {

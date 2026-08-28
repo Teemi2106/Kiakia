@@ -2,10 +2,9 @@
 
 import { registerVendorAction, type FormState } from "@/app/actions/vendor";
 import { Button, Input, Select, Textarea } from "@kiakia/ui";
+import { VENDOR_CATEGORIES } from "@kiakia/domain";
 import { LocateFixed } from "lucide-react";
 import { useActionState, useState } from "react";
-
-const CATEGORIES = ["African", "Rice", "Soups", "Swallow", "Grills", "Drinks", "Bakery", "Groceries"] as const;
 
 const initialState: FormState = {};
 
@@ -38,8 +37,8 @@ export function VendorOnboardingForm() {
         <label htmlFor="category" className="text-sm font-medium text-ink">
           Category
         </label>
-        <Select id="category" name="category" defaultValue={CATEGORIES[0]} className="mt-1 w-full">
-          {CATEGORIES.map((c) => (
+        <Select id="category" name="category" defaultValue={VENDOR_CATEGORIES[0]} className="mt-1 w-full">
+          {VENDOR_CATEGORIES.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>

@@ -1,6 +1,7 @@
 // app/(vendor)/menu/page.tsx
 import { getVendorForCurrentUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { mealCategoryLabel } from "@kiakia/domain";
 import { Plus, Utensils } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,7 +19,7 @@ export default async function VendorMenuPage() {
   const [{ data: categoryData }, { data: itemData }] = await Promise.all([
     supabase
       .from("menu_categories")
-      .select("id, name, sort_order")
+      .select("id, category_key, sort_order")
       .eq("vendor_id", vendor.id)
       .order("sort_order"),
     supabase
@@ -30,7 +31,11 @@ export default async function VendorMenuPage() {
       .order("sort_order"),
   ]);
 
-  const categories = categoryData ?? [];
+  const categories = (categoryData ?? []).map((c) => ({
+    id: c.id,
+    name: mealCategoryLabel(c.category_key),
+    sort_order: c.sort_order,
+  }));
   const items = itemData ?? [];
 
   if (items.length === 0) {

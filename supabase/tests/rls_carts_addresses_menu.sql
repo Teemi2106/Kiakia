@@ -18,8 +18,8 @@ values
 insert into vendor_staff (vendor_id, user_id, role)
 values ('00000000-0000-7000-8000-000000000040', tests.get_supabase_uid('vendor_owner_a'), 'vendor_owner');
 
-insert into menu_categories (id, vendor_id, name)
-values ('00000000-0000-7000-8000-000000000041', '00000000-0000-7000-8000-000000000040', 'Mains');
+insert into menu_categories (id, vendor_id, category_key)
+values ('00000000-0000-7000-8000-000000000041', '00000000-0000-7000-8000-000000000040', 'rice_dishes');
 
 -- ---------------------------------------------------------------------------
 -- addresses — fully owned by the customer.
@@ -105,7 +105,7 @@ select is(
 -- actions/menu.ts's Server Actions (admin client), not client-side RLS.
 select tests.authenticate_as('vendor_owner_a');
 select throws_ok(
-  $$ insert into menu_categories (vendor_id, name) values ('00000000-0000-7000-8000-000000000040', 'Drinks') $$,
+  $$ insert into menu_categories (vendor_id, category_key) values ('00000000-0000-7000-8000-000000000040', 'drinks') $$,
   '42501',
   null,
   'even the vendor''s own staff cannot write menu_categories directly — insert is revoked from authenticated'

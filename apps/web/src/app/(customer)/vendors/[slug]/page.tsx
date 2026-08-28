@@ -1,4 +1,5 @@
 // app/(customer)/vendors/[slug]/page.tsx
+import { mealCategoryLabel } from "@kiakia/domain";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -60,7 +61,7 @@ export default async function VendorPage({
   const [{ data: categoryRows }, { data: itemRows }] = await Promise.all([
     supabase
       .from("menu_categories")
-      .select("id, name, sort_order, is_active")
+      .select("id, category_key, sort_order, is_active")
       .eq("vendor_id", vendor.id)
       .eq("is_active", true)
       .order("sort_order"),
@@ -121,7 +122,7 @@ export default async function VendorPage({
 
   const categories: MenuCategory[] = (categoryRows ?? []).map((category) => ({
     id: category.id,
-    name: category.name,
+    name: mealCategoryLabel(category.category_key),
     items: (itemRows ?? [])
       .filter((item) => item.category_id === category.id)
       .map(toMenuItem),

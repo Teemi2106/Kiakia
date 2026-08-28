@@ -16,16 +16,20 @@ export default async function EditMenuItemPage({ params }: { params: Promise<{ i
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: item }, { data: categories }] = await Promise.all([
-    supabase
-      .from("menu_items")
-      .select("id, vendor_id, name, description, image_url, price_kobo, category_id, is_available")
-      .eq("id", id)
-      .maybeSingle(),
-    supabase.from("menu_categories").select("id, name").eq("vendor_id", vendor.id).order("sort_order"),
-  ]);
+  const { data: item } = await supabase
+    .from("menu_items")
+    .select("id, vendor_id, name, description, image_url, price_kobo, category_id, is_available")
+    .eq("id", id)
+    .maybeSingle();
 
   if (!item || item.vendor_id !== vendor.id) notFound();
+
+  // The form picks a category by preset key (MenuItemForm.tsx), not by
+  // menu_categories.id, so resolve the item's current category row to its
+  // key here rather than passing every one of the vendor's category rows down.
+  const { data: currentCategory } = item.category_id
+    ? await supabase.from("menu_categories").select("category_key").eq("id", item.category_id).maybeSingle()
+    : { data: null };
 
   const { data: groupRows } = await supabase
     .from("option_groups")
@@ -65,14 +69,13 @@ export default async function EditMenuItemPage({ params }: { params: Promise<{ i
       <div className="mt-6 rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
         <MenuItemForm
           vendorId={vendor.id}
-          categories={categories ?? []}
           existingItem={{
             id: item.id,
             name: item.name,
             description: item.description,
             imageUrl: item.image_url,
             priceKobo: item.price_kobo,
-            categoryId: item.category_id,
+            categoryKey: currentCategory?.category_key ?? null,
             isAvailable: item.is_available,
             optionGroups,
           }}

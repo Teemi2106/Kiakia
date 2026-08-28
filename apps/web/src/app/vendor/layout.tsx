@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getOptionalSession, getRoles, hasRole, VENDOR_ROLES } from "@/lib/auth/dal";
+import "../(auth)/auth.css";
 
 export default async function VendorAuthLayout({ children }: { children: React.ReactNode }) {
   // Mirrors (auth)/layout.tsx's "already signed in? skip the form" bounce,
@@ -24,9 +25,9 @@ export default async function VendorAuthLayout({ children }: { children: React.R
     redirect("/onboarding");
   }
 
-  return (
-     <main className="flex min-h-screen flex-1 items-center justify-center bg-[#FCF9F8] p-4 md:p-6">
-      <div className="w-full max-w-7xl">{children}</div>
-    </main>
-  );
+  // No wrapper element: /vendor/login and /vendor/register render the same
+  // full-bleed <AuthShell> as the customer screens, so a centring <main>
+  // here would fight it. This layout exists for the guard above and to scope
+  // auth.css to these two routes.
+  return children;
 }

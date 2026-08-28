@@ -1,48 +1,48 @@
 // app/(customer)/home/_components/CategoryChips.tsx
 import { cn } from "@kiakia/ui";
+import type { MealCategoryPreset } from "@kiakia/domain";
 import {
-  Beef,
+  Cookie,
   CupSoda,
   Flame,
   LayoutGrid,
+  Package,
+  Sandwich,
   Soup,
   Utensils,
-  UtensilsCrossed,
   Wheat,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 
-// Matches the fixed option list vendors pick from at onboarding
-// (app/onboarding/_components/VendorOnboardingForm.tsx's CATEGORIES) —
-// vendors.category is a free-text column but this app only ever writes one
-// of these values into it, so the icon map covers them and falls back to a
-// generic fork/knife for anything else that shows up.
+// Keyed by the same preset keys menu items are categorized under
+// (packages/domain/src/meal-categories.ts's MEAL_CATEGORIES) — falls back to
+// a generic fork/knife for anything not covered here.
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  African: UtensilsCrossed,
-  Rice: Utensils,
-  Soups: Soup,
-  Swallow: Wheat,
-  Grills: Flame,
-  Drinks: CupSoda,
-  Bakery: Wheat,
-  Groceries: Beef,
+  swallow: Wheat,
+  soups: Soup,
+  rice_dishes: Utensils,
+  proteins_grills: Flame,
+  small_chops_snacks: Sandwich,
+  pastries_bakery: Cookie,
+  drinks: CupSoda,
+  combo_meals: Package,
 };
 
 interface CategoryChipsProps {
-  categories: string[];
+  categories: readonly MealCategoryPreset[];
   activeCategory?: string;
   preserveParams?: Record<string, string | undefined>;
 }
 
-function hrefFor(category: string | null, preserveParams?: Record<string, string | undefined>) {
+function hrefFor(categoryKey: string | null, preserveParams?: Record<string, string | undefined>) {
   const params = new URLSearchParams();
   if (preserveParams) {
     for (const [key, value] of Object.entries(preserveParams)) {
       if (value) params.set(key, value);
     }
   }
-  if (category) params.set("category", category);
+  if (categoryKey) params.set("category", categoryKey);
   const qs = params.toString();
   return qs ? `/home?${qs}` : "/home";
 }
@@ -55,21 +55,21 @@ function hrefFor(category: string | null, preserveParams?: Record<string, string
  */
 export function CategoryChips({ categories, activeCategory, preserveParams }: CategoryChipsProps) {
   const items = [
-    { label: "All", value: null as string | null },
-    ...categories.map((c) => ({ label: c, value: c })),
+    { key: null as string | null, label: "All" },
+    ...categories.map((c) => ({ key: c.key as string | null, label: c.label })),
   ];
 
   return (
     <div className="relative">
       <div className="flex gap-2.5 overflow-x-auto pb-2 pr-10 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((item) => {
-          const isActive = item.value === (activeCategory ?? null);
-          const Icon = item.value ? (CATEGORY_ICONS[item.value] ?? Utensils) : LayoutGrid;
+          const isActive = item.key === (activeCategory ?? null);
+          const Icon = item.key ? (CATEGORY_ICONS[item.key] ?? Utensils) : LayoutGrid;
 
           return (
             <Link
               key={item.label}
-              href={hrefFor(item.value, preserveParams)}
+              href={hrefFor(item.key, preserveParams)}
               aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex h-11 shrink-0 items-center gap-2 rounded-full border pl-2.5 pr-4 font-inter text-sm font-semibold transition-all duration-200",

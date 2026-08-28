@@ -1,14 +1,12 @@
-// app/register/page.tsx
 import type { Metadata } from "next";
-import ImagePane from "../_components/ImagePane";
-import { MobileLayout } from "./components/MobileLayout";
-import { DesktopLayout } from "./components/DesktopLayout";
+import { AuthLegal, AuthShell, AuthSwap } from "../_components/AuthShell";
+import { EscrowCodeCard } from "../_components/AuthStage";
+import { RegisterForm } from "../_components/RegisterForm";
 
 export const metadata: Metadata = {
   title: "Create an account",
   description:
     "Join KiaKia to experience high-velocity food delivery with zero compromises on quality.",
-  // Optional: Add more metadata for better SEO
   openGraph: {
     title: "Create an account | KiaKia",
     description:
@@ -19,18 +17,32 @@ export const metadata: Metadata = {
 
 export default function RegisterPage() {
   return (
-    <main className="flex min-h-screen flex-col bg-[#FCF9F8] lg:flex-row">
-      <ImagePane
-        imageSrc="/assets/signup-image.png"
-        altText="A KiaKia vendor preparing a fresh meal in their kitchen"
-        heading="Join KiaKia Today."
-        subheading="Create an account to experience high-velocity food delivery with zero compromises on quality."
-      />
-
-      <div className="flex flex-1 flex-col bg-[#FCF9F8] lg:w-1/2 lg:items-center lg:justify-center lg:bg-transparent">
-        <MobileLayout />
-        <DesktopLayout />
-      </div>
-    </main>
+    <AuthShell
+      backHref="/"
+      backLabel="Back to home"
+      role="customer"
+      stage={{
+        imageSrc: "/assets/signup-image.png",
+        altText: "A KiaKia vendor preparing a fresh meal in their kitchen",
+        eyebrow: "Zero-trust delivery",
+        heading: (
+          <>
+            Order kia kia.
+            <br />
+            Pay on your terms.
+          </>
+        ),
+        subheading:
+          "Kitchens and shops down the road, a rider you can watch in real time, and your money held safely until the food is in your hand.",
+        panel: <EscrowCodeCard />,
+        footnote: "Free to join. No subscription, no card stored until you order.",
+      }}
+      title="Create your account"
+      subtitle="Two minutes now, and every order after this one takes seconds."
+      footer={<AuthSwap prompt="Already have an account?" href="/login" cta="Sign in" />}
+      legal={<AuthLegal verb="creating an account," />}
+    >
+      <RegisterForm />
+    </AuthShell>
   );
 }
