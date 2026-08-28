@@ -7,8 +7,14 @@
       "outputs": [".next/**", "!.next/dev/**", "dist/**"],
       "env": [
         "NEXT_PUBLIC_SUPABASE_URL",
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-        "NEXT_PUBLIC_SITE_URL"
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+        "NEXT_PUBLIC_SITE_URL",
+        "NEXT_PUBLIC_MAPBOX_TOKEN",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "MONNIFY_API_KEY",
+        "MONNIFY_API_SECRET",
+        "MONNIFY_CONTRACT_CODE",
+        "MONNIFY_BASE_URL"
       ]
     },
     "dev": {
