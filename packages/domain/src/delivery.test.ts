@@ -22,7 +22,6 @@ describe("computeDeliveryFee", () => {
     subtotalKobo: koboOf(1_000_000),
     baseDeliveryFeeKobo: koboOf(50_000),
     perKmFeeKobo: koboOf(15_000),
-    freeAboveKobo: null,
   };
 
   it("charges base fee only within the first km", () => {
@@ -37,16 +36,14 @@ describe("computeDeliveryFee", () => {
     expect(computeDeliveryFee({ ...base, distanceM: 0 })).toBe(50_000);
   });
 
-  it("waives delivery entirely once subtotal reaches the free-above threshold", () => {
-    expect(
-      computeDeliveryFee({ ...base, freeAboveKobo: koboOf(1_000_000), distanceM: 5_000 }),
-    ).toBe(0);
-  });
-
-  it("does not waive delivery below the threshold", () => {
-    expect(
-      computeDeliveryFee({ ...base, freeAboveKobo: koboOf(2_000_000), distanceM: 5_000 }),
-    ).toBeGreaterThan(0);
+  it("charges the full fee regardless of how large the subtotal is (no free-delivery waiver)", () => {
+    // See this module's file header: the free-above-threshold waiver was
+    // removed (0062_remove_free_delivery_threshold.sql) because it let the
+    // customer's fee drop to zero while the rider was still paid in full,
+    // with nothing tying the two together.
+    expect(computeDeliveryFee({ ...base, subtotalKobo: koboOf(50_000_000), distanceM: 5_000 })).toBe(
+      50_000 + 15_000 * 5,
+    );
   });
 
   it("rejects a negative distance", () => {
@@ -73,9 +70,10 @@ describe("computeRiderFee", () => {
     );
   });
 
-  it("still pays the rider when dropoff distance is 0 (e.g. a waived-fee order)", () => {
-    // Unlike computeDeliveryFee, there is no free-above waiver here — the
-    // rider is paid for the pickup leg regardless of the customer's fee.
+  it("still pays the rider when dropoff distance is 0", () => {
+    // computeRiderFee has never had a free-above waiver (unlike
+    // computeDeliveryFee, which used to) — the rider is paid for the
+    // pickup leg regardless of what the customer's own fee happens to be.
     expect(computeRiderFee({ ...base, pickupDistanceM: 2_000, dropoffDistanceM: 0 })).toBe(
       50_000 + 15_000 * 2,
     );
@@ -100,7 +98,6 @@ describe("computePlacementFees", () => {
       subtotalKobo: koboOf(1_000_000),
       baseDeliveryFeeKobo: koboOf(50_000),
       perKmFeeKobo: koboOf(15_000),
-      freeAboveKobo: null,
       distanceM: 1_500,
     });
 

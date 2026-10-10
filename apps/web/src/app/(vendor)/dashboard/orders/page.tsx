@@ -1,6 +1,7 @@
 // app/(vendor)/orders/page.tsx
 import { getVendorForCurrentUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { RealtimeRefresh } from "@/lib/realtime/RealtimeRefresh";
 import { ClipboardList } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -51,7 +52,7 @@ export default async function VendorOrdersPage() {
   const { data: realOrders } = await supabase
     .from("orders")
     .select(
-      "id, code, status, subtotal_kobo, delivery_fee_kobo, total_kobo, created_at, customer_id, delivery_address, delivery_note",
+      "id, code, status, subtotal_kobo, delivery_fee_kobo, total_kobo, created_at, delivery_address, delivery_note",
     )
     .eq("vendor_id", vendor.id)
     .in("status", ACTIVE_STATUSES)
@@ -61,6 +62,11 @@ export default async function VendorOrdersPage() {
   if (rawOrders.length === 0) {
     return (
       <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
+        <RealtimeRefresh
+          table="orders"
+          filter={`vendor_id=eq.${vendor.id}`}
+          topic={`vendor-orders-${vendor.id}`}
+        />
         <h1 className="font-sora text-2xl font-bold text-[#1C1B1B]">Active Orders</h1>
         <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E4BEB8] bg-white p-12 text-center">
           <ClipboardList className="size-8 text-[#5B403C]/30" />
@@ -74,14 +80,17 @@ export default async function VendorOrdersPage() {
   }
 
   const orderIds = rawOrders.map((order) => order.id);
-  const customerIds = [...new Set(rawOrders.map((order) => order.customer_id))];
 
-  const [{ data: itemRows }, { data: profileRows }] = await Promise.all([
+  const [{ data: itemRows }, { data: contactRows }] = await Promise.all([
     supabase
       .from("order_items")
       .select("id, order_id, menu_item_id, name_snapshot, qty, options_snapshot, line_total_kobo")
       .in("order_id", orderIds),
-    supabase.from("profiles").select("id, full_name, phone").in("id", customerIds),
+    // profiles is own-row-only under RLS, so a direct read of a customer's
+    // profile returns nothing for vendor staff - names and phones never showed.
+    // This SECURITY DEFINER read is scoped to this vendor's in-flight orders
+    // (0077_input_and_exposure_hardening.sql).
+    supabase.rpc("get_vendor_order_customers", { p_order_ids: orderIds }),
   ]);
 
   const menuItemIds = [...new Set((itemRows ?? []).map((item) => item.menu_item_id))];
@@ -90,7 +99,7 @@ export default async function VendorOrdersPage() {
     : { data: [] as { id: string; image_url: string | null }[] };
 
   const imageByMenuItemId = new Map((menuItemRows ?? []).map((m) => [m.id, m.image_url]));
-  const profileById = new Map((profileRows ?? []).map((p) => [p.id, p]));
+  const contactByOrderId = new Map((contactRows ?? []).map((c) => [c.order_id, c]));
 
   const itemsByOrderId = new Map<string, OrderItem[]>();
   for (const item of itemRows ?? []) {
@@ -107,7 +116,7 @@ export default async function VendorOrdersPage() {
   }
 
   const orders: Order[] = rawOrders.map((order) => {
-    const profile = profileById.get(order.customer_id);
+    const contact = contactByOrderId.get(order.id);
     return {
       id: order.id,
       code: order.code,
@@ -116,13 +125,22 @@ export default async function VendorOrdersPage() {
       delivery_fee_kobo: order.delivery_fee_kobo,
       total_kobo: order.total_kobo,
       created_at: order.created_at,
-      customer_name: profile?.full_name ?? undefined,
-      customer_phone: profile?.phone ?? undefined,
+      customer_name: contact?.customer_name ?? undefined,
+      customer_phone: contact?.customer_phone ?? undefined,
       items: itemsByOrderId.get(order.id) ?? [],
       delivery_address: formatAddress(order.delivery_address),
       customer_note: order.delivery_note,
     };
   });
 
-  return <OrdersWrapper orders={orders} />;
+  return (
+    <>
+      <RealtimeRefresh
+        table="orders"
+        filter={`vendor_id=eq.${vendor.id}`}
+        topic={`vendor-orders-${vendor.id}`}
+      />
+      <OrdersWrapper orders={orders} />
+    </>
+  );
 }

@@ -1,10 +1,11 @@
 // app/(customer)/orders/[id]/page.tsx
-import { retryPaymentAction } from "@/app/actions/orders";
+import { restoreCartFromOrderAction, retryPaymentAction } from "@/app/actions/orders";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapMonnifyPaymentMethod, verifyTransaction } from "@/lib/monnify";
-import { formatNaira, koboOf } from "@kiakia/domain";
+import { RealtimeRefresh } from "@/lib/realtime/RealtimeRefresh";
+import { formatNaira, isTerminalStatus, koboOf } from "@kiakia/domain";
 import type { Json } from "@kiakia/db";
 import {
   Button,
@@ -115,7 +116,7 @@ export default async function OrderDetailPage({
   // "vendor staff read their vendor orders" policies), this query
   // naturally returns no row, so `code` below is undefined for them — that
   // is the fix, not an oversight.
-  const [{ data: vendor }, { data: items }, { data: deliveryCodeRow }] = await Promise.all([
+  const [{ data: vendor }, { data: rawItems }, { data: deliveryCodeRow }] = await Promise.all([
     supabase
       .from("vendors")
       .select("name, logo_url")
@@ -123,10 +124,29 @@ export default async function OrderDetailPage({
       .maybeSingle(),
     supabase
       .from("order_items")
-      .select("id, name_snapshot, qty, line_total_kobo")
+      .select("id, name_snapshot, qty, line_total_kobo, menu_item_id")
       .eq("order_id", orderRow.id),
     supabase.from("order_delivery_codes").select("code").eq("order_id", orderRow.id).maybeSingle(),
   ]);
+
+  // order_items itself has no image column — the item's photo lives on
+  // menu_items, looked up separately and merged here (not a PostgREST
+  // embed: packages/db/src/generated.ts has no relationship metadata for
+  // any table, so `.select("...menu_items(image_url)")` doesn't type-check
+  // — same pattern CartDrawer.tsx and the vendor orders list already use).
+  // OrderSummaryDetails.tsx used to fall back to the VENDOR's logo for
+  // every item's image when this was missing, which is wrong regardless —
+  // a vendor's logo is not any specific dish's photo.
+  const menuItemIds = [...new Set((rawItems ?? []).map((item) => item.menu_item_id))];
+  const { data: menuItemRows } = menuItemIds.length
+    ? await supabase.from("menu_items").select("id, image_url").in("id", menuItemIds)
+    : { data: [] as { id: string; image_url: string | null }[] };
+  const imageByMenuItemId = new Map((menuItemRows ?? []).map((m) => [m.id, m.image_url]));
+
+  const items = (rawItems ?? []).map((item) => ({
+    ...item,
+    image_url: imageByMenuItemId.get(item.menu_item_id) ?? null,
+  }));
 
   const order = { ...orderRow, delivery_code: deliveryCodeRow?.code ?? null };
 
@@ -138,6 +158,7 @@ export default async function OrderDetailPage({
   if (needsPayment) {
     return (
       <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
+        <RealtimeRefresh table="orders" filter={`id=eq.${order.id}`} topic={`customer-order-${order.id}`} />
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-ink-muted">Order {order.code}</p>
@@ -158,6 +179,14 @@ export default async function OrderDetailPage({
           >
             <Button type="submit" className="w-full">
               Complete payment →
+            </Button>
+          </form>
+          <form
+            action={restoreCartFromOrderAction.bind(null, order.id)}
+            className="mt-2"
+          >
+            <Button type="submit" variant="ghost" className="w-full">
+              Return items to my cart
             </Button>
           </form>
         </Card>
@@ -210,6 +239,12 @@ export default async function OrderDetailPage({
   // For confirmed orders, show the redesigned layout
   return (
     <>
+      <RealtimeRefresh
+        table="orders"
+        filter={`id=eq.${order.id}`}
+        topic={`customer-order-${order.id}`}
+        enabled={!isTerminalStatus(order.status as OrderStatus)}
+      />
       <div className="hidden md:block">
         <OrderDetailDesktop order={order} vendor={vendor} items={items ?? []} />
       </div>

@@ -1,10 +1,11 @@
 // app/(vendor)/_components/VendorTopNav.tsx
 "use client";
 
-import { ArrowLeftRight, Bell, User } from "lucide-react";
+import { ArrowLeftRight, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { switchToCustomerAction } from "@/app/actions/session";
+import { NotificationsButton } from "@/app/_components/NotificationsButton";
 
 // Map paths to display names
 const PAGE_TITLES: Record<string, string> = {
@@ -16,7 +17,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/settings": "Store Settings",
 };
 
-export function VendorTopNav() {
+export function VendorTopNav({ vendorId }: { vendorId: string | null }) {
   const pathname = usePathname();
 
   // Get the current page title
@@ -73,14 +74,20 @@ export function VendorTopNav() {
             </button>
           </form>
 
-          {/* Notifications */}
-          <button
-            className="relative rounded-full p-2 transition-colors hover:bg-[#FCF9F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40"
-            aria-label="Notifications"
-          >
-            <Bell className="size-5 text-[#5B403C] sm:size-5" />
-            <span className="absolute right-2 top-2 size-2 rounded-full bg-[#B61913]" />
-          </button>
+          {/* Notifications. Rendered only with a vendor in context — without
+              one there is no feed to read. Until 0049 this was a bare
+              <button> with no handler and a permanently-lit red dot, so it
+              both did nothing and claimed unread activity that did not
+              exist. */}
+          {vendorId && (
+            <NotificationsButton
+              audience="vendor"
+              vendorId={vendorId}
+              buttonClassName="relative rounded-full p-2 transition-colors hover:bg-[#FCF9F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40"
+              iconClassName="size-5 text-[#5B403C]"
+              emptyMessage="Nothing here yet — new orders and delivery updates will show up as they happen."
+            />
+          )}
 
           {/* Profile Avatar - vendor mode has no /profile route (customer-only); store settings is the equivalent here */}
           <Link

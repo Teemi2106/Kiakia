@@ -5,6 +5,7 @@ import { formatNaira, koboOf } from "@kiakia/domain";
 import { Button } from "@kiakia/ui";
 import { ForkKnifeCrossedIcon } from "lucide-react";
 import type { CheckoutFormState } from "@/app/actions/orders";
+import type { DeliveryFeeEstimate } from "@/lib/checkout/useDeliveryFeeEstimate";
 import Image from "next/image";
 import type { CartItem, Vendor, PaymentMethod } from "./types";
 
@@ -12,8 +13,14 @@ interface OrderSummaryProps {
   vendor: Vendor | null;
   items: CartItem[];
   subtotalKobo: number;
+  deliveryFeeEstimate: DeliveryFeeEstimate;
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
+  /** profiles.phone as of page load — prefills the field below so a
+   * returning customer isn't retyping it. placeOrderAction writes whatever
+   * is submitted here back to profiles.phone, so this only ever needs
+   * asking once in practice. */
+  customerPhone: string | null;
   // Kept in the prop shape for when a second payment method actually ships
   // (see PaymentSection); the submit button below no longer branches on it
   // since Card is the only method placeOrderAction supports today.
@@ -27,14 +34,21 @@ export function OrderSummary({
   vendor,
   items,
   subtotalKobo,
+  deliveryFeeEstimate,
   deliveryNote,
   onDeliveryNoteChange,
+  customerPhone,
   paymentMethod: _paymentMethod,
   formState,
   pending,
   variant = "desktop",
 }: OrderSummaryProps) {
-  const deliveryFeeKobo = 0; // This would be calculated based on location
+  // Never fabricated: while the real fee is still resolving, or the address
+  // falls outside every service area, this shows a real absence rather than
+  // a wrong number that happens to look like one — see
+  // useDeliveryFeeEstimate.ts. place_order() computes the authoritative
+  // total server-side regardless of what displays here.
+  const deliveryFeeKobo = deliveryFeeEstimate.feeKobo ?? 0;
   const totalKobo = subtotalKobo + deliveryFeeKobo;
   const isMobile = variant === "mobile";
 
@@ -79,6 +93,29 @@ export function OrderSummary({
           ))}
         </div>
 
+        {/* Contact Phone — required so the rider can actually reach the
+            customer (get_rider_offer_details(), extended by 0072, reads
+            this straight off profiles.phone). Uncontrolled: unlike
+            deliveryNote, nothing else on this page needs its live value,
+            so a plain defaultValue read via FormData is enough. */}
+        <div>
+          <label htmlFor="contactPhone" className="font-inter text-sm font-semibold text-[#1C1B1B]">
+            Contact phone
+          </label>
+          <input
+            id="contactPhone"
+            name="contactPhone"
+            type="tel"
+            required
+            defaultValue={customerPhone ?? ""}
+            placeholder="0801 234 5678"
+            className="mt-2 w-full rounded-xl border border-[#E5E2E1] bg-[#F6F3F2] px-4 py-3 font-inter text-sm text-[#1C1B1B] placeholder:text-[#5B403C] focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20"
+          />
+          <p className="mt-1.5 font-inter text-xs text-[#5B403C]">
+            Your rider will use this number if they need to reach you.
+          </p>
+        </div>
+
         {/* Delivery Note */}
         <div>
           <label className="font-inter text-sm font-semibold text-[#1C1B1B]">
@@ -109,7 +146,13 @@ export function OrderSummary({
               Delivery fee
             </span>
             <span className="font-inter text-base text-[#1C1B1B]">
-              {formatNaira(koboOf(deliveryFeeKobo))}
+              {deliveryFeeEstimate.loading ? (
+                "Calculating…"
+              ) : deliveryFeeEstimate.outsideServiceArea ? (
+                "Unavailable here"
+              ) : (
+                formatNaira(koboOf(deliveryFeeKobo))
+              )}
             </span>
           </div>
           <div className="flex justify-between border-t border-[#E5E2E1] pt-4">

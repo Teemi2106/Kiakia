@@ -268,55 +268,6 @@
   }
 }
 
-/* ---------------------------------------------------------------- escrow */
-/* The four escrow digits land one after another, hold, then clear with the
-   rest of the loop. */
-.kk-digit {
-  animation: kk-digit-in 8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-  animation-delay: var(--kk-delay, 0ms);
-}
-
-@keyframes kk-digit-in {
-  0%,
-  2% {
-    opacity: 0;
-    transform: translateY(14px) scale(0.85);
-  }
-  10%,
-  86% {
-    opacity: 1;
-    transform: none;
-  }
-  94%,
-  100% {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-  }
-}
-
-/* "Payment released" stamp - slams in once the last digit has landed. */
-.kk-stamp {
-  animation: kk-stamp 8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
-}
-
-@keyframes kk-stamp {
-  0%,
-  42% {
-    opacity: 0;
-    transform: rotate(-14deg) scale(1.5);
-  }
-  52%,
-  84% {
-    opacity: 1;
-    transform: rotate(-8deg) scale(1);
-  }
-  92%,
-  100% {
-    opacity: 0;
-    transform: rotate(-8deg) scale(1);
-  }
-}
-
 /* ------------------------------------------------------------- connector */
 /* Dashed track behind the three how-it-works steps, dashes crawling from
    step one toward step three. */
@@ -372,6 +323,20 @@
   transform: rotate(45deg);
 }
 
+/* --------------------------------------------------------------- rail */
+/* Cravings carousel. The scrollbar is hidden because the arrows and the
+   card running off the right edge already say "this scrolls" - the rail
+   itself stays fully swipeable and tabbable. */
+.kk-rail {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+}
+
+.kk-rail::-webkit-scrollbar {
+  display: none;
+}
+
 /* ------------------------------------------------------- reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .kk-reveal[data-shown="false"] {
@@ -389,10 +354,12 @@
   .kk-streak,
   .kk-runner,
   .kk-runner-fill,
-  .kk-digit,
-  .kk-stamp,
   .kk-track {
     animation: none !important;
+  }
+
+  .kk-rail {
+    scroll-behavior: auto;
   }
 
   .kk-underline path {
@@ -407,12 +374,6 @@
 
   .kk-rotator-word:first-child {
     opacity: 1;
-  }
-
-  .kk-digit,
-  .kk-stamp {
-    opacity: 1;
-    transform: none;
   }
 
   .kk-progress::after {

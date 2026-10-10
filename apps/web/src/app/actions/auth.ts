@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { emailSchema, loginSchema, passwordSchema, registerSchema } from "@/lib/validation/auth";
 import { serverEnv } from "@/lib/env.server";
-import { getRoles, hasRole, VENDOR_ROLES } from "@/lib/auth/dal";
+import { getRoles, hasRole, isPureRider, VENDOR_ROLES } from "@/lib/auth/dal";
 import { clearActiveRole, setActiveRole } from "@/lib/auth/active-role";
 
 /**
@@ -125,11 +125,23 @@ export async function loginAction(_prevState: FormState, formData: FormData): Pr
     return { error: "Incorrect email or password." };
   }
 
+  const roles = await getRoles();
+
+  // A pure rider account (rider role, no vendor role — see isPureRider's own
+  // comment on why the auto-granted 'customer' role doesn't count) has no
+  // reason to be signing into the web app at all: KiaKia Rider is a separate
+  // app with its own login, and this app has no rider-facing surface for
+  // that account to land on. signOut() matters here — signInWithPassword()
+  // above already created a real session before this check ever ran.
+  if (isPureRider(roles)) {
+    await supabase.auth.signOut();
+    return { error: "This account is registered as a rider. Sign in through the KiaKia Rider app instead." };
+  }
+
   // A vendor-role account lands in vendor mode from *any* login entry
   // point, not just /vendor/login — the customer surface stays one
   // explicit switchToCustomerAction() away (see app/actions/session.ts),
   // it's never the default for an account that also holds a vendor role.
-  const roles = await getRoles();
   if (hasRole(roles, ...VENDOR_ROLES)) {
     await setActiveRole("vendor");
     redirect("/dashboard");
@@ -162,6 +174,16 @@ export async function vendorLoginAction(_prevState: FormState, formData: FormDat
   }
 
   const roles = await getRoles();
+
+  // Same reasoning as loginAction's own check — a pure rider account has no
+  // legitimate reason to be at /vendor/login either, and without this it
+  // would fall through to the "not a vendor yet, go apply" branch below and
+  // land on /onboarding, which is not a rider-facing surface.
+  if (isPureRider(roles)) {
+    await supabase.auth.signOut();
+    return { error: "This account is registered as a rider. Sign in through the KiaKia Rider app instead." };
+  }
+
   if (!hasRole(roles, ...VENDOR_ROLES)) {
     // S3 (independent security review): without this, a non-vendor account
     // signing in through /vendor/login left behind whatever kk_active_role

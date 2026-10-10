@@ -48,8 +48,9 @@ export default async function CustomerLayout({
           --kk-nav-h must equal CustomerTopNav's real height: 56px identity
           row + 84px address/search row + 1px border below `lg`, and a single
           72px row + 1px border at `lg` and up. --kk-tabbar-h matches
-          BottomNav's h-16, which disappears at the same `lg` breakpoint. */}
-      <div className="flex min-h-screen flex-col bg-kk-cream [--kk-nav-h:141px] [--kk-tabbar-h:4rem] lg:[--kk-nav-h:73px] lg:[--kk-tabbar-h:0px]">
+          BottomNav's floating 72px slab plus its edge clearance, which
+          disappears at the same `lg` breakpoint. */}
+      <div className="flex min-h-screen flex-col bg-kk-cream [--kk-nav-h:141px] [--kk-tabbar-h:7.5rem] lg:[--kk-nav-h:73px] lg:[--kk-tabbar-h:0px]">
         <CustomerTopNav canSwitchToVendor={canSwitchToVendor} />
         <main className="flex-1 pt-(--kk-nav-h) pb-(--kk-tabbar-h)">{children}</main>
         <CustomerBottomNav />

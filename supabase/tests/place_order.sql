@@ -14,12 +14,12 @@ select tests.create_supabase_user('vendor_owner_a');
 select tests.create_supabase_user('vendor_owner_b');
 
 -- A service area covering a 1x1-degree square, and a vendor + menu item inside it.
-insert into service_areas (id, name, polygon, is_active, base_delivery_fee_kobo, per_km_fee_kobo, free_above_kobo)
+insert into service_areas (id, name, polygon, is_active, base_delivery_fee_kobo, per_km_fee_kobo)
 values (
   '00000000-0000-7000-8000-000000000010',
   'Test Area',
   st_geogfromtext('POLYGON((7.0 9.0, 8.0 9.0, 8.0 10.0, 7.0 10.0, 7.0 9.0))'),
-  true, 50000, 15000, null
+  true, 50000, 15000
 );
 
 insert into vendors (id, owner_user_id, name, slug, status, is_accepting_orders, location, commission_bps, min_order_kobo)

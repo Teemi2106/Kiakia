@@ -63,3 +63,27 @@ entrypoint = "./functions/monnify-webhook/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/monnify-webhook/*.html" ]
+
+[functions.dispatch-push]
+enabled = true
+# No verify_jwt override, unlike monnify-webhook — this keeps the platform
+# default (true). Its only caller is migration 0062's trigger, which
+# authenticates with the service-role key read from Vault. See
+# supabase/functions/dispatch-push/index.ts's header.
+import_map = "./functions/dispatch-push/deno.json"
+entrypoint = "./functions/dispatch-push/index.ts"
+
+[functions.web-push]
+enabled = true
+# Same trust boundary as dispatch-push — no verify_jwt override. Its only
+# caller is 0069_web_push_subscriptions.sql's trigger, which authenticates
+# with the service-role key read from Vault. See
+# supabase/functions/web-push/index.ts's header.
+import_map = "./functions/web-push/deno.json"
+entrypoint = "./functions/web-push/index.ts"
+
+# pgTAP helpers for images that do not ship supabase_test_helpers (see 0013 and
+# test_helpers_shim.sql). Local/CI only: db push does not run seeds.
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql", "./test_helpers_shim.sql"]

@@ -80,6 +80,7 @@ export function CartMobile({
                   price={item.unit_price_kobo}
                   total={item.line_total_kobo}
                   qty={item.qty}
+                  image={item.menu_item_image_url}
                   options={formatCartItemOptions(item.options_snapshot)}
                   pending={pendingId === item.id}
                   onQtyChange={onQtyChange}

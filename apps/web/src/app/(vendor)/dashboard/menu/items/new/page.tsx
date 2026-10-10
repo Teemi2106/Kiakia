@@ -27,7 +27,7 @@ export default async function NewMenuItemPage() {
         Add a dish to your menu so customers can order it.
       </p>
       <div className="mt-6 rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
-        <MenuItemForm vendorId={vendor.id} />
+        <MenuItemForm vendorId={vendor.id} commissionBps={vendor.commission_bps} />
       </div>
     </div>
   );

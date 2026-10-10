@@ -6,13 +6,28 @@ describe("phoneSchema", () => {
     expect(phoneSchema.safeParse("+2348012345678").success).toBe(true);
   });
 
-  it("rejects a number missing the country code", () => {
-    expect(phoneSchema.safeParse("08012345678").success).toBe(false);
+  it("accepts local format and normalizes it to E.164", () => {
+    const result = phoneSchema.safeParse("08012345678");
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).toBe("+2348012345678");
+  });
+
+  it("accepts the country code without a leading +", () => {
+    const result = phoneSchema.safeParse("2348012345678");
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).toBe("+2348012345678");
+  });
+
+  it("trims surrounding whitespace and internal separators before matching", () => {
+    const result = phoneSchema.safeParse(" 0801-234-5678 ");
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).toBe("+2348012345678");
   });
 
   it("rejects a number with the wrong digit count", () => {
     expect(phoneSchema.safeParse("+234801234567").success).toBe(false); // 9 digits, not 10
     expect(phoneSchema.safeParse("+23480123456789").success).toBe(false); // 11 digits
+    expect(phoneSchema.safeParse("0801234567").success).toBe(false); // local, 10 digits
   });
 
   it("rejects a non-Nigerian country code", () => {
@@ -65,6 +80,12 @@ describe("registerSchema", () => {
 
   it("accepts a fully valid registration payload", () => {
     expect(registerSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("normalizes a local-format phone number within the full payload", () => {
+    const result = registerSchema.safeParse({ ...valid, phone: "08012345678" });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.phone).toBe("+2348012345678");
   });
 
   it("rejects mismatched password/confirmPassword", () => {

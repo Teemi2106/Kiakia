@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { RealtimeRefresh } from "@/lib/realtime/RealtimeRefresh";
 import { OrdersList } from "./_components/OrdersList";
 import type { Order } from "./_components/types";
 
@@ -44,6 +45,12 @@ export default async function ActiveOrdersPage() {
     .select("id, code, status, total_kobo, vendor_id, created_at, delivery_address")
     .eq("customer_id", session.userId)
     .not("status", "in", `(${TERMINAL_STATUSES.join(",")})`)
+    // A "draft" order is one place_order() created but payment never
+    // captured for - the customer cancelled checkout, or never finished it.
+    // It never became a real order the vendor is preparing, so it does not
+    // belong in "Active Orders" alongside orders that actually were placed.
+    // Its own detail page (orders/[id]) still offers a payment retry.
+    .neq("status", "draft")
     .order("created_at", { ascending: false });
 
   const rawOrders = realOrders ?? [];
@@ -81,6 +88,11 @@ export default async function ActiveOrdersPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-12">
+      <RealtimeRefresh
+        table="orders"
+        filter={`customer_id=eq.${session.userId}`}
+        topic={`customer-orders-${session.userId}`}
+      />
       {/* Header */}
       <div className="mb-8">
         <h1 className="font-sora text-[28px] font-bold text-[#1C1B1B] pt-6 sm:text-[48px] sm:leading-[56px] sm:tracking-[-0.96px]">

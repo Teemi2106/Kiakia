@@ -19,8 +19,14 @@ export function OrderSummary({ total }: OrderSummaryProps) {
           <span className="font-inter text-base text-[#5B403C]">
             Delivery fee
           </span>
-          <span className="font-inter text-base font-semibold text-[#1C1B1B]">
-            {formatNaira(koboOf(0))}
+          {/* No delivery address is known yet at the cart stage, so there is
+              nothing to compute a distance-based fee from - see checkout's
+              own OrderSummary for where the real, address-aware estimate
+              actually lives (useDeliveryFeeEstimate). Saying "₦0.00" here
+              would read as a promise of free delivery this cart cannot
+              back up. */}
+          <span className="font-inter text-base font-semibold text-[#5B403C]">
+            Calculated at checkout
           </span>
         </div>
         <div className="h-px bg-[#E5E2E1]" />

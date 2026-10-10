@@ -36,7 +36,7 @@ function formData(fields: Record<string, string>): FormData {
   return fd;
 }
 
-const VALID_NEW_ADDRESS = { line1: "1 Test Street", lat: "9.05", lng: "7.45" };
+const VALID_NEW_ADDRESS = { line1: "1 Test Street", lat: "9.05", lng: "7.45", contactPhone: "08012345678" };
 const OPEN_CART = { data: { id: "cart-1" }, error: null };
 const PLACED_ORDER = {
   data: { id: "order-1", code: "KK-0001", total_kobo: 500000 },
@@ -79,17 +79,21 @@ describe("placeOrderAction", () => {
       from: {
         addresses: queryBuilder(ok(null)), // .eq("customer_id", session.userId) excluded it
         carts: queryBuilder(OPEN_CART),
+        profiles: queryBuilder(ok({ full_name: "Ada Lovelace" })),
       },
       rpc: { place_order: PLACED_ORDER },
     });
-    const result = await placeOrderAction({}, formData({ addressId: "someone-elses-address" }));
+    const result = await placeOrderAction(
+      {},
+      formData({ addressId: "someone-elses-address", contactPhone: "08012345678" }),
+    );
     expect(result.error).toContain("could not be found");
     expect(state.client.current.rpc).not.toHaveBeenCalled();
   });
 
   it("rejects checkout when the customer has no open cart", async () => {
     state.client.current = supabaseClientMock({
-      from: { carts: queryBuilder(ok(null)) },
+      from: { carts: queryBuilder(ok(null)), profiles: queryBuilder(ok({ full_name: "Ada Lovelace" })) },
       rpc: { place_order: PLACED_ORDER },
     });
     const result = await placeOrderAction({}, formData(VALID_NEW_ADDRESS));
@@ -99,7 +103,7 @@ describe("placeOrderAction", () => {
 
   it("surfaces a friendly message when the address is outside every service area", async () => {
     state.client.current = supabaseClientMock({
-      from: { carts: queryBuilder(OPEN_CART) },
+      from: { carts: queryBuilder(OPEN_CART), profiles: queryBuilder(ok({ full_name: "Ada Lovelace" })) },
       rpc: { place_order: { data: null, error: { message: "address is outside every active service area" } } },
     });
     const result = await placeOrderAction({}, formData(VALID_NEW_ADDRESS));
@@ -108,7 +112,7 @@ describe("placeOrderAction", () => {
 
   it("never leaks the raw place_order() SQL error for unrelated failures", async () => {
     state.client.current = supabaseClientMock({
-      from: { carts: queryBuilder(OPEN_CART) },
+      from: { carts: queryBuilder(OPEN_CART), profiles: queryBuilder(ok({ full_name: "Ada Lovelace" })) },
       rpc: { place_order: { data: null, error: { message: 'duplicate key value violates unique constraint "orders_pkey"' } } },
     });
     const result = await placeOrderAction({}, formData(VALID_NEW_ADDRESS));

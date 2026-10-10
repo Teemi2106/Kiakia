@@ -1,5 +1,6 @@
 "use client";
 
+import { MAX_CART_ITEM_QTY } from "@kiakia/domain";
 import { createClient } from "./supabase/client";
 
 /**
@@ -20,10 +21,17 @@ export interface CartOptionSelection {
 
 /** Canonical cart_items row shape — shared by the drawer (CartDrawer) and
  * the dedicated /cart page (CartPageView) so both stay in sync instead of
- * maintaining two near-identical, drift-prone interfaces. */
+ * maintaining two near-identical, drift-prone interfaces.
+ *
+ * `menu_item_image_url` is not a cart_items column — it comes from the
+ * menu_items(image_url) embed both fetch sites now do via menu_item_id, so
+ * this shape has to be built from a joined query, not a plain `select`. Null
+ * whenever menu_item_id itself is null (should not happen in practice, but
+ * the column allows it) or the menu item's own image_url is unset. */
 export interface CartLineItem {
   readonly id: string;
   readonly menu_item_id: string | null;
+  readonly menu_item_image_url: string | null;
   readonly name_snapshot: string;
   readonly unit_price_kobo: number;
   readonly qty: number;
@@ -74,6 +82,10 @@ async function getOpenCart(customerId: string) {
  * for one yes/no decision).
  */
 export async function addToCart(input: AddToCartInput): Promise<CartResult> {
+  if (!Number.isInteger(input.qty) || input.qty < 1 || input.qty > MAX_CART_ITEM_QTY) {
+    return { ok: false, error: `You can order between 1 and ${MAX_CART_ITEM_QTY} of one item.` };
+  }
+
   const supabase = createClient();
   const {
     data: { user },
@@ -134,6 +146,9 @@ export async function addToCart(input: AddToCartInput): Promise<CartResult> {
 export async function updateCartItemQty(itemId: string, qty: number): Promise<CartResult> {
   if (qty <= 0) {
     return removeCartItem(itemId);
+  }
+  if (!Number.isInteger(qty) || qty > MAX_CART_ITEM_QTY) {
+    return { ok: false, error: `You can order at most ${MAX_CART_ITEM_QTY} of one item.` };
   }
 
   const supabase = createClient();

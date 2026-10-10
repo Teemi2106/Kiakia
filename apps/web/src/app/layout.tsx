@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     template: "%s · KiaKia",
   },
   description:
-    "Order food and goods from vendors near you, delivered kia kia — with your payment held in escrow until it reaches your hand.",
+    "Order food and goods from vendors near you, delivered kia kia — tracked live and in your hand in minutes.",
 };
 
 export const viewport: Viewport = {

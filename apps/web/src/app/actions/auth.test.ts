@@ -12,10 +12,16 @@ vi.mock("@/lib/supabase/server", () => ({
 // tests control "does this account hold a vendor role" directly instead of
 // wiring up a user_roles table fixture.
 const getRoles = vi.fn(() => Promise.resolve<string[]>([]));
+const VENDOR_ROLES = ["vendor_staff", "vendor_manager", "vendor_owner"];
+const hasRole = (roles: string[], ...allowed: string[]) => roles.some((role) => allowed.includes(role));
 vi.mock("@/lib/auth/dal", () => ({
   getRoles: () => getRoles(),
-  hasRole: (roles: string[], ...allowed: string[]) => roles.some((role) => allowed.includes(role)),
-  VENDOR_ROLES: ["vendor_staff", "vendor_manager", "vendor_owner"],
+  hasRole,
+  VENDOR_ROLES,
+  // Real logic, not a stub — same shape as dal.ts's own isPureRider, so
+  // these tests exercise the actual "rider but no vendor role" condition
+  // rather than a value the test controls directly.
+  isPureRider: (roles: string[]) => hasRole(roles, "rider") && !hasRole(roles, ...VENDOR_ROLES),
 }));
 
 const setActiveRole = vi.fn((..._args: unknown[]) => Promise.resolve());
@@ -141,6 +147,30 @@ describe("loginAction", () => {
     );
     expect(setActiveRole).toHaveBeenCalledWith("vendor");
   });
+
+  it("signs a pure-rider account back out and refuses to set up a web session", async () => {
+    getRoles.mockResolvedValueOnce(["rider", "customer"]);
+    const signOut = vi.fn(() => Promise.resolve({ error: null }));
+    mockClient.current = supabaseClientMock({
+      auth: { signInWithPassword: vi.fn(() => Promise.resolve({ error: null })), signOut },
+    });
+    setActiveRole.mockClear();
+    const result = await loginAction({}, formData({ email: "rider@example.com", password: "abcd1234" }));
+    expect(result.error).toContain("rider");
+    expect(signOut).toHaveBeenCalled();
+    expect(setActiveRole).not.toHaveBeenCalled();
+  });
+
+  it("does not block a rider account that also holds a vendor role", async () => {
+    getRoles.mockResolvedValueOnce(["rider", "vendor_owner"]);
+    mockClient.current = supabaseClientMock({
+      auth: { signInWithPassword: vi.fn(() => Promise.resolve({ error: null })) },
+    });
+    await expect(loginAction({}, formData({ email: "ada@example.com", password: "abcd1234" }))).rejects.toThrow(
+      "NEXT_REDIRECT:/dashboard",
+    );
+    expect(setActiveRole).toHaveBeenCalledWith("vendor");
+  });
 });
 
 describe("vendorRegisterAction", () => {
@@ -184,6 +214,18 @@ describe("vendorLoginAction", () => {
     await expect(
       vendorLoginAction({}, formData({ email: "ada@example.com", password: "abcd1234" })),
     ).rejects.toThrow("NEXT_REDIRECT:/onboarding");
+  });
+
+  it("signs a pure-rider account back out instead of sending it to /onboarding", async () => {
+    getRoles.mockResolvedValueOnce(["rider", "customer"]);
+    const signOut = vi.fn(() => Promise.resolve({ error: null }));
+    mockClient.current = supabaseClientMock({
+      auth: { signInWithPassword: vi.fn(() => Promise.resolve({ error: null })), signOut },
+    });
+    const result = await vendorLoginAction({}, formData({ email: "rider@example.com", password: "abcd1234" }));
+    expect(result.error).toContain("rider");
+    expect(signOut).toHaveBeenCalled();
+    expect(setActiveRole).not.toHaveBeenCalled();
   });
 
   it("resets a stale vendor-mode cookie to customer when redirecting a non-vendor account to /onboarding (S3)", async () => {

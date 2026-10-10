@@ -78,7 +78,7 @@ export function ActiveOrderCard({
 
           <p className="mt-1.5 truncate font-inter text-sm text-white/55">
             {order.vendorName ?? "Your order"} · #{order.code} ·{" "}
-            {formatNaira(koboOf(order.total_kobo))} held in escrow
+            {formatNaira(koboOf(order.total_kobo))}
           </p>
         </div>
 

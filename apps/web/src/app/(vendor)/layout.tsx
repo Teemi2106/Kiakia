@@ -27,7 +27,7 @@ export default async function VendorLayout({
         />
       )}
       <div>
-        <VendorTopNav />
+        <VendorTopNav vendorId={vendor?.id ?? null} />
       </div>
       <div className="flex flex-1 flex-col pb-16 pt-14 sm:pb-0 sm:pt-[63px] min-w-0 max-w-full">
         {vendor && vendor.status !== "active" && (

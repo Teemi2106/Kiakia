@@ -1,7 +1,9 @@
 // app/(marketing)/_components/Hero.tsx
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Bike, Lock, Store } from "lucide-react";
+import { ArrowRight, BadgeCheck, Bike, Flame, ShieldCheck, Store, Timer } from "lucide-react";
+import { switchToCustomerAction, switchToVendorAction } from "@/app/actions/session";
+import type { MarketingAccount } from "@/lib/auth/marketing-account";
 
 /**
  * The noun that cycles as the first line of the headline. SIZER is whichever
@@ -14,7 +16,7 @@ const CRAVINGS = ["Jollof", "Suya", "Shawarma", "Swallow", "Groceries"] as const
 const SIZER = "Groceries";
 const WORD_STAGGER_MS = 11_000 / CRAVINGS.length;
 
-export function Hero() {
+export function Hero({ account }: { account: MarketingAccount | null }) {
   return (
     <section className="relative overflow-hidden bg-kk-cream pb-20 pt-6 sm:pb-28 sm:pt-10">
       {/* Ambient wash. Purely decorative, so it stays out of the a11y tree. */}
@@ -90,31 +92,56 @@ export function Hero() {
             className="kk-enter mt-8 max-w-xl font-inter text-lg leading-8 text-kk-cocoa sm:text-xl"
             style={{ "--kk-delay": "200ms" } as React.CSSProperties}
           >
-            <span className="font-semibold text-kk-ink">Kia kia</span> means quick quick — that is
-            the whole promise. Order from a kitchen down the road, watch the rider close in live,
-            and your money stays in escrow until a{" "}
-            <span className="font-semibold text-kk-ink">4-digit code</span> at your door releases
-            it.
+            Still steaming when you open the bag. Order from a kitchen on your own street, watch
+            your rider close in, and eat —{" "}
+            <span className="font-semibold text-kk-ink">most orders land in under 30 minutes</span>.
           </p>
 
           <div
             className="kk-enter mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
             style={{ "--kk-delay": "280ms" } as React.CSSProperties}
           >
-            <Link
-              href="/register"
-              className="kk-shine group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-kk-red px-8 font-inter text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(182,25,19,0.95)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-kk-red-deep"
-            >
-              Start an order
-              <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-            <Link
-              href="/vendor/register"
-              className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl border border-kk-line bg-white/70 px-7 font-inter text-base font-semibold text-kk-ink backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-kk-ink/25 hover:bg-white"
-            >
-              <Store className="size-5 text-kk-orange-deep" />
-              Sell on KiaKia
-            </Link>
+            {account ? (
+              <>
+                <form action={switchToCustomerAction}>
+                  <button
+                    type="submit"
+                    className="kk-shine group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-kk-red px-8 font-inter text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(182,25,19,0.95)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-kk-red-deep"
+                  >
+                    Are you hungry?
+                    <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </button>
+                </form>
+                {account.isVendor && (
+                  <form action={switchToVendorAction}>
+                    <button
+                      type="submit"
+                      className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl border border-kk-line bg-white/70 px-7 font-inter text-base font-semibold text-kk-ink backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-kk-ink/25 hover:bg-white"
+                    >
+                      <Store className="size-5 text-kk-orange-deep" />
+                      Vendor dashboard
+                    </button>
+                  </form>
+                )}
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="kk-shine group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-kk-red px-8 font-inter text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(182,25,19,0.95)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-kk-red-deep"
+                >
+                  Order something now
+                  <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  href="/vendor/register"
+                  className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl border border-kk-line bg-white/70 px-7 font-inter text-base font-semibold text-kk-ink backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-kk-ink/25 hover:bg-white"
+                >
+                  <Store className="size-5 text-kk-orange-deep" />
+                  Sell on KiaKia
+                </Link>
+              </>
+            )}
           </div>
 
           <div
@@ -126,12 +153,12 @@ export function Hero() {
                 <span className="kk-ping absolute inset-0" />
                 <span className="relative size-2 rounded-full bg-kk-green" />
               </span>
-              Riders dispatched the second a vendor accepts
+              Kitchens near you are cooking right now
             </span>
             <span className="hidden h-4 w-px bg-kk-line sm:block" />
-            <span className="inline-flex items-center gap-2">
-              <Lock className="size-4 text-kk-green" />
-              Escrow-protected, every order
+            <span className="inline-flex items-center gap-2 text-kk-cocoa/75">
+              <ShieldCheck className="size-4 text-kk-green" />
+              Your money is safe till it lands
             </span>
           </div>
         </div>
@@ -168,7 +195,7 @@ export function Hero() {
                   <BadgeCheck className="size-4 shrink-0 text-kk-mint" />
                 </span>
                 <span className="block truncate font-inter text-xs text-white/75">
-                  1.2 km away · Opens 8:00 AM
+                  1.2 km away · Open now
                 </span>
               </span>
             </div>
@@ -204,26 +231,28 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Escrow chip */}
+          {/* Craving card — the thing the visitor actually came here for,
+              priced and timed. Replaced the payment chip that used to sit
+              here: the hero should make you hungry, not reassure you. */}
           <div
-            className="kk-float absolute bottom-24 right-0 w-[196px] sm:-right-8 sm:bottom-28 sm:w-[210px]"
+            className="kk-float absolute bottom-24 right-0 w-[204px] sm:-right-8 sm:bottom-28 sm:w-[218px]"
             style={{ "--kk-delay": "1400ms" } as React.CSSProperties}
           >
             <div className="rounded-3xl bg-kk-ink-deep p-4 shadow-[0_30px_60px_-25px_rgba(18,13,12,0.8)]">
-              <span className="flex items-center gap-2 font-inter text-[11px] font-semibold uppercase tracking-[0.16em] text-kk-mint">
-                <Lock className="size-3.5" />
-                Held in escrow
+              <span className="flex items-center gap-2 font-inter text-[11px] font-semibold uppercase tracking-[0.16em] text-kk-orange">
+                <Flame className="size-3.5" />
+                Hot right now
               </span>
-              <p className="mt-2 font-sora text-2xl font-extrabold tracking-tight text-white">
-                ₦8,450
+              <p className="mt-2 font-sora text-[17px] font-extrabold leading-tight tracking-tight text-white">
+                Smoky jollof &amp; chicken
               </p>
-              <p className="mt-1 font-inter text-[11px] leading-4 text-white/60">
-                Released the moment you share your code.
+              <p className="mt-1.5 font-inter text-[11px] leading-4 text-white/60">
+                ₦4,200 · out of the pot in 12 min
               </p>
             </div>
           </div>
 
-          {/* Code chip. Desktop only — on a phone the two cards above already
+          {/* Speed badge. Desktop only — on a phone the two cards above already
               fill the frame, and a third would crowd the photo out. The
               rotation sits on an inner element because kk-float animates
               `transform`, which would otherwise replace it. */}
@@ -231,15 +260,11 @@ export function Hero() {
             className="kk-float absolute -top-3 right-0 hidden sm:-right-6 sm:block"
             style={{ "--kk-delay": "700ms" } as React.CSSProperties}
           >
-            <div className="flex -rotate-6 items-center gap-1.5 rounded-2xl border border-kk-line bg-kk-cream px-3 py-2.5 shadow-[0_20px_40px_-20px_rgba(28,27,27,0.5)]">
-              {["4", "0", "9", "1"].map((digit, i) => (
-                <span
-                  key={`${digit}-${i}`}
-                  className="flex size-8 items-center justify-center rounded-lg bg-white font-sora text-base font-extrabold text-kk-ink ring-1 ring-inset ring-kk-line"
-                >
-                  {digit}
-                </span>
-              ))}
+            <div className="flex -rotate-6 items-center gap-2 rounded-2xl border border-kk-line bg-kk-cream px-4 py-3 shadow-[0_20px_40px_-20px_rgba(28,27,27,0.5)]">
+              <Timer className="size-4 shrink-0 text-kk-red" />
+              <span className="font-sora text-sm font-extrabold tracking-tight text-kk-ink">
+                26 min average
+              </span>
             </div>
           </div>
         </div>

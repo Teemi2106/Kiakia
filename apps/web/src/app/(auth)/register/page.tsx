@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AuthLegal, AuthShell, AuthSwap } from "../_components/AuthShell";
-import { EscrowCodeCard } from "../_components/AuthStage";
+import { DeliveryCodeCard } from "../_components/AuthStage";
 import { RegisterForm } from "../_components/RegisterForm";
 
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ export default function RegisterPage() {
         ),
         subheading:
           "Kitchens and shops down the road, a rider you can watch in real time, and your money held safely until the food is in your hand.",
-        panel: <EscrowCodeCard />,
+        panel: <DeliveryCodeCard />,
         footnote: "Free to join. No subscription, no card stored until you order.",
       }}
       title="Create your account"

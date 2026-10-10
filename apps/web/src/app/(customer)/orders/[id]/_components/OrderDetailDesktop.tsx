@@ -45,11 +45,7 @@ export function OrderDetailDesktop({
           <DeliveryCodeSection deliveryCode={order.delivery_code} />
 
           {/* Order Summary */}
-          <OrderSummaryDetails
-            items={items}
-            order={order}
-            vendorImage={vendor?.logo_url}
-          />
+          <OrderSummaryDetails items={items} order={order} />
         </div>
       </div>
 

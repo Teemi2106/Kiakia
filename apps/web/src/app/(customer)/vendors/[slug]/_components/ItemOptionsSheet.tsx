@@ -65,7 +65,13 @@ export function ItemOptionsSheet({
     const chosenInGroup = group.options.filter((o) =>
       selected.has(o.id),
     ).length;
-    return chosenInGroup < group.minSelect;
+    // A required group must gate on at least one selection even if
+    // minSelect itself is 0 - the two fields are set independently on the
+    // vendor's menu form, so a group can be marked required with minSelect
+    // left at its default. Trusting minSelect alone let a customer confirm
+    // an order with no takeaway pack, no spice level, whatever the vendor
+    // actually needed to know, silently.
+    return chosenInGroup < Math.max(group.minSelect, 1);
   });
 
   async function handleConfirm() {
@@ -79,7 +85,7 @@ export function ItemOptionsSheet({
 
   return (
     <div
-      className="fixed inset-0 z-20 flex items-end justify-center bg-black/40 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center"
       onClick={onClose}
     >
       <div

@@ -1,5 +1,5 @@
 import "server-only";
-import { getOptionalSession } from "./dal";
+import { getOptionalSession, getRoles, hasRole, VENDOR_ROLES } from "./dal";
 import { getActiveRole } from "./active-role";
 import { createClient } from "../supabase/server";
 
@@ -7,6 +7,8 @@ export interface MarketingAccount {
   fullName: string;
   avatarUrl: string | null;
   accountHref: string;
+  /** Holds a vendor role, in addition to whatever else the account can do. */
+  isVendor: boolean;
 }
 
 /**
@@ -20,14 +22,16 @@ export async function getMarketingAccount(): Promise<MarketingAccount | null> {
   if (!session) return null;
 
   const supabase = await createClient();
-  const [{ data: profile }, activeRole] = await Promise.all([
+  const [{ data: profile }, activeRole, roles] = await Promise.all([
     supabase.from("profiles").select("full_name, avatar_url").eq("id", session.userId).single(),
     getActiveRole(),
+    getRoles(),
   ]);
 
   return {
     fullName: profile?.full_name || session.email || "Account",
     avatarUrl: profile?.avatar_url ?? null,
     accountHref: activeRole === "vendor" ? "/dashboard" : "/profile",
+    isVendor: hasRole(roles, ...VENDOR_ROLES),
   };
 }

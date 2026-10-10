@@ -8,6 +8,7 @@ import { AddressSection } from "./AddressSection";
 import { PaymentSection } from "./PaymentSection";
 import { OrderSummary } from "./OrderSummary";
 import type { Address, CartItem, Vendor, PaymentMethod } from "./types";
+import type { DeliveryFeeEstimate } from "@/lib/checkout/useDeliveryFeeEstimate";
 
 interface CheckoutMobileProps {
   vendor: Vendor | null;
@@ -19,8 +20,10 @@ interface CheckoutMobileProps {
   onPaymentMethodChange: (method: PaymentMethod) => void;
   subtotalKobo: number;
   walletBalanceKobo: number;
+  deliveryFeeEstimate: DeliveryFeeEstimate;
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
+  customerPhone: string | null;
   formAction: (formData: FormData) => void;
   formState: CheckoutFormState;
   pending: boolean;
@@ -36,8 +39,10 @@ export function CheckoutMobile({
   onPaymentMethodChange,
   subtotalKobo,
   walletBalanceKobo,
+  deliveryFeeEstimate,
   deliveryNote,
   onDeliveryNoteChange,
+  customerPhone,
   formAction,
   formState,
   pending,
@@ -128,8 +133,10 @@ export function CheckoutMobile({
             vendor={vendor}
             items={items}
             subtotalKobo={subtotalKobo}
+            deliveryFeeEstimate={deliveryFeeEstimate}
             deliveryNote={deliveryNote}
             onDeliveryNoteChange={onDeliveryNoteChange}
+            customerPhone={customerPhone}
             paymentMethod={paymentMethod}
             formState={formState}
             pending={pending}

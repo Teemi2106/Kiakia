@@ -8,8 +8,8 @@
 // Next 16 requires the ssr:false boundary to live in a Client Component, not
 // a Server Component, and mapbox-gl can't be evaluated during SSR at all.
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef } from "react";
-import { Map, Marker, type MapRef } from "react-map-gl/mapbox";
+import { useEffect, useMemo, useRef } from "react";
+import { Map, Marker, Source, Layer, type MapRef, type LayerProps } from "react-map-gl/mapbox";
 import type { MapMouseEvent, MarkerDragEvent } from "react-map-gl/mapbox";
 import { MapPin } from "lucide-react";
 import { clientEnv } from "@/lib/env.client";
@@ -22,6 +22,46 @@ export interface LatLng {
 // Lagos, Nigeria — a reasonable default center when the vendor hasn't set a
 // location yet, not an implied real position.
 export const DEFAULT_MAP_CENTER: LatLng = { lat: 6.5244, lng: 3.3792 };
+
+/** Faint fill for the delivery-radius circle — a preview, not a hard border. */
+const radiusFillLayer: LayerProps = {
+  id: "delivery-radius-fill",
+  type: "fill",
+  paint: { "fill-color": "#B61913", "fill-opacity": 0.07 },
+};
+
+const radiusOutlineLayer: LayerProps = {
+  id: "delivery-radius-outline",
+  type: "line",
+  paint: { "line-color": "#B61913", "line-width": 1.5, "line-opacity": 0.45, "line-dasharray": [2, 2] },
+};
+
+/**
+ * A geodesic circle around `center`, as a GeoJSON polygon — real map
+ * coordinates, not screen pixels, so it scales correctly with `radiusM` at
+ * any zoom level instead of needing a zoom-dependent pixel expression
+ * (Mapbox's `circle` layer type draws in pixels, which is wrong for "this
+ * many real-world meters"). 64 points is smooth enough at any radius this
+ * slider allows (500m-20km, DeliveryZone.tsx) without generating a visibly
+ * expensive polygon.
+ */
+function radiusCircleFeature(center: LatLng, radiusM: number): GeoJSON.Feature<GeoJSON.Polygon> {
+  const EARTH_RADIUS_M = 6_371_000;
+  const POINTS = 64;
+  const latRad = (center.lat * Math.PI) / 180;
+
+  const coordinates: GeoJSON.Position[] = [];
+  for (let i = 0; i <= POINTS; i++) {
+    const angle = (i / POINTS) * 2 * Math.PI;
+    const dEast = radiusM * Math.cos(angle);
+    const dNorth = radiusM * Math.sin(angle);
+    const dLat = dNorth / EARTH_RADIUS_M;
+    const dLng = dEast / (EARTH_RADIUS_M * Math.cos(latRad));
+    coordinates.push([center.lng + (dLng * 180) / Math.PI, center.lat + (dLat * 180) / Math.PI]);
+  }
+
+  return { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [coordinates] } };
+}
 
 interface DeliveryLocationMapProps {
   position: LatLng | null;
@@ -36,11 +76,28 @@ interface DeliveryLocationMapProps {
    * presence-keyed (not coordinate-keyed) re-fit effect.
    */
   flyToRequestId: number;
+  /** The delivery-radius slider's live value (DeliveryZone.tsx), drawn as a
+   * faint circle around `position` so the vendor sees how far it actually
+   * reaches as they drag it — not just the km number next to the slider. */
+  radiusM: number;
 }
 
-export default function DeliveryLocationMap({ position, onPositionChange, flyToRequestId }: DeliveryLocationMapProps) {
+export default function DeliveryLocationMap({
+  position,
+  onPositionChange,
+  flyToRequestId,
+  radiusM,
+}: DeliveryLocationMapProps) {
   const mapRef = useRef<MapRef | null>(null);
   const center = position ?? DEFAULT_MAP_CENTER;
+
+  const radiusGeoJson = useMemo(
+    () => (position ? radiusCircleFeature(position, radiusM) : null),
+    // Keyed on coordinate values, not `position` object identity — matches
+    // MapboxMap.tsx's own convention for effects/memos over a {lat,lng} prop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [position?.lat, position?.lng, radiusM],
+  );
 
   useEffect(() => {
     if (flyToRequestId === 0) return; // 0 = mount, nothing requested yet
@@ -69,6 +126,13 @@ export default function DeliveryLocationMap({ position, onPositionChange, flyToR
       attributionControl={false}
       onClick={handleMapClick}
     >
+      {radiusGeoJson && (
+        <Source id="delivery-radius" type="geojson" data={radiusGeoJson}>
+          <Layer {...radiusFillLayer} />
+          <Layer {...radiusOutlineLayer} />
+        </Source>
+      )}
+
       {position && (
         <Marker
           longitude={position.lng}

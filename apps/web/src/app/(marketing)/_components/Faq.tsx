@@ -2,30 +2,35 @@
 import Link from "next/link";
 import { Reveal } from "./Reveal";
 
+/**
+ * Ordered by what someone standing in their kitchen at 8pm actually wants to
+ * know. Half of these used to be about the payment flow; that is now one
+ * question, because it is one question people ask — not the reason they came.
+ */
 const QUESTIONS = [
   {
-    q: "What actually happens to my money?",
-    a: "It leaves your account at checkout and stops at KiaKia. It is not credited to the vendor and it is not ours to spend — it is held against your specific order until that order is confirmed delivered.",
+    q: "How fast is fast?",
+    a: "Most orders are at the door inside 30 minutes. Your food is never held back to share a bike with three other drops, the ride offer goes out to every rider around the vendor at the same instant, and you are only ever shown kitchens close enough that it arrives hot.",
   },
   {
-    q: "What if the rider never turns up?",
-    a: "Then the release never happens and the funds stay where they are. There is no vendor to chase and no refund queue to join, because the payout was never made in the first place.",
-  },
-  {
-    q: "Why a 4-digit code and not a photo or a signature?",
-    a: "Because a code is the one piece of proof only you can give. It is shown to you, not to the vendor, and reading it out at your door is what tells the system the hand-off genuinely happened.",
-  },
-  {
-    q: "How is it actually faster?",
-    a: "Because nothing waits. Your order is never batched with other drops, the offer goes out to every rider around the vendor at the same instant, and the kitchens you can order from are the ones already close to you.",
-  },
-  {
-    q: "I run a kitchen. When do I get paid?",
-    a: "The same moment the customer's code is accepted at the door — not on a weekly cycle, and never subject to a chargeback weeks later. The money was already committed before you started cooking.",
+    q: "What can I actually order?",
+    a: "Whatever is being cooked and sold around you — rice and stews, suya, swallow and soups, shawarma, small chops, breakfast, drinks. Plus the shops, for groceries and the thing you forgot to buy on the way home.",
   },
   {
     q: "Do I need to install anything?",
-    a: "No. KiaKia runs in your browser on a phone or a laptop. Create an account, order, and track it from the same place.",
+    a: "No. KiaKia runs in your browser on a phone or a laptop. Create an account, order, and watch it come from the same place.",
+  },
+  {
+    q: "How do I know the kitchen is any good?",
+    a: "Every vendor is checked before they can take a single order, and what you see is their real menu, their real prices and their live opening hours. Nothing you tap turns out to be closed.",
+  },
+  {
+    q: "Is my money safe?",
+    a: "Yes. It leaves your account at checkout and stops with us — not with the vendor, and not ours to spend. It is only paid out once the food is in your hand, so if an order never arrives there is nothing to chase and no refund queue to join.",
+  },
+  {
+    q: "I run a kitchen. When do I get paid?",
+    a: "The same moment the customer takes delivery — not on a weekly cycle, and never clawed back by a chargeback weeks later. The money was already committed before you started cooking.",
   },
 ] as const;
 
@@ -51,7 +56,7 @@ export function Faq() {
               <Link href="/terms" className="font-semibold text-kk-red underline underline-offset-4">
                 terms
               </Link>{" "}
-              spell out the escrow mechanics in full.
+              have the fine print.
             </p>
           </div>
         </Reveal>

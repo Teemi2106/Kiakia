@@ -158,6 +158,9 @@ select is(
 -- and relationship to the order. This is the exact "any customer can call
 -- transition_order(their_own_draft_order, 'placed', 'customer', their_own_uid)"
 -- bug 0015's own header claimed to close but didn't.
+-- Message text updated in 0050_restore_transition_order_guards.sql to use a
+-- plain hyphen instead of an em dash (hard no-em-dash requirement on that
+-- migration's own text) - the allow-list being tested here is unchanged.
 select tests.authenticate_as('customer_a');
 select throws_ok(
   $$ select transition_order(
@@ -165,7 +168,7 @@ select throws_ok(
        tests.get_supabase_uid('customer_a')
      ) $$,
   'P0001',
-  'transition_order: actor_type=customer may not drive an order to placed— only cancelled_by_customer',
+  'transition_order: actor_type=customer may not drive an order to placed- only cancelled_by_customer',
   'a customer cannot push their own unpaid draft order to placed — only cancelled_by_customer is a valid customer-driven edge'
 );
 

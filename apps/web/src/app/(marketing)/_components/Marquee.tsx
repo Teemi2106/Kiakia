@@ -1,26 +1,37 @@
 // app/(marketing)/_components/Marquee.tsx
 
-// Rendered twice back to back; the keyframe translates exactly -50%, so the
-// second copy is in the first copy's place when the loop restarts.
-const CLAIMS = [
-  "Escrow on every order",
-  "Fast. Fresh. Reliable.",
-  "4-digit handoff code",
-  "Live rider tracking",
-  "No batching, ever",
-  "Vendors paid on delivery",
-  "Kia kia — quick quick",
+// Two bands running opposite ways. The top one is what you could be eating;
+// the bottom one is what we do about it. Each band is rendered twice back to
+// back, and the keyframe translates exactly -50%, so the second copy is in
+// the first copy's place when the loop restarts.
+const CRAVINGS = [
+  "Jollof still steaming",
+  "Suya off the grill",
+  "Shawarma at 11pm",
+  "Pounded yam & egusi",
+  "Peppered chicken",
+  "Puff-puff by the dozen",
+  "Chapman, cold",
 ] as const;
 
-function Band() {
+const PROMISES = [
+  "Kia kia — quick quick",
+  "Kitchens on your street",
+  "Live rider tracking",
+  "No batching, ever",
+  "Hot when it reaches you",
+  "Your money is safe",
+] as const;
+
+function Band({ items, reverse }: { items: readonly string[]; reverse?: boolean }) {
   return (
-    <div className="kk-marquee">
+    <div className={`kk-marquee${reverse ? " kk-marquee-reverse" : ""}`}>
       {[0, 1].map((copy) => (
         <div key={copy} className="flex shrink-0 items-center" aria-hidden={copy === 1 || undefined}>
-          {CLAIMS.map((claim) => (
-            <span key={claim} className="flex items-center">
+          {items.map((item) => (
+            <span key={item} className="flex items-center">
               <span className="whitespace-nowrap px-6 font-sora text-sm font-bold uppercase tracking-[0.18em] text-kk-cream sm:text-base">
-                {claim}
+                {item}
               </span>
               <Star />
             </span>
@@ -44,9 +55,15 @@ function Star() {
 
 export function Marquee() {
   return (
-    <section className="relative overflow-hidden bg-kk-ink-deep py-6 sm:py-7" aria-label="What KiaKia guarantees">
-      <div className="-ml-[4%] w-[108%] -rotate-[1.2deg]">
-        <Band />
+    <section
+      className="relative overflow-hidden bg-kk-ink-deep py-6 sm:py-7"
+      aria-label="What you can order on KiaKia"
+    >
+      <div className="-ml-[4%] w-[108%] -rotate-[1.2deg] space-y-3">
+        <Band items={CRAVINGS} />
+        <div className="opacity-45">
+          <Band items={PROMISES} reverse />
+        </div>
       </div>
     </section>
   );

@@ -1,11 +1,12 @@
 // app/(customer)/tracking/_components/DriverCard.tsx
 "use client";
 
-import { Phone, MessageCircle, Contact } from "lucide-react";
+import { Phone, Contact } from "lucide-react";
 
 interface DriverCardProps {
   driver: {
     name: string;
+    phone?: string;
     plateNumber?: string;
     avatarUrl?: string;
     car?: string;
@@ -40,16 +41,23 @@ export function DriverCard({ driver }: DriverCardProps) {
         </div>
       </div>
 
-      <div className="mt-4 flex gap-3">
-        <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#934B00] py-2 font-inter text-sm font-semibold text-[#934B00] hover:bg-[#F6F3F2]">
+      {/* No in-app messaging channel exists anywhere in this codebase — a
+          "Message" button here would be dead UI, same reasoning this app
+          avoids fabricating any other feature that isn't actually built.
+          `tel:` is real: it hands off to whatever calling app the device
+          already has. Omitted entirely (not disabled) when the rider's
+          number is unset — get_order_tracking() (0071) can return
+          rider_phone: null even once a rider is assigned, if their own
+          profile has no phone on file. */}
+      {driver.phone && (
+        <a
+          href={`tel:${driver.phone}`}
+          className="mt-4 flex items-center justify-center gap-2 rounded-xl border-2 border-[#934B00] py-2 font-inter text-sm font-semibold text-[#934B00] hover:bg-[#F6F3F2]"
+        >
           <Phone className="size-3.5" />
-          Call
-        </button>
-        <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#934B00] py-2 font-inter text-sm font-semibold text-[#934B00] hover:bg-[#F6F3F2]">
-          <MessageCircle className="size-3.5" />
-          Message
-        </button>
-      </div>
+          Call {driver.name.split(" ")[0]}
+        </a>
+      )}
     </div>
   );
 }

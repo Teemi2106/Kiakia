@@ -6,7 +6,9 @@ import { requireVendorContext } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { uploadVendorImage } from "@/lib/storage/vendor-media";
-import { InvalidMoneyError, isMealCategoryKey, nairaToKobo } from "@kiakia/domain";
+import { InvalidMoneyError, isMealCategoryKey, nairaToKobo, parseMenuPriceKobo } from "@kiakia/domain";
+
+const PRICE_ERROR = "Enter a price between ₦0.01 and ₦1,000,000, in whole kobo.";
 
 export interface FormState {
   readonly error?: string;
@@ -260,10 +262,13 @@ async function writeOptionGroups(itemId: string, groups: OptionGroupInput[]): Pr
 export async function createMenuItemAction(_prevState: FormState, formData: FormData): Promise<FormState> {
   const vendorId = formData.get("vendorId") as string | null;
   const name = formData.get("name") as string | null;
-  const priceNaira = Number(formData.get("priceNaira"));
+  const priceKobo = parseMenuPriceKobo(formData.get("priceNaira"));
 
-  if (!vendorId || !name?.trim() || !Number.isFinite(priceNaira) || priceNaira <= 0) {
+  if (!vendorId || !name?.trim()) {
     return { error: "Enter an item name and a valid price." };
+  }
+  if (priceKobo === null) {
+    return { error: PRICE_ERROR };
   }
 
   await assertVendorStaff(vendorId);
@@ -285,7 +290,7 @@ export async function createMenuItemAction(_prevState: FormState, formData: Form
       name: name.trim(),
       description: (formData.get("description") as string | null) || null,
       image_url: imageResult.url,
-      price_kobo: Math.round(priceNaira * 100),
+      price_kobo: priceKobo,
       is_available: formData.get("isAvailable") === "on",
     })
     .select("id")
@@ -304,10 +309,13 @@ export async function updateMenuItemAction(_prevState: FormState, formData: Form
   const vendorId = formData.get("vendorId") as string | null;
   const itemId = formData.get("itemId") as string | null;
   const name = formData.get("name") as string | null;
-  const priceNaira = Number(formData.get("priceNaira"));
+  const priceKobo = parseMenuPriceKobo(formData.get("priceNaira"));
 
-  if (!vendorId || !itemId || !name?.trim() || !Number.isFinite(priceNaira) || priceNaira <= 0) {
+  if (!vendorId || !itemId || !name?.trim()) {
     return { error: "Enter an item name and a valid price." };
+  }
+  if (priceKobo === null) {
+    return { error: PRICE_ERROR };
   }
 
   await assertVendorStaff(vendorId);
@@ -331,7 +339,7 @@ export async function updateMenuItemAction(_prevState: FormState, formData: Form
       name: name.trim(),
       description: (formData.get("description") as string | null) || null,
       image_url: imageResult.url,
-      price_kobo: Math.round(priceNaira * 100),
+      price_kobo: priceKobo,
       is_available: formData.get("isAvailable") === "on",
     })
     .eq("id", itemId);

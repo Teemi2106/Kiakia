@@ -1,32 +1,44 @@
 import "server-only";
 import { createAdminClient } from "./supabase/admin";
-import { initiateRefund, type MonnifyRefundStatus } from "./monnify";
+import { getRefundStatus, initiateRefund, type MonnifyRefundStatus } from "./monnify";
 
 /**
- * The second half of the auto-refund flow: 0041/0043's SQL side already
- * reverses KiaKia's own ledger the instant an order is rejected/cancelled
- * (transition_order() -> _unwind_order_escrow_ledger()), but Postgres has
- * no HTTP client — it can never actually ask Monnify to send the customer's
- * money back. This is that missing call, made from the app layer right
- * after a Server Action's transition_order()/refund_order_escrow() RPC call
- * succeeds (see advanceOrderAction and refundOrderEscrowAction).
- *
- * Best-effort by design: never throws past this function. By the time this
- * runs, the order's status transition has ALREADY committed — a Monnify
- * failure here must not (and structurally cannot, since it's called after
- * the fact) undo that. A failure just leaves `payments.refund_reference`
- * unset, so a later retry of this same function tries again instead of
- * silently giving up forever.
- *
- * Idempotent two ways: `payments.refund_reference` being already set means
- * this order has already been asked about (skip, don't ask Monnify twice
- * from our side), and even if that check somehow raced, Monnify's own API
- * is keyed on the same "<order.code>-refund" refundReference every time, so
- * a duplicate call should surface as a duplicate/rejection at their end
- * rather than a second real refund.
+ * What requestMonnifyRefundForOrder() did.
+ *  - recorded: Monnify's status for the refund is now on the payment row.
+ *  - unknown: the refund was claimed but Monnify's answer could not be
+ *    established. It may or may not exist there; check Monnify before doing
+ *    anything else.
+ *  - already_requested: another call holds the claim; nothing was sent.
+ *  - not_applicable: the ledger did not refund this order to the gateway, or
+ *    there is no Monnify payment to refund; nothing was sent.
  */
-export async function requestMonnifyRefundForOrder(orderCode: string): Promise<void> {
+export type GatewayRefundOutcome = "recorded" | "unknown" | "already_requested" | "not_applicable";
+
+/**
+ * The second half of a gateway refund: refund_order_escrow(..., 'gateway')
+ * reverses KiaKia's own ledger, but Postgres has no HTTP client, so asking
+ * Monnify to send the customer's money back happens here, from the Server
+ * Action, after that RPC succeeds.
+ *
+ * Money rules, in order:
+ *  1. Only an order whose '<code>-refund' ledger transaction credited
+ *     platform:gateway is eligible. A wallet-refunded order has already paid
+ *     the customer; a card refund on top would pay them twice.
+ *  2. payments.refund_reference is CLAIMED (set, status 'pending') before
+ *     Monnify is called, by a conditional update only one caller can win. A
+ *     double click or a concurrent retry therefore never sends two requests.
+ *  3. A failed call does not release the claim: the request may have reached
+ *     Monnify. Its status is looked up by the same refundReference instead and
+ *     recorded; if that fails too the row stays 'pending' and the outcome is
+ *     'unknown'.
+ *
+ * Never throws: the order transition and ledger refund have already committed.
+ */
+export async function requestMonnifyRefundForOrder(orderCode: string): Promise<GatewayRefundOutcome> {
   const admin = createAdminClient();
+
+  const { data: destination } = await admin.rpc("order_refund_destination", { p_order_code: orderCode });
+  if (destination !== "gateway") return "not_applicable";
 
   const { data: payment } = await admin
     .from("payments")
@@ -34,13 +46,22 @@ export async function requestMonnifyRefundForOrder(orderCode: string): Promise<v
     .eq("idempotency_key", orderCode)
     .maybeSingle();
 
-  // No payment row, or it never actually reached Monnify (no provider_ref
-  // yet) — nothing was ever captured, so there's nothing to send back.
-  if (!payment || !payment.provider_ref) return;
-  // Already asked Monnify for this order — never ask twice from our side.
-  if (payment.refund_reference) return;
+  if (!payment || !payment.provider_ref) return "not_applicable";
+  if (payment.refund_reference) return "already_requested";
 
   const refundReference = `${orderCode}-refund`;
+
+  const { data: claimed, error: claimError } = await admin
+    .from("payments")
+    .update({ refund_reference: refundReference, refund_status: "pending" })
+    .eq("id", payment.id)
+    .is("refund_reference", null)
+    .select("id");
+  if (claimError) {
+    console.error(`requestMonnifyRefundForOrder: could not claim the refund for order ${orderCode}`, claimError);
+    return "unknown";
+  }
+  if (!claimed?.length) return "already_requested";
 
   try {
     const result = await initiateRefund({
@@ -50,20 +71,29 @@ export async function requestMonnifyRefundForOrder(orderCode: string): Promise<v
       refundReason: "Order cancelled",
       customerNote: "KiaKia refund",
     });
-
-    await admin
-      .from("payments")
-      .update({
-        refund_reference: refundReference,
-        refund_status: mapMonnifyRefundStatus(result.refundStatus),
-      })
-      .eq("id", payment.id);
+    await recordRefundStatus(admin, payment.id, result.refundStatus);
+    return "recorded";
   } catch (error) {
-    // Network/API failure — refund_reference stays null, so a future call
-    // to this function for the same order will try again rather than
-    // treating this as "already asked".
     console.error(`requestMonnifyRefundForOrder: Monnify initiate-refund failed for order ${orderCode}`, error);
   }
+
+  try {
+    const result = await getRefundStatus(refundReference);
+    await recordRefundStatus(admin, payment.id, result.refundStatus);
+    return "recorded";
+  } catch (error) {
+    console.error(`requestMonnifyRefundForOrder: Monnify refund status lookup failed for order ${orderCode}`, error);
+    return "unknown";
+  }
+}
+
+async function recordRefundStatus(
+  admin: ReturnType<typeof createAdminClient>,
+  paymentId: string,
+  status: MonnifyRefundStatus,
+): Promise<void> {
+  const { error } = await admin.from("payments").update({ refund_status: mapMonnifyRefundStatus(status) }).eq("id", paymentId);
+  if (error) console.error(`requestMonnifyRefundForOrder: could not record refund status for payment ${paymentId}`, error);
 }
 
 function mapMonnifyRefundStatus(status: MonnifyRefundStatus): "pending" | "completed" | "failed" {

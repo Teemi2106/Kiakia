@@ -17,6 +17,8 @@ export interface LinkComponentProps {
 export interface BottomNavProps {
   readonly items: readonly BottomNavItem[];
   readonly activeHref: string;
+  /** Optional surface/position overrides for a specific product shell. */
+  readonly className?: string;
   /**
    * Deliberately not hard-wired to `next/link` — `packages/ui` is meant to
    * be shared with the rider app too (§6 of the architecture doc), which
@@ -33,6 +35,7 @@ export interface BottomNavProps {
    */
   readonly activeBgClassName?: string;
   readonly activeTextClassName?: string;
+  readonly inactiveTextClassName?: string;
 }
 
 const DefaultLink: ComponentType<LinkComponentProps> = ({
@@ -49,12 +52,19 @@ const DefaultLink: ComponentType<LinkComponentProps> = ({
 export function BottomNav({
   items,
   activeHref,
+  className,
   LinkComponent = DefaultLink,
   activeBgClassName = "bg-[#FE8E27]",
   activeTextClassName = "text-[#653200]",
+  inactiveTextClassName = "text-[#5B403C]",
 }: BottomNavProps) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 flex h-16 items-center bg-[#F0EDED] px-[18.75px] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)] rounded-t-xl pb-[env(safe-area-inset-bottom)]">
+    <nav
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-10 flex h-16 items-center rounded-t-xl bg-[#F0EDED] px-[18.75px] pb-[env(safe-area-inset-bottom)] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)]",
+        className,
+      )}
+    >
       {items.map((item) => {
         const active = item.href === activeHref;
         return (
@@ -66,10 +76,10 @@ export function BottomNav({
               active ? cn("h-11 rounded-full px-4 py-1", activeBgClassName) : "h-[38px] px-2 py-0",
             )}
           >
-            <span className={cn("flex items-center justify-center", active ? activeTextClassName : "text-[#5B403C]")}>
+            <span className={cn("flex items-center justify-center", active ? activeTextClassName : inactiveTextClassName)}>
               {item.icon}
             </span>
-            <span className={cn("text-xs font-medium leading-4", active ? activeTextClassName : "text-[#5B403C]")}>
+            <span className={cn("text-xs font-medium leading-4", active ? activeTextClassName : inactiveTextClassName)}>
               {item.label}
             </span>
           </LinkComponent>

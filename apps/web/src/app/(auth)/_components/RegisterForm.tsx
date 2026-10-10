@@ -69,7 +69,7 @@ export function RegisterForm({ action = registerAction, signInHref = "/login" }:
           label="Phone number"
           icon={Phone}
           autoComplete="tel"
-          hint="We only use this to reach you about a delivery."
+          hint="0801 234 5678 or +234 801 234 5678. We only use this to reach you about a delivery."
           required
         />
 

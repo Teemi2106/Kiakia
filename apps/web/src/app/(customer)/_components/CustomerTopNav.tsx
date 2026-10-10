@@ -10,7 +10,7 @@ import { cn } from "@kiakia/ui";
 import { useCart } from "../cart/_components/CartProvider";
 import { switchToVendorAction } from "@/app/actions/session";
 import { createClient } from "@/lib/supabase/client";
-import { NotificationsButton } from "./NotificationsButton";
+import { NotificationsButton } from "@/app/_components/NotificationsButton";
 
 // Text-only on desktop; the icon versions of these live in CustomerBottomNav,
 // which is what renders below `lg`.
@@ -167,7 +167,7 @@ export function CustomerTopNav({ canSwitchToVendor = false }: CustomerTopNavProp
             )}
           </button>
 
-          <NotificationsButton />
+          <NotificationsButton audience="customer" />
 
           <Link
             href="/profile"

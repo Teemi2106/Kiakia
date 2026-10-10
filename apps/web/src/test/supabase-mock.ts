@@ -13,7 +13,7 @@ export function fail(message: string, code?: string): QueryResult<never> {
   return { data: null, error: { message, code } };
 }
 
-const CHAIN_METHODS = ["select", "eq", "neq", "in", "order", "limit", "gt", "lt", "not", "or", "match"] as const;
+const CHAIN_METHODS = ["select", "eq", "neq", "is", "in", "order", "limit", "gt", "lt", "not", "or", "match"] as const;
 
 /**
  * A stand-in for a Supabase PostgrestFilterBuilder. Every filter/modifier

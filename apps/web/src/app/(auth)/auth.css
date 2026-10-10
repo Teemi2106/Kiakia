@@ -174,7 +174,7 @@
   }
 }
 
-/* The four escrow digits land one after another, hold, then clear. */
+/* The four code digits land one after another, hold, then clear. */
 .kk-digit {
   animation: kk-digit-in 8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
   animation-delay: var(--kk-delay, 0ms);

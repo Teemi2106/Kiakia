@@ -35,12 +35,12 @@ export function Personas() {
                 </span>
                 <h3 className="mt-7 font-sora text-3xl font-extrabold tracking-tight">Order</h3>
                 <p className="mt-3 font-inter text-[15px] leading-7 text-white/80">
-                  Food, groceries, that thing you forgot. Pay once, track the rider, release the
-                  money when it&apos;s in your hand.
+                  Dinner, groceries, that thing you forgot at the shop. Tap it, watch it come, eat
+                  it. That is the whole app.
                 </p>
                 <ul className="mt-7 space-y-2.5 font-inter text-sm text-white/85">
-                  <Bullet tone="light">Escrow on every single order</Bullet>
-                  <Bullet tone="light">Live map from pickup to your door</Bullet>
+                  <Bullet tone="light">Kitchens and shops from your own area</Bullet>
+                  <Bullet tone="light">Live map from the pot to your door</Bullet>
                   <Bullet tone="light">Card or bank transfer at checkout</Bullet>
                 </ul>
                 <Link
@@ -69,8 +69,8 @@ export function Personas() {
                   Sell
                 </h3>
                 <p className="mt-3 font-inter text-[15px] leading-7 text-kk-cocoa">
-                  Put your kitchen or shop in front of the street. Escrow means the payment is
-                  already committed before you start cooking.
+                  Put your kitchen or shop in front of the whole street. The payment is already
+                  committed before you turn on the gas.
                 </p>
                 <ul className="mt-7 space-y-2.5 font-inter text-sm text-kk-cocoa">
                   <Bullet tone="dark">Guaranteed payout on hand-off</Bullet>
@@ -108,8 +108,8 @@ export function Personas() {
                 </p>
                 <ul className="mt-7 space-y-2.5 font-inter text-sm text-white/70">
                   <Bullet tone="light">Accept or pass on every offer</Bullet>
-                  <Bullet tone="light">Fare escrowed before pickup</Bullet>
-                  <Bullet tone="light">Paid the moment the code is entered</Bullet>
+                  <Bullet tone="light">Fare funded before pickup</Bullet>
+                  <Bullet tone="light">Paid the moment you hand it over</Bullet>
                 </ul>
                 <p className="mt-9 rounded-2xl border border-dashed border-white/20 px-5 py-3.5 font-inter text-[13px] leading-5 text-white/50">
                   Rider sign-up opens with the next release. The dispatch and payout side is

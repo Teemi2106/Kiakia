@@ -9,13 +9,11 @@ import { ForkKnifeCrossedIcon } from "lucide-react";
 interface OrderSummaryDetailsProps {
   items: OrderItem[];
   order: OrderDetail;
-  vendorImage?: string | null;
 }
 
 export function OrderSummaryDetails({
   items,
   order,
-  vendorImage,
 }: OrderSummaryDetailsProps) {
   return (
     <div className="space-y-4">
@@ -31,9 +29,9 @@ export function OrderSummaryDetails({
             className="flex items-center gap-4 rounded-xl border border-[#E5E2E1] p-4"
           >
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F0EDED]">
-              {vendorImage ? (
+              {item.image_url ? (
                 <Image
-                  src={vendorImage}
+                  src={item.image_url}
                   alt={item.name_snapshot}
                   fill
                   className="object-cover"

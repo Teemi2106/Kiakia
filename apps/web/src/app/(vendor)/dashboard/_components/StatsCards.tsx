@@ -22,19 +22,19 @@ export function StatsCards({
   if (isDesktop) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Escrow Pending */}
+        {/* Pending Settlements */}
         <div className="flex flex-col justify-between rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
           <div className="mb-4 flex items-center justify-between">
             <span className="rounded-xl bg-[rgba(147,75,0,0.1)] p-3 text-[#934B00]">
               <Lock className="size-6" />
             </span>
             <span className="font-inter text-xs font-medium leading-4 text-[#5B403C]">
-              Safety Lock
+              Pending
             </span>
           </div>
           <div>
             <p className="font-inter text-sm font-medium leading-5 text-[#5B403C]">
-              Escrow Pending
+              Pending Settlements
             </p>
             <h3 className="font-sora text-[32px] font-bold leading-10 text-[#934B00]">
               {formatNaira(koboOf(escrowKobo))}
@@ -89,10 +89,10 @@ export function StatsCards({
   // Mobile version
   return (
     <div className="grid grid-cols-1 gap-4">
-      {/* Escrow Pending */}
+      {/* Pending Settlements */}
       <div className="rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-all hover:shadow-lg">
         <p className="mb-2 font-inter text-sm font-medium leading-5 text-[#5B403C]">
-          Escrow Pending
+          Pending Settlements
         </p>
         <p className="font-sora text-[32px] font-bold text-[#934B00]">
           {formatNaira(koboOf(escrowKobo))}

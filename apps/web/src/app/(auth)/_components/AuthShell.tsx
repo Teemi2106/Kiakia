@@ -121,8 +121,8 @@ export function AuthShell({
 
             {/* The stage's trust line, repeated for the ~70% of traffic that
                 never sees the stage. Without this the mobile screens made no
-                mention of escrow at all — the single reason someone hands
-                this app their money. */}
+                mention of payment protection at all — the single reason someone
+                hands this app their money. */}
             <p
               className="kk-enter mt-7 flex items-start justify-center gap-2 rounded-2xl border border-kk-line/40 bg-white/60 px-4 py-3 text-center font-inter text-[12.5px] leading-5 text-kk-cocoa/80 lg:hidden"
               style={{ "--kk-delay": "280ms" } as React.CSSProperties}

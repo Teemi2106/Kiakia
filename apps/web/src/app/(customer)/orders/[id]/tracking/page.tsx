@@ -1,15 +1,23 @@
 // app/(customer)/orders/[id]/tracking/page.tsx
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@kiakia/db";
 import type { OrderStatus } from "@kiakia/domain";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { TrackingDesktop } from "./_components/TrackingDesktop";
 import { TrackingMobile } from "./_components/TrackingMobile";
 import { isTrackingTerminal } from "./_components/statusCopy";
 import type { TimelineStep, Driver, Vendor } from "./_components/types";
 
 export const metadata: Metadata = { title: "Live Tracking" };
+
+// postgrest-js's `.single()` narrows via `Result extends (infer R)[] ? R :
+// never` — but generated.ts models get_order_tracking's Returns as a plain
+// object rather than a `[]` + SetofOptions, so the chain types as `never`.
+// Same cast-back-to-the-function's-own-Returns-type fix as
+// useOrderTracking.ts's own identical comment for this same function.
+type GetOrderTrackingRow = Database["public"]["Functions"]["get_order_tracking"]["Returns"];
 
 interface TrackingPageProps {
   params: Promise<{ id: string }>;
@@ -72,7 +80,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: order } = await supabase
+  const { data: order, error: orderError } = await supabase
     .from("orders")
     .select(
       "id, code, status, vendor_id, rider_id, placed_at, accepted_at, ready_at, assigned_at, picked_up_at, in_transit_at, arrived_at, delivered_at",
@@ -80,7 +88,22 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
     .eq("id", id)
     .maybeSingle();
 
+  if (orderError) {
+    console.error("[tracking_page] order query failed", id, orderError);
+  }
+
   if (!order) notFound();
+
+  // A "draft" order is one place_order() created but payment never captured
+  // for - the customer cancelled checkout, or abandoned it before finishing.
+  // It never became a real order, so there is nothing here to track live:
+  // no vendor is preparing it, no rider will ever be offered it. Send the
+  // customer to its detail page instead, which already renders the correct
+  // "payment wasn't completed" state with a retry action - see
+  // orders/[id]/page.tsx's own `needsPayment` check, which this mirrors.
+  if (order.status === "draft") {
+    redirect(`/orders/${order.id}`);
+  }
 
   // delivery_code lives in its own table now (order_delivery_codes,
   // supabase/migrations/0022_delivery_code_off_orders.sql), RLS-scoped to
@@ -94,7 +117,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
     .eq("order_id", order.id)
     .maybeSingle();
 
-  const [{ data: vendorRow }, { count: itemCount }, riderRows] = await Promise.all([
+  const [{ data: vendorRow }, { count: itemCount }, { data: rawTrackingRow }] = await Promise.all([
     supabase
       .from("vendors")
       .select("name, logo_url")
@@ -104,16 +127,20 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
       .from("order_items")
       .select("id", { count: "exact", head: true })
       .eq("order_id", order.id),
+    // get_order_tracking() (0029, extended by 0071 with rider contact info)
+    // is the only way this read can ever see the assigned rider's name/
+    // phone/vehicle at all: `profiles` and `riders` are both own-row-only
+    // under RLS (0007_rls.sql), so a direct query for another user's row —
+    // exactly what fetching "the rider assigned to MY order" is — silently
+    // returns nothing no matter how it's written. This function is
+    // SECURITY DEFINER with its own explicit "customer of this order, or
+    // this vendor's staff, or admin" check in place of relying on RLS at
+    // all. See 0071's own header for how this went unnoticed until now:
+    // the broken direct query never errored, it just always returned an
+    // empty driver card.
     order.rider_id
-      ? Promise.all([
-          supabase
-            .from("riders")
-            .select("vehicle_type, plate_number")
-            .eq("user_id", order.rider_id)
-            .maybeSingle(),
-          supabase.from("profiles").select("full_name").eq("id", order.rider_id).maybeSingle(),
-        ])
-      : Promise.resolve(null),
+      ? supabase.rpc("get_order_tracking", { p_order_id: order.id }).single()
+      : Promise.resolve({ data: null }),
   ]);
 
   const status = order.status as OrderStatus;
@@ -125,21 +152,18 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
     logoUrl: vendorRow?.logo_url ?? undefined,
   };
 
-  // rider_id is a real FK, but no Server Action in this app assigns one yet
-  // (dispatch is Phase 3 — see supabase/migrations/0002_identity.sql), so
-  // this will realistically always resolve to undefined today. When it is
-  // set, only the fields the `riders`/`profiles` tables actually carry are
-  // shown — no rating, no live location.
+  const trackingRow = rawTrackingRow as GetOrderTrackingRow | null;
+
+  // Only the fields riders/profiles actually carry are shown — no rating,
+  // no fabricated placeholder when a field is genuinely unset.
   let driver: Driver | undefined;
-  if (riderRows) {
-    const [{ data: rider }, { data: riderProfile }] = riderRows;
-    if (rider || riderProfile) {
-      driver = {
-        name: riderProfile?.full_name ?? "Rider",
-        car: rider?.vehicle_type ?? undefined,
-        plateNumber: rider?.plate_number ?? undefined,
-      };
-    }
+  if (trackingRow && (trackingRow.rider_name || trackingRow.rider_phone)) {
+    driver = {
+      name: trackingRow.rider_name ?? "Rider",
+      phone: trackingRow.rider_phone ?? undefined,
+      car: trackingRow.rider_vehicle_type ?? undefined,
+      plateNumber: trackingRow.rider_plate_number ?? undefined,
+    };
   }
 
   // The rider needs this read out to them to confirm delivery

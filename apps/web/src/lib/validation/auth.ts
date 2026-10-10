@@ -1,13 +1,36 @@
 import { z } from "zod";
 
-// Nigerian E.164 numbers: +234 followed by 10 digits. Collected as a
-// profile field on registration (§14: phone-first identity matters even
-// though the auth *mechanism* itself is email+password, per the Figma
-// registration form).
+// Accepts what a Nigerian rider or customer actually types - local format
+// (0XXXXXXXXXX, 11 digits) or international (+234XXXXXXXXXX / 234XXXXXXXXXX)
+// - and normalizes every accepted shape down to the one this app stores and
+// dials everywhere else: +234 followed by 10 digits. Collected as a profile
+// field on registration (§14: phone-first identity matters even though the
+// auth *mechanism* itself is email+password, per the Figma registration
+// form).
+function normalizeNigerianPhone(raw: string): string | null {
+  const digits = raw.replace(/[\s-]/g, "");
+
+  if (/^\+234\d{10}$/.test(digits)) return digits;
+  if (/^234\d{10}$/.test(digits)) return `+${digits}`;
+  if (/^0\d{10}$/.test(digits)) return `+234${digits.slice(1)}`;
+
+  return null;
+}
+
 export const phoneSchema = z
   .string()
   .trim()
-  .regex(/^\+234\d{10}$/, "Enter a Nigerian number as +234XXXXXXXXXX");
+  .transform((value, ctx) => {
+    const normalized = normalizeNigerianPhone(value);
+    if (normalized === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter a Nigerian number as 0XXXXXXXXXX or +234XXXXXXXXXX",
+      });
+      return z.NEVER;
+    }
+    return normalized;
+  });
 
 export const emailSchema = z.string().trim().email("Enter a valid email address");
 

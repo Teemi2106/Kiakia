@@ -8,7 +8,7 @@ const COLUMNS = [
     heading: "Ordering",
     links: [
       { label: "How it works", href: "/#how-it-works" },
-      { label: "Escrow & your money", href: "/#escrow" },
+      { label: "What we deliver", href: "/#cravings" },
       { label: "Questions", href: "/#faq" },
       { label: "Create an account", href: "/register" },
       { label: "Log in", href: "/login" },
@@ -53,8 +53,8 @@ export function Footer() {
               />
             </Link>
             <p className="mt-6 max-w-xs font-inter text-[15px] leading-7 text-white/55">
-              Food and goods from the shops around you — with your payment held safe until the
-              moment it reaches your hand.
+              Hot food and everyday goods from the kitchens and shops around your street,
+              at your door kia kia.
             </p>
             <div className="mt-6 flex flex-col gap-2.5 font-inter text-[13px] text-white/45">
               <span className="inline-flex items-center gap-2">
@@ -63,7 +63,7 @@ export function Footer() {
               </span>
               <span className="inline-flex items-center gap-2">
                 <Lock className="size-4 text-kk-mint" />
-                Escrow-protected payments
+                Your money is safe
               </span>
             </div>
           </div>

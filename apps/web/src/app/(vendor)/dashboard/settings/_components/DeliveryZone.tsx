@@ -103,7 +103,12 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
         <div className="relative h-80 w-full overflow-hidden rounded-2xl border border-[#E4BEB8] sm:h-95">
           {clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN ? (
             <>
-              <DeliveryLocationMap position={position} onPositionChange={setPosition} flyToRequestId={flyToRequestId} />
+              <DeliveryLocationMap
+                position={position}
+                onPositionChange={setPosition}
+                flyToRequestId={flyToRequestId}
+                radiusM={radiusM}
+              />
               <button
                 type="button"
                 onClick={useMyLocation}

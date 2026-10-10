@@ -5,3 +5,55 @@ body {
   background: var(--color-surface);
   color: var(--color-ink);
 }
+
+/* Customer bottom-nav active state: a small glass lens over the walnut slab. */
+.kk-liquid-tab {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 42%);
+  background:
+    radial-gradient(circle at 88% 110%, rgb(254 142 39 / 28%), transparent 42%),
+    linear-gradient(180deg, rgb(255 255 255 / 24%), rgb(255 255 255 / 11%));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 35%),
+    0 5px 14px rgb(0 0 0 / 28%);
+  backdrop-filter: blur(9px) saturate(135%);
+  animation: kk-liquid-tab-in 440ms cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
+}
+
+.kk-liquid-tab::before {
+  position: absolute;
+  top: 3px;
+  right: 14%;
+  left: 14%;
+  height: 9px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 20%);
+  content: "";
+}
+
+.kk-liquid-tab > span {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes kk-liquid-tab-in {
+  0% {
+    opacity: 0.62;
+    transform: translateY(3px) scale(0.78);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kk-liquid-tab {
+    animation: none;
+  }
+}

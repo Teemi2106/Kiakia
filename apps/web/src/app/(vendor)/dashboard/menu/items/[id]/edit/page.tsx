@@ -69,6 +69,7 @@ export default async function EditMenuItemPage({ params }: { params: Promise<{ i
       <div className="mt-6 rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
         <MenuItemForm
           vendorId={vendor.id}
+          commissionBps={vendor.commission_bps}
           existingItem={{
             id: item.id,
             name: item.name,

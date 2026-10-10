@@ -28,7 +28,15 @@ export function CustomerBottomNav() {
   // `lg`, so a tablet would otherwise have no way to reach Orders/History.
   return (
     <div className="block lg:hidden">
-      <BottomNav items={ITEMS} activeHref={pathname} LinkComponent={Link} />
+      <BottomNav
+        items={ITEMS}
+        activeHref={pathname}
+        LinkComponent={Link}
+        className="inset-x-6 bottom-[max(1.5rem,env(safe-area-inset-bottom))] h-[72px] overflow-hidden rounded-[22px] border border-white/20 bg-[#24140d] bg-[linear-gradient(rgba(18,9,5,0.34),rgba(18,9,5,0.34)),url('/assets/nav-walnut.jpg')] bg-cover bg-center px-2 pb-0 shadow-[0_18px_40px_rgba(18,9,5,0.30)]"
+        activeBgClassName="kk-liquid-tab"
+        activeTextClassName="text-[#FFF7EF]"
+        inactiveTextClassName="text-[#FFF7EF]/65"
+      />
     </div>
   );
 }

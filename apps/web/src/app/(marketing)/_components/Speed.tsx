@@ -3,10 +3,10 @@ import { Bike, ChefHat, DoorOpen, Zap } from "lucide-react";
 import { Reveal } from "./Reveal";
 
 const BEATS = [
-  { icon: Zap, label: "Order placed", note: "You hit pay" },
+  { icon: Zap, label: "Order placed", note: "You tap, we go" },
   { icon: ChefHat, label: "Vendor accepts", note: "Pan's already hot" },
   { icon: Bike, label: "Rider claims it", note: "First to tap, first to ride" },
-  { icon: DoorOpen, label: "Knock knock", note: "Code, food, done" },
+  { icon: DoorOpen, label: "Knock knock", note: "Bag in hand, still hot" },
 ] as const;
 
 const MECHANICS = [
@@ -26,7 +26,7 @@ const MECHANICS = [
 
 export function Speed() {
   return (
-    <section className="relative overflow-hidden bg-kk-cream px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+    <section className="relative overflow-hidden bg-kk-sand px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
         <div className="kk-blob -right-40 top-0 size-[520px] bg-kk-orange/30" />
         <div className="kk-blob -left-32 bottom-0 size-[420px] bg-kk-red/20" />

@@ -1,9 +1,9 @@
 "use client";
 
 import { createMenuItemAction, updateMenuItemAction, type FormState } from "@/app/actions/menu";
-import { MEAL_CATEGORIES } from "@kiakia/domain";
+import { applyBps, formatNaira, koboOf, MEAL_CATEGORIES, subtractKobo } from "@kiakia/domain";
 import { ImagePlus, Loader2 } from "lucide-react";
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import { OptionGroupsBuilder, type OptionGroupState } from "./OptionGroupsBuilder";
 
@@ -29,15 +29,33 @@ const initialState: FormState = {};
 
 export function MenuItemForm({
   vendorId,
+  commissionBps,
   existingItem,
 }: {
   vendorId: string;
+  /** vendors.commission_bps — used only to show the vendor their own net
+   * payout as they type a price, never sent anywhere: place_order() and
+   * verify_delivery_and_release_escrow() re-derive the real commission
+   * server-side from the live vendors row at order time, not from
+   * anything this form computes. */
+  commissionBps: number;
   existingItem?: ExistingItem;
 }) {
   const action = existingItem ? updateMenuItemAction : createMenuItemAction;
   const [state, formAction, pending] = useActionState(action, initialState);
   const [groups, setGroups] = useState<OptionGroupState[]>([...(existingItem?.optionGroups ?? [])]);
   const [preview, setPreview] = useState<string | null>(existingItem?.imageUrl ?? null);
+  const [priceNaira, setPriceNaira] = useState(
+    existingItem ? String(existingItem.priceKobo / 100) : "",
+  );
+
+  const payout = useMemo(() => {
+    const naira = Number.parseFloat(priceNaira);
+    if (!Number.isFinite(naira) || naira <= 0) return null;
+    const priceKobo = koboOf(Math.round(naira * 100));
+    const commissionKobo = applyBps(priceKobo, commissionBps);
+    return { commissionKobo, netKobo: subtractKobo(priceKobo, commissionKobo) };
+  }, [priceNaira, commissionBps]);
 
   function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -134,11 +152,23 @@ export function MenuItemForm({
               min={0}
               step="0.01"
               required
-              defaultValue={existingItem ? existingItem.priceKobo / 100 : undefined}
+              value={priceNaira}
+              onChange={(event) => setPriceNaira(event.target.value)}
               placeholder="0.00"
               className="w-full rounded-xl border border-[#E4BEB8] bg-white py-2.5 pl-7 pr-3.5 text-sm text-[#1C1B1B] outline-none placeholder:text-[#5B403C]/50 focus:border-[#B61913] focus:ring-2 focus:ring-[#B61913]/20"
             />
           </div>
+          {/* KiaKia's commission (vendors.commission_bps) comes straight off
+              the price the vendor sets here, same math
+              verify_delivery_and_release_escrow() actually pays out on
+              delivery (0044) — shown live so pricing isn't a guess about
+              what lands in their balance. */}
+          {payout && (
+            <p className="mt-1.5 text-xs text-[#5B403C]">
+              You&apos;ll receive <span className="font-semibold text-[#176A22]">{formatNaira(payout.netKobo)}</span>{" "}
+              after KiaKia&apos;s {(commissionBps / 100).toFixed(1)}% commission ({formatNaira(payout.commissionKobo)})
+            </p>
+          )}
         </div>
 
         {/* Category */}

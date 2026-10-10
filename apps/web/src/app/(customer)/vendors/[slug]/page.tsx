@@ -3,6 +3,7 @@ import { mealCategoryLabel } from "@kiakia/domain";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { TrackEvent } from "../../_components/TrackEvent";
 import { VendorMenu } from "./_components/VendorMenu";
 import type {
   MenuCategory,
@@ -140,7 +141,12 @@ export default async function VendorPage({
     });
   }
 
-  return <VendorMenu vendor={vendor} categories={categories} />;
+  return (
+    <>
+      <TrackEvent eventType="view_vendor" vendorId={vendor.id} />
+      <VendorMenu vendor={vendor} categories={categories} />
+    </>
+  );
 }
 
 export async function generateMetadata({

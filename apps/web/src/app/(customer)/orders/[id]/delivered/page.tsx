@@ -1,13 +1,19 @@
 // app/(customer)/orders/[id]/delivered/page.tsx
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@kiakia/db";
 import { EmptyState, buttonVariants } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeliveredDesktop } from "./_components/DeliveredDesktop";
 import { DeliveredMobile } from "./_components/DeliveredMobile";
+import { RateOrderPopup } from "./_components/RateOrderPopup";
 import type { Driver } from "./_components/types";
+
+// Same postgrest-js `.single()` narrowing fix as the tracking page and the
+// vendor order detail page's own identical comments for this function.
+type GetOrderTrackingRow = Database["public"]["Functions"]["get_order_tracking"]["Returns"];
 
 export const metadata: Metadata = { title: "Order Delivered" };
 
@@ -62,38 +68,39 @@ export default async function DeliveredPage({ params }: DeliveredPageProps) {
     );
   }
 
-  const [{ count: itemCount }, riderRows] = await Promise.all([
-    supabase
-      .from("order_items")
-      .select("id", { count: "exact", head: true })
-      .eq("order_id", order.id),
-    order.rider_id
-      ? Promise.all([
-          supabase
-            .from("riders")
-            .select("vehicle_type, plate_number")
-            .eq("user_id", order.rider_id)
-            .maybeSingle(),
-          supabase.from("profiles").select("full_name").eq("id", order.rider_id).maybeSingle(),
-        ])
-      : Promise.resolve(null),
-  ]);
+  const [{ count: itemCount }, { data: vendorRow }, { data: rawTrackingRow }, { data: existingRating }] =
+    await Promise.all([
+      supabase
+        .from("order_items")
+        .select("id", { count: "exact", head: true })
+        .eq("order_id", order.id),
+      supabase.from("vendors").select("name").eq("id", order.vendor_id).maybeSingle(),
+      // get_order_tracking() (0029, extended by 0071 for rider contact
+      // info) is the only way this read can ever see the assigned rider's
+      // name/vehicle at all: `profiles`/`riders` are both own-row-only
+      // under RLS (0007_rls.sql), so the direct query this page used to
+      // run here always silently returned nothing - see 0071's own header.
+      order.rider_id
+        ? supabase.rpc("get_order_tracking", { p_order_id: order.id }).single()
+        : Promise.resolve({ data: null }),
+      // "customer reads own order ratings" (0073_order_ratings.sql) - null
+      // means this order hasn't been rated yet, which is the common case
+      // the popup below exists for.
+      supabase.from("order_ratings").select("order_id").eq("order_id", order.id).maybeSingle(),
+    ]);
 
-  // rider_id is a real FK, but no Server Action in this app assigns one yet
-  // (dispatch is Phase 3 — see supabase/migrations/0002_identity.sql), so
-  // this will realistically always resolve to undefined today. When it is
-  // set, only the fields the `riders`/`profiles` tables actually carry are
-  // shown — no fabricated avatar.
+  const trackingRow = rawTrackingRow as GetOrderTrackingRow | null;
+
+  // Only the fields riders/profiles actually carry are shown — no
+  // fabricated avatar, no rating (that's what this page's own popup below
+  // is for).
   let driver: Driver | undefined;
-  if (riderRows) {
-    const [{ data: rider }, { data: riderProfile }] = riderRows;
-    if (rider || riderProfile) {
-      driver = {
-        name: riderProfile?.full_name ?? "Rider",
-        vehicle: rider?.vehicle_type ?? undefined,
-        plateNumber: rider?.plate_number ?? undefined,
-      };
-    }
+  if (trackingRow?.rider_name) {
+    driver = {
+      name: trackingRow.rider_name,
+      vehicle: trackingRow.rider_vehicle_type ?? undefined,
+      plateNumber: trackingRow.rider_plate_number ?? undefined,
+    };
   }
 
   return (
@@ -111,6 +118,14 @@ export default async function DeliveredPage({ params }: DeliveredPageProps) {
           deliveryCode={deliveryCodeRow?.code ?? undefined}
         />
       </div>
+      {!existingRating && (
+        <RateOrderPopup
+          orderId={order.id}
+          vendorName={vendorRow?.name ?? "the vendor"}
+          riderId={order.rider_id}
+          riderName={trackingRow?.rider_name ?? null}
+        />
+      )}
     </>
   );
 }

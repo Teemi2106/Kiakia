@@ -2,7 +2,8 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, UtensilsCrossed } from "lucide-react";
+import Image from "next/image";
 
 interface CartItemProps {
   id: string;
@@ -37,20 +38,27 @@ export function CartItem({
     <div
       className={`flex gap-4 ${isDesktop ? "" : "rounded-xl border border-[#E5E2E1] bg-white p-4 shadow-sm"}`}
     >
-      {/* Image */}
+      {/* Image — a UtensilsCrossed icon when there is none, same convention
+          as MenuItemCard.tsx/ItemOptionsSheet.tsx use on the vendor page,
+          rather than a placeholder image file (there has never been one at
+          /assets/food-placeholder.png — that path 404s silently as a CSS
+          background-image, which is why every cart line used to render as
+          a plain grey box regardless of whether the dish actually had a
+          photo). */}
       <div
-        className={`shrink-0 overflow-hidden bg-[#E5E2E1] ${
+        className={`relative shrink-0 overflow-hidden bg-[#E5E2E1] ${
           isDesktop
             ? "h-20 w-20 rounded-xl border border-[#E5E2E1]"
             : "h-20 w-20 rounded-lg"
         }`}
       >
-        <div
-          className="h-full w-full bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${image || "/assets/food-placeholder.png"})`,
-          }}
-        />
+        {image ? (
+          <Image src={image} alt={name} fill sizes="80px" className="object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <UtensilsCrossed className="size-6 text-[#5B403C]/30" />
+          </div>
+        )}
       </div>
 
       {/* Details */}

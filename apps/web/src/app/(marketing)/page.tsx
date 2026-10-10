@@ -4,21 +4,27 @@
 // renders on the server with no client data fetching, and the only session
 // read is getMarketingAccount() for the header. Keep it that way — load/
 // marketing-page.js leans on this route being cheap to serve.
+//
+// Running order is deliberate: appetite first (Hero, Marquee, Cravings),
+// then the reason to believe it will be quick (Speed, HowItWorks), and only
+// then a slim Assurance band. Trust is a footnote to hunger here, not the
+// pitch — a visitor arrives wanting dinner, not a payments explainer.
 import type { Metadata } from "next";
 import { getMarketingAccount } from "@/lib/auth/marketing-account";
 import { Header } from "./_components/Header";
 import { Hero } from "./_components/Hero";
 import { Marquee } from "./_components/Marquee";
+import { Cravings } from "./_components/Cravings";
 import { Speed } from "./_components/Speed";
 import { HowItWorks } from "./_components/HowItWorks";
-import { EscrowSection } from "./_components/EscrowSection";
+import { Assurance } from "./_components/Assurance";
 import { Personas } from "./_components/Personas";
 import { Faq } from "./_components/Faq";
 import { FinalCta } from "./_components/FinalCta";
 import { Footer } from "./_components/Footer";
 
 const DESCRIPTION =
-  "Kia kia. Order from kitchens and shops near you, track the rider live, and keep your payment in escrow until a 4-digit code at your door releases it.";
+  "Jollof, suya, shawarma, groceries — from kitchens and shops on your own street, at your door in under 30 minutes. Order on KiaKia and watch your rider the whole way.";
 
 export const metadata: Metadata = {
   title: "Fast. Fresh. Reliable.",
@@ -36,14 +42,15 @@ export default async function MarketingHome() {
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
       <Header account={account} />
-      <Hero />
+      <Hero account={account} />
       <Marquee />
+      <Cravings />
       <Speed />
       <HowItWorks />
-      <EscrowSection />
+      <Assurance />
       <Personas />
       <Faq />
-      <FinalCta />
+      <FinalCta account={account} />
       <Footer />
     </main>
   );

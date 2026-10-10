@@ -73,9 +73,13 @@ export function OptionGroupsBuilder({
               Min
               <input
                 type="number"
-                min={0}
+                min={group.isRequired ? 1 : 0}
                 value={group.minSelect}
-                onChange={(e) => updateGroup(groupIndex, { minSelect: Number(e.target.value) })}
+                onChange={(e) =>
+                  updateGroup(groupIndex, {
+                    minSelect: Math.max(Number(e.target.value), group.isRequired ? 1 : 0),
+                  })
+                }
                 className="w-14 rounded-lg border border-[#E4BEB8] bg-white px-2 py-1 text-[#1C1B1B] outline-none focus:border-[#B61913]"
               />
             </label>
@@ -93,7 +97,18 @@ export function OptionGroupsBuilder({
               <input
                 type="checkbox"
                 checked={group.isRequired}
-                onChange={(e) => updateGroup(groupIndex, { isRequired: e.target.checked })}
+                onChange={(e) => {
+                  const isRequired = e.target.checked;
+                  // A customer never sees minSelect - they see "Required".
+                  // Letting the two fields drift (required, but minSelect
+                  // still 0) is what let an order through with no takeaway
+                  // pack picked, so checking this box always guarantees at
+                  // least one selection is actually enforced.
+                  updateGroup(groupIndex, {
+                    isRequired,
+                    minSelect: isRequired ? Math.max(group.minSelect, 1) : group.minSelect,
+                  });
+                }}
                 className="size-4 rounded border-[#E4BEB8] text-[#B61913] focus:ring-[#B61913]/40"
               />
               Required

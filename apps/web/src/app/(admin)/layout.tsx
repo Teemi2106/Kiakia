@@ -1,13 +1,11 @@
-// app/(admin)/layout.tsx
 import { requireAdminContext } from "@/lib/auth/dal";
 import Link from "next/link";
+import { AdminNav } from "./_components/AdminNav";
 
 /**
- * Gates the (admin) route group — mirrors (vendor)/layout.tsx's structure,
- * simpler: this is an internal tool for admin/superadmin staff, not a
- * customer/vendor-facing surface, so no active-mode cookie, no bottom nav,
- * no sidebar bells and whistles. requireAdminContext() is the real gate;
- * proxy.ts only proved "logged in".
+ * requireAdminContext() is the real gate for the (admin) group; proxy.ts only
+ * proves "logged in". Every admin page and action re-checks it too, because
+ * partial rendering means a client-side navigation doesn't re-run this layout.
  */
 export default async function AdminLayout({
   children,
@@ -17,19 +15,14 @@ export default async function AdminLayout({
   await requireAdminContext("/home");
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface-sunken">
-      <header className="border-b border-border bg-surface-raised px-6 py-4">
-        <nav className="flex items-center gap-6 text-sm font-medium">
-          <span className="text-ink-muted">Admin</span>
-          <Link href="/admin/vendors" className="text-ink hover:text-brand-500">
-            Pending vendors
-          </Link>
-          <Link href="/admin/flagged-orders" className="text-ink hover:text-brand-500">
-            Flagged orders
-          </Link>
-        </nav>
-      </header>
-      <main className="flex-1 px-6 py-6">{children}</main>
+    <div className="flex min-h-screen flex-col bg-surface-sunken md:flex-row">
+      <aside className="border-b border-border bg-surface-raised md:sticky md:top-0 md:h-screen md:w-56 md:shrink-0 md:overflow-y-auto md:border-b-0 md:border-r">
+        <Link href="/admin" className="block px-4 py-3 text-base font-semibold text-ink md:py-5">
+          KiaKia Admin
+        </Link>
+        <AdminNav />
+      </aside>
+      <main className="min-w-0 flex-1 px-4 py-6 md:px-8">{children}</main>
     </div>
   );
 }

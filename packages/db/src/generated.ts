@@ -73,6 +73,15 @@ export interface OrderRow {
   distance_m: number | null;
   rider_fee_kobo: number;
   rider_pickup_distance_m: number | null;
+  /** Set once, the first time this order is ever dispatched to any rider
+   * (early-dispatch or ready_for_pickup, whichever comes first) — the
+   * anchor for the 30-minute give-up SLA (0067). Never reset. */
+  first_dispatched_at: string | null;
+  /** Reset to now() each time dispatch starts a fresh notify-everyone cycle
+   * (0067) — sweep_dispatch_offers() excludes a rider from re-offer only
+   * for rows offered since this timestamp, not forever, so an exhausted
+   * pool loops back to the closest rider again instead of going silent. */
+  dispatch_cycle_started_at: string | null;
   placed_at: string | null;
   accepted_at: string | null;
   ready_at: string | null;
@@ -170,6 +179,10 @@ export interface RiderRow {
   is_online: boolean;
   current_location: string | null;
   last_ping_at: string | null;
+  // Payout destination (0079_rider_bank_details.sql) - all three set or none.
+  bank_name: string | null;
+  bank_account_name: string | null;
+  bank_account_number: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -193,30 +206,34 @@ export type OrderStatus =
 export interface Database {
   public: {
     Tables: {
+      // Exactly one of customer_id / vendor_id is set on any given row -
+      // enforced by the notifications_one_audience check constraint
+      // (0049_vendor_notifications.sql), which TypeScript cannot express
+      // here, so both read as nullable.
       notifications: {
         Row: {
           id: string;
-          customer_id: string;
+          customer_id: string | null;
+          vendor_id: string | null;
           order_id: string | null;
           title: string;
           body: string;
           is_read: boolean;
           created_at: string;
         };
-        Insert: {
-          id?: string;
-          customer_id: string;
-          order_id?: string | null;
-          title: string;
-          body: string;
-          is_read?: boolean;
-        };
+        // 0038_customer_notifications.sql:39 revokes insert/delete from both
+        // authenticated and anon outright (rows are written only by the two
+        // SECURITY DEFINER order-status triggers), so there is no
+        // authenticated-reachable insert shape to type here at all - fixed
+        // in 0057_rider_review_round_two.sql (task 8), this file was
+        // hand-authored and had drifted to permit what SQL denies.
+        Insert: never;
+        // 0049_vendor_notifications.sql:65-66 revokes table-wide UPDATE and
+        // grants back only `update (is_read)` - a recipient can flip
+        // is_read on their own row and nothing else. Narrowed here to match,
+        // same fix as rider_notifications.Update below - see this file's
+        // own 0057 comment there for the full reasoning.
         Update: {
-          id?: string;
-          customer_id?: string;
-          order_id?: string | null;
-          title?: string;
-          body?: string;
           is_read?: boolean;
         };
         Relationships: [];
@@ -321,6 +338,14 @@ export interface Database {
           is_online: boolean;
           current_location: string | null;
           last_ping_at: string | null;
+          // rating_avg/rating_count (0073_order_ratings.sql) - maintained
+          // only by submit_order_rating(), never recomputed from scratch.
+          rating_avg: number;
+          rating_count: number;
+          // Payout destination (0079) - written only by update_rider_bank_details().
+          bank_name: string | null;
+          bank_account_name: string | null;
+          bank_account_number: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -332,6 +357,11 @@ export interface Database {
           is_online?: boolean;
           current_location?: string | null;
           last_ping_at?: string | null;
+          rating_avg?: number;
+          rating_count?: number;
+          bank_name?: string | null;
+          bank_account_name?: string | null;
+          bank_account_number?: string | null;
         };
         Update: {
           user_id?: string;
@@ -341,7 +371,55 @@ export interface Database {
           is_online?: boolean;
           current_location?: string | null;
           last_ping_at?: string | null;
+          rating_avg?: number;
+          rating_count?: number;
+          bank_name?: string | null;
+          bank_account_name?: string | null;
+          bank_account_number?: string | null;
         };
+        Relationships: [];
+      };
+      // order_ratings (0073_order_ratings.sql) - one row per delivered
+      // order, written only by submit_order_rating(). No authenticated-
+      // reachable insert/update/delete path exists.
+      order_ratings: {
+        Row: {
+          order_id: string;
+          customer_id: string;
+          vendor_id: string;
+          rider_id: string | null;
+          vendor_rating: number;
+          vendor_comment: string | null;
+          rider_rating: number | null;
+          rider_comment: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // customer_events (0084_customer_events.sql) - append-only behavioural
+      // signals for the home recommender. Written only by
+      // log_customer_event() and the cart_items triggers; customers read
+      // only their own rows. No authenticated-reachable write path.
+      customer_events: {
+        Row: {
+          id: string;
+          customer_id: string;
+          event_type:
+            | "view_vendor"
+            | "view_item"
+            | "search"
+            | "cart_add"
+            | "cart_remove"
+            | "recommendation_click";
+          vendor_id: string | null;
+          menu_item_id: string | null;
+          search_query: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
       service_areas: {
@@ -352,7 +430,6 @@ export interface Database {
           is_active: boolean;
           base_delivery_fee_kobo: number;
           per_km_fee_kobo: number;
-          free_above_kobo: number | null;
           // rider_base_fee_kobo/rider_per_km_fee_kobo (0044) are
           // column-REVOKEd from anon/authenticated — internal payout
           // economics, not customer-facing. Present here for service_role
@@ -371,7 +448,6 @@ export interface Database {
           is_active?: boolean;
           base_delivery_fee_kobo: number;
           per_km_fee_kobo: number;
-          free_above_kobo?: number | null;
           rider_base_fee_kobo?: number;
           rider_per_km_fee_kobo?: number;
           launched_at?: string | null;
@@ -383,7 +459,6 @@ export interface Database {
           is_active?: boolean;
           base_delivery_fee_kobo?: number;
           per_km_fee_kobo?: number;
-          free_above_kobo?: number | null;
           rider_base_fee_kobo?: number;
           rider_per_km_fee_kobo?: number;
           launched_at?: string | null;
@@ -693,6 +768,8 @@ export interface Database {
           distance_m: number | null;
           rider_fee_kobo: number;
           rider_pickup_distance_m: number | null;
+          first_dispatched_at: string | null;
+          dispatch_cycle_started_at: string | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -870,17 +947,42 @@ export interface Database {
         };
         Relationships: [];
       };
+      // admin_audit_log (0080_admin_audit_log.sql) - append-only. service_role
+      // may SELECT only; the sole writer is the internal _write_admin_audit(),
+      // called from inside each admin RPC in the same transaction.
+      admin_audit_log: {
+        Row: {
+          id: string;
+          actor_id: string;
+          action: string;
+          target_type: "user" | "vendor" | "rider" | "rider_document" | "order" | "service_area";
+          target_id: string;
+          reason: string | null;
+          details: Json;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       dispatch_offers: {
         Row: {
           id: string;
           order_id: string;
           rider_id: string;
-          status: "offered" | "accepted" | "expired" | "declined";
+          status: "offered" | "accepted" | "expired" | "declined" | "revoked";
           offered_at: string;
+          // expires_at (0028_dispatch_offer_lifecycle.sql) was missing from
+          // this hand-authored file entirely until this round (0051) - a
+          // real drift this file's own header warns about. Default 60
+          // seconds from offered_at; accept_dispatch_offer() refuses an
+          // offer once this has passed.
+          expires_at: string;
           responded_at: string | null;
         };
         // Written only by dispatch_order_to_nearby_riders() (the
-        // ready_for_pickup trigger) and accept_dispatch_offer() — no
+        // ready_for_pickup trigger), accept_dispatch_offer(),
+        // decline_dispatch_offer(), and sweep_dispatch_offers() (0055) - no
         // authenticated-reachable write path exists (0019_rider_dispatch.sql).
         Insert: never;
         Update: never;
@@ -916,6 +1018,98 @@ export interface Database {
         // order's own customer, that order's vendor staff, or an admin.
         Insert: never;
         Update: never;
+        Relationships: [];
+      };
+      // rider_documents (0052_rider_kyc_documents.sql) - KYC document
+      // metadata; the actual files live in the private `rider-kyc` storage
+      // bucket, scoped by storage.objects RLS to each rider's own
+      // `<uid>/...` folder. No authenticated-reachable write path exists -
+      // every write goes through submit_rider_document() (rider-facing) or
+      // approve_rider_document()/reject_rider_document() (admin,
+      // service_role only). See that migration's header for why a plain
+      // RLS insert policy was deliberately not used here.
+      rider_documents: {
+        Row: {
+          id: string;
+          rider_id: string;
+          doc_type: "government_id" | "drivers_license" | "vehicle_photo";
+          storage_path: string;
+          status: "pending" | "approved" | "rejected";
+          review_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // rider_push_tokens (0053_rider_push_notifications.sql) - WHERE to
+      // send a rider a push notification, not the notification itself.
+      // Primary key is (rider_id, token) - see that migration's header for
+      // why a surrogate id was deliberately not used. No
+      // authenticated-reachable write path exists - writes go through
+      // register_rider_push_token()/unregister_rider_push_token().
+      rider_push_tokens: {
+        Row: {
+          rider_id: string;
+          token: string;
+          platform: "ios" | "android";
+          device_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // web_push_subscriptions (0069_web_push_subscriptions.sql) - the
+      // customer/vendor-staff counterpart of rider_push_tokens, for the Web
+      // Push standard instead of Expo. Written only by
+      // register_web_push_subscription()/unregister_web_push_subscription()
+      // - no authenticated-reachable insert/update/delete path exists.
+      web_push_subscriptions: {
+        Row: {
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth_key: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // rider_notifications (0053_rider_push_notifications.sql) - the
+      // rider-side counterpart of `notifications` (0038), keyed on rider_id
+      // instead of customer_id. Written only by
+      // notify_rider_of_order_status_change() (SECURITY DEFINER trigger) -
+      // riders may only flip is_read on their own rows.
+      rider_notifications: {
+        Row: {
+          id: string;
+          rider_id: string;
+          order_id: string | null;
+          title: string;
+          body: string;
+          is_read: boolean;
+          created_at: string;
+        };
+        // insert/delete have no authenticated-reachable path at all
+        // (revoked from both authenticated and anon); update is permitted
+        // only for the caller's own rows and, as of
+        // 0056_rider_kyc_review_fixes.sql:90-91 (table-wide UPDATE revoked,
+        // `grant update (is_read)` given back), only is_read is actually
+        // writable - title/body/rider_id/order_id/id all raise
+        // "permission denied" on a direct update, no matter what the RLS
+        // policy alone would otherwise admit. This type had drifted to
+        // permit all five columns; corrected in
+        // 0057_rider_review_round_two.sql (task 8) as a types-only fix, no
+        // SQL change (0056 already enforced this at the database).
+        Insert: never;
+        Update: {
+          is_read?: boolean;
+        };
         Relationships: [];
       };
     };
@@ -959,6 +1153,8 @@ export interface Database {
           distance_m: number | null;
           rider_fee_kobo: number;
           rider_pickup_distance_m: number | null;
+          first_dispatched_at: string | null;
+          dispatch_cycle_started_at: string | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -1001,6 +1197,8 @@ export interface Database {
           distance_m: number | null;
           rider_fee_kobo: number;
           rider_pickup_distance_m: number | null;
+          first_dispatched_at: string | null;
+          dispatch_cycle_started_at: string | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -1088,6 +1286,8 @@ export interface Database {
           distance_m: number | null;
           rider_fee_kobo: number;
           rider_pickup_distance_m: number | null;
+          first_dispatched_at: string | null;
+          dispatch_cycle_started_at: string | null;
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -1138,6 +1338,8 @@ export interface Database {
         Args: {
           p_vendor_id: string;
           p_actor_id: string;
+          /** 0080 - audited alongside the action. */
+          p_reason?: string;
         };
         Returns: VendorRow;
       };
@@ -1145,6 +1347,8 @@ export interface Database {
         Args: {
           p_vendor_id: string;
           p_actor_id: string;
+          /** 0080 - audited alongside the action. */
+          p_reason?: string;
         };
         Returns: VendorRow;
       };
@@ -1181,8 +1385,9 @@ export interface Database {
           id: string;
           order_id: string;
           rider_id: string;
-          status: "offered" | "accepted" | "expired" | "declined";
+          status: "offered" | "accepted" | "expired" | "declined" | "revoked";
           offered_at: string;
+          expires_at: string;
           responded_at: string | null;
         };
       };
@@ -1202,6 +1407,13 @@ export interface Database {
           rider_lat: number | null;
           rider_lng: number | null;
           rider_updated_at: string | null;
+          // rider_name/rider_phone/rider_vehicle_type/rider_plate_number
+          // (0071_order_tracking_rider_contact.sql) - NULL until
+          // orders.rider_id is set, sourced from profiles + riders.
+          rider_name: string | null;
+          rider_phone: string | null;
+          rider_vehicle_type: string | null;
+          rider_plate_number: string | null;
         };
       };
       // approve_rider / reject_rider (0027_rider_kyc_admin_approval.sql) — mirrors
@@ -1213,6 +1425,8 @@ export interface Database {
         Args: {
           p_rider_id: string;
           p_actor_id: string;
+          /** 0080 - audited alongside the action. */
+          p_reason?: string;
         };
         Returns: RiderRow;
       };
@@ -1220,6 +1434,8 @@ export interface Database {
         Args: {
           p_rider_id: string;
           p_actor_id: string;
+          /** 0080 - audited alongside the action. */
+          p_reason?: string;
         };
         Returns: RiderRow;
       };
@@ -1342,8 +1558,365 @@ export interface Database {
         Args: {
           p_order_id: string;
           p_actor_id: string;
+          /** 0080 - audited alongside the action. */
+          p_reason?: string;
         };
         Returns: OrderRow;
+      };
+      // Admin dispatch override (0083_admin_dispatch_override.sql), both
+      // service_role-only. p_rider_id null unassigns and re-offers the order;
+      // set, it forces that rider onto it. The reason is required.
+      admin_reassign_order_rider: {
+        Args: {
+          p_order_id: string;
+          p_rider_id: string | null;
+          p_reason: string;
+          p_actor_id: string;
+        };
+        Returns: OrderRow;
+      };
+      admin_list_assignable_riders: {
+        Args: {
+          p_order_id: string;
+          p_limit?: number;
+        };
+        Returns: {
+          rider_id: string;
+          full_name: string | null;
+          phone: string | null;
+          pickup_distance_m: number;
+          rider_fee_kobo: number;
+          last_ping_at: string;
+        }[];
+      };
+      // submit_rider_document (0052_rider_kyc_documents.sql) - the only
+      // authenticated-reachable write path for rider_documents. Upserts on
+      // (rider_id, doc_type), always resetting status to pending.
+      submit_rider_document: {
+        Args: {
+          p_doc_type: "government_id" | "drivers_license" | "vehicle_photo";
+          p_storage_path: string;
+        };
+        Returns: {
+          id: string;
+          rider_id: string;
+          doc_type: "government_id" | "drivers_license" | "vehicle_photo";
+          storage_path: string;
+          status: "pending" | "approved" | "rejected";
+          review_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      // approve_rider_document / reject_rider_document (0052) - mirrors
+      // approve_rider/reject_rider (0027) exactly: SECURITY DEFINER,
+      // service_role only, never granted to authenticated.
+      approve_rider_document: {
+        Args: {
+          p_document_id: string;
+          p_actor_id: string;
+        };
+        Returns: {
+          id: string;
+          rider_id: string;
+          doc_type: "government_id" | "drivers_license" | "vehicle_photo";
+          storage_path: string;
+          status: "pending" | "approved" | "rejected";
+          review_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      reject_rider_document: {
+        Args: {
+          p_document_id: string;
+          p_actor_id: string;
+          p_note: string;
+        };
+        Returns: {
+          id: string;
+          rider_id: string;
+          doc_type: "government_id" | "drivers_license" | "vehicle_photo";
+          storage_path: string;
+          status: "pending" | "approved" | "rejected";
+          review_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      // register_rider_push_token / unregister_rider_push_token
+      // (0053_rider_push_notifications.sql) - rider_id is always derived
+      // from auth.uid() inside the function, never accepted as a
+      // parameter, so neither can ever act on another rider's token.
+      register_rider_push_token: {
+        Args: {
+          p_token: string;
+          p_platform: "ios" | "android";
+          p_device_id?: string | null;
+        };
+        Returns: {
+          rider_id: string;
+          token: string;
+          platform: "ios" | "android";
+          device_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      unregister_rider_push_token: {
+        Args: {
+          p_token: string;
+        };
+        Returns: undefined;
+      };
+      // register_web_push_subscription / unregister_web_push_subscription
+      // (0069_web_push_subscriptions.sql) - the customer/vendor-staff
+      // counterpart of register_rider_push_token(), for the Web Push
+      // standard instead of Expo. Both `returns void` in SQL - Returns:
+      // undefined, matching unregister_rider_push_token() above.
+      // get_vendor_order_customers (0077_input_and_exposure_hardening.sql) - the
+      // only way vendor staff can read a customer's name/phone (profiles is
+      // own-row-only under RLS); in-flight orders of the caller's own vendor.
+      get_vendor_order_customers: {
+        Args: {
+          p_order_ids: string[];
+        };
+        Returns: {
+          order_id: string;
+          customer_name: string | null;
+          customer_phone: string | null;
+        }[];
+      };
+      register_web_push_subscription: {
+        Args: {
+          p_endpoint: string;
+          p_p256dh: string;
+          p_auth: string;
+        };
+        Returns: undefined;
+      };
+      unregister_web_push_subscription: {
+        Args: {
+          p_endpoint: string;
+        };
+        Returns: undefined;
+      };
+      // log_customer_event (0084_customer_events.sql) - client-callable
+      // logger for view_vendor / view_item / search / recommendation_click.
+      // customer_id is always auth.uid(); cart_* types are trigger-only.
+      log_customer_event: {
+        Args: {
+          p_event_type: "view_vendor" | "view_item" | "search" | "recommendation_click";
+          p_vendor_id?: string | null;
+          p_menu_item_id?: string | null;
+          p_search_query?: string | null;
+        };
+        Returns: undefined;
+      };
+      // submit_order_rating (0073_order_ratings.sql) - the only writer of
+      // order_ratings + vendors/riders.rating_avg/rating_count. Requires
+      // the order to be `delivered` and the caller to be its customer;
+      // refuses a second rating for the same order.
+      submit_order_rating: {
+        Args: {
+          p_order_id: string;
+          p_vendor_rating: number;
+          p_vendor_comment?: string | null;
+          p_rider_rating?: number | null;
+          p_rider_comment?: string | null;
+        };
+        Returns: {
+          order_id: string;
+          customer_id: string;
+          vendor_id: string;
+          rider_id: string | null;
+          vendor_rating: number;
+          vendor_comment: string | null;
+          rider_rating: number | null;
+          rider_comment: string | null;
+          created_at: string;
+        };
+      };
+      // get_rider_earnings_history (0054_rider_earnings_history.sql) - the
+      // ledger-derived counterpart of get_rider_earnings() (0032): one row
+      // per escrow-release credit to the caller's own rider `available`
+      // account, never derived from orders.rider_fee_kobo. p_limit is
+      // clamped to [1, 100] server-side; p_offset must be >= 0.
+      get_rider_earnings_history: {
+        Args: {
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: {
+          order_id: string;
+          order_code: string;
+          vendor_name: string;
+          amount_kobo: number;
+          delivered_at: string | null;
+          created_at: string;
+        }[];
+      };
+      // sweep_dispatch_offers (0055_dispatch_offer_sweep.sql) - the
+      // re-dispatch sweep 0028_dispatch_offer_lifecycle.sql's own scope
+      // note deferred. service_role only; NOT scheduled by any migration -
+      // requires pg_cron or an external scheduler calling it with the
+      // service-role key roughly every 15-30 seconds. See that migration's
+      // header for the exact (commented-out) cron.schedule() statement.
+      // Modelled as a plain object rather than `[]`, same convention as
+      // get_order_tracking/get_rider_offer_details: it is a `returns table`
+      // function that yields exactly one aggregate row (a single `return
+      // query select v_expired_count, v_created_count, v_cancelled_count`),
+      // so callers use `.single()` and cast. orders_cancelled added by
+      // 0067_dispatch_cycle_and_30min_giveup.sql — see that migration for
+      // the 30-minute auto-cancel this counts.
+      sweep_dispatch_offers: {
+        Args: Record<string, never>;
+        Returns: {
+          offers_expired: number;
+          offers_created: number;
+          orders_cancelled: number;
+        };
+      };
+      // find_service_area_for_point (0063_service_area_rates_for_point.sql) -
+      // read-only, RLS-respecting lookup used to estimate the delivery fee
+      // client-side at checkout (useDeliveryFeeEstimate.ts), before
+      // place_order() computes the authoritative one. `[]` rather than the
+      // single-object convention some other `returns table` functions use
+      // here: the caller does not chain `.single()` (zero rows is a normal,
+      // expected "outside every service area" outcome, not an error to
+      // throw on), so PostgREST's plain array response is what's typed.
+      find_service_area_for_point: {
+        Args: { p_lng: number; p_lat: number };
+        Returns: {
+          id: string;
+          base_delivery_fee_kobo: number;
+          per_km_fee_kobo: number;
+        }[];
+      };
+
+      // Admin dashboard operations (0081_admin_operations.sql). All
+      // service_role only; every write re-verifies p_actor_id and writes an
+      // admin_audit_log row in the same transaction.
+      admin_set_user_status: {
+        Args: {
+          p_user_id: string;
+          p_status: "active" | "suspended";
+          p_reason: string | null;
+          p_actor_id: string;
+        };
+        /**
+         * `changed` is false for an idempotent replay; lift the auth ban only when changed and previous_status was "suspended".
+         * `sign_in_ban_deferred` is present (true) only when suspending a rider mid-delivery: do not apply the ban yet.
+         */
+        Returns: {
+          status: "active" | "suspended";
+          previous_status: "active" | "suspended";
+          changed: boolean;
+          sign_in_ban_deferred?: boolean;
+        };
+      };
+      /** true when a row changed, false for an idempotent no-op. */
+      admin_set_platform_role: {
+        Args: {
+          p_user_id: string;
+          p_role: "admin" | "superadmin" | "rider";
+          p_grant: boolean;
+          p_reason: string;
+          p_actor_id: string;
+        };
+        Returns: boolean;
+      };
+      admin_set_vendor_commission: {
+        Args: {
+          p_vendor_id: string;
+          p_commission_bps: number;
+          p_reason: string;
+          p_actor_id: string;
+        };
+        Returns: VendorRow;
+      };
+      admin_update_service_area: {
+        Args: {
+          p_service_area_id: string;
+          p_base_delivery_fee_kobo: number;
+          p_per_km_fee_kobo: number;
+          p_rider_base_fee_kobo: number;
+          p_rider_per_km_fee_kobo: number;
+          p_is_active: boolean;
+          p_reason: string;
+          p_actor_id: string;
+        };
+        Returns: {
+          id: string;
+          name: string;
+          polygon: string;
+          is_active: boolean;
+          base_delivery_fee_kobo: number;
+          per_km_fee_kobo: number;
+          rider_base_fee_kobo: number;
+          rider_per_km_fee_kobo: number;
+          launched_at: string | null;
+          created_at: string;
+        };
+      };
+      admin_record_payout: {
+        Args: {
+          p_owner_type: "vendor" | "rider";
+          p_owner_id: string;
+          p_amount_kobo: number;
+          p_external_reference: string;
+          p_reason: string | null;
+          p_actor_id: string;
+        };
+        Returns: {
+          id: string;
+          kind: "payment_capture" | "escrow_release" | "payout" | "refund" | "adjustment";
+          reference: string;
+          order_id: string | null;
+          description: string | null;
+          created_at: string;
+        };
+      };
+      /** Where the order's <code>-refund ledger transaction credited: "wallet", "gateway", or null if never refunded (0080). */
+      order_refund_destination: {
+        Args: { p_order_code: string };
+        Returns: "wallet" | "gateway" | null;
+      };
+      /** Returns the order code to hand to requestMonnifyRefundForOrder(). */
+      admin_request_gateway_refund: {
+        Args: {
+          p_order_id: string;
+          p_reason: string | null;
+          p_actor_id: string;
+        };
+        Returns: string;
+      };
+      // jsonb documents - typed in apps/web/src/lib/admin/finance.ts (DashboardMetrics, LedgerHealth).
+      admin_dashboard_metrics: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+      admin_ledger_health: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+      admin_list_balances: {
+        Args: {
+          p_owner_type: "vendor" | "rider" | "customer";
+          p_limit?: number;
+          p_offset?: number;
+          p_owner_id?: string;
+        };
+        Returns: {
+          owner_id: string;
+          display_name: string | null;
+          balance_kobo: number;
+          disbursed_kobo: number;
+          bank_name: string | null;
+          bank_account_name: string | null;
+          bank_account_number: string | null;
+          total_count: number;
+        }[];
       };
     };
     Enums: {

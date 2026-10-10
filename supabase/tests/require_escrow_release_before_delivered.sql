@@ -72,11 +72,14 @@ insert into ledger_entries (transaction_id, account_id, direction, amount_kobo, 
 select '00000000-0000-7000-8000-000000000161', a.id, 'credit', 560000, 'payment_capture', '00000000-0000-7000-8000-000000000061'
 from accounts a where a.owner_type = 'platform' and a.owner_id is null and a.kind = 'escrow';
 
+-- Message text updated in 0050_restore_transition_order_guards.sql to use a
+-- plain hyphen instead of an em dash (hard no-em-dash requirement on that
+-- migration's own text) - the guard being tested here is unchanged.
 select tests.authenticate_as('rider_a');
 select throws_ok(
   $$ select transition_order('00000000-0000-7000-8000-000000000061'::uuid, 'delivered', 'rider', tests.get_supabase_uid('rider_a')) $$,
   'P0001',
-  'transition_order: order 00000000-0000-7000-8000-000000000061 cannot be marked delivered before its escrow has been released — call verify_delivery_and_release_escrow() with the customer''s delivery code instead',
+  'transition_order: order 00000000-0000-7000-8000-000000000061 cannot be marked delivered before its escrow has been released - call verify_delivery_and_release_escrow() with the customer''s delivery code instead',
   'the assigned rider cannot call transition_order() directly to reach delivered, skipping the delivery-code check and stranding escrow'
 );
 

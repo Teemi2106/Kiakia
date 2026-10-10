@@ -30,7 +30,7 @@ export default function VendorLoginPage() {
         subheading:
           "Live orders, menu control, rider dispatch and a wallet that settles the moment a customer confirms delivery.",
         panel: <VendorPayoutCard />,
-        footnote: "Escrow protects you too — funds are ring-fenced before a rider is ever assigned.",
+        footnote: "You get paid too — funds are ring-fenced before a rider is ever assigned.",
       }}
       title="Partner login"
       subtitle="Access your dashboard to manage incoming orders and your menu."

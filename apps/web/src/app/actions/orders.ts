@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { initializeTransaction } from "@/lib/monnify";
 import { serverEnv } from "@/lib/env.server";
+import { phoneSchema } from "@/lib/validation/auth";
 
 interface DeliveryAddressJson {
   line1: string;
@@ -159,6 +160,34 @@ export async function placeOrderAction(
 
   const supabase = await createClient();
 
+  // Required so the rider assigned to this order can actually reach the
+  // customer — get_rider_offer_details() (extended by
+  // 0072_rider_offer_details_customer_contact.sql) reads it straight off
+  // profiles.phone, the same field registration collects (0070 fixed a
+  // regression that had silently left this null for every existing
+  // signup - see that migration's header). Normalized/validated with the
+  // exact same phoneSchema registration itself uses, so a number entered
+  // here and one entered at signup always end up in the same stored shape.
+  const contactPhoneRaw = (formData.get("contactPhone") as string | null) ?? "";
+  const contactPhoneResult = phoneSchema.safeParse(contactPhoneRaw);
+  if (!contactPhoneResult.success) {
+    return { error: "Enter a valid phone number so your rider can reach you." };
+  }
+  const contactPhone = contactPhoneResult.data;
+
+  // Saved for subsequent orders — only writes when it actually changed, so
+  // this never touches updated_at (and any trigger keyed off it) on every
+  // single checkout. "update own profile" (0007_rls.sql) permits this: the
+  // authenticated customer updating their own row.
+  const { data: currentProfile } = await supabase
+    .from("profiles")
+    .select("phone")
+    .eq("id", session.userId)
+    .maybeSingle();
+  if (currentProfile?.phone !== contactPhone) {
+    await supabase.from("profiles").update({ phone: contactPhone }).eq("id", session.userId);
+  }
+
   const deliveryNote = (formData.get("deliveryNote") as string | null) || null;
   const savedAddressId = formData.get("addressId") as string | null;
 
@@ -234,6 +263,9 @@ export async function placeOrderAction(
   if (placeError || !order) {
     if (placeError?.message.includes("outside every active service area")) {
       return { error: "Sorry, that address is outside our delivery area right now." };
+    }
+    if (placeError?.message.includes("delivery radius")) {
+      return { error: "This kitchen does not deliver that far. Try another address or a closer kitchen." };
     }
     return { error: "We couldn't place your order. Please try again." };
   }
@@ -320,6 +352,113 @@ export async function retryPaymentAction(orderId: string): Promise<void> {
   const checkoutUrl = await initializePaymentForOrder(session, order);
 
   redirect(checkoutUrl);
+}
+
+/**
+ * The other way out of a "payment wasn't completed" draft order (see
+ * orders/[id]/page.tsx's needsPayment branch, alongside retryPaymentAction):
+ * copy this order's items back into a fresh open cart instead of paying for
+ * it. place_order() marks the source cart 'converted' the instant checkout
+ * starts (0022_delivery_code_off_orders.sql), before Monnify is ever
+ * contacted — necessary so pricing is locked server-side rather than
+ * re-derived from a cart that could still change under the customer, but it
+ * means a customer who cancels or abandons payment has no cart left at all,
+ * only this stranded draft order. This rebuilds one from order_items, which
+ * carries everything cart_items needs (menu_item_id, options_snapshot,
+ * line_total_kobo) because place_order() copied it from there in the first
+ * place.
+ *
+ * Deliberately does not cancel or otherwise touch the draft order itself —
+ * the order state machine has no draft -> cancelled edge (draft only ever
+ * advances to placed, packages/domain/src/order-state-machine.ts), and
+ * adding one is a real change to a security-reviewed core RPC, not a
+ * one-line fix. Left alone, the draft order is inert: no money moved, no
+ * vendor was ever notified, and its own "Complete payment" link still works
+ * if the customer navigates back to it — which would create a second,
+ * independent Monnify transaction for a second, independent order, not a
+ * double-charge on this one. The one thing this actively avoids is losing
+ * the customer's selections; it does not need to also erase the abandoned
+ * order to do that.
+ */
+export async function restoreCartFromOrderAction(orderId: string): Promise<void> {
+  const session = await verifySession();
+
+  if ((await getActiveRole()) === "vendor") {
+    redirect("/dashboard");
+  }
+
+  const supabase = await createClient();
+
+  const { data: order } = await supabase
+    .from("orders")
+    .select("id, vendor_id, customer_id, status, payment_status")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (!order || order.customer_id !== session.userId) {
+    throw new Error("Order not found.");
+  }
+  if (order.status !== "draft" || order.payment_status !== "pending") {
+    throw new Error("This order has already been paid for.");
+  }
+
+  const { data: existingCart } = await supabase
+    .from("carts")
+    .select("id, vendor_id")
+    .eq("customer_id", session.userId)
+    .eq("status", "open")
+    .maybeSingle();
+
+  let cartId: string;
+  if (existingCart && existingCart.vendor_id === order.vendor_id) {
+    // Already have an open cart for the same vendor (the customer started
+    // browsing again after abandoning this order) — add to that one rather
+    // than fragmenting it across two carts for the same restaurant.
+    cartId = existingCart.id;
+  } else {
+    if (existingCart) {
+      // An open cart for a *different* vendor. This action was reached from
+      // a page dedicated to this specific draft order, so restoring it is
+      // the explicit, deliberate choice here — matching addToCart()'s own
+      // single-vendor-cart rule, just without a confirm() dialog a Server
+      // Action can't show.
+      await supabase.from("carts").update({ status: "abandoned" }).eq("id", existingCart.id);
+    }
+    const { data: newCart, error } = await supabase
+      .from("carts")
+      .insert({ customer_id: session.userId, vendor_id: order.vendor_id, status: "open" })
+      .select("id")
+      .single();
+    if (error || !newCart) {
+      throw new Error("Could not restore your cart.");
+    }
+    cartId = newCart.id;
+  }
+
+  const { data: orderItems } = await supabase
+    .from("order_items")
+    .select("menu_item_id, name_snapshot, unit_price_kobo, qty, options_snapshot, line_total_kobo")
+    .eq("order_id", order.id);
+
+  if (orderItems && orderItems.length > 0) {
+    const { error } = await supabase.from("cart_items").insert(
+      orderItems.map((item) => ({
+        cart_id: cartId,
+        menu_item_id: item.menu_item_id,
+        name_snapshot: item.name_snapshot,
+        unit_price_kobo: item.unit_price_kobo,
+        qty: item.qty,
+        options_snapshot: item.options_snapshot,
+        line_total_kobo: item.line_total_kobo,
+      })),
+    );
+
+    if (error) {
+      throw new Error("Could not restore your cart items.");
+    }
+  }
+
+  redirect("/cart");
 }
 
 

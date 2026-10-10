@@ -21,6 +21,15 @@ const clientSchema = z.object({
   // crashing; it never blocks the rest of the tracking page (timeline,
   // rider card, delivery code all work token-free).
   NEXT_PUBLIC_MAPBOX_TOKEN: z.string().min(1).optional(),
+  // The VAPID public key browsers sign PushManager.subscribe() calls
+  // against — safe to expose (it's a public key), and must match
+  // VAPID_PRIVATE_KEY set on the web-push Edge Function exactly (see that
+  // function's own header). Optional for the same reason
+  // NEXT_PUBLIC_MAPBOX_TOKEN is: no VAPID key pair has been provisioned by
+  // default, and `pnpm build` must still succeed without one. When absent,
+  // the notifications bell's "Enable notifications" control (0069_web_push_
+  // subscriptions.sql) simply doesn't render, rather than crashing.
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1).optional(),
 });
 
 // Safe parse with better error handling
@@ -31,6 +40,7 @@ function getClientEnv() {
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   });
 
   if (!result.success) {
@@ -54,6 +64,7 @@ function getClientEnv() {
         NEXT_PUBLIC_SITE_URL:
           process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
         NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
       };
     }
 

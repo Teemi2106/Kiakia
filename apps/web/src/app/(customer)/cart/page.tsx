@@ -29,5 +29,20 @@ export default async function CartPage() {
       .eq("cart_id", cart.id),
   ]);
 
-  return <CartPageView items={items ?? []} vendor={vendor ?? null} />;
+  // A separate query rather than a PostgREST embed — see CartDrawer.tsx's
+  // fetchCartData() for why (no embed precedent anywhere in this app, and
+  // packages/db's hand-maintained generated.ts has no Relationships
+  // metadata for the client library to type one against).
+  const menuItemIds = [...new Set((items ?? []).map((item) => item.menu_item_id))];
+  const { data: menuItemRows } = menuItemIds.length
+    ? await supabase.from("menu_items").select("id, image_url").in("id", menuItemIds)
+    : { data: [] };
+  const imageByMenuItemId = new Map((menuItemRows ?? []).map((row) => [row.id, row.image_url]));
+
+  const itemsWithImages = (items ?? []).map((item) => ({
+    ...item,
+    menu_item_image_url: item.menu_item_id ? (imageByMenuItemId.get(item.menu_item_id) ?? null) : null,
+  }));
+
+  return <CartPageView items={itemsWithImages} vendor={vendor ?? null} />;
 }

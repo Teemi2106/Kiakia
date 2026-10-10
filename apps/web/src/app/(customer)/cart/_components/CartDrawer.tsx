@@ -45,10 +45,31 @@ export function CartDrawer({ isOpen, onClose, onUpdate }: CartDrawerProps) {
 
     const [{ data: vendorData }, { data: cartItems }] = await Promise.all([
       supabase.from("vendors").select("id, name").eq("id", cart.vendor_id).single(),
-      supabase.from("cart_items").select("id, menu_item_id, name_snapshot, unit_price_kobo, qty, options_snapshot, line_total_kobo").eq("cart_id", cart.id),
+      supabase
+        .from("cart_items")
+        .select("id, menu_item_id, name_snapshot, unit_price_kobo, qty, options_snapshot, line_total_kobo")
+        .eq("cart_id", cart.id),
     ]);
 
-    return { items: cartItems ?? [], vendor: vendorData ?? null };
+    // A separate query rather than a PostgREST embed (cart_items(menu_items(...))) —
+    // this codebase has no precedent for embeds anywhere, and packages/db's
+    // hand-maintained generated.ts declares every table's Relationships as
+    // [], so the client library cannot type an embedded select even though
+    // the real FK exists. Matches the manual-join pattern every other page
+    // in this app already uses (e.g. vendors/[slug]/page.tsx).
+    const menuItemIds = [...new Set((cartItems ?? []).map((item) => item.menu_item_id))];
+    const { data: menuItemRows } = menuItemIds.length
+      ? await supabase.from("menu_items").select("id, image_url").in("id", menuItemIds)
+      : { data: [] };
+    const imageByMenuItemId = new Map((menuItemRows ?? []).map((row) => [row.id, row.image_url]));
+
+    return {
+      items: (cartItems ?? []).map((item) => ({
+        ...item,
+        menu_item_image_url: item.menu_item_id ? (imageByMenuItemId.get(item.menu_item_id) ?? null) : null,
+      })),
+      vendor: vendorData ?? null,
+    };
   }
 
   // Fetch on every open (not just the first), since the cart can genuinely

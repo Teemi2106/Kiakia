@@ -25,4 +25,7 @@ export interface OrderItem {
   name_snapshot: string;
   qty: number;
   line_total_kobo: number;
+  /** From menu_items.image_url (order_items itself has no image column) —
+   * null when the menu item never had one, or was deleted since. */
+  image_url: string | null;
 }

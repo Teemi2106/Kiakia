@@ -6,11 +6,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { getHomeRecommendations } from "@/lib/recommendations/get-home-recommendations";
+import { TrackEvent } from "../_components/TrackEvent";
+import { RealtimeRefresh } from "@/lib/realtime/RealtimeRefresh";
 import { ActiveOrderCard, type ActiveOrder } from "./_components/ActiveOrderCard";
 import { CategoryChips } from "./_components/CategoryChips";
+import { CravingBlocks } from "./_components/CravingBlocks";
 import { FeaturedCarousel, type FeaturedVendor } from "./_components/FeaturedCarousel";
 import { FilterChips, type HomeSearchParams } from "./_components/FilterChips";
 import { HomeGreeting } from "./_components/HomeGreeting";
+import { PersonalizedSection } from "./_components/PersonalizedSection";
 import { SectionHeading } from "./_components/SectionHeading";
 import { VendorCard, type VendorCardVendor } from "./_components/VendorCard";
 import { isVendorOpenNow } from "./_lib/opening-hours";
@@ -91,6 +96,11 @@ export default async function CustomerHomePage({
         .select("id, code, status, total_kobo, vendor_id")
         .eq("customer_id", session.userId)
         .not("status", "in", `(${TERMINAL_STATUS_LIST})`)
+        // Same reasoning as /orders' own query: a "draft" order is an
+        // abandoned or not-yet-completed checkout, not a real order the
+        // vendor is preparing - it must never headline the homepage as a
+        // "LIVE ORDER" with a progress bar implying the kitchen has it.
+        .neq("status", "draft")
         .order("created_at", { ascending: false })
         .limit(10),
     ]);
@@ -155,6 +165,7 @@ export default async function CustomerHomePage({
       { data: topRated },
       { data: allVendorsRaw },
       { data: dishRows },
+      recommendations,
     ] = await Promise.all([
       liveOrderVendorQuery,
       topRatedQuery,
@@ -170,6 +181,7 @@ export default async function CustomerHomePage({
         .eq("is_available", true)
         .not("image_url", "is", null)
         .limit(60),
+      getHomeRecommendations(),
     ]);
 
     const topRatedVendors = (topRated ?? []) as VendorCardVendor[];
@@ -197,11 +209,13 @@ export default async function CustomerHomePage({
     return (
       <HomeShell
         firstName={firstName}
+        customerId={session.userId}
         activeOrder={toActiveOrder(newestLiveOrder, liveOrderVendor?.name ?? null)}
         otherActiveCount={Math.max(liveOrders.length - 1, 0)}
         categories={categories}
         activeCategory={category}
         homeSearchParams={{ q, category, open, quick, sort }}
+        heroImageUrl={featured[0]?.dishImageUrl}
       >
         {!hasAnyVendors ? (
           <EmptyState
@@ -219,6 +233,8 @@ export default async function CustomerHomePage({
           />
         ) : (
           <div className="space-y-12">
+            <PersonalizedSection items={recommendations.items} personalised={recommendations.personalised} />
+            <CravingBlocks />
             {featured.length > 0 && (
               <section>
                 <SectionHeading
@@ -327,12 +343,14 @@ export default async function CustomerHomePage({
   return (
     <HomeShell
       firstName={firstName}
+      customerId={session.userId}
       activeOrder={toActiveOrder(newestLiveOrder, liveOrderVendor?.name ?? null)}
       otherActiveCount={Math.max(liveOrders.length - 1, 0)}
       categories={categories}
       activeCategory={category}
       homeSearchParams={{ q, category, open, quick, sort }}
     >
+      {q?.trim() && <TrackEvent eventType="search" searchQuery={q.trim().slice(0, 80)} />}
       <div className="space-y-12">
         {categoryDishes.length > 0 && (
           <section>
@@ -499,24 +517,33 @@ function VendorGrid({ vendors }: { vendors: VendorCardVendor[] }) {
 
 function HomeShell({
   firstName,
+  customerId,
   activeOrder,
   otherActiveCount,
   categories,
   activeCategory,
   homeSearchParams,
+  heroImageUrl,
   children,
 }: {
   firstName: string | null;
+  customerId: string;
   activeOrder: ActiveOrder | null;
   otherActiveCount: number;
   categories: readonly MealCategoryPreset[];
   activeCategory?: string;
   homeSearchParams: HomeSearchParams;
+  heroImageUrl?: string | null;
   children: React.ReactNode;
 }) {
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 pb-12 pt-5 sm:px-6 sm:pb-16 sm:pt-8">
-      <HomeGreeting firstName={firstName} />
+      <RealtimeRefresh
+        table="orders"
+        filter={`customer_id=eq.${customerId}`}
+        topic={`customer-home-${customerId}`}
+      />
+      <HomeGreeting firstName={firstName} heroImageUrl={heroImageUrl} />
 
       {activeOrder && (
         <div className="mt-4">
@@ -526,7 +553,7 @@ function HomeShell({
 
       {/* Browse controls. Grouped into one panel so the category rail and the
           filter chips read as a single toolbar rather than two loose rows. */}
-      <div className="mt-9 space-y-4">
+      <div className="mt-10 space-y-4 rounded-3xl border border-kk-line/40 bg-white/65 p-4 shadow-[0_20px_50px_-45px_rgba(66,29,20,0.5)] sm:p-5">
         <div className="flex items-center gap-3">
           <Store className="size-4 shrink-0 text-kk-red" />
           <h2 className="font-inter text-[11px] font-semibold uppercase tracking-[0.22em] text-kk-cocoa">

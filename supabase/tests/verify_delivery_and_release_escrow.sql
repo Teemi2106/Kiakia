@@ -192,15 +192,17 @@ select is(
 );
 
 -- ---------------------------------------------------------------------------
--- 0044 regression test — a free-delivery order (delivery_fee_kobo = 0,
--- e.g. subtotal >= service_areas.free_above_kobo) must still pay the rider
--- via rider_fee_kobo. Before 0044, this order's rider would have been
--- credited exactly delivery_fee_kobo, i.e. 0 — a real delivery done for
--- free. Order 055: subtotal 1200000, delivery_fee 0 (waived), service_fee
--- 24000, discount 0, total 1224000; rider_fee_kobo set to 65000 (what
--- accept_dispatch_offer() would have computed from distance, independent
--- of the waiver); commission_bps 1500: commission = round(1200000*0.15) =
--- 180000; vendor = 1020000; platform = 1224000 - 1020000 - 65000 = 139000.
+-- 0044 regression test — an order with delivery_fee_kobo = 0 (this test
+-- constructs the row directly with that value; place_order() itself no
+-- longer has any waiver that produces one — see
+-- 0062_remove_free_delivery_threshold.sql) must still pay the rider via
+-- rider_fee_kobo. Before 0044, this order's rider would have been credited
+-- exactly delivery_fee_kobo, i.e. 0 — a real delivery done for free. Order
+-- 055: subtotal 1200000, delivery_fee 0, service_fee 24000, discount 0,
+-- total 1224000; rider_fee_kobo set to 65000 (what accept_dispatch_offer()
+-- would have computed from distance, independent of delivery_fee_kobo);
+-- commission_bps 1500: commission = round(1200000*0.15) = 180000; vendor =
+-- 1020000; platform = 1224000 - 1020000 - 65000 = 139000.
 -- ---------------------------------------------------------------------------
 
 select tests.authenticate_as_service_role();

@@ -169,7 +169,7 @@ export function LiveOrderCard() {
       <div className="mt-5 flex items-center gap-2.5 rounded-2xl bg-white/[0.06] px-3.5 py-3">
         <Lock className="size-4 shrink-0 text-kk-mint" />
         <p className="font-inter text-[12px] leading-5 text-white/65">
-          ₦8,450 held in escrow — released by your code at the door.
+          ₦8,450 held safely — released by your code at the door.
         </p>
       </div>
     </div>
@@ -179,7 +179,7 @@ export function LiveOrderCard() {
 const CODE = ["4", "9", "2", "7"] as const;
 
 /** Sign-up: the promise that makes handing over an email worth it. */
-export function EscrowCodeCard() {
+export function DeliveryCodeCard() {
   return (
     <div className={GLASS}>
       <p className="font-inter text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
@@ -202,8 +202,8 @@ export function EscrowCodeCard() {
         Nobody gets paid until you say so.
       </p>
       <p className="mt-1.5 font-inter text-[13px] leading-6 text-white/50">
-        Your money sits in escrow from checkout to hand-off. Four digits at your door are the only
-        key that opens it.
+        Your money sits safely with KiaKia from checkout to hand-off. Four digits at your door are
+        the only key that opens it.
       </p>
 
       <div className="mt-5 grid grid-cols-2 gap-2.5">
@@ -257,7 +257,7 @@ const VENDOR_PITCH = [
   },
   {
     icon: Lock,
-    title: "Escrow-backed payments",
+    title: "Payments secured upfront",
     body: "Every naira is secured at checkout, before a rider is dispatched.",
   },
   {

@@ -5,10 +5,24 @@
 --
 -- Committed as a regular migration (not a local-only seed step) on
 -- purpose: it keeps the local/CI schema identical to whatever gets
--- deployed, the same "don't let test and prod schemas drift" reasoning
--- already applied elsewhere in this migration set. Both extensions are
--- inert — a `tests` schema of assertion helpers, no runtime behavior
--- change for the app itself — and ship pre-installed in Supabase's
--- Postgres image, so this needs no network access to apply.
+-- deployed. pgtap is inert and ships in Supabase's Postgres image.
+--
+-- supabase_test_helpers is NOT shipped by every image: the pinned
+-- supabase/postgres:17.6.1.147 has pgtap but no supabase_test_helpers control
+-- file, so an unconditional CREATE EXTENSION made `supabase start` fail here.
+-- It is therefore created only when the server offers it (identical behaviour
+-- to before wherever it applied). Where it does not, the same `tests.*`
+-- helpers come from supabase/test_helpers_shim.sql, loaded as a LOCAL/CI
+-- seed (config.toml [db.seed]) - deliberately NOT a migration, because those
+-- helpers create auth.users rows and must never reach a deployed database.
 create extension if not exists pgtap with schema extensions;
-create extension if not exists "supabase_test_helpers" with schema extensions;
+
+do $do$
+begin
+  if exists (select 1 from pg_available_extensions where name = 'supabase_test_helpers') then
+    create extension if not exists "supabase_test_helpers" with schema extensions;
+  else
+    raise notice '0013: supabase_test_helpers is not available on this server; pgTAP helpers come from supabase/test_helpers_shim.sql (local seed)';
+  end if;
+end
+$do$;

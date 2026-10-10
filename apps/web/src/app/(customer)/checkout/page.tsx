@@ -1,5 +1,4 @@
 // app/(customer)/checkout/page.tsx
-import { formatNaira, koboOf } from "@kiakia/domain";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { verifySession } from "@/lib/auth/dal";
@@ -23,7 +22,7 @@ export default async function CheckoutPage() {
     redirect("/cart");
   }
 
-  const [{ data: vendor }, { data: items }, { data: addresses }] =
+  const [{ data: vendor }, { data: items }, { data: addresses }, { data: profile }] =
     await Promise.all([
       supabase
         .from("vendors")
@@ -41,6 +40,10 @@ export default async function CheckoutPage() {
         )
         .eq("customer_id", session.userId)
         .order("is_default", { ascending: false }),
+      // "read own profile" (0007_rls.sql) permits this — session.userId IS
+      // auth.uid() here, unlike the cross-user rider/customer lookups
+      // 0071_order_tracking_rider_contact.sql had to route around RLS for.
+      supabase.from("profiles").select("phone").eq("id", session.userId).maybeSingle(),
     ]);
 
   const subtotalKobo = (items ?? []).reduce(
@@ -70,6 +73,7 @@ export default async function CheckoutPage() {
       defaultAddress={defaultAddress}
       subtotalKobo={subtotalKobo}
       walletBalanceKobo={walletBalanceKobo ?? 0}
+      customerPhone={profile?.phone ?? null}
     />
   );
 }

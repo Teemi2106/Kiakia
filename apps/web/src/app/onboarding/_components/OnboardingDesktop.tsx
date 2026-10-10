@@ -53,7 +53,7 @@ export function OnboardingDesktop() {
                   Secure Payments
                 </h3>
                 <p className="font-inter text-sm leading-6 text-[#5B403C]">
-                  Escrow protection for every order.
+                  Your payout is secured on every order.
                 </p>
               </div>
             </div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AuthShell } from "../(auth)/_components/AuthShell";
-import { EscrowCodeCard } from "../(auth)/_components/AuthStage";
+import { DeliveryCodeCard } from "../(auth)/_components/AuthStage";
 import { ResetPasswordForm } from "../(auth)/_components/ResetPasswordForm";
 import "../(auth)/auth.css";
 
@@ -52,7 +52,7 @@ export default async function ResetPasswordPage({
         subheading: linkIsValid
           ? "Pick something you haven't used elsewhere. You'll stay signed in on this device once it's set."
           : "Reset links are single-use and short-lived on purpose — it's what stops an old email in someone else's inbox from opening your account.",
-        panel: <EscrowCodeCard />,
+        panel: <DeliveryCodeCard />,
         footnote: "Your saved addresses, orders and wallet balance are untouched.",
       }}
       title={linkIsValid ? "Set a new password" : "This link has expired"}

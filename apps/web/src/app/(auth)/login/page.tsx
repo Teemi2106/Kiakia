@@ -34,7 +34,7 @@ export default function LoginPage() {
         subheading:
           "Sign in to pick up where you left off — saved addresses, repeat orders, and a rider you can watch close in live.",
         panel: <LiveOrderCard />,
-        footnote: "Every order is escrow-protected until the code at your door releases it.",
+        footnote: "Nobody gets paid until the code at your door says the food arrived.",
       }}
       title="Welcome back"
       subtitle="Enter your details to get back to fast, reliable delivery."

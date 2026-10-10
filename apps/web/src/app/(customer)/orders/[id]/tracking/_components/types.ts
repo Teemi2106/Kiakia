@@ -13,6 +13,7 @@ export interface TimelineStep {
 // is no fabricated fallback.
 export interface Driver {
   name: string;
+  phone?: string;
   plateNumber?: string;
   avatarUrl?: string;
   car?: string;
