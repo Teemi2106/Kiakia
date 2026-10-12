@@ -69,7 +69,15 @@ select is(
 );
 
 -- (3) expired offers never re-offered
-update dispatch_offers set expires_at = now() - interval '1 second' where order_id = '00000000-0000-7000-8000-0000000000a2' and status = 'offered';
+-- Everything in a pgTAP file runs in ONE transaction, so now() is frozen: the
+-- fixture offer's offered_at and the order's dispatch_cycle_started_at are the
+-- same instant as the sweep's own now(), and 0076's cycle rule
+-- (offered_at >= cycle start => already asked this cycle) would exclude the rider
+-- forever. In production each sweep tick is its own transaction. Age the offer and
+-- the cycle into the past so the expired-offer re-open path is what is exercised.
+update dispatch_offers set expires_at = now() - interval '1 second', offered_at = now() - interval '3 minutes'
+ where order_id = '00000000-0000-7000-8000-0000000000a2' and status = 'offered';
+update orders set dispatch_cycle_started_at = now() - interval '5 minutes' where id = '00000000-0000-7000-8000-0000000000a2';
 select sweep_dispatch_offers();
 select sweep_dispatch_offers();
 select is(
@@ -85,13 +93,18 @@ update riders set current_location = st_geogfromtext('POINT(7.95 9.95)') where u
 select tests.authenticate_as('qa_rider_fresh');
 select throws_ok(
   $$ select accept_dispatch_offer('00000000-0000-7000-8000-0000000000a2'::uuid) $$,
-  null, null,
+  '23514', -- check_violation, 0076
+  'accept_dispatch_offer: order 00000000-0000-7000-8000-0000000000a2 is too far from this rider - the payout would exceed what the order can fund',
   'accepting an order whose rider_fee would exceed the order''s payable share must fail at accept time, not after delivery'
 );
 
 -- (4) vendor with no location
 select tests.authenticate_as_service_role();
 update vendors set location = null where id = '00000000-0000-7000-8000-0000000000a1';
+-- The rider's offer from the steps above is still live ('offered'), and the sweep
+-- (rightly) leaves an order with a live offer alone, so let it lapse first.
+update dispatch_offers set expires_at = now() - interval '1 second'
+ where order_id = '00000000-0000-7000-8000-0000000000a2' and status = 'offered';
 update orders set first_dispatched_at = now() - interval '40 minutes' where id = '00000000-0000-7000-8000-0000000000a2' and rider_id is null;
 select sweep_dispatch_offers();
 select isnt(

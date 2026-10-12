@@ -182,7 +182,7 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
 
           <div>
             <label htmlFor="deliveryRadiusM" className="mb-2 block font-inter text-sm font-medium text-[#1C1B1B]">
-              Delivery radius
+              How far will you deliver?
             </label>
             <input
               id="deliveryRadiusM"
@@ -206,7 +206,9 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
             <div className="flex items-center gap-3 text-[#653200]">
               <Info className="size-5 shrink-0" />
               <p className="text-sm">
-                Customers outside this radius won&apos;t see your store as a delivery option at checkout.
+                Customers can order from you only if their delivery address is within this distance of your
+                kitchen. The red circle on the map shows the area you cover. A smaller area means shorter
+                rides and faster deliveries.
               </p>
             </div>
           </div>

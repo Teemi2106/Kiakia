@@ -42,7 +42,7 @@ async function getAccessToken(): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error(`Monnify auth failed: ${response.status} ${await response.text()}`);
+    throw new Error(`Monnify auth failed: ${describeFailure(response.status, await response.text())}`);
   }
 
   const body = (await response.json()) as MonnifyEnvelope<{ accessToken: string; expiresIn: number }>;
@@ -56,6 +56,15 @@ async function getAccessToken(): Promise<string> {
     expiresAt: Date.now() + (body.responseBody.expiresIn - 60) * 1000,
   };
   return cachedToken.accessToken;
+}
+
+// Monnify sits behind Cloudflare, whose block page is a full HTML document.
+// Keep errors to a readable line instead of dumping it into logs and digests.
+function describeFailure(status: number, text: string): string {
+  if (/Attention Required|cf-error-details/.test(text)) {
+    return `${status} blocked by Monnify's Cloudflare WAF (a localhost redirectUrl triggers this; use a public https URL)`;
+  }
+  return `${status} ${text.slice(0, 300)}`;
 }
 
 async function monnifyFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

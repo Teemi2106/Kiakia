@@ -32,7 +32,7 @@ vi.mock("../supabase/server", () => ({
   },
 }));
 
-const { isPureRider, requireAdminContext, requireFinanceContext, requireVendorContext } = await import("./dal");
+const { isPureRider, requireActiveAccount, requireAdminContext, requireFinanceContext, requireVendorContext } = await import("./dal");
 
 beforeEach(() => {
   state.roles = ["customer", "admin"];
@@ -117,5 +117,17 @@ describe("requireVendorContext", () => {
   it("still sends a vendor who is not in vendor mode to the requested page", async () => {
     getActiveRole.mockResolvedValue("customer");
     await expect(requireVendorContext("/home")).rejects.toThrow("NEXT_REDIRECT:/home");
+  });
+});
+
+describe("requireActiveAccount", () => {
+  it("lets an active account through without redirecting", async () => {
+    await expect(requireActiveAccount()).resolves.toBeUndefined();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it.each(["suspended", "deleted", null])("sends an account whose profile is %s to the public landing page", async (status) => {
+    state.profileStatus = status;
+    await expect(requireActiveAccount()).rejects.toThrow("NEXT_REDIRECT:/");
   });
 });

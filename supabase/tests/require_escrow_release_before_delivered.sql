@@ -42,13 +42,17 @@ insert into riders (user_id, is_online) values (tests.get_supabase_uid('rider_a'
 -- 0035, it must raise.
 -- ---------------------------------------------------------------------------
 
-insert into orders (id, customer_id, vendor_id, rider_id, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_location, arrived_at)
+-- rider_fee_kobo = 50000: since 0044 the rider is paid rider_fee_kobo (frozen by
+-- accept_dispatch_offer()), not delivery_fee_kobo, and release writes no rider
+-- credit when it is 0 - so a directly-seeded order needs it set for the release
+-- to produce the vendor/rider/platform + escrow-debit set of 4 ledger entries.
+insert into orders (id, customer_id, vendor_id, rider_id, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, rider_fee_kobo, delivery_address, delivery_location, arrived_at)
 values (
   '00000000-0000-7000-8000-000000000061',
   tests.get_supabase_uid('customer_a'),
   '00000000-0000-7000-8000-000000000060',
   tests.get_supabase_uid('rider_a'),
-  'arrived', 'paid', 500000, 50000, 10000, 0, 560000,
+  'arrived', 'paid', 500000, 50000, 10000, 0, 560000, 50000,
   '{"line1": "1 Test Street"}'::jsonb,
   st_geogfromtext('POINT(7.45 9.05)'),
   now() - interval '10 minutes'
@@ -78,7 +82,7 @@ from accounts a where a.owner_type = 'platform' and a.owner_id is null and a.kin
 select tests.authenticate_as('rider_a');
 select throws_ok(
   $$ select transition_order('00000000-0000-7000-8000-000000000061'::uuid, 'delivered', 'rider', tests.get_supabase_uid('rider_a')) $$,
-  'P0001',
+  '23514', -- check_violation, as raised by 0030/0050/0075
   'transition_order: order 00000000-0000-7000-8000-000000000061 cannot be marked delivered before its escrow has been released - call verify_delivery_and_release_escrow() with the customer''s delivery code instead',
   'the assigned rider cannot call transition_order() directly to reach delivered, skipping the delivery-code check and stranding escrow'
 );

@@ -3,7 +3,7 @@
 import type { Json, OrderStatus } from "@kiakia/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireVendorContext, verifySession } from "@/lib/auth/dal";
+import { requireActiveAccount, requireVendorContext, verifySession } from "@/lib/auth/dal";
 import { getActiveRole } from "@/lib/auth/active-role";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -79,13 +79,19 @@ async function initializePaymentForOrder(session: SessionLike, order: OrderForPa
     throw new Error("This order has already been paid for.");
   }
 
+  // Monnify rejects an empty customerEmail (422) — fail with a clear message
+  // before the network round-trip rather than after it.
+  if (!session.email) {
+    throw new Error("Add an email address to your account before paying by card.");
+  }
+
   const transaction = await initializeTransaction({
     amountKobo: order.total_kobo,
     paymentReference: order.code,
     paymentDescription: `KiaKia order ${order.code}`,
     customerName: profile?.full_name ?? "KiaKia Customer",
-    customerEmail: session.email ?? "",
-    redirectUrl: `${serverEnv.NEXT_PUBLIC_SITE_URL}/orders/${order.id}`,
+    customerEmail: session.email,
+    redirectUrl: `${serverEnv.MONNIFY_REDIRECT_BASE_URL ?? serverEnv.NEXT_PUBLIC_SITE_URL}/orders/${order.id}`,
   });
 
   // Never overwrite a row the webhook already captured while the Monnify
@@ -147,6 +153,7 @@ export async function placeOrderAction(
   formData: FormData,
 ): Promise<CheckoutFormState> {
   const session = await verifySession();
+  await requireActiveAccount();
 
   // Mirror of requireVendorContext()'s gate on the vendor side: this is a
   // customer money-moving action, reachable by direct POST regardless of
@@ -328,6 +335,7 @@ export async function placeOrderAction(
  */
 export async function retryPaymentAction(orderId: string): Promise<void> {
   const session = await verifySession();
+  await requireActiveAccount();
 
   // Mirror of the same active-role gate as placeOrderAction — see there.
   if ((await getActiveRole()) === "vendor") {

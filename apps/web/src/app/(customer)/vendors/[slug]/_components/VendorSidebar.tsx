@@ -53,10 +53,10 @@ function getHoursStatus(hours: readonly VendorDayHours[] | null): HoursStatus | 
   return { label: `Open until ${formatTime12h(today.closesAt)}`, isOpenNow: true };
 }
 
-function formatDeliveryRadius(meters: number): string {
-  if (meters <= 0) return "Not set";
+function formatDeliveryReach(meters: number): string {
+  if (meters <= 0) return "Delivery area not set";
   const km = meters / 1000;
-  return `${km % 1 === 0 ? km.toFixed(0) : km.toFixed(1)} km radius`;
+  return `Delivers up to ${km % 1 === 0 ? km.toFixed(0) : km.toFixed(1)} km from this kitchen`;
 }
 
 export function VendorSidebar({ vendor }: { vendor: VendorSummary }) {
@@ -193,7 +193,7 @@ export function VendorSidebar({ vendor }: { vendor: VendorSummary }) {
               <Bike className="size-4" />
             </div>
             <span className="font-inter text-sm text-[#1C1B1B]">
-              Delivers within {formatDeliveryRadius(vendor.deliveryRadiusM)}
+              {formatDeliveryReach(vendor.deliveryRadiusM)}
             </span>
           </div>
           <div className="flex items-center gap-2.5">

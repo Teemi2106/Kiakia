@@ -188,6 +188,19 @@ const isActiveAccount = cache(async (): Promise<boolean> => {
 });
 
 /**
+ * Gates a customer-side Server Action on an active account. Customer actions
+ * have no requireRole() bundle to hang this on (every signed-in user is a
+ * customer), so they call this directly after verifySession(). Redirects to
+ * "/" for the same reason requireVendorContext() does: it's the one public
+ * page that never redirects a session, so it can't loop.
+ */
+export async function requireActiveAccount(redirectTo = "/"): Promise<void> {
+  if (!(await isActiveAccount())) {
+    redirect(redirectTo);
+  }
+}
+
+/**
  * Gates the (admin) route group. Unlike (vendor), there's no explicit
  * "active mode" concept for admin — holding an admin/superadmin role on an
  * active account is itself sufficient, no mode-switch cookie to layer on top.

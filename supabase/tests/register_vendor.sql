@@ -36,6 +36,8 @@ select is(
 -- second vendor.
 select throws_ok(
   $$ select register_vendor('Second Store', 'second-store-rv', 'food') $$,
+  '23505',
+  'register_vendor: this account already has a vendor — one vendor per account in this release',
   'an account that already staffs a vendor cannot register a second one'
 );
 

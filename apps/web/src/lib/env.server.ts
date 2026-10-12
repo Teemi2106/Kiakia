@@ -24,6 +24,10 @@ const serverOnlySchema = z.object({
   MONNIFY_API_SECRET: z.string().min(1),
   MONNIFY_CONTRACT_CODE: z.string().min(1),
   MONNIFY_BASE_URL: z.string().url(),
+  // Public https origin Monnify sends the customer back to. Monnify's
+  // Cloudflare WAF 403s init-transaction for a localhost redirectUrl, so local
+  // dev points this at a tunnel while NEXT_PUBLIC_SITE_URL stays localhost.
+  MONNIFY_REDIRECT_BASE_URL: z.string().url().optional(),
 });
 
 const serverOnly = serverOnlySchema.parse({
@@ -32,6 +36,7 @@ const serverOnly = serverOnlySchema.parse({
   MONNIFY_API_SECRET: process.env.MONNIFY_API_SECRET,
   MONNIFY_CONTRACT_CODE: process.env.MONNIFY_CONTRACT_CODE,
   MONNIFY_BASE_URL: process.env.MONNIFY_BASE_URL,
+  MONNIFY_REDIRECT_BASE_URL: process.env.MONNIFY_REDIRECT_BASE_URL || undefined,
 });
 
 export const serverEnv = { ...clientEnv, ...serverOnly };

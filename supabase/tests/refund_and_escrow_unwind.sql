@@ -82,8 +82,8 @@ select throws_ok(
     $$ select refund_order_escrow('00000000-0000-7000-8000-000000000070'::uuid, %L::uuid, 'test refund') $$,
     tests.get_supabase_uid('admin_a')
   ),
-  'P0001',
-  'refund_order_escrow: requires the service-role key',
+  '42501', -- EXECUTE is revoked from authenticated (0031/0080), so Postgres refuses before the in-function service-role check can run
+  'permission denied for function refund_order_escrow',
   'a plain authenticated session cannot call refund_order_escrow, even claiming a real admin''s uid'
 );
 
@@ -182,7 +182,7 @@ select verify_delivery_and_release_escrow('00000000-0000-7000-8000-000000000071'
 select tests.authenticate_as_service_role();
 select throws_ok(
   $$ select refund_order_escrow('00000000-0000-7000-8000-000000000071'::uuid, tests.get_supabase_uid('admin_a'), 'too late') $$,
-  'P0001',
+  '23514', -- check_violation, as raised by 0031/0045/0080
   'refund_order_escrow: order 00000000-0000-7000-8000-000000000071 escrow has already been released to vendor/rider/platform — refusing to refund and pay out twice',
   'refund_order_escrow refuses outright once escrow has actually been released — the single most important guard'
 );
@@ -251,8 +251,8 @@ select throws_ok(
     $$ select admin_reset_delivery_code_attempts('00000000-0000-7000-8000-000000000071'::uuid, %L::uuid) $$,
     tests.get_supabase_uid('admin_a')
   ),
-  'P0001',
-  'admin_reset_delivery_code_attempts: requires the service-role key',
+  '42501', -- EXECUTE is revoked from authenticated (0031/0080), so Postgres refuses before the in-function service-role check can run
+  'permission denied for function admin_reset_delivery_code_attempts',
   'a plain authenticated session cannot call admin_reset_delivery_code_attempts'
 );
 
@@ -284,7 +284,7 @@ select throws_ok(
     $$ select admin_reset_delivery_code_attempts('00000000-0000-7000-8000-000000000074'::uuid, %L::uuid) $$,
     tests.get_supabase_uid('admin_a')
   ),
-  'P0001',
+  '23514', -- check_violation, as raised by 0031/0080
   'admin_reset_delivery_code_attempts: order 00000000-0000-7000-8000-000000000074 is not awaiting delivery-code verification (status=accepted)',
   'admin_reset_delivery_code_attempts refuses an order that is not arrived'
 );

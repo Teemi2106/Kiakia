@@ -57,10 +57,14 @@ values (
 -- (the column's own default, 0002_identity.sql) — never approved, used
 -- below to prove BLOCKING 4's fix actually rejects it even though it holds
 -- a genuinely-offered row.
-insert into riders (user_id, is_online, current_location, kyc_status) values
-  (tests.get_supabase_uid('rider_a'), true, st_geogfromtext('POINT(7.5 9.5)'), 'approved'),
-  (tests.get_supabase_uid('rider_b'), true, st_geogfromtext('POINT(7.5 9.5)'), 'approved'),
-  (tests.get_supabase_uid('rider_c'), true, st_geogfromtext('POINT(7.5 9.5)'), 'pending');
+insert into riders (user_id, is_online, current_location, last_ping_at, kyc_status) values
+  (tests.get_supabase_uid('rider_a'), true, st_geogfromtext('POINT(7.5 9.5)'), now(), 'approved'),
+  (tests.get_supabase_uid('rider_b'), true, st_geogfromtext('POINT(7.5 9.5)'), now(), 'approved'),
+  (tests.get_supabase_uid('rider_c'), true, st_geogfromtext('POINT(7.5 9.5)'), now(), 'pending');
+
+-- last_ping_at = now(): 0076 made accept_dispatch_offer() require a ping under 5
+-- minutes old (the fee is frozen from that position), so fixtures that accept
+-- must have one.
 
 -- Seeded directly at 'ready_for_pickup' — this fixture tests
 -- accept_dispatch_offer() in isolation, not the dispatch trigger itself
@@ -151,6 +155,7 @@ select is(
 -- order that is already assigned — orders.rider_id is no longer null, which
 -- accept_dispatch_offer() checks independently of dispatch_offers.status.
 select tests.clear_authentication();
+reset role; -- fixture insert as the owner: dispatch_offers has no INSERT policy for anon/authenticated
 insert into dispatch_offers (order_id, rider_id, status)
 values ('00000000-0000-7000-8000-000000000041', tests.get_supabase_uid('rider_b'), 'offered');
 select tests.authenticate_as('rider_b');

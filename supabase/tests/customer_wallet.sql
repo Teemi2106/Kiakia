@@ -158,7 +158,7 @@ select lives_ok(
 );
 
 select is(
-  (select balance_kobo from account_balances b
+  (select b.balance_kobo::bigint from account_balances b
      join accounts a on a.id = b.account_id
     where a.owner_type = 'customer' and a.owner_id = tests.get_supabase_uid('wallet_customer') and a.kind = 'wallet'),
   100000::bigint,
@@ -178,7 +178,7 @@ select is(
 -- The ledger invariant is enforced by trigger, but assert it explicitly for
 -- the refund transaction: a wallet credit must be matched by an escrow debit.
 select is(
-  (select coalesce(sum(case when e.direction = 'credit' then e.amount_kobo else -e.amount_kobo end), 0)
+  (select coalesce(sum(case when e.direction = 'credit' then e.amount_kobo else -e.amount_kobo end), 0)::bigint
      from ledger_entries e
      join transactions t on t.id = e.transaction_id
     where t.order_id = '00000000-0000-7000-8000-000000000090' and t.kind = 'refund'),
@@ -273,8 +273,11 @@ select is(
   'the order records how it was funded'
 );
 
+-- ledger_entries is revoked from authenticated (0005_ledger.sql), so read it as
+-- service_role, then go back to the customer for the next assertions.
+select tests.authenticate_as_service_role();
 select is(
-  (select coalesce(sum(e.amount_kobo), 0) from ledger_entries e
+  (select coalesce(sum(e.amount_kobo), 0)::bigint from ledger_entries e
      join accounts a on a.id = e.account_id
     where e.order_id = '00000000-0000-7000-8000-000000000091'
       and a.owner_type = 'platform' and a.kind = 'escrow'
@@ -282,6 +285,7 @@ select is(
   60000::bigint,
   'the money moved into escrow, so the rest of the order lifecycle is unchanged'
 );
+select tests.authenticate_as('wallet_customer');
 
 -- Paying the same order twice must not produce a second escrow credit. The
 -- order is no longer draft/pending, which is the guard that catches it.
@@ -346,7 +350,7 @@ select throws_ok(
 );
 
 select is(
-  (select balance_kobo from account_balances b
+  (select b.balance_kobo::bigint from account_balances b
      join accounts a on a.id = b.account_id
     where a.owner_type = 'customer' and a.owner_id = tests.get_supabase_uid('wallet_customer') and a.kind = 'wallet'),
   40000::bigint,
@@ -369,7 +373,7 @@ select lives_ok(
 );
 
 select is(
-  (select coalesce(sum(e.amount_kobo), 0) from ledger_entries e
+  (select coalesce(sum(e.amount_kobo), 0)::bigint from ledger_entries e
      join accounts a on a.id = e.account_id
     where e.order_id = '00000000-0000-7000-8000-000000000094'
       and e.entry_type = 'refund'

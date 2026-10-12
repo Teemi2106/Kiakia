@@ -48,6 +48,8 @@ values ('00000000-0000-7000-8000-000000000050', tests.get_supabase_uid('vendor_o
 select tests.authenticate_as('vendor_stranger');
 select throws_ok(
   $$ select set_vendor_location('00000000-0000-7000-8000-000000000050'::uuid, 9.05, 7.45) $$,
+  'P0001',
+  format('set_vendor_location: actor %s is not staff on vendor 00000000-0000-7000-8000-000000000050', tests.get_supabase_uid('vendor_stranger')),
   'a non-staff caller cannot set this vendor''s location'
 );
 
@@ -79,10 +81,14 @@ select ok(
 -- Out-of-range lat/lng are rejected, never clamped.
 select throws_ok(
   $$ select set_vendor_location('00000000-0000-7000-8000-000000000050'::uuid, 91, 7.45) $$,
+  '23514',
+  'set_vendor_location: lat 91 is out of range [-90, 90]',
   'an out-of-range latitude is rejected rather than clamped'
 );
 select throws_ok(
   $$ select set_vendor_location('00000000-0000-7000-8000-000000000050'::uuid, 9.05, 181) $$,
+  '23514',
+  'set_vendor_location: lng 181 is out of range [-180, 180]',
   'an out-of-range longitude is rejected rather than clamped'
 );
 
@@ -97,6 +103,9 @@ select throws_ok(
 -- above. Same convention accept_dispatch_offer.sql / verify_delivery_and_
 -- release_escrow.sql already follow.
 select tests.clear_authentication();
+-- clear_authentication() leaves role = anon (same in basejump's helper), which
+-- RLS/revoked grants reject; fixture rows must be written as the owner.
+reset role;
 
 insert into riders (user_id, is_online, current_location, kyc_status) values
   (tests.get_supabase_uid('rider_a'), true, st_geogfromtext('POINT(7.45 9.05)'), 'approved'),
@@ -129,6 +138,8 @@ values ('00000000-0000-7000-8000-000000000051', tests.get_supabase_uid('rider_a'
 select tests.clear_authentication();
 select throws_ok(
   $$ select * from get_rider_offer_details('00000000-0000-7000-8000-000000000051'::uuid) $$,
+  'P0001',
+  'get_rider_offer_details: no authenticated caller',
   'an unauthenticated caller cannot read offer details, even for an order with no rider assigned yet'
 );
 
@@ -136,6 +147,8 @@ select throws_ok(
 select tests.authenticate_as('rider_b');
 select throws_ok(
   $$ select * from get_rider_offer_details('00000000-0000-7000-8000-000000000051'::uuid) $$,
+  'P0001',
+  format('get_rider_offer_details: actor %s has no active offer or assignment on order 00000000-0000-7000-8000-000000000051', tests.get_supabase_uid('rider_b')),
   'a rider with no offer and no assignment on the order cannot read its details'
 );
 
@@ -192,9 +205,12 @@ select is(
 -- `authenticated` (0007_rls.sql), so these must run unauthenticated/
 -- superuser too, same reasoning as above.
 select tests.clear_authentication();
+reset role; -- as above: anon cannot write accounts/transactions/ledger_entries
 
-insert into accounts (owner_type, owner_id, kind) values ('platform', null, 'escrow')
-  on conflict (owner_type, owner_id, kind) do nothing;
+-- platform:escrow already exists (seeded by 0010_capture_payment.sql). Do NOT
+-- re-insert it with ON CONFLICT DO NOTHING: unique (owner_type, owner_id, kind)
+-- treats the NULL owner_id as distinct, so that inserts a SECOND escrow account
+-- and the single-row lookups below then fail with "more than one row".
 insert into accounts (owner_type, owner_id, kind) values ('rider', tests.get_supabase_uid('rider_a'), 'available');
 insert into accounts (owner_type, owner_id, kind) values ('rider', tests.get_supabase_uid('rider_b'), 'available');
 
@@ -211,7 +227,7 @@ select id, (select id from accounts where owner_type = 'platform' and owner_id i
 from transactions where reference = 'KK-TEST051-escrow';
 
 insert into ledger_entries (transaction_id, account_id, direction, amount_kobo, entry_type, order_id)
-select id, (select id from accounts where owner_type = 'rider' and owner_id = tests.get_supabase_uid('rider_a')), 'credit', 50000, 'escrow_release', '00000000-0000-7000-8000-000000000051'
+select id, (select id from accounts where owner_type = 'rider' and owner_id = tests.get_supabase_uid('rider_a') and kind = 'available'), 'credit', 50000, 'escrow_release', '00000000-0000-7000-8000-000000000051'
 from transactions where reference = 'KK-TEST051-escrow';
 
 -- rider_a reads their own credited balance.

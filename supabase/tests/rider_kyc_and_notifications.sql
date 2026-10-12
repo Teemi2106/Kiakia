@@ -115,6 +115,7 @@ select is(
 -- ---------------------------------------------------------------------------
 
 select tests.clear_authentication();
+reset role; -- clear_authentication() leaves role = anon; fixture rows are written as the owner
 
 insert into rider_push_tokens (rider_id, token, platform, device_id)
 values (tests.get_supabase_uid('kyc_rider_a'), 'expo-token-rider-a', 'android', 'device-a');
@@ -241,6 +242,7 @@ select lives_ok(
 -- ---------------------------------------------------------------------------
 
 select tests.clear_authentication();
+reset role; -- clear_authentication() leaves role = anon; fixture rows are written as the owner
 
 insert into orders (id, code, customer_id, vendor_id, rider_id, status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, rider_fee_kobo, delivery_address, delivery_location)
 values (
@@ -254,8 +256,10 @@ values (
   st_geogfromtext('POINT(7.46 9.06)')
 );
 
-insert into accounts (owner_type, owner_id, kind) values ('platform', null, 'escrow')
-  on conflict (owner_type, owner_id, kind) do nothing;
+-- platform:escrow already exists (seeded by 0010_capture_payment.sql). Do NOT
+-- re-insert it with ON CONFLICT DO NOTHING: unique (owner_type, owner_id, kind)
+-- treats the NULL owner_id as distinct, so that would add a SECOND escrow account
+-- and the single-row lookups below would fail with "more than one row".
 insert into accounts (owner_type, owner_id, kind) values ('rider', tests.get_supabase_uid('kyc_rider_a'), 'available')
   on conflict (owner_type, owner_id, kind) do nothing;
 
@@ -286,8 +290,8 @@ select tests.authenticate_as('kyc_rider_a');
 
 select throws_ok(
   $$ select sweep_dispatch_offers() $$,
-  'P0001',
-  'sweep_dispatch_offers: requires the service-role key',
+  '42501', -- EXECUTE is revoked from authenticated (0055/0066/0067), so Postgres refuses before the in-function check
+  'permission denied for function sweep_dispatch_offers',
   'a plain authenticated session cannot call sweep_dispatch_offers()'
 );
 
@@ -297,6 +301,7 @@ select throws_ok(
 -- ---------------------------------------------------------------------------
 
 select tests.clear_authentication();
+reset role; -- clear_authentication() leaves role = anon; fixture rows are written as the owner
 
 insert into orders (id, code, customer_id, vendor_id, status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_location)
 values (

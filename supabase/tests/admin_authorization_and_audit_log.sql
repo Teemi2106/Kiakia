@@ -161,7 +161,10 @@ select throws_ok(
 
 -- A direct service-role session: no JWT claims at all (auth.role() is NULL),
 -- only the Postgres role. This is the NULL-safe branch of _assert_admin_actor.
+-- The claims are cleared explicitly because the local helper shim
+-- (test_helpers_shim.sql) sets a service_role claim and basejump's does not.
 select tests.authenticate_as_service_role();
+select set_config('request.jwt.claims', '', true), set_config('request.jwt.claim.role', '', true);
 select ok(auth.role() is null, 'fixture: a direct service_role session has a NULL auth.role() (the case the actor check must handle NULL-safely)');
 select throws_ok(
   format($$ select approve_vendor('ad000000-0000-7000-8000-0000000000aa'::uuid, %L::uuid) $$, tests.get_supabase_uid('az_admin')),

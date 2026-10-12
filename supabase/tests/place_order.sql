@@ -62,6 +62,9 @@ values ('00000000-0000-7000-8000-000000000013', '00000000-0000-7000-8000-0000000
 -- 250000) — the whole point of this test is that place_order() must
 -- ignore them and re-derive 250000 from menu_items itself.
 
+-- throws_ok() below uses the 4-arg form (sql, sqlstate, exact message,
+-- description): the 2-arg form treats its second argument as an expected-message
+-- match, so the descriptions used to be asserted as the error text and never matched.
 -- customer_b cannot place customer_a's cart.
 select tests.authenticate_as('customer_b');
 select throws_ok(
@@ -71,6 +74,8 @@ select throws_ok(
        st_geogfromtext('POINT(7.5 9.5)'),
        null
      ) $$,
+  'P0001',
+  'place_order: cart 00000000-0000-7000-8000-000000000013 does not belong to the caller',
   'a cart cannot be placed by a customer who does not own it'
 );
 
@@ -83,6 +88,8 @@ select throws_ok(
        st_geogfromtext('POINT(50.0 50.0)'), -- nowhere near the test area
        null
      ) $$,
+  '23514',
+  'place_order: delivery address is outside every active service area',
   'an address outside every active service area is rejected'
 );
 
@@ -115,6 +122,8 @@ select throws_ok(
        st_geogfromtext('POINT(7.5 9.5)'),
        null
      ) $$,
+  '23514',
+  'place_order: cart 00000000-0000-7000-8000-000000000018 has an option that is no longer available for its item',
   'a cross-vendor option id in options_snapshot is rejected, not silently dropped from the price sum'
 );
 
@@ -129,6 +138,8 @@ select throws_ok(
        st_geogfromtext('POINT(7.5 9.5)'),
        null
      ) $$,
+  '23514',
+  'place_order: subtotal 500000 kobo is below vendor 00000000-0000-7000-8000-000000000011''s minimum order of 999999999 kobo',
   'an order below the vendor''s min_order_kobo is rejected server-side'
 );
 select tests.authenticate_as_service_role();

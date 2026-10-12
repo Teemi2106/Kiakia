@@ -151,19 +151,19 @@ select ok(
 select tests.authenticate_as_service_role();
 
 select is(
-  (select balance_kobo from account_balances ab join accounts a on a.id = ab.account_id where a.owner_type = 'vendor' and a.owner_id = '00000000-0000-7000-8000-000000000050'),
+  (select ab.balance_kobo::bigint from account_balances ab join accounts a on a.id = ab.account_id where a.owner_type = 'vendor' and a.owner_id = '00000000-0000-7000-8000-000000000050'),
   425000::bigint,
   'the vendor is credited subtotal minus commission (500000 - 15% = 425000)'
 );
 
 select is(
-  (select balance_kobo from account_balances ab join accounts a on a.id = ab.account_id where a.owner_type = 'rider' and a.owner_id = tests.get_supabase_uid('rider_a')),
+  (select ab.balance_kobo::bigint from account_balances ab join accounts a on a.id = ab.account_id where a.owner_type = 'rider' and a.owner_id = tests.get_supabase_uid('rider_a')),
   50000::bigint,
   'the rider is credited exactly the order''s rider_fee_kobo (0044 — independent of delivery_fee_kobo)'
 );
 
 select is(
-  (select balance_kobo from account_balances ab join accounts a on a.id = ab.account_id where a.owner_type = 'platform' and a.owner_id is null and a.kind = 'revenue'),
+  (select ab.balance_kobo::bigint from account_balances ab join accounts a on a.id = ab.account_id where a.owner_type = 'platform' and a.owner_id is null and a.kind = 'revenue'),
   85000::bigint,
   'the platform is credited the residual share (commission + service_fee here, since discount_kobo = 0)'
 );
@@ -241,7 +241,7 @@ select ok(
 
 select tests.authenticate_as_service_role();
 select is(
-  (select balance_kobo from account_balances ab join accounts a on a.id = ab.account_id where a.owner_type = 'rider' and a.owner_id = tests.get_supabase_uid('rider_a')),
+  (select ab.balance_kobo::bigint from account_balances ab join accounts a on a.id = ab.account_id where a.owner_type = 'rider' and a.owner_id = tests.get_supabase_uid('rider_a')),
   50000::bigint + 65000::bigint,
   'the rider is paid rider_fee_kobo (65000) on a free-delivery order — the fee waiver does not zero their pay (0044''s whole point). 50000 is rider_a''s existing balance from order 051 above.'
 );
@@ -341,7 +341,7 @@ select tests.authenticate_as('rider_a');
 select throws_ok(
   $$ select verify_delivery_and_release_escrow('00000000-0000-7000-8000-000000000058'::uuid, '2222') $$,
   'P0001',
-  'verify_delivery_and_release_escrow: escrow for order 00000000-0000-7000-8000-000000000058 holds 400000 kobo but total_kobo is 560000 — refusing to release',
+  'verify_delivery_and_release_escrow: escrow for order 00000000-0000-7000-8000-000000000058 holds 400000 kobo but total_kobo is 560000 - refusing to release',
   'release is refused when escrow does not hold exactly total_kobo, even with the correct code'
 );
 

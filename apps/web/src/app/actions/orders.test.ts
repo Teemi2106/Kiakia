@@ -9,8 +9,11 @@ const state = {
 
 const requireVendorContext = vi.fn((..._args: unknown[]) => Promise.resolve(state.session.current));
 const verifySession = vi.fn(() => Promise.resolve(state.session.current));
+// Defaults to an active account; a suspension test swaps in a redirect.
+const requireActiveAccount = vi.fn((..._args: unknown[]) => Promise.resolve());
 
 vi.mock("@/lib/auth/dal", () => ({
+  requireActiveAccount: (...args: unknown[]) => requireActiveAccount(...args),
   requireVendorContext: (...args: unknown[]) => requireVendorContext(...args),
   verifySession: () => verifySession(),
 }));
@@ -228,6 +231,8 @@ describe("placeOrderAction", () => {
 
 describe("retryPaymentAction", () => {
   beforeEach(() => {
+    requireActiveAccount.mockReset();
+    requireActiveAccount.mockResolvedValue(undefined);
     initializeTransaction.mockReset();
     getActiveRole.mockReset();
     getActiveRole.mockResolvedValue("customer");
@@ -240,6 +245,24 @@ describe("retryPaymentAction", () => {
     state.client.current = supabaseClientMock();
     await expect(retryPaymentAction("order-1")).rejects.toThrow("NEXT_REDIRECT:/dashboard");
     expect(initializeTransaction).not.toHaveBeenCalled();
+  });
+
+  it("sends a suspended customer to / without reading the order or starting a checkout", async () => {
+    requireActiveAccount.mockImplementation(() => Promise.reject(new Error("NEXT_REDIRECT:/")));
+    const orders = queryBuilder(
+      ok({ id: "order-1", code: "KK-1", total_kobo: 1000, customer_id: "customer-a", status: "draft", payment_status: "pending" }),
+    );
+    state.client.current = supabaseClientMock({ from: { orders } });
+    const paymentsUpsert = vi.fn(() => queryBuilder(ok(null)));
+    state.adminClient.current = supabaseClientMock({
+      from: { payments: { select: vi.fn(() => queryBuilder(ok(null))), upsert: paymentsUpsert } as never },
+    });
+
+    await expect(retryPaymentAction("order-1")).rejects.toThrow("NEXT_REDIRECT:/");
+    expect(requireActiveAccount).toHaveBeenCalledTimes(1);
+    expect(orders.select).not.toHaveBeenCalled();
+    expect(initializeTransaction).not.toHaveBeenCalled();
+    expect(paymentsUpsert).not.toHaveBeenCalled();
   });
 
   it("refuses to retry payment on an order belonging to a different customer", async () => {

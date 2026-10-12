@@ -78,6 +78,8 @@ select is(
 select throws_ok(
   $$ insert into cart_items (cart_id, menu_item_id, name_snapshot, unit_price_kobo, qty, line_total_kobo)
      values ('00000000-0000-7000-8000-000000000043', '00000000-0000-7000-8000-000000000041', 'x', 100, 1, 100) $$,
+  '42501',
+  'new row violates row-level security policy for table "cart_items"',
   'a different customer cannot insert cart_items into another customer''s cart (with-check fails)'
 );
 
