@@ -14,6 +14,8 @@ interface CheckoutFormProps {
   addresses: Address[];
   defaultAddress: Address | null;
   subtotalKobo: number;
+  /** Live service fee for this subtotal, computed server-side from the admin-set rate; null if it could not be read. */
+  serviceFeeKobo: number | null;
   walletBalanceKobo: number;
   /** profiles.phone as of page load — prefills the required contact-phone
    * field so a returning customer isn't retyping it every order. */
@@ -28,6 +30,7 @@ export function CheckoutForm({
   addresses,
   defaultAddress,
   subtotalKobo,
+  serviceFeeKobo,
   walletBalanceKobo,
   customerPhone,
 }: CheckoutFormProps) {
@@ -74,6 +77,7 @@ export function CheckoutForm({
           paymentMethod={paymentMethod}
           onPaymentMethodChange={setPaymentMethod}
           subtotalKobo={subtotalKobo}
+          serviceFeeKobo={serviceFeeKobo}
           walletBalanceKobo={walletBalanceKobo}
           deliveryFeeEstimate={deliveryFeeEstimate}
           deliveryNote={deliveryNote}
@@ -94,6 +98,7 @@ export function CheckoutForm({
           paymentMethod={paymentMethod}
           onPaymentMethodChange={setPaymentMethod}
           subtotalKobo={subtotalKobo}
+          serviceFeeKobo={serviceFeeKobo}
           walletBalanceKobo={walletBalanceKobo}
           deliveryFeeEstimate={deliveryFeeEstimate}
           deliveryNote={deliveryNote}

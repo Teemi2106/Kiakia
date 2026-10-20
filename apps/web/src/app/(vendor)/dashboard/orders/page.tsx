@@ -49,14 +49,20 @@ export default async function VendorOrdersPage() {
 
   const supabase = await createClient();
 
-  const { data: realOrders } = await supabase
-    .from("orders")
-    .select(
-      "id, code, status, subtotal_kobo, delivery_fee_kobo, total_kobo, created_at, delivery_address, delivery_note",
-    )
-    .eq("vendor_id", vendor.id)
-    .in("status", ACTIVE_STATUSES)
-    .order("created_at", { ascending: true });
+  // The photo lookup does not depend on which orders are active (it is this
+  // store's own menu images, joined in JS below), so it rides in the first wave
+  // instead of waiting behind the items as a third.
+  const [{ data: realOrders }, { data: menuImageRows }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select(
+        "id, code, status, subtotal_kobo, delivery_fee_kobo, total_kobo, created_at, delivery_address, delivery_note",
+      )
+      .eq("vendor_id", vendor.id)
+      .in("status", ACTIVE_STATUSES)
+      .order("created_at", { ascending: true }),
+    supabase.from("menu_items").select("id, image_url").eq("vendor_id", vendor.id).not("image_url", "is", null),
+  ]);
   const rawOrders = realOrders ?? [];
 
   if (rawOrders.length === 0) {
@@ -93,12 +99,7 @@ export default async function VendorOrdersPage() {
     supabase.rpc("get_vendor_order_customers", { p_order_ids: orderIds }),
   ]);
 
-  const menuItemIds = [...new Set((itemRows ?? []).map((item) => item.menu_item_id))];
-  const { data: menuItemRows } = menuItemIds.length
-    ? await supabase.from("menu_items").select("id, image_url").in("id", menuItemIds)
-    : { data: [] as { id: string; image_url: string | null }[] };
-
-  const imageByMenuItemId = new Map((menuItemRows ?? []).map((m) => [m.id, m.image_url]));
+  const imageByMenuItemId = new Map((menuImageRows ?? []).map((m) => [m.id, m.image_url]));
   const contactByOrderId = new Map((contactRows ?? []).map((c) => [c.order_id, c]));
 
   const itemsByOrderId = new Map<string, OrderItem[]>();

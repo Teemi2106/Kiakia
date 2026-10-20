@@ -141,7 +141,7 @@ export function SettingsForm({ vendor }: { vendor: VendorSettings }) {
         <label className="flex cursor-pointer items-center justify-between rounded-xl border border-[#E4BEB8] bg-[#F6F3F2] p-4">
           <span>
             <span className="block text-sm font-medium text-[#1C1B1B]">Accepting orders</span>
-            <span className="block text-xs text-[#5B403C]">Customers can place new orders while this is on.</span>
+            <span className="block text-xs text-[#5B403C]">Customers can place new orders while this is on, once KiaKia has approved your store.</span>
           </span>
           <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
             <input

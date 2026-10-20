@@ -70,6 +70,132 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   return data as unknown as DashboardMetrics;
 }
 
+/** Time ranges the Overview's Money section can show. Default is 30 days. */
+export const MONEY_RANGES = ["today", "7d", "30d", "all"] as const;
+export type MoneyRange = (typeof MONEY_RANGES)[number];
+export const DEFAULT_MONEY_RANGE: MoneyRange = "all";
+
+/** Reads the `range` search param; anything unrecognised falls back to the default. */
+export function parseMoneyRange(value: string | undefined): MoneyRange {
+  return (MONEY_RANGES as readonly string[]).includes(value ?? "") ? (value as MoneyRange) : DEFAULT_MONEY_RANGE;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const WAT_OFFSET_MS = 60 * 60 * 1000;
+
+/**
+ * The [from, to) the RPC filters on. "Today" starts at midnight in Nigeria
+ * (WAT, UTC+1, no daylight saving); 7 and 30 days are rolling, like the
+ * delivered-order cards beside it. "all" is the open window. `to` is always
+ * open-ended so a payment landing while the page renders is still counted.
+ */
+export function moneyRangeWindow(range: MoneyRange, now: Date = new Date()): { from: string | null; to: null } {
+  switch (range) {
+    case "all":
+      return { from: null, to: null };
+    case "today": {
+      const localMidnight = Math.floor((now.getTime() + WAT_OFFSET_MS) / DAY_MS) * DAY_MS - WAT_OFFSET_MS;
+      return { from: new Date(localMidnight).toISOString(), to: null };
+    }
+    case "7d":
+      return { from: new Date(now.getTime() - 7 * DAY_MS).toISOString(), to: null };
+    case "30d":
+      return { from: new Date(now.getTime() - 30 * DAY_MS).toISOString(), to: null };
+  }
+}
+
+/**
+ * admin_money_summary() (0091), ledger-derived, kobo. Flows cover the requested
+ * window; the "right now" group and the reconciliation do not depend on it.
+ */
+export interface MoneySummary {
+  readonly generatedAt: string;
+  /** Total customers paid in the window: delivered, in progress, and later refunded. */
+  readonly processedKobo: number;
+  readonly processedCardKobo: number;
+  readonly processedWalletKobo: number;
+  readonly deliveredGmvKobo: number;
+  readonly deliveredOrders: number;
+  readonly platformEarningsKobo: number;
+  readonly vendorEarnedKobo: number;
+  readonly riderEarnedKobo: number;
+  readonly refundedKobo: number;
+  readonly refundedGatewayKobo: number;
+  readonly refundedWalletKobo: number;
+  readonly paidToVendorsInWindowKobo: number;
+  readonly paidToRidersInWindowKobo: number;
+  /** Right now, whatever the window. */
+  readonly heldInEscrowKobo: number;
+  readonly owedToVendorsKobo: number;
+  readonly owedToRidersKobo: number;
+  readonly paidToVendorsKobo: number;
+  readonly paidToRidersKobo: number;
+  readonly customerWalletKobo: number;
+  readonly reconciliation: {
+    readonly reconciles: boolean;
+    readonly differenceKobo: number;
+    readonly capturedKobo: number;
+    readonly heldKobo: number;
+    readonly releasedKobo: number;
+    readonly refundedKobo: number;
+  };
+}
+
+function field(source: Record<string, unknown>, key: string): number {
+  const value = Number(source[key]);
+  if (source[key] === null || source[key] === undefined || !Number.isFinite(value)) {
+    throw new Error(`admin_money_summary: missing or invalid ${key}`);
+  }
+  return value;
+}
+
+/** Maps the RPC's jsonb document to the typed summary; throws if a figure is missing so a half-built page never shows zeros for "unknown". */
+export function toMoneySummary(raw: unknown): MoneySummary {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) throw new Error("admin_money_summary: unexpected response");
+  const doc = raw as Record<string, unknown>;
+  const rec = doc.reconciliation;
+  if (typeof rec !== "object" || rec === null || Array.isArray(rec)) throw new Error("admin_money_summary: missing reconciliation");
+  const r = rec as Record<string, unknown>;
+  return {
+    generatedAt: String(doc.generated_at ?? ""),
+    processedKobo: field(doc, "gross_processed_kobo"),
+    processedCardKobo: field(doc, "gross_processed_card_kobo"),
+    processedWalletKobo: field(doc, "gross_processed_wallet_kobo"),
+    deliveredGmvKobo: field(doc, "delivered_gmv_kobo"),
+    deliveredOrders: field(doc, "delivered_orders"),
+    platformEarningsKobo: field(doc, "platform_earnings_kobo"),
+    vendorEarnedKobo: field(doc, "vendor_earned_kobo"),
+    riderEarnedKobo: field(doc, "rider_earned_kobo"),
+    refundedKobo: field(doc, "refunded_kobo"),
+    refundedGatewayKobo: field(doc, "refunded_gateway_kobo"),
+    refundedWalletKobo: field(doc, "refunded_wallet_kobo"),
+    paidToVendorsInWindowKobo: field(doc, "paid_out_to_vendors_window_kobo"),
+    paidToRidersInWindowKobo: field(doc, "paid_out_to_riders_window_kobo"),
+    heldInEscrowKobo: field(doc, "held_in_escrow_kobo"),
+    owedToVendorsKobo: field(doc, "owed_to_vendors_kobo"),
+    owedToRidersKobo: field(doc, "owed_to_riders_kobo"),
+    paidToVendorsKobo: field(doc, "paid_out_to_vendors_kobo"),
+    paidToRidersKobo: field(doc, "paid_out_to_riders_kobo"),
+    customerWalletKobo: field(doc, "customer_wallet_float_kobo"),
+    reconciliation: {
+      reconciles: r.reconciles === true,
+      differenceKobo: field(r, "difference_kobo"),
+      capturedKobo: field(r, "captured_kobo"),
+      heldKobo: field(r, "held_kobo"),
+      releasedKobo: field(r, "released_kobo"),
+      refundedKobo: field(r, "refunded_kobo"),
+    },
+  };
+}
+
+export async function getMoneySummary(range: MoneyRange = DEFAULT_MONEY_RANGE): Promise<MoneySummary> {
+  await requireAdminContext();
+  const { from, to } = moneyRangeWindow(range);
+  const { data, error } = await createAdminClient().rpc("admin_money_summary", { p_from: from, p_to: to });
+  if (error) throw new Error(error.message);
+  return toMoneySummary(data);
+}
+
 export async function getLedgerHealth(): Promise<LedgerHealth> {
   await requireAdminContext();
   const { data, error } = await createAdminClient().rpc("admin_ledger_health");

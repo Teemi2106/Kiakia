@@ -74,90 +74,89 @@ export default async function VendorDashboardPage() {
   const supabase = await createClient();
   const admin = createAdminClient();
 
-  const { data: accounts, error: accountsError } = await admin
-    .from("accounts")
-    .select("id, kind")
-    .eq("owner_type", "vendor")
-    .eq("owner_id", vendor.id);
-
-  if (accountsError) {
-    throw new Error(accountsError.message);
-  }
-
-  const accountIds = (accounts ?? []).map((a) => a.id);
-
-  const { data: balances, error: balancesError } = accountIds.length
-    ? await admin
-        .from("account_balances")
-        .select("account_id, balance_kobo")
-        .in("account_id", accountIds)
-    : { data: [], error: null };
-
-  if (balancesError) {
-    throw new Error(balancesError.message);
-  }
-
-  const balanceForKind = (kind: "available") => {
-    const account = (accounts ?? []).find((a) => a.kind === kind);
-    if (!account) return 0;
-    return (
-      (balances ?? []).find((b) => b.account_id === account.id)?.balance_kobo ?? 0
-    );
-  };
-
-  // No vendor-scoped `escrow` account is ever created (see
-  // lib/vendor-escrow.ts's header) — derived from live orders instead of a
-  // ledger balance that's always zero.
-  const escrowKobo = await computeVendorPendingEscrowKobo(supabase, admin, vendor.id, vendor.commission_bps);
-  const availableKobo = balanceForKind("available");
-
   const salesWindowStart = new Date();
   salesWindowStart.setHours(0, 0, 0, 0);
   salesWindowStart.setDate(salesWindowStart.getDate() - (SALES_DAYS - 1));
 
-  const [{ count: activeCount }, { count: preparingCount }, { count: dispatchCount }, { data: incoming }, { data: recentOrders }] =
-    await Promise.all([
-      supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .eq("vendor_id", vendor.id)
-        .in("status", ACTIVE_STATUSES),
-      supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .eq("vendor_id", vendor.id)
-        .eq("status", "preparing"),
-      supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .eq("vendor_id", vendor.id)
-        .in("status", DISPATCH_STATUSES),
-      supabase
-        .from("orders")
-        .select("id, code, status, total_kobo, created_at")
-        .eq("vendor_id", vendor.id)
-        .in("status", ["placed", "accepted", "preparing"])
-        .order("created_at", { ascending: true })
-        .limit(5),
-      supabase
-        .from("orders")
-        .select("status, total_kobo, created_at")
-        .eq("vendor_id", vendor.id)
-        .gte("created_at", salesWindowStart.toISOString()),
-    ]);
+  // Every read below depends only on `vendor.id`, so they all go out together;
+  // the two chains (accounts -> balances, incoming orders -> their items) run
+  // inside their own promise instead of holding up the rest. This page used to
+  // be six round trips deep in a row.
+  const availableKoboPromise = (async () => {
+    const { data: accounts, error: accountsError } = await admin
+      .from("accounts")
+      .select("id, kind")
+      .eq("owner_type", "vendor")
+      .eq("owner_id", vendor.id);
+    if (accountsError) throw new Error(accountsError.message);
 
-  const orders = incoming || [];
-  const orderIds = orders.map((o) => o.id);
+    const available = (accounts ?? []).find((a) => a.kind === "available");
+    if (!available) return 0;
 
-  const { data: orderItemRows } = orderIds.length
-    ? await supabase
-        .from("order_items")
-        .select("order_id, name_snapshot, qty")
-        .in("order_id", orderIds)
-    : { data: [] };
+    const { data: balances, error: balancesError } = await admin
+      .from("account_balances")
+      .select("account_id, balance_kobo")
+      .eq("account_id", available.id);
+    if (balancesError) throw new Error(balancesError.message);
+
+    return (balances ?? []).find((b) => b.account_id === available.id)?.balance_kobo ?? 0;
+  })();
+
+  const incomingPromise = (async () => {
+    const { data: incoming } = await supabase
+      .from("orders")
+      .select("id, code, status, total_kobo, created_at")
+      .eq("vendor_id", vendor.id)
+      .in("status", ["placed", "accepted", "preparing"])
+      .order("created_at", { ascending: true })
+      .limit(5);
+    const orders = incoming || [];
+    const orderIds = orders.map((o) => o.id);
+    const { data: orderItemRows } = orderIds.length
+      ? await supabase.from("order_items").select("order_id, name_snapshot, qty").in("order_id", orderIds)
+      : { data: [] };
+    return { orders, orderItemRows: orderItemRows ?? [] };
+  })();
+
+  // No vendor-scoped `escrow` account is ever created (see
+  // lib/vendor-escrow.ts's header) - derived from live orders instead of a
+  // ledger balance that's always zero.
+  const [
+    availableKobo,
+    escrowKobo,
+    { count: activeCount },
+    { count: preparingCount },
+    { count: dispatchCount },
+    { orders, orderItemRows },
+    { data: recentOrders },
+  ] = await Promise.all([
+    availableKoboPromise,
+    computeVendorPendingEscrowKobo(supabase, admin, vendor.id, vendor.commission_bps),
+    supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("vendor_id", vendor.id)
+      .in("status", ACTIVE_STATUSES),
+    supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("vendor_id", vendor.id)
+      .eq("status", "preparing"),
+    supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("vendor_id", vendor.id)
+      .in("status", DISPATCH_STATUSES),
+    incomingPromise,
+    supabase
+      .from("orders")
+      .select("status, total_kobo, created_at")
+      .eq("vendor_id", vendor.id)
+      .gte("created_at", salesWindowStart.toISOString()),
+  ]);
 
   const itemSummaryByOrderId = new Map<string, string>();
-  for (const row of orderItemRows ?? []) {
+  for (const row of orderItemRows) {
     const existing = itemSummaryByOrderId.get(row.order_id);
     const part = `${row.qty}× ${row.name_snapshot}`;
     itemSummaryByOrderId.set(row.order_id, existing ? `${existing}, ${part}` : part);

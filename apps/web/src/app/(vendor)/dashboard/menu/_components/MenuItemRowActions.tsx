@@ -5,7 +5,8 @@ import {
   toggleItemAvailabilityAction,
 } from "@/app/actions/menu";
 import { Loader2, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { ActionToast } from "@/app/_components/ActionToast";
 
 interface AvailabilityToggleProps {
   vendorId: string;
@@ -22,6 +23,8 @@ export function AvailabilityToggle({
 }: AvailabilityToggleProps) {
   const [checked, setChecked] = useState(initialValue);
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const dismiss = useCallback(() => setError(null), []);
 
   async function toggle() {
     setPending(true);
@@ -35,18 +38,19 @@ export function AvailabilityToggle({
 
     try {
       await toggleItemAvailabilityAction(vendorId, itemId, next);
-    } catch (error) {
+    } catch {
       // Revert on error
       setChecked(checked);
       if (onToggle) {
         onToggle(checked);
       }
-      console.error("Failed to toggle availability:", error);
+      setError("Couldn't change availability. It has been put back as it was.");
     }
     setPending(false);
   }
 
   return (
+    <>
     <button
       type="button"
       role="switch"
@@ -61,6 +65,8 @@ export function AvailabilityToggle({
         className={`inline-block size-4 rounded-full bg-white shadow-md ring-1 ring-black/5 transition-transform duration-200 ${checked ? "translate-x-6" : "translate-x-1"}`}
       />
     </button>
+    <ActionToast message={error} onDismiss={dismiss} />
+    </>
   );
 }
 

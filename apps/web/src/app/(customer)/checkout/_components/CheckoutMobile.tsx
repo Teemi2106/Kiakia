@@ -19,6 +19,7 @@ interface CheckoutMobileProps {
   paymentMethod: PaymentMethod;
   onPaymentMethodChange: (method: PaymentMethod) => void;
   subtotalKobo: number;
+  serviceFeeKobo: number | null;
   walletBalanceKobo: number;
   deliveryFeeEstimate: DeliveryFeeEstimate;
   deliveryNote: string;
@@ -38,6 +39,7 @@ export function CheckoutMobile({
   paymentMethod,
   onPaymentMethodChange,
   subtotalKobo,
+  serviceFeeKobo,
   walletBalanceKobo,
   deliveryFeeEstimate,
   deliveryNote,
@@ -133,6 +135,7 @@ export function CheckoutMobile({
             vendor={vendor}
             items={items}
             subtotalKobo={subtotalKobo}
+            serviceFeeKobo={serviceFeeKobo}
             deliveryFeeEstimate={deliveryFeeEstimate}
             deliveryNote={deliveryNote}
             onDeliveryNoteChange={onDeliveryNoteChange}

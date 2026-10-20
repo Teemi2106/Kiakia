@@ -52,3 +52,15 @@ export async function loginAsVendor(page: Page, email: string, password: string)
   // holds a vendor role, setting active mode to vendor along the way.
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
 }
+
+/**
+ * Signs in an account that holds an admin/superadmin platform role. Admins use
+ * the ordinary customer sign-in form (platform roles are not a session mode),
+ * then open /admin, whose layout gates on requireAdminContext().
+ */
+export async function loginAsAdmin(page: Page, email: string, password: string): Promise<void> {
+  await loginAs(page, email, password);
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/admin/);
+  await expect(page.getByRole("heading").first()).toBeVisible();
+}

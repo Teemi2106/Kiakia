@@ -61,15 +61,14 @@ interface OrderForPayment {
  */
 async function initializePaymentForOrder(session: SessionLike, order: OrderForPayment): Promise<string> {
   const supabase = await createClient();
-  const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", session.userId).maybeSingle();
-
   const admin = createAdminClient();
 
-  const { data: existingPayment } = await admin
-    .from("payments")
-    .select("status")
-    .eq("idempotency_key", order.code)
-    .maybeSingle();
+  // Two independent reads (the buyer's display name for Monnify, and whether
+  // this order was already captured): one wave, not two.
+  const [{ data: profile }, { data: existingPayment }] = await Promise.all([
+    supabase.from("profiles").select("full_name").eq("id", session.userId).maybeSingle(),
+    admin.from("payments").select("status").eq("idempotency_key", order.code).maybeSingle(),
+  ]);
 
   if (existingPayment?.status === "success") {
     // Already captured — most likely the webhook landed between the
@@ -153,7 +152,6 @@ export async function placeOrderAction(
   formData: FormData,
 ): Promise<CheckoutFormState> {
   const session = await verifySession();
-  await requireActiveAccount();
 
   // Mirror of requireVendorContext()'s gate on the vendor side: this is a
   // customer money-moving action, reachable by direct POST regardless of
@@ -182,34 +180,46 @@ export async function placeOrderAction(
   }
   const contactPhone = contactPhoneResult.data;
 
+  const deliveryNote = (formData.get("deliveryNote") as string | null) || null;
+  const savedAddressId = formData.get("addressId") as string | null;
+
+  // One wave of reads, with the account-status gate riding in it: the gate
+  // (requireActiveAccount, a profiles read) and the data this action needs
+  // (current phone, the chosen saved address, the open cart) do not depend on
+  // each other. Nothing is WRITTEN until the gate has passed: if it redirects,
+  // Promise.all rejects and every write below is skipped.
+  const [, { data: currentProfile }, savedAddress, { data: cart }] = await Promise.all([
+    requireActiveAccount(),
+    supabase.from("profiles").select("phone").eq("id", session.userId).maybeSingle(),
+    savedAddressId
+      ? supabase
+          .from("addresses")
+          .select("line1, landmark, city, state, location")
+          .eq("id", savedAddressId)
+          .eq("customer_id", session.userId)
+          .maybeSingle()
+      : Promise.resolve(null),
+    supabase.from("carts").select("id").eq("customer_id", session.userId).eq("status", "open").maybeSingle(),
+  ]);
+
+  let deliveryLocationWkt: string;
+  let deliveryAddress: DeliveryAddressJson;
+  // Writes that do not feed place_order(): run beside it, not before it.
+  const sideWrites: PromiseLike<unknown>[] = [];
+
   // Saved for subsequent orders — only writes when it actually changed, so
   // this never touches updated_at (and any trigger keyed off it) on every
   // single checkout. "update own profile" (0007_rls.sql) permits this: the
   // authenticated customer updating their own row.
-  const { data: currentProfile } = await supabase
-    .from("profiles")
-    .select("phone")
-    .eq("id", session.userId)
-    .maybeSingle();
   if (currentProfile?.phone !== contactPhone) {
-    await supabase.from("profiles").update({ phone: contactPhone }).eq("id", session.userId);
+    sideWrites.push(supabase.from("profiles").update({ phone: contactPhone }).eq("id", session.userId));
   }
 
-  const deliveryNote = (formData.get("deliveryNote") as string | null) || null;
-  const savedAddressId = formData.get("addressId") as string | null;
-
-  let deliveryLocationWkt: string;
-  let deliveryAddress: DeliveryAddressJson;
-
   if (savedAddressId) {
-    const { data: address } = await supabase
-      .from("addresses")
-      .select("line1, landmark, city, state, location")
-      .eq("id", savedAddressId)
-      .eq("customer_id", session.userId)
-      .maybeSingle();
+    const address = savedAddress?.data;
 
     if (!address) {
+      await Promise.all(sideWrites);
       return { error: "That address could not be found. Please choose or add another." };
     }
 
@@ -229,6 +239,7 @@ export async function placeOrderAction(
     const lng = formData.get("lng") as string | null;
 
     if (!line1 || !lat || !lng) {
+      await Promise.all(sideWrites);
       return { error: "Add a delivery address, or share your location, before checking out." };
     }
 
@@ -237,35 +248,34 @@ export async function placeOrderAction(
 
     const shouldSave = formData.get("saveAddress") === "on";
     if (shouldSave) {
-      await supabase.from("addresses").insert({
-        customer_id: session.userId,
-        label: (formData.get("label") as string | null) || "Home",
-        line1,
-        landmark,
-        city,
-        state,
-        location: deliveryLocationWkt,
-      });
+      sideWrites.push(
+        supabase.from("addresses").insert({
+          customer_id: session.userId,
+          label: (formData.get("label") as string | null) || "Home",
+          line1,
+          landmark,
+          city,
+          state,
+          location: deliveryLocationWkt,
+        }),
+      );
     }
   }
 
-  const { data: cart } = await supabase
-    .from("carts")
-    .select("id")
-    .eq("customer_id", session.userId)
-    .eq("status", "open")
-    .maybeSingle();
-
   if (!cart) {
+    await Promise.all(sideWrites);
     return { error: "Your cart is empty." };
   }
 
-  const { data: order, error: placeError } = await supabase.rpc("place_order", {
-    p_cart_id: cart.id,
-    p_delivery_address: deliveryAddress as unknown as Json,
-    p_delivery_location: deliveryLocationWkt,
-    p_delivery_note: deliveryNote,
-  });
+  const [{ data: order, error: placeError }] = await Promise.all([
+    supabase.rpc("place_order", {
+      p_cart_id: cart.id,
+      p_delivery_address: deliveryAddress as unknown as Json,
+      p_delivery_location: deliveryLocationWkt,
+      p_delivery_note: deliveryNote,
+    }),
+    ...sideWrites,
+  ]);
 
   if (placeError || !order) {
     if (placeError?.message.includes("outside every active service area")) {

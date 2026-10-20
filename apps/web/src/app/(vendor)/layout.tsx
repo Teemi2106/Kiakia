@@ -14,8 +14,11 @@ export default async function VendorLayout({
   // "logged in". See requireVendorContext() for why holding the role alone
   // isn't enough (a customer who also owns a store must not land here just
   // by typing the URL).
-  await requireVendorContext("/home");
-  const vendor = await getVendorForCurrentUser();
+  //
+  // The vendor lookup is an independent read (the caller's own membership, via
+  // RLS), so it runs beside the gate instead of after it. If the gate redirects,
+  // the lookup's result is simply never used.
+  const [, vendor] = await Promise.all([requireVendorContext("/home"), getVendorForCurrentUser()]);
 
   return (
     <div className="flex flex-1 overflow-x-hidden max-w-full">

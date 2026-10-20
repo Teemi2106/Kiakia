@@ -1,4 +1,8 @@
+"use client";
+
+import { useCallback, useOptimistic, useState, useTransition } from "react";
 import { advanceOrderAction } from "@/app/actions/orders";
+import { ActionToast } from "@/app/_components/ActionToast";
 import type { OrderStatus } from "@kiakia/db";
 import { Button } from "@kiakia/ui";
 
@@ -7,48 +11,69 @@ import { Button } from "@kiakia/ui";
  * state machine (§10) — only the edges a *vendor* actor can trigger.
  * `ready_for_pickup` onward needs a rider (dispatch, Phase 3), so there's
  * nothing for the vendor to do there but wait.
+ *
+ * A click moves the panel to the next step immediately and runs the Server
+ * Action (transition_order(), which is the real authorization and state-machine
+ * check) behind it. If the action fails the panel returns to where it was and a
+ * toast says so; on success the action's revalidation delivers the fresh page.
  */
 export function VendorOrderActions({ orderId, status }: { orderId: string; status: OrderStatus }) {
-  if (status === "placed") {
-    return (
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const dismiss = useCallback(() => setError(null), []);
+  const [shownStatus, setShownStatus] = useOptimistic<OrderStatus, OrderStatus>(status, (_current, next) => next);
+
+  function advance(next: OrderStatus) {
+    setError(null);
+    startTransition(async () => {
+      setShownStatus(next);
+      try {
+        await advanceOrderAction(orderId, next);
+      } catch {
+        setError("Couldn't update that order. It has been put back as it was.");
+      }
+    });
+  }
+
+  let body: React.ReactNode = null;
+
+  if (shownStatus === "placed") {
+    body = (
       <div className="flex gap-2">
-        <form action={advanceOrderAction.bind(null, orderId, "accepted")} className="flex-1">
-          <Button type="submit" className="w-full">
-            Accept Order
-          </Button>
-        </form>
-        <form action={advanceOrderAction.bind(null, orderId, "rejected_by_vendor")} className="flex-1">
-          <Button type="submit" variant="secondary" className="w-full">
-            Reject
-          </Button>
-        </form>
+        <Button type="button" className="w-full flex-1" disabled={isPending} onClick={() => advance("accepted")}>
+          Accept Order
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full flex-1"
+          disabled={isPending}
+          onClick={() => advance("rejected_by_vendor")}
+        >
+          Reject
+        </Button>
       </div>
     );
-  }
-
-  if (status === "accepted") {
-    return (
-      <form action={advanceOrderAction.bind(null, orderId, "preparing")}>
-        <Button type="submit" className="w-full">
-          Start Preparing
-        </Button>
-      </form>
+  } else if (shownStatus === "accepted") {
+    body = (
+      <Button type="button" className="w-full" disabled={isPending} onClick={() => advance("preparing")}>
+        Start Preparing
+      </Button>
     );
-  }
-
-  if (status === "preparing") {
-    return (
-      <form action={advanceOrderAction.bind(null, orderId, "ready_for_pickup")}>
-        <Button type="submit" className="w-full">
-          Mark Ready for Pickup
-        </Button>
-      </form>
+  } else if (shownStatus === "preparing") {
+    body = (
+      <Button type="button" className="w-full" disabled={isPending} onClick={() => advance("ready_for_pickup")}>
+        Mark Ready for Pickup
+      </Button>
     );
+  } else if (shownStatus === "ready_for_pickup") {
+    body = <p className="text-center text-xs text-ink-muted">Waiting for a rider to be assigned…</p>;
   }
 
-  if (status === "ready_for_pickup") {
-    return <p className="text-center text-xs text-ink-muted">Waiting for a rider to be assigned…</p>;
-  }
-
-  return null;
+  return (
+    <>
+      {body}
+      <ActionToast message={error} onDismiss={dismiss} />
+    </>
+  );
 }

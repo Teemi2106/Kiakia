@@ -75,6 +75,37 @@ export const setVendorCommissionSchema = z.object({
   reason: requiredReason,
 });
 
+/**
+ * Platform-wide fees stored in platform_settings (0092). Entered as a
+ * percentage, stored as basis points. The ceilings mirror
+ * admin_set_platform_fee(): service fee 20%, default commission 50%.
+ */
+export const PLATFORM_FEE_KEYS = ["service_fee_bps", "default_vendor_commission_bps"] as const;
+export type PlatformFeeKey = (typeof PLATFORM_FEE_KEYS)[number];
+
+export const PLATFORM_FEE_MAX_BPS: Record<PlatformFeeKey, number> = {
+  service_fee_bps: 2000,
+  default_vendor_commission_bps: 5000,
+};
+
+const PLATFORM_FEE_NAMES: Record<PlatformFeeKey, string> = {
+  service_fee_bps: "The service fee",
+  default_vendor_commission_bps: "The default commission",
+};
+
+export const setPlatformFeeSchema = z
+  .object({
+    key: z.enum(PLATFORM_FEE_KEYS, { message: "Unknown fee" }),
+    valueBps: commissionPercentSchema,
+    reason: requiredReason,
+  })
+  .superRefine((value, ctx) => {
+    const max = PLATFORM_FEE_MAX_BPS[value.key];
+    if (value.valueBps > max) {
+      ctx.addIssue({ code: "custom", path: ["valueBps"], message: `${PLATFORM_FEE_NAMES[value.key]} cannot exceed ${max / 100}%` });
+    }
+  });
+
 export const updateServiceAreaSchema = z.object({
   serviceAreaId: uuidSchema,
   baseDeliveryFeeKobo: feeNairaSchema("Base delivery fee"),

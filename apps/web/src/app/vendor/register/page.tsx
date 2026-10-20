@@ -32,7 +32,7 @@ export default function VendorRegisterPage() {
         subheading:
           "Join the kitchens and shops delivering speed, freshness and reliability to hungry customers every day.",
         panel: <VendorPitchCard />,
-        footnote: "Applications are reviewed quickly — most kitchens are live within a day.",
+        footnote: "Every store is reviewed by the KiaKia team before customers can see it. You can follow its status on your dashboard.",
       }}
       title="Partner with KiaKia"
       subtitle="Create your account first — you'll add your store details and menu next."

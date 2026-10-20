@@ -30,6 +30,15 @@ const staticSecurityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Lets a second `next dev` (e.g. the throwaway full-cycle e2e server, see
+  // e2e/README.md) run beside a developer's own without fighting over
+  // `.next/dev/lock`. Unset in every normal run, so behaviour is unchanged.
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
+  // The e2e build skips Next's own type-check pass: `pnpm typecheck` already
+  // covers it, and it type-checks every `.next/dev/types` file, including ones
+  // a concurrently running developer `next dev` is rewriting mid-build.
+  ...(process.env.NEXT_E2E_SKIP_TYPECHECK === "1" ? { typescript: { ignoreBuildErrors: true } } : {}),
+
   // Raw-TS workspace packages, no build step per §6's monorepo layout.
   transpilePackages: ["@kiakia/domain", "@kiakia/db", "@kiakia/ui"],
 

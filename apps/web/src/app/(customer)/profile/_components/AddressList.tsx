@@ -3,7 +3,8 @@
 import { Button, EmptyState, Input } from "@kiakia/ui";
 import { LocateFixed, MapPin, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useOptimistic, useState, useTransition } from "react";
+import { ActionToast } from "@/app/_components/ActionToast";
 import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,22 +18,82 @@ interface Address {
   readonly is_default: boolean;
 }
 
+interface NewAddress {
+  readonly label: string;
+  readonly line1: string;
+  readonly landmark: string;
+  readonly city: string;
+  readonly state: string;
+  readonly coords: { lat: number; lng: number };
+}
+
+type AddressChange = { type: "add"; address: Address } | { type: "remove"; id: string };
+
 export function AddressList({ addresses }: { addresses: readonly Address[] }) {
   const router = useRouter();
+  const userId = useCustomerStore((s) => s.userId);
   const [adding, setAdding] = useState(false);
-  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<NewAddress | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const dismiss = useCallback(() => setError(null), []);
+  const [, startTransition] = useTransition();
 
-  async function remove(id: string) {
-    setRemovingId(id);
-    const supabase = createClient();
-    await supabase.from("addresses").delete().eq("id", id);
-    router.refresh();
-    setRemovingId(null);
+  // Both writes show their result at once and settle behind it: useOptimistic
+  // falls back to the server's list when the transition ends (after the refresh
+  // below), so a failed write puts the list back by itself and the toast says why.
+  const [shown, applyChange] = useOptimistic(addresses, (current, change: AddressChange) =>
+    change.type === "add" ? [...current, change.address] : current.filter((address) => address.id !== change.id),
+  );
+
+  function remove(id: string) {
+    setError(null);
+    startTransition(async () => {
+      applyChange({ type: "remove", id });
+      const { error: deleteError } = await createClient().from("addresses").delete().eq("id", id);
+      if (deleteError) setError("Couldn't remove that address. It has been put back.");
+      router.refresh();
+    });
+  }
+
+  function add(values: NewAddress) {
+    setError(null);
+    setDraft(null);
+    setAdding(false);
+    startTransition(async () => {
+      applyChange({
+        type: "add",
+        address: {
+          id: `pending-${Date.now()}`,
+          label: values.label,
+          line1: values.line1,
+          landmark: values.landmark || null,
+          city: values.city,
+          state: values.state,
+          is_default: addresses.length === 0,
+        },
+      });
+      const { error: insertError } = await createClient().from("addresses").insert({
+        customer_id: userId,
+        label: values.label,
+        line1: values.line1,
+        landmark: values.landmark || null,
+        city: values.city,
+        state: values.state,
+        location: `POINT(${values.coords.lng} ${values.coords.lat})`,
+      });
+      if (insertError) {
+        // Give the form back with what was typed, so nothing has to be re-entered.
+        setDraft(values);
+        setAdding(true);
+        setError("Could not save this address.");
+      }
+      router.refresh();
+    });
   }
 
   return (
     <div className="mt-4 flex flex-col gap-3">
-      {addresses.length === 0 && !adding && (
+      {shown.length === 0 && !adding && (
         <EmptyState
           title="No saved addresses yet"
           description="Add a delivery address so checkout remembers where to send your orders."
@@ -48,7 +109,7 @@ export function AddressList({ addresses }: { addresses: readonly Address[] }) {
         />
       )}
 
-      {addresses.map((address) => (
+      {shown.map((address) => (
         <div
           key={address.id}
           className="flex items-start justify-between gap-3 rounded-2xl border border-[#E5E2E1] bg-white p-4 shadow-sm"
@@ -74,8 +135,8 @@ export function AddressList({ addresses }: { addresses: readonly Address[] }) {
           </div>
           <button
             type="button"
-            disabled={removingId === address.id}
-            onClick={() => void remove(address.id)}
+            disabled={address.id.startsWith("pending-")}
+            onClick={() => remove(address.id)}
             className="shrink-0 rounded-full p-2 text-[#5B403C] transition-colors hover:bg-[#FCF9F8] hover:text-[#BA1A1A] disabled:opacity-40"
             aria-label="Remove address"
           >
@@ -85,15 +146,9 @@ export function AddressList({ addresses }: { addresses: readonly Address[] }) {
       ))}
 
       {adding ? (
-        <NewAddressForm
-          onDone={() => {
-            setAdding(false);
-            router.refresh();
-          }}
-          onCancel={() => setAdding(false)}
-        />
+        <NewAddressForm draft={draft} onSubmit={add} onCancel={() => setAdding(false)} />
       ) : (
-        addresses.length > 0 && (
+        shown.length > 0 && (
           <button
             type="button"
             onClick={() => setAdding(true)}
@@ -104,20 +159,27 @@ export function AddressList({ addresses }: { addresses: readonly Address[] }) {
           </button>
         )
       )}
+      <ActionToast message={error} onDismiss={dismiss} />
     </div>
   );
 }
 
-function NewAddressForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
-  const userId = useCustomerStore((s) => s.userId);
-  const [label, setLabel] = useState("Home");
-  const [line1, setLine1] = useState("");
-  const [landmark, setLandmark] = useState("");
-  const [city, setCity] = useState("Abuja");
-  const [state, setState] = useState("FCT");
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+function NewAddressForm({
+  draft,
+  onSubmit,
+  onCancel,
+}: {
+  draft: NewAddress | null;
+  onSubmit: (values: NewAddress) => void;
+  onCancel: () => void;
+}) {
+  const [label, setLabel] = useState(draft?.label ?? "Home");
+  const [line1, setLine1] = useState(draft?.line1 ?? "");
+  const [landmark, setLandmark] = useState(draft?.landmark ?? "");
+  const [city, setCity] = useState(draft?.city ?? "Abuja");
+  const [state, setState] = useState(draft?.state ?? "FCT");
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(draft?.coords ?? null);
   const [locating, setLocating] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function useMyLocation() {
@@ -135,28 +197,12 @@ function NewAddressForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
     );
   }
 
-  async function save() {
+  function save() {
     if (!line1 || !coords) {
       setError("Add your address and share your location before saving.");
       return;
     }
-    setSaving(true);
-    const { error: insertError } = await createClient().from("addresses").insert({
-      customer_id: userId,
-      label,
-      line1,
-      landmark: landmark || null,
-      city,
-      state,
-      location: `POINT(${coords.lng} ${coords.lat})`,
-    });
-
-    setSaving(false);
-    if (insertError) {
-      setError("Could not save this address.");
-      return;
-    }
-    onDone();
+    onSubmit({ label, line1, landmark, city, state, coords });
   }
 
   return (
@@ -223,8 +269,7 @@ function NewAddressForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
         {error && <p className="font-inter text-xs font-medium text-[#BA1A1A]">{error}</p>}
         <div className="flex gap-2">
           <Button
-            onClick={() => void save()}
-            loading={saving}
+            onClick={save}
             className="flex-1 rounded-xl bg-[#B61913] font-inter text-sm font-semibold text-white hover:bg-[#9A1410]"
           >
             Save address

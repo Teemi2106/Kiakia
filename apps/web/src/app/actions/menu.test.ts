@@ -13,7 +13,10 @@ const state = {
 
 const requireVendorContext = vi.fn((..._args: unknown[]) => Promise.resolve(state.session));
 
-vi.mock("@/lib/auth/dal", () => ({ requireVendorContext: (...args: unknown[]) => requireVendorContext(...args) }));
+vi.mock("@/lib/auth/dal", () => ({
+  requireVendorContext: (...args: unknown[]) => requireVendorContext(...args),
+  verifySession: () => Promise.resolve(state.session),
+}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn(() => Promise.resolve(state.client.current)) }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn(() => state.adminClient.current) }));
 
@@ -188,9 +191,16 @@ describe("deleteMenuItemAction / toggleItemAvailabilityAction (cross-vendor IDOR
     await expect(deleteMenuItemAction(MY_VENDOR, "someone-elses-item")).rejects.toThrow("Menu item not found.");
   });
 
-  it("toggleItemAvailabilityAction refuses an item belonging to a different vendor", async () => {
-    state.adminClient.current = supabaseClientMock({ from: { menu_items: queryBuilder(ok(null)) } });
-    await expect(toggleItemAvailabilityAction(MY_VENDOR, "someone-elses-item", true)).rejects.toThrow("Menu item not found.");
+  it("toggleItemAvailabilityAction refuses an item belonging to a different vendor (the write's own WHERE matches no row)", async () => {
+    const select = vi.fn(() => Promise.resolve(ok([])));
+    const eqVendor = vi.fn(() => ({ select }));
+    const eqId = vi.fn(() => ({ eq: eqVendor }));
+    const update = vi.fn(() => ({ eq: eqId }));
+    state.adminClient.current = { from: vi.fn(() => ({ update })) } as never;
+
+    await expect(toggleItemAvailabilityAction(MY_VENDOR, "someone-elses-item", true)).rejects.toThrow("Could not update this item.");
+    expect(eqId).toHaveBeenCalledWith("id", "someone-elses-item");
+    expect(eqVendor).toHaveBeenCalledWith("vendor_id", MY_VENDOR);
   });
 
   it("deleteMenuItemAction deletes an item the caller's vendor owns", async () => {
@@ -229,22 +239,16 @@ describe("deleteMenuItemAction / toggleItemAvailabilityAction (cross-vendor IDOR
     expect(result.error).toBe("This item has order history and can't be deleted. Mark it unavailable instead.");
   });
 
-  it("toggleItemAvailabilityAction succeeds for an item the caller's vendor owns", async () => {
-    const update = vi.fn(() => ({ eq: vi.fn(() => Promise.resolve(ok(null))) }));
-    let call = 0;
-    state.adminClient.current = {
-      from: vi.fn((table: string) => {
-        expect(table).toBe("menu_items");
-        call += 1;
-        if (call === 1) {
-          return { select: vi.fn(() => ({ eq: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: () => Promise.resolve(ok({ id: "item-1" })) })) })) })) };
-        }
-        return { update };
-      }),
-    } as never;
+  it("toggleItemAvailabilityAction succeeds for an item the caller's vendor owns, in one write scoped to the vendor", async () => {
+    const select = vi.fn(() => Promise.resolve(ok([{ id: "item-1" }])));
+    const eqVendor = vi.fn(() => ({ select }));
+    const eqId = vi.fn(() => ({ eq: eqVendor }));
+    const update = vi.fn(() => ({ eq: eqId }));
+    state.adminClient.current = { from: vi.fn(() => ({ update })) } as never;
 
     await toggleItemAvailabilityAction(MY_VENDOR, "item-1", false);
     expect(update).toHaveBeenCalledWith({ is_available: false });
+    expect(eqVendor).toHaveBeenCalledWith("vendor_id", MY_VENDOR);
   });
 });
 

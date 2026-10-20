@@ -1,4 +1,4 @@
-import { getDashboardMetrics, listPayables } from "@/lib/admin/finance";
+import { getDashboardMetrics, getMoneySummary, listPayables, parseMoneyRange } from "@/lib/admin/finance";
 import { listFlaggedOrders } from "@/lib/admin/flagged";
 import { listOrders, type OrderListItem } from "@/lib/admin/orders";
 import { countVendorsByStatus } from "@/lib/admin/vendors";
@@ -9,7 +9,9 @@ import Link from "next/link";
 import { formatDateTime, humanize, money } from "../_components/format";
 import { ANOMALY_LABELS } from "../_components/labels";
 import { PageHeader } from "../_components/PageHeader";
+import { firstParam, type SearchParams } from "../_components/search-params";
 import { Section } from "../_components/Section";
+import { MoneySection } from "./_components/MoneySection";
 
 export const metadata: Metadata = { title: "Admin overview" };
 
@@ -24,11 +26,13 @@ const PIPELINE_STATUSES = [
   "arrived",
 ] as const;
 
-export default async function AdminOverviewPage() {
+export default async function AdminOverviewPage({ searchParams }: { searchParams: SearchParams }) {
   await requireAdminContext();
+  const range = parseMoneyRange(firstParam((await searchParams).range));
 
-  const [metrics, flagged, readyOrders, arrivedOrders, failedOrders, vendorCounts, owed] = await Promise.all([
+  const [metrics, moneySummary, flagged, readyOrders, arrivedOrders, failedOrders, vendorCounts, owed] = await Promise.all([
     getDashboardMetrics(),
+    getMoneySummary(range),
     listFlaggedOrders({ pageSize: 5 }),
     listOrders({ status: "ready_for_pickup", pageSize: 5 }),
     listOrders({ status: "arrived", pageSize: 5 }),
@@ -66,11 +70,12 @@ export default async function AdminOverviewPage() {
         </ul>
       </Section>
 
+      <MoneySection summary={moneySummary} range={range} />
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Metric label="Delivered, last 24 hours" value={String(metrics.delivered.last_24h.orders)} hint={money(metrics.delivered.last_24h.gmv_kobo)} />
         <Metric label="Delivered, last 7 days" value={String(metrics.delivered.last_7d.orders)} hint={money(metrics.delivered.last_7d.gmv_kobo)} />
         <Metric label="Delivered, last 30 days" value={String(metrics.delivered.last_30d.orders)} hint={money(metrics.delivered.last_30d.gmv_kobo)} />
-        <Metric label="KiaKia earnings, last 30 days" value={money(metrics.platform_revenue_30d_kobo)} />
         <Metric label="Riders online" value={String(metrics.riders.online)} />
         <Metric label="Vendors suspended" value={String(metrics.vendors_suspended)} href="/admin/vendors?status=suspended" />
         <Metric

@@ -2,7 +2,7 @@
 
 import { Button, Input } from "@kiakia/ui";
 import { Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
 import { createClient } from "@/lib/supabase/client";
@@ -21,24 +21,25 @@ export function ProfileInfo({
   const router = useRouter();
   const userId = useCustomerStore((s) => s.userId);
   const [name, setName] = useState(fullName);
-  const [saving, setSaving] = useState(false);
+  const [, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function save() {
-    setSaving(true);
-    setSaved(false);
-    setError(null);
-    // RLS ("update own profile") is what scopes this write to the caller.
-    const { error: updateError } = await createClient().from("profiles").update({ full_name: name }).eq("id", userId);
-    if (updateError) {
-      setError("Couldn't save your name. Please try again.");
-      setSaving(false);
-      return;
-    }
+  // Shows "Saved" at once and settles behind it; if the write fails the button
+  // goes back and the error says so. RLS ("update own profile") is what scopes
+  // the write to the caller.
+  function save() {
     setSaved(true);
-    setSaving(false);
-    router.refresh();
+    setError(null);
+    startTransition(async () => {
+      const { error: updateError } = await createClient().from("profiles").update({ full_name: name }).eq("id", userId);
+      if (updateError) {
+        setSaved(false);
+        setError("Couldn't save your name. Please try again.");
+        return;
+      }
+      router.refresh();
+    });
   }
 
   function onNameChange(value: string) {
@@ -90,8 +91,7 @@ export function ProfileInfo({
         )}
         {error && <p className="font-inter text-xs font-medium text-[#BA1A1A]">{error}</p>}
         <Button
-          onClick={() => void save()}
-          loading={saving}
+          onClick={save}
           className="self-start rounded-xl bg-[#B61913] px-5 font-inter text-sm font-semibold text-white hover:bg-[#9A1410]"
         >
           {saved ? (

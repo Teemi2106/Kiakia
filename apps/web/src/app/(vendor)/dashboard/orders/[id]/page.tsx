@@ -17,36 +17,39 @@ export const metadata: Metadata = { title: "Order detail" };
 type GetOrderTrackingRow = Database["public"]["Functions"]["get_order_tracking"]["Returns"];
 
 export default async function VendorOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const vendor = await getVendorForCurrentUser();
-  if (!vendor) notFound();
-
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: order } = await supabase
-    .from("orders")
-    .select(
-      "id, code, status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, total_kobo, delivery_address, delivery_note, vendor_id, rider_id",
-    )
-    .eq("id", id)
-    .maybeSingle();
-
-  if (!order || order.vendor_id !== vendor.id) notFound();
-
-  const [{ data: items }, { data: rawTrackingRow }] = await Promise.all([
+  // The store lookup, the order and its lines are three independent reads (the
+  // lines are keyed by the order id from the URL and, like the order, are RLS-scoped
+  // to this store's staff), so one wave. The ownership check below still decides
+  // whether any of it is used.
+  const [vendor, { data: order }, { data: items }] = await Promise.all([
+    getVendorForCurrentUser(),
+    supabase
+      .from("orders")
+      .select(
+        "id, code, status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, total_kobo, delivery_address, delivery_note, vendor_id, rider_id",
+      )
+      .eq("id", id)
+      .maybeSingle(),
     supabase
       .from("order_items")
       .select("id, name_snapshot, qty, options_snapshot, line_total_kobo")
-      .eq("order_id", order.id),
-    // get_order_tracking() (0029, extended by 0071 for rider contact info)
-    // is the only way vendor staff can see the assigned rider's name/
-    // phone at all — `profiles`/`riders` are both own-row-only under RLS
-    // (0007_rls.sql), so a direct query for another user's row silently
-    // returns nothing. See that migration's own header.
-    order.rider_id
-      ? supabase.rpc("get_order_tracking", { p_order_id: order.id }).single()
-      : Promise.resolve({ data: null }),
+      .eq("order_id", id),
   ]);
+
+  if (!vendor) notFound();
+  if (!order || order.vendor_id !== vendor.id) notFound();
+
+  // get_order_tracking() (0029, extended by 0071 for rider contact info)
+  // is the only way vendor staff can see the assigned rider's name/
+  // phone at all — `profiles`/`riders` are both own-row-only under RLS
+  // (0007_rls.sql), so a direct query for another user's row silently
+  // returns nothing. See that migration's own header.
+  const { data: rawTrackingRow } = order.rider_id
+    ? await supabase.rpc("get_order_tracking", { p_order_id: order.id }).single()
+    : { data: null };
 
   const trackingRow = rawTrackingRow as GetOrderTrackingRow | null;
 

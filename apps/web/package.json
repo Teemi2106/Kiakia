@@ -9,7 +9,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "e2e:cycle:up": "node e2e/support/stack.mjs up",
+    "e2e:cycle": "node e2e/support/run-cycle.mjs",
+    "e2e:cycle:down": "node e2e/support/stack.mjs down"
   },
   "dependencies": {
     "@kiakia/db": "workspace:*",

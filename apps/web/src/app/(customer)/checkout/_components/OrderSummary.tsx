@@ -13,6 +13,8 @@ interface OrderSummaryProps {
   vendor: Vendor | null;
   items: CartItem[];
   subtotalKobo: number;
+  /** Server-computed from the live admin-set rate; null when it could not be read. */
+  serviceFeeKobo: number | null;
   deliveryFeeEstimate: DeliveryFeeEstimate;
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
@@ -34,6 +36,7 @@ export function OrderSummary({
   vendor,
   items,
   subtotalKobo,
+  serviceFeeKobo,
   deliveryFeeEstimate,
   deliveryNote,
   onDeliveryNoteChange,
@@ -49,7 +52,7 @@ export function OrderSummary({
   // useDeliveryFeeEstimate.ts. place_order() computes the authoritative
   // total server-side regardless of what displays here.
   const deliveryFeeKobo = deliveryFeeEstimate.feeKobo ?? 0;
-  const totalKobo = subtotalKobo + deliveryFeeKobo;
+  const totalKobo = subtotalKobo + deliveryFeeKobo + (serviceFeeKobo ?? 0);
   const isMobile = variant === "mobile";
 
   return (
@@ -153,6 +156,14 @@ export function OrderSummary({
               ) : (
                 formatNaira(koboOf(deliveryFeeKobo))
               )}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-inter text-base text-[#5B403C]">
+              Service fee
+            </span>
+            <span className="font-inter text-base text-[#1C1B1B]">
+              {serviceFeeKobo === null ? "Added at payment" : formatNaira(koboOf(serviceFeeKobo))}
             </span>
           </div>
           <div className="flex justify-between border-t border-[#E5E2E1] pt-4">

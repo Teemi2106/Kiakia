@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireVendorContext } from "@/lib/auth/dal";
+import { requireVendorContext, verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { uploadVendorImage } from "@/lib/storage/vendor-media";
@@ -30,14 +30,20 @@ export interface FormState {
  * which layout rendered the form that normally calls it. See lib/auth/dal.ts.
  */
 async function assertVendorStaff(vendorId: string): Promise<void> {
-  const session = await requireVendorContext();
+  // The context gate (roles, active account, vendor mode) and the membership
+  // lookup are independent reads, so one wave. Both must pass before anything
+  // is written; a failing gate redirects/throws and the lookup result is dropped.
+  const session = await verifySession();
   const supabase = await createClient();
-  const { data: staff } = await supabase
-    .from("vendor_staff")
-    .select("vendor_id")
-    .eq("vendor_id", vendorId)
-    .eq("user_id", session.userId)
-    .maybeSingle();
+  const [, { data: staff }] = await Promise.all([
+    requireVendorContext(),
+    supabase
+      .from("vendor_staff")
+      .select("vendor_id")
+      .eq("vendor_id", vendorId)
+      .eq("user_id", session.userId)
+      .maybeSingle(),
+  ]);
 
   if (!staff) {
     throw new Error("You don't have access to this store.");
@@ -376,7 +382,19 @@ export async function deleteMenuItemAction(vendorId: string, itemId: string): Pr
 export async function toggleItemAvailabilityAction(vendorId: string, itemId: string, isAvailable: boolean): Promise<void> {
   await assertVendorStaff(vendorId);
   const admin = createAdminClient();
-  await assertMenuItemOwnedByVendor(admin, vendorId, itemId);
-  await admin.from("menu_items").update({ is_available: isAvailable }).eq("id", itemId);
-  revalidatePath("/dashboard/menu");
+  // Ownership rides in the write's own WHERE clause (the item must belong to
+  // the vendor the caller was just verified to staff), so this is one round
+  // trip rather than a lookup followed by an update. Zero rows means "not
+  // yours" (or gone) and throws, which the client rolls its optimistic flip
+  // back on.
+  const { data, error } = await admin
+    .from("menu_items")
+    .update({ is_available: isAvailable })
+    .eq("id", itemId)
+    .eq("vendor_id", vendorId)
+    .select("id");
+  if (error || !data || data.length === 0) throw new Error("Could not update this item.");
+  // No revalidatePath: the toggle already shows the new state, and a revalidate
+  // would hold the response for a full re-render of the menu page. The next
+  // visit to the menu fetches fresh data (dynamic pages are not client-cached).
 }

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireFinanceContext } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { field, rpcFailureMessage, type FormState } from "@/lib/admin/action-helpers";
-import { firstIssue, setVendorCommissionSchema, updateServiceAreaSchema } from "@/lib/validation/admin";
+import { firstIssue, setPlatformFeeSchema, setVendorCommissionSchema, updateServiceAreaSchema } from "@/lib/validation/admin";
 
 /**
  * Sets a vendor's commission (entered as a percentage, stored as basis
@@ -68,4 +68,33 @@ export async function updateServiceAreaAction(_prevState: FormState, formData: F
 
   revalidatePath("/admin/settings");
   return { success: true };
+}
+
+/**
+ * Sets a platform-wide fee (service fee, default commission for new vendors),
+ * entered as a percentage and stored as basis points. Applies to orders placed
+ * / vendors created AFTER the change only. Finance-tier like every other fee
+ * edit; the RPC re-checks the actor and the bounds.
+ */
+export async function setPlatformFeeAction(_prevState: FormState, formData: FormData): Promise<FormState> {
+  const session = await requireFinanceContext();
+
+  const parsed = setPlatformFeeSchema.safeParse({
+    key: field(formData, "key"),
+    valueBps: field(formData, "percent"),
+    reason: field(formData, "reason"),
+  });
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
+
+  const { error } = await createAdminClient().rpc("admin_set_platform_fee", {
+    p_key: parsed.data.key,
+    p_value: parsed.data.valueBps,
+    p_reason: parsed.data.reason,
+    p_actor_id: session.userId,
+  });
+  if (error) return { error: rpcFailureMessage(error) };
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/audit");
+  return { success: true, message: "Saved. The new rate applies to new orders from now on." };
 }

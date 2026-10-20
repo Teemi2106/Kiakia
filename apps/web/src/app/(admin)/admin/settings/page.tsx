@@ -1,3 +1,4 @@
+import { getPlatformFees, listRecentFeeChanges } from "@/lib/admin/platform-fees";
 import { listServiceAreas } from "@/lib/admin/settings";
 import { canManageFinance, requireAdminContext } from "@/lib/auth/dal";
 import { Badge, EmptyState } from "@kiakia/ui";
@@ -5,6 +6,7 @@ import type { Metadata } from "next";
 import { formatDateTime, money } from "../../_components/format";
 import { PageHeader } from "../../_components/PageHeader";
 import { Fields, Section } from "../../_components/Section";
+import { PlatformFeesSection } from "./_components/PlatformFeesSection";
 import { ServiceAreaForm } from "./_components/ServiceAreaForm";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -13,15 +15,18 @@ export default async function AdminSettingsPage() {
   await requireAdminContext();
   const financeAccess = await canManageFinance();
 
-  const areas = await listServiceAreas();
+  const [areas, fees, changes] = await Promise.all([listServiceAreas(), getPlatformFees(), listRecentFeeChanges()]);
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
       <PageHeader
         title="Settings"
-        description="Where KiaKia delivers, and what a delivery costs in each area. You can change fees and switch an area on or off. Area boundaries cannot be changed here."
+        description="The fees KiaKia charges, and where it delivers. You can change fees and switch a delivery area on or off. Area boundaries cannot be changed here."
       />
 
+      <PlatformFeesSection fees={fees} changes={changes} canEdit={financeAccess} />
+
+      <div id="delivery-areas" className="flex scroll-mt-4 flex-col gap-6">
       {areas.length === 0 ? (
         <EmptyState title="No delivery areas set up" description="Delivery areas are added by the technical team." />
       ) : (
@@ -55,6 +60,7 @@ export default async function AdminSettingsPage() {
           </Section>
         ))
       )}
+      </div>
     </div>
   );
 }

@@ -34,16 +34,6 @@ export default async function DeliveredPage({ params }: DeliveredPageProps) {
 
   if (!order) notFound();
 
-  // delivery_code lives in its own table now (order_delivery_codes,
-  // supabase/migrations/0022_delivery_code_off_orders.sql), RLS-scoped to
-  // this order's own customer only — never the assigned rider or vendor
-  // staff. For a non-customer session this query naturally returns no row.
-  const { data: deliveryCodeRow } = await supabase
-    .from("order_delivery_codes")
-    .select("code")
-    .eq("order_id", order.id)
-    .maybeSingle();
-
   // Honest fallback: this screen only makes sense once the order has
   // actually reached `delivered` (written only by transition_order() —
   // supabase/migrations/0006_transition_order.sql). It's linked to from the
@@ -68,7 +58,7 @@ export default async function DeliveredPage({ params }: DeliveredPageProps) {
     );
   }
 
-  const [{ count: itemCount }, { data: vendorRow }, { data: rawTrackingRow }, { data: existingRating }] =
+  const [{ count: itemCount }, { data: vendorRow }, { data: rawTrackingRow }, { data: existingRating }, { data: deliveryCodeRow }] =
     await Promise.all([
       supabase
         .from("order_items")
@@ -87,6 +77,9 @@ export default async function DeliveredPage({ params }: DeliveredPageProps) {
       // means this order hasn't been rated yet, which is the common case
       // the popup below exists for.
       supabase.from("order_ratings").select("order_id").eq("order_id", order.id).maybeSingle(),
+      // delivery_code lives in its own table (order_delivery_codes, 0022), RLS-scoped
+      // to this order's own customer only: for anyone else this naturally returns no row.
+      supabase.from("order_delivery_codes").select("code").eq("order_id", order.id).maybeSingle(),
     ]);
 
   const trackingRow = rawTrackingRow as GetOrderTrackingRow | null;

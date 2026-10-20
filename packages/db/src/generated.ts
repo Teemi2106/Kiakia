@@ -955,11 +955,27 @@ export interface Database {
           id: string;
           actor_id: string;
           action: string;
-          target_type: "user" | "vendor" | "rider" | "rider_document" | "order" | "service_area" | "export";
+          target_type: "user" | "vendor" | "rider" | "rider_document" | "order" | "service_area" | "export" | "platform_setting";
           target_id: string;
           reason: string | null;
           details: Json;
           created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // platform_settings (0092_platform_fees.sql) - admin-set platform fees,
+      // one row per key. service_role may SELECT only; the sole writer is
+      // admin_set_platform_fee(). Keys: service_fee_bps, default_vendor_commission_bps.
+      platform_settings: {
+        Row: {
+          key: string;
+          id: string;
+          value_int: number;
+          unit: "bps" | "kobo";
+          updated_at: string;
+          updated_by: string | null;
         };
         Insert: never;
         Update: never;
@@ -1826,6 +1842,28 @@ export interface Database {
         };
         Returns: boolean;
       };
+      // admin_set_platform_fee (0092) - service_role only, finance tier, audited.
+      admin_set_platform_fee: {
+        Args: {
+          p_key: "service_fee_bps" | "default_vendor_commission_bps";
+          p_value: number;
+          p_reason: string;
+          p_actor_id: string;
+        };
+        Returns: {
+          key: string;
+          id: string;
+          value_int: number;
+          unit: "bps" | "kobo";
+          updated_at: string;
+          updated_by: string | null;
+        };
+      };
+      // get_service_fee_bps (0092) - the live customer service fee rate (bps).
+      get_service_fee_bps: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
       admin_set_vendor_commission: {
         Args: {
           p_vendor_id: string;
@@ -1898,6 +1936,14 @@ export interface Database {
       };
       admin_ledger_health: {
         Args: Record<string, never>;
+        Returns: Json;
+      };
+      // jsonb document - typed in apps/web/src/lib/admin/finance.ts (MoneySummary). Hand-typed (0091).
+      admin_money_summary: {
+        Args: {
+          p_from?: string | null;
+          p_to?: string | null;
+        };
         Returns: Json;
       };
       admin_list_balances: {

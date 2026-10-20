@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ActionResponseBuffer } from "./_components/ActionResponseBuffer";
 
 /**
  * Sora (display) + Inter (text) are the two families the Figma screens were
@@ -47,7 +48,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       data-scroll-behavior="smooth"
       className={`${sora.variable} ${inter.variable} ${geistMono.variable}`}
     >
-      <body className="flex min-h-screen flex-col antialiased">{children}</body>
+      <body className="flex min-h-screen flex-col antialiased">
+        <ActionResponseBuffer />
+        {children}
+      </body>
     </html>
   );
 }

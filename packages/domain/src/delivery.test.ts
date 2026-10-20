@@ -17,6 +17,13 @@ describe("computeServiceFee", () => {
   });
 });
 
+describe("computeServiceFee with a live rate", () => {
+  it("uses the supplied bps instead of the seed default", () => {
+    expect(computeServiceFee(koboOf(500_000), 500)).toBe(25_000);
+    expect(computeServiceFee(koboOf(500_000), 0)).toBe(0);
+  });
+});
+
 describe("computeDeliveryFee", () => {
   const base = {
     subtotalKobo: koboOf(1_000_000),

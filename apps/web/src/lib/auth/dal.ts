@@ -138,13 +138,22 @@ export async function requireRole(allowed: readonly Role[], redirectTo = "/"): P
  * either would loop. "/" is the one public page that never redirects a session.
  */
 export async function requireVendorContext(redirectTo = "/home"): Promise<Session> {
-  const session = await requireRole(VENDOR_ROLES, redirectTo);
+  const session = await verifySession();
 
-  if ((await getActiveRole()) !== "vendor") {
+  // Three independent reads (roles and profile status are database round trips,
+  // the active-role cookie is local), so one wave rather than a chain. The
+  // checks below still run in the same order, so which redirect wins is unchanged.
+  const [roles, activeRole, active] = await Promise.all([getRoles(), getActiveRole(), isActiveAccount()]);
+
+  if (!hasRole(roles, ...VENDOR_ROLES)) {
     redirect(redirectTo);
   }
 
-  if (!(await isActiveAccount())) {
+  if (activeRole !== "vendor") {
+    redirect(redirectTo);
+  }
+
+  if (!active) {
     redirect("/");
   }
 
@@ -210,7 +219,11 @@ export async function requireActiveAccount(redirectTo = "/"): Promise<void> {
 export async function requireAdminContext(redirectTo = "/home"): Promise<Session> {
   const session = await verifySession();
 
-  if (!hasRole(await getPlatformRoles(), ...ADMIN_ROLES) || !(await isActiveAccount())) {
+  // Platform roles and profile status are independent database reads: one
+  // wave, not two in a row. Both must pass; neither result is trusted alone.
+  const [platformRoles, active] = await Promise.all([getPlatformRoles(), isActiveAccount()]);
+
+  if (!hasRole(platformRoles, ...ADMIN_ROLES) || !active) {
     redirect(redirectTo);
   }
 
@@ -257,9 +270,19 @@ export const getVendorForCurrentUser = cache(async (): Promise<VendorRow | null>
   const session = await verifySession();
   const supabase = await createClient();
 
-  const { data: staff } = await supabase.from("vendor_staff").select("vendor_id").eq("user_id", session.userId).maybeSingle();
-  if (!staff) return null;
+  // One round trip, not two: an inner join through vendor_staff, filtered to the
+  // caller's own membership row (still read under RLS, "staff read own
+  // membership"). The generated types carry no relationships, so the embed is
+  // untyped here; the row is the plain vendors row plus the join's filter column.
+  const { data } = await supabase
+    .from("vendors")
+    .select("*, vendor_staff!inner(user_id)")
+    .eq("vendor_staff.user_id", session.userId)
+    .maybeSingle();
 
-  const { data: vendor } = await supabase.from("vendors").select("*").eq("id", staff.vendor_id).maybeSingle();
+  if (!data) return null;
+
+  const { vendor_staff: _membership, ...vendor } = data as unknown as VendorRow & { vendor_staff: unknown };
+  void _membership;
   return vendor;
 });

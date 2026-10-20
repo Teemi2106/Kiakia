@@ -18,6 +18,7 @@ coverage
 
 # next.js
 .next/
+.next-e2e/
 out/
 
 # build outputs
@@ -52,3 +53,6 @@ next-env.d.ts
 supabase/.branches
 supabase/.temp
 .claude
+test-results/
+playwright-report/
+.next-perf-*/

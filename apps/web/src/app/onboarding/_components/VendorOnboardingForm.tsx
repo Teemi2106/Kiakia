@@ -94,7 +94,7 @@ export function VendorOnboardingForm() {
         Create my store →
       </Button>
       <p className="text-center text-xs text-ink-muted">
-        Your store goes live immediately — you can start adding menu items right away.
+        We create your store right away, so you can add your menu now. It stays hidden from customers until KiaKia approves it, and it only takes orders once you switch on &ldquo;Accepting orders&rdquo; in Settings. You&apos;ll see the approval status at the top of your dashboard.
       </p>
     </form>
   );

@@ -13,14 +13,14 @@ const VENDOR_STAFF_ROLES = ["vendor_staff", "vendor_manager", "vendor_owner"] as
 type VendorStaffRole = (typeof VENDOR_STAFF_ROLES)[number];
 
 async function assertVendorStaff(vendorId: string): Promise<{ userId: string; role: VendorStaffRole }> {
-  const session = await requireVendorContext();
+  // Context gate and membership lookup are independent reads: one wave. The
+  // gate redirects/throws on failure, so a lookup result is only used once it passed.
+  const session = await verifySession();
   const supabase = await createClient();
-  const { data: staff } = await supabase
-    .from("vendor_staff")
-    .select("role")
-    .eq("vendor_id", vendorId)
-    .eq("user_id", session.userId)
-    .maybeSingle();
+  const [, { data: staff }] = await Promise.all([
+    requireVendorContext(),
+    supabase.from("vendor_staff").select("role").eq("vendor_id", vendorId).eq("user_id", session.userId).maybeSingle(),
+  ]);
 
   if (!staff) throw new Error("You don't have access to this store.");
   return { userId: session.userId, role: staff.role as VendorStaffRole };
@@ -117,18 +117,18 @@ export async function registerVendorAction(_prevState: FormState, formData: Form
  * admin-only/manual-SQL, per §22.
  */
 export async function updateVendorSettingsAction(_prevState: FormState, formData: FormData): Promise<FormState> {
-  const session = await requireVendorContext();
+  const session = await verifySession();
 
   const vendorId = formData.get("vendorId") as string | null;
   if (!vendorId) return { error: "Missing store." };
 
+  // The context gate and the membership lookup are independent reads: one wave.
+  // Nothing is written (or uploaded) until both have passed below.
   const supabase = await createClient();
-  const { data: staff } = await supabase
-    .from("vendor_staff")
-    .select("vendor_id")
-    .eq("vendor_id", vendorId)
-    .eq("user_id", session.userId)
-    .maybeSingle();
+  const [, { data: staff }] = await Promise.all([
+    requireVendorContext(),
+    supabase.from("vendor_staff").select("vendor_id").eq("vendor_id", vendorId).eq("user_id", session.userId).maybeSingle(),
+  ]);
 
   if (!staff) {
     return { error: "You don't have access to this store." };

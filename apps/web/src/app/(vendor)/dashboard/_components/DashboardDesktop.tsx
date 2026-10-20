@@ -1,12 +1,20 @@
 // app/(vendor)/dashboard/_components/DashboardDesktop.tsx
 "use client";
 
+import dynamic from "next/dynamic";
 import { StatsCards } from "./StatsCards";
 import { IncomingOrders } from "./IncomingOrders";
-import { SalesChart } from "./SalesChart";
 import { ChartBar, Inbox } from "lucide-react";
 import Link from "next/link";
 import type { Vendor, Order, SalesDataPoint } from "./types";
+
+// recharts is ~300 KB of JS that only the chart needs; loading it on demand keeps it
+// out of this page's first-load bundle, so the page is interactive before the chart is.
+const SalesChart = dynamic(() => import("./SalesChart").then((m) => m.SalesChart), {
+  ssr: false,
+  loading: () => <div className="h-48 w-full animate-pulse rounded-xl bg-[#F0EDED]" aria-hidden="true" />,
+});
+
 
 interface DashboardDesktopProps {
   vendor: Vendor;

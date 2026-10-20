@@ -32,8 +32,12 @@ const ACCENT_COLOR: Record<string, string> = {
 };
 
 export function OrdersMobile({ orders, onStatusChange }: OrdersMobileProps) {
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  // By id, re-derived from the current list each render, so the open modal
+  // follows an optimistic or refreshed status instead of showing a stale copy
+  // (and closes by itself when the order leaves the list).
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const selectedOrder = orders.find((order) => order.id === selectedId) ?? null;
   const [stage, setStage] = useState<string>("All");
 
   const stages = useMemo(() => {
@@ -49,7 +53,7 @@ export function OrdersMobile({ orders, onStatusChange }: OrdersMobileProps) {
   }, [orders, stage]);
 
   const handleSelectOrder = (order: Order) => {
-    setSelectedOrder(order);
+    setSelectedId(order.id);
     setIsModalOpen(true);
   };
 

@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { verifySession } from "@/lib/auth/dal";
+import { computeServiceFee, koboOf } from "@kiakia/domain";
 import { getCustomerBootstrap } from "@/lib/customer/bootstrap";
 import { createClient } from "@/lib/supabase/server";
 import { CheckoutForm } from "./_components/CheckoutForm";
@@ -28,7 +29,7 @@ export default async function CheckoutPage() {
   // auth.uid() and takes no arguments, so there is nothing to scope here.
   // A failed read is a zero balance, not a broken checkout — the wallet
   // option simply doesn't appear, and card checkout is unaffected.
-  const [{ data: vendor }, { data: addresses }, { data: profile }, { data: walletBalanceKobo }] =
+  const [{ data: vendor }, { data: addresses }, { data: profile }, { data: walletBalanceKobo }, { data: serviceFeeBps }] =
     await Promise.all([
       supabase
         .from("vendors")
@@ -47,9 +48,17 @@ export default async function CheckoutPage() {
       // 0071_order_tracking_rider_contact.sql had to route around RLS for.
       supabase.from("profiles").select("phone").eq("id", session.userId).maybeSingle(),
       supabase.rpc("get_wallet_balance"),
+      // The live admin-set service-fee rate (0092), read per request - never
+      // cached - so the figure shown is the one place_order() is about to
+      // apply. Computed here, not in the client, so UI and server share one
+      // source. If the read fails the fee is shown as unavailable rather than
+      // guessed; place_order() still charges the real amount.
+      supabase.rpc("get_service_fee_bps"),
     ]);
 
   const subtotalKobo = items.reduce((sum, item) => sum + item.line_total_kobo, 0);
+
+  const serviceFeeKobo = typeof serviceFeeBps === "number" ? computeServiceFee(koboOf(subtotalKobo), serviceFeeBps) : null;
 
   // Get the default address or first one
   const defaultAddress =
@@ -62,6 +71,7 @@ export default async function CheckoutPage() {
       addresses={addresses ?? []}
       defaultAddress={defaultAddress}
       subtotalKobo={subtotalKobo}
+      serviceFeeKobo={serviceFeeKobo}
       walletBalanceKobo={walletBalanceKobo ?? 0}
       customerPhone={profile?.phone ?? null}
     />

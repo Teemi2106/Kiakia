@@ -25,6 +25,14 @@ const MAPBOX_ORIGINS = ["https://api.mapbox.com", "https://events.mapbox.com"];
 export function buildContentSecurityPolicy(nonce: string, supabaseHostname: string | null): string {
   const supabaseHttps = supabaseHostname ? `https://${supabaseHostname}` : "";
   const supabaseWss = supabaseHostname ? `wss://${supabaseHostname}` : "";
+  // A local Supabase stack (`supabase start`) serves plain http/ws on a
+  // loopback address, which the https/wss-only sources above silently block:
+  // every browser-side REST call (cart writes) and Realtime subscription fails
+  // with a CSP violation. Loopback is never a deployed origin, so allowing the
+  // cleartext scheme for exactly that host widens nothing in production.
+  const isLoopbackSupabase = supabaseHostname ? /^(127\.0\.0\.1|localhost)(:\d+)?$/.test(supabaseHostname) : false;
+  const supabaseHttp = isLoopbackSupabase ? `http://${supabaseHostname}` : "";
+  const supabaseWs = isLoopbackSupabase ? `ws://${supabaseHostname}` : "";
   // React's dev-mode error-stack reconstruction relies on eval(); the CSP
   // guide calls this out explicitly. Never needed (or allowed) in prod.
   const isDev = process.env.NODE_ENV === "development";
@@ -35,9 +43,9 @@ export function buildContentSecurityPolicy(nonce: string, supabaseHostname: stri
     "style-src": "'self' 'unsafe-inline'", // Tailwind's runtime style injection has no nonce hook yet
     // data:/blob: already cover Mapbox's own raster/sprite image handling —
     // no origin addition needed here.
-    "img-src": `'self' data: blob: ${supabaseHttps}`,
+    "img-src": `'self' data: blob: ${supabaseHttps} ${supabaseHttp}`,
     "font-src": "'self' data:",
-    "connect-src": `'self' ${supabaseHttps} ${supabaseWss} ${MONNIFY_ORIGINS.join(" ")} ${MAPBOX_ORIGINS.join(" ")}`,
+    "connect-src": `'self' ${supabaseHttps} ${supabaseWss} ${supabaseHttp} ${supabaseWs} ${MONNIFY_ORIGINS.join(" ")} ${MAPBOX_ORIGINS.join(" ")}`,
     "frame-src": `'self' ${MONNIFY_ORIGINS.join(" ")}`,
     // mapbox-gl spins up its tile-decoding workers from blob: URLs, not a
     // same-origin script file — without this they're silently blocked and

@@ -27,6 +27,17 @@ describe("buildContentSecurityPolicy", () => {
     }
   });
 
+  it("lets the browser reach a local http/ws Supabase stack, and only on loopback (regression: cart writes + Realtime were CSP-blocked against `supabase start`)", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const local = buildContentSecurityPolicy("test-nonce", "127.0.0.1:54321");
+    expect(local).toContain("connect-src 'self' https://127.0.0.1:54321 wss://127.0.0.1:54321 http://127.0.0.1:54321 ws://127.0.0.1:54321");
+    expect(buildContentSecurityPolicy("test-nonce", "localhost:54321")).toContain("ws://localhost:54321");
+
+    const hosted = buildContentSecurityPolicy("test-nonce", "abcd.supabase.co");
+    expect(hosted).not.toMatch(/http:\/\/|ws:\/\//);
+    expect(buildContentSecurityPolicy("test-nonce", "evil.example.com:80")).not.toMatch(/http:\/\/|ws:\/\//);
+  });
+
   it("omits 'unsafe-eval' in production", () => {
     vi.stubEnv("NODE_ENV", "production");
     const csp = buildContentSecurityPolicy("test-nonce", "abcd.supabase.co");

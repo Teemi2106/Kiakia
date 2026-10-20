@@ -116,7 +116,7 @@ export default async function OrderDetailPage({
   // "vendor staff read their vendor orders" policies), this query
   // naturally returns no row, so `code` below is undefined for them — that
   // is the fix, not an oversight.
-  const [{ data: vendor }, { data: rawItems }, { data: deliveryCodeRow }] = await Promise.all([
+  const [{ data: vendor }, { data: rawItems }, { data: deliveryCodeRow }, { data: menuItemRows }] = await Promise.all([
     supabase
       .from("vendors")
       .select("name, logo_url")
@@ -127,6 +127,9 @@ export default async function OrderDetailPage({
       .select("id, name_snapshot, qty, line_total_kobo, menu_item_id")
       .eq("order_id", orderRow.id),
     supabase.from("order_delivery_codes").select("code").eq("order_id", orderRow.id).maybeSingle(),
+    // The dish photos: this vendor's menu images, joined to the items in JS below.
+    // Fetched beside the items rather than after them (it only needs the vendor).
+    supabase.from("menu_items").select("id, image_url").eq("vendor_id", orderRow.vendor_id).not("image_url", "is", null),
   ]);
 
   // order_items itself has no image column — the item's photo lives on
@@ -137,10 +140,6 @@ export default async function OrderDetailPage({
   // OrderSummaryDetails.tsx used to fall back to the VENDOR's logo for
   // every item's image when this was missing, which is wrong regardless —
   // a vendor's logo is not any specific dish's photo.
-  const menuItemIds = [...new Set((rawItems ?? []).map((item) => item.menu_item_id))];
-  const { data: menuItemRows } = menuItemIds.length
-    ? await supabase.from("menu_items").select("id, image_url").in("id", menuItemIds)
-    : { data: [] as { id: string; image_url: string | null }[] };
   const imageByMenuItemId = new Map((menuItemRows ?? []).map((m) => [m.id, m.image_url]));
 
   const items = (rawItems ?? []).map((item) => ({

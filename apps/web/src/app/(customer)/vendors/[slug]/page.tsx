@@ -64,7 +64,28 @@ export default async function VendorPage({
     operatingHours: parseOperatingHours(vendorRow.opening_hours),
   };
 
-  const [{ data: categoryRows }, { data: itemRows }] = await Promise.all([
+  // The option groups and options are fetched by an inner join up to this
+  // vendor's menu_items rather than by the item/group ids, so they ride in the
+  // same wave as the categories and items. They used to wait behind them, two
+  // more round trips deep. The generated types carry no relationships, so the
+  // embed is untyped and the rows are given their shape here.
+  interface GroupRow {
+    id: string;
+    menu_item_id: string;
+    name: string;
+    min_select: number;
+    max_select: number;
+    is_required: boolean;
+  }
+  interface OptionRow {
+    id: string;
+    group_id: string;
+    name: string;
+    price_delta_kobo: number;
+    is_available: boolean;
+  }
+
+  const [{ data: categoryRows }, { data: itemRows }, groupsResult, optionsResult] = await Promise.all([
     supabase
       .from("menu_categories")
       .select("id, category_key, sort_order, is_active")
@@ -78,25 +99,18 @@ export default async function VendorPage({
       )
       .eq("vendor_id", vendor.id)
       .order("sort_order"),
+    supabase
+      .from("option_groups")
+      .select("id, menu_item_id, name, min_select, max_select, is_required, menu_items!inner(vendor_id)")
+      .eq("menu_items.vendor_id", vendor.id),
+    supabase
+      .from("options")
+      .select("id, group_id, name, price_delta_kobo, is_available, option_groups!inner(menu_items!inner(vendor_id))")
+      .eq("option_groups.menu_items.vendor_id", vendor.id),
   ]);
 
-  const itemIds = (itemRows ?? []).map((item) => item.id);
-
-  const { data: groupRows } = itemIds.length
-    ? await supabase
-        .from("option_groups")
-        .select("id, menu_item_id, name, min_select, max_select, is_required")
-        .in("menu_item_id", itemIds)
-    : { data: [] };
-
-  const groupIds = (groupRows ?? []).map((group) => group.id);
-
-  const { data: optionRows } = groupIds.length
-    ? await supabase
-        .from("options")
-        .select("id, group_id, name, price_delta_kobo, is_available")
-        .in("group_id", groupIds)
-    : { data: [] };
+  const groupRows = (groupsResult.data ?? []) as unknown as GroupRow[];
+  const optionRows = (optionsResult.data ?? []) as unknown as OptionRow[];
 
   function toMenuItem(item: NonNullable<typeof itemRows>[number]): MenuItem {
     return {

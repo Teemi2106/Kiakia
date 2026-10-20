@@ -25,11 +25,16 @@
 
 import { type Kobo, addKobo, applyBps, koboOf, subtractKobo } from "./money";
 
-/** 2% of subtotal. Placeholder pending a real pricing decision — see file header. */
+/**
+ * The SEED default (2% of subtotal) for platform_settings 'service_fee_bps'
+ * (0092). The live rate is admin-configurable and place_order() reads it from
+ * the database; callers that know the live rate must pass it to
+ * computeServiceFee() rather than rely on this constant.
+ */
 export const SERVICE_FEE_BPS = 200;
 
-export function computeServiceFee(subtotalKobo: Kobo): Kobo {
-  return applyBps(subtotalKobo, SERVICE_FEE_BPS);
+export function computeServiceFee(subtotalKobo: Kobo, bps: number = SERVICE_FEE_BPS): Kobo {
+  return applyBps(subtotalKobo, bps);
 }
 
 export interface DeliveryFeeInput {
@@ -50,6 +55,8 @@ export function computeDeliveryFee(input: DeliveryFeeInput): Kobo {
 }
 
 export interface PlacementFeesInput {
+  /** Live service fee in bps; defaults to the seed value SERVICE_FEE_BPS. */
+  readonly serviceFeeBps?: number;
   readonly subtotalKobo: Kobo;
   readonly baseDeliveryFeeKobo: Kobo;
   readonly perKmFeeKobo: Kobo;
@@ -65,7 +72,7 @@ export interface PlacementFees {
 export function computePlacementFees(input: PlacementFeesInput): PlacementFees {
   return {
     deliveryFeeKobo: computeDeliveryFee(input),
-    serviceFeeKobo: computeServiceFee(input.subtotalKobo),
+    serviceFeeKobo: computeServiceFee(input.subtotalKobo, input.serviceFeeBps),
   };
 }
 

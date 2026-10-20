@@ -12,7 +12,10 @@ const state = {
 const requireVendorContext = vi.fn((..._args: unknown[]) =>
   Promise.resolve({ userId: "u1", email: null, phone: null }),
 );
-vi.mock("@/lib/auth/dal", () => ({ requireVendorContext: (...args: unknown[]) => requireVendorContext(...args) }));
+vi.mock("@/lib/auth/dal", () => ({
+  requireVendorContext: (...args: unknown[]) => requireVendorContext(...args),
+  verifySession: () => Promise.resolve({ userId: "u1", email: null, phone: null }),
+}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn(() => Promise.resolve(state.client.current)) }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn(() => state.adminClient.current) }));
 

@@ -222,6 +222,7 @@ describe("placeOrderAction", () => {
         payments: {
           select: vi.fn(() => queryBuilder(ok(null))),
           upsert: vi.fn(() => queryBuilder({ data: null, error: { message: "constraint violation" } })),
+          update: vi.fn(() => queryBuilder(ok(null))),
         } as never,
       },
     });

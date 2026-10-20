@@ -34,55 +34,45 @@ export default async function VendorEarningsPage() {
   const supabase = await createClient();
   const admin = createAdminClient();
 
-  const { data: accounts, error: accountsError } = await admin
-    .from("accounts")
-    .select("id, kind")
-    .eq("owner_type", "vendor")
-    .eq("owner_id", vendor.id);
+  // The accounts lookup and the derived pending figure are independent (no
+  // vendor-scoped `pending_payout` account is ever created, see
+  // lib/vendor-escrow.ts's header - pending is derived from live orders), so
+  // they go out together; the balances and the ledger page both need the
+  // account ids and then go out together too. Four round trips in a row before.
+  const [accountsResult, pendingKobo] = await Promise.all([
+    admin.from("accounts").select("id, kind").eq("owner_type", "vendor").eq("owner_id", vendor.id),
+    computeVendorPendingEscrowKobo(supabase, admin, vendor.id, vendor.commission_bps),
+  ]);
 
-  if (accountsError) {
-    throw new Error(accountsError.message);
+  if (accountsResult.error) {
+    throw new Error(accountsResult.error.message);
   }
 
-  const accountIds = (accounts ?? []).map((a) => a.id);
+  const accounts = accountsResult.data ?? [];
+  const accountIds = accounts.map((a) => a.id);
 
-  const { data: balances, error: balancesError } = accountIds.length
-    ? await admin
-        .from("account_balances")
-        .select("account_id, balance_kobo")
-        .in("account_id", accountIds)
-    : { data: [], error: null };
+  const [balancesResult, payoutsResult] = accountIds.length
+    ? await Promise.all([
+        admin.from("account_balances").select("account_id, balance_kobo").in("account_id", accountIds),
+        admin
+          .from("ledger_entries")
+          .select("id, amount_kobo, direction, entry_type, created_at")
+          .in("account_id", accountIds)
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ])
+    : [{ data: [], error: null }, { data: [], error: null }];
 
-  if (balancesError) {
-    throw new Error(balancesError.message);
+  if (balancesResult.error) {
+    throw new Error(balancesResult.error.message);
+  }
+  if (payoutsResult.error) {
+    throw new Error(payoutsResult.error.message);
   }
 
-  const available =
-    (accounts ?? []).find((a) => a.kind === "available") &&
-    (balances ?? []).find(
-      (b) =>
-        b.account_id ===
-        (accounts ?? []).find((a) => a.kind === "available")?.id,
-    );
-
-  const availableKobo = available?.balance_kobo ?? 0;
-  // No vendor-scoped `pending_payout` account is ever created (see
-  // lib/vendor-escrow.ts's header) — derived from live orders instead of a
-  // ledger balance that's always zero.
-  const pendingKobo = await computeVendorPendingEscrowKobo(supabase, admin, vendor.id, vendor.commission_bps);
-
-  const { data: realPayouts, error: payoutsError } = accountIds.length
-    ? await admin
-        .from("ledger_entries")
-        .select("id, amount_kobo, direction, entry_type, created_at")
-        .in("account_id", accountIds)
-        .order("created_at", { ascending: false })
-        .limit(50)
-    : { data: [], error: null };
-
-  if (payoutsError) {
-    throw new Error(payoutsError.message);
-  }
+  const availableAccountId = accounts.find((a) => a.kind === "available")?.id;
+  const availableKobo = (balancesResult.data ?? []).find((b) => b.account_id === availableAccountId)?.balance_kobo ?? 0;
+  const realPayouts = payoutsResult.data;
 
   const payouts = realPayouts || [];
 

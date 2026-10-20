@@ -18,6 +18,8 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  // The full-cycle spec needs its own throwaway stack: `pnpm --filter web e2e:cycle`.
+  testIgnore: "**/cycle/**",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

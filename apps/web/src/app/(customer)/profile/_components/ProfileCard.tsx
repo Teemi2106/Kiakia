@@ -4,7 +4,6 @@
 import { Camera, User, Star, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState, useTransition, type ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
 import { updateAvatarAction } from "@/app/actions/profile";
 
 interface ProfileCardProps {
@@ -27,7 +26,6 @@ export function ProfileCard({
   variant = "desktop",
 }: ProfileCardProps) {
   const isMobile = variant === "mobile";
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +54,8 @@ export function ProfileCard({
         setError(result.error);
         return;
       }
-      router.refresh();
+      // No router.refresh(): updateAvatarAction revalidates /profile, so the fresh
+      // page arrives in the action's own response.
     });
   }
 
