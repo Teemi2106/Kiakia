@@ -24,7 +24,14 @@ export interface Page<T> {
   readonly total: number;
   readonly page: number;
   readonly pageSize: number;
+  /** Set by loaders that fetch one extra row; when present it beats `total` for "is there a next page". */
+  readonly hasNext?: boolean;
+  /** True when `total` is a planner estimate (large tables), so it should be shown as "about N". */
+  readonly approximateTotal?: boolean;
 }
+
+/** Above this an "estimated" count is the planner's guess rather than an exact count. */
+export const ESTIMATE_THRESHOLD = 1000;
 
 export function pageWindow(params: PageParams): { page: number; pageSize: number; from: number; to: number } {
   const page = Number.isInteger(params.page) && params.page! >= 1 ? params.page! : 1;

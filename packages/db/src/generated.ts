@@ -955,7 +955,7 @@ export interface Database {
           id: string;
           actor_id: string;
           action: string;
-          target_type: "user" | "vendor" | "rider" | "rider_document" | "order" | "service_area";
+          target_type: "user" | "vendor" | "rider" | "rider_document" | "order" | "service_area" | "export";
           target_id: string;
           reason: string | null;
           details: Json;
@@ -1916,6 +1916,176 @@ export interface Database {
           bank_account_name: string | null;
           bank_account_number: string | null;
           total_count: number;
+        }[];
+      };
+      // customer_bootstrap (0089_customer_read_performance.sql) - hand-authored.
+      // SECURITY INVOKER read, authenticated only. cart is null when the caller has no open cart.
+      customer_bootstrap: {
+        Args: Record<string, never>;
+        Returns: {
+          cart: {
+            id: string;
+            vendor_id: string | null;
+            vendor_name: string | null;
+            items: {
+              id: string;
+              menu_item_id: string;
+              menu_item_image_url: string | null;
+              name_snapshot: string;
+              unit_price_kobo: number;
+              qty: number;
+              options_snapshot: Json;
+              line_total_kobo: number;
+            }[];
+          } | null;
+          unread_notifications: number;
+          default_address: { label: string | null; line1: string } | null;
+        };
+      };
+      // admin_list_users (0087_admin_read_scalability.sql) - hand-authored.
+      admin_list_users: {
+        Args: {
+          p_q?: string | null;
+          p_status?: "active" | "suspended" | "deleted" | null;
+          p_role?: "rider" | "vendor_staff" | "vendor_manager" | "vendor_owner" | "admin" | "superadmin" | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: {
+          id: string;
+          full_name: string | null;
+          phone: string | null;
+          status: "active" | "suspended" | "deleted";
+          created_at: string;
+          roles: Role[];
+          total_count: number;
+        }[];
+      };
+      // admin_list_customers / admin_list_riders / admin_rider_state_counts / admin_list_payables (0090_admin_directory_and_payables.sql) - hand-authored.
+      admin_list_customers: {
+        Args: {
+          p_q?: string | null;
+          p_status?: "active" | "suspended" | "deleted" | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: {
+          id: string;
+          full_name: string | null;
+          phone: string | null;
+          status: "active" | "suspended" | "deleted";
+          created_at: string;
+          order_count: number;
+          wallet_balance_kobo: number;
+          total_count: number;
+        }[];
+      };
+      admin_list_riders: {
+        Args: {
+          p_q?: string | null;
+          p_state?: "pending" | "active" | "rejected" | "suspended" | "deleted" | null;
+          p_availability?: "online" | "offline" | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: {
+          user_id: string;
+          full_name: string | null;
+          phone: string | null;
+          vehicle_type: string | null;
+          plate_number: string | null;
+          kyc_status: "pending" | "approved" | "rejected";
+          state: "pending" | "active" | "rejected" | "suspended" | "deleted";
+          is_online: boolean;
+          rating_avg: number;
+          rating_count: number;
+          last_ping_at: string | null;
+          documents_pending: number;
+          created_at: string;
+          total_count: number;
+        }[];
+      };
+      admin_rider_state_counts: {
+        Args: Record<PropertyKey, never>;
+        Returns: { state: "pending" | "active" | "rejected" | "suspended" | "deleted"; total: number }[];
+      };
+      admin_list_payables: {
+        Args: { p_limit?: number; p_offset?: number };
+        Returns: {
+          owner_type: "vendor" | "rider";
+          owner_id: string;
+          display_name: string | null;
+          balance_kobo: number;
+          disbursed_kobo: number;
+          bank_name: string | null;
+          bank_account_name: string | null;
+          bank_account_number: string | null;
+          total_count: number;
+          total_owed_kobo: number;
+        }[];
+      };
+      // admin_log_export / admin_export_orders_page / admin_export_ledger_page (0088_admin_exports.sql) - hand-authored.
+      admin_log_export: {
+        Args: {
+          p_actor_id: string;
+          p_kind: "orders" | "ledger";
+          p_filters: Json;
+        };
+        /** The new admin_audit_log.target_id for this export. */
+        Returns: string;
+      };
+      admin_export_orders_page: {
+        Args: {
+          p_actor_id: string;
+          p_from: string;
+          p_to: string;
+          p_status?: OrderStatus | null;
+          p_vendor_id?: string | null;
+          p_after_created_at?: string | null;
+          p_after_id?: string | null;
+          p_limit?: number;
+        };
+        Returns: {
+          id: string;
+          code: string;
+          created_at: string;
+          status: OrderStatus;
+          payment_status: "pending" | "paid" | "failed" | "refunded";
+          vendor_id: string;
+          vendor_name: string;
+          customer_id: string;
+          rider_id: string | null;
+          subtotal_kobo: number;
+          delivery_fee_kobo: number;
+          service_fee_kobo: number;
+          discount_kobo: number;
+          total_kobo: number;
+          placed_at: string | null;
+          delivered_at: string | null;
+        }[];
+      };
+      admin_export_ledger_page: {
+        Args: {
+          p_actor_id: string;
+          p_from: string;
+          p_to: string;
+          p_after_created_at?: string | null;
+          p_after_id?: string | null;
+          p_limit?: number;
+        };
+        Returns: {
+          id: string;
+          created_at: string;
+          transaction_id: string;
+          transaction_reference: string;
+          transaction_kind: string;
+          entry_type: string;
+          account_owner_type: string;
+          account_kind: string;
+          account_owner_id: string | null;
+          direction: "debit" | "credit";
+          amount_kobo: number;
+          order_code: string | null;
         }[];
       };
     };

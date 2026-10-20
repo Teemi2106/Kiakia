@@ -19,11 +19,11 @@ export default async function AdminSettingsPage() {
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
       <PageHeader
         title="Settings"
-        description="Delivery fees and activation for each service area. Area boundaries are not editable here."
+        description="Where KiaKia delivers, and what a delivery costs in each area. You can change fees and switch an area on or off. Area boundaries cannot be changed here."
       />
 
       {areas.length === 0 ? (
-        <EmptyState title="No service areas" />
+        <EmptyState title="No delivery areas set up" description="Delivery areas are added by the technical team." />
       ) : (
         areas.map((area) => (
           <Section
@@ -42,14 +42,14 @@ export default async function AdminSettingsPage() {
               <>
                 <Fields
                   items={[
-                    { label: "Base delivery fee", value: money(area.baseDeliveryFeeKobo) },
-                    { label: "Delivery fee per km", value: money(area.perKmFeeKobo) },
-                    { label: "Rider base fee", value: money(area.riderBaseFeeKobo) },
-                    { label: "Rider fee per km", value: money(area.riderPerKmFeeKobo) },
+                    { label: "Customer pays: base delivery fee", value: money(area.baseDeliveryFeeKobo) },
+                    { label: "Customer pays: fee per km", value: money(area.perKmFeeKobo) },
+                    { label: "Rider earns: base fee", value: money(area.riderBaseFeeKobo) },
+                    { label: "Rider earns: fee per km", value: money(area.riderPerKmFeeKobo) },
                     { label: "Status", value: area.isActive ? "Active" : "Inactive" },
                   ]}
                 />
-                <p className="mt-3 text-sm text-ink-muted">Changing fees or activation needs finance access.</p>
+                <p className="mt-3 text-sm text-ink-muted">Only finance admins and superadmins can change fees or switch an area on or off. Ask one of them.</p>
               </>
             )}
           </Section>

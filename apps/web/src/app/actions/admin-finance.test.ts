@@ -48,7 +48,7 @@ describe("recordPayoutAction", () => {
 
   it("converts naira to integer kobo exactly once", async () => {
     const rpc = useClient({ admin_record_payout: ok({}) });
-    expect(await recordPayoutAction({}, formData(base))).toEqual({ success: true });
+    expect(await recordPayoutAction({}, formData(base))).toEqual({ success: true, message: "Recorded. ₦1,234.50 is now marked as paid." });
     expect(rpc).toHaveBeenCalledWith("admin_record_payout", {
       p_owner_type: "vendor",
       p_owner_id: VENDOR_ID,
@@ -86,12 +86,26 @@ describe("recordPayoutAction", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it("surfaces the overdraw and reference-reuse messages written for admins", async () => {
+  it("says an overdraw in naira, never kobo, and tells the admin what to do", async () => {
     useClient({ admin_record_payout: fail("admin_record_payout: vendor available balance is 60000 kobo, cannot pay out 60001 kobo", "23514") });
-    expect((await recordPayoutAction({}, formData(base))).error).toBe("vendor available balance is 60000 kobo, cannot pay out 60001 kobo");
+    const { error } = await recordPayoutAction({}, formData(base));
+    expect(error).toBe("Only ₦600.00 is owed to this vendor now, so ₦600.01 is too much. Refresh the page and check the amount.");
+    expect(error).not.toMatch(/kobo/i);
+  });
 
+  it("explains a reused bank reference in plain words", async () => {
     useClient({ admin_record_payout: fail("admin_record_payout: reference BANK-REF_001 was already used for a different payout", "23505") });
-    expect((await recordPayoutAction({}, formData(base))).error).toBe("That bank reference was already used for a different payout.");
+    const { error } = await recordPayoutAction({}, formData(base));
+    expect(error).toContain("already been used for a different payment");
+    expect(error).toContain("payment history");
+  });
+
+  it("is safe to submit twice: the RPC returns the same payout for a repeated reference, and both calls succeed", async () => {
+    const rpc = useClient({ admin_record_payout: ok({ id: "tx-1" }) });
+    expect((await recordPayoutAction({}, formData(base))).success).toBe(true);
+    expect((await recordPayoutAction({}, formData(base))).success).toBe(true);
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc.mock.calls[0]).toEqual(rpc.mock.calls[1]);
   });
 });
 

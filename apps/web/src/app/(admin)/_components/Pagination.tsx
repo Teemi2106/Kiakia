@@ -7,6 +7,8 @@ export function Pagination({
   page,
   pageSize,
   total,
+  hasNext,
+  approximateTotal,
 }: {
   basePath: string;
   /** Active filters, carried across page links. */
@@ -14,8 +16,13 @@ export function Pagination({
   page: number;
   pageSize: number;
   total: number;
+  /** When the loader knows (it fetched one extra row), this decides "Next" instead of the total. */
+  hasNext?: boolean;
+  /** The total is a planner estimate: render "about N". */
+  approximateTotal?: boolean;
 }) {
   const lastPage = Math.max(1, Math.ceil(total / pageSize));
+  const canGoNext = hasNext ?? page < lastPage;
   if (total === 0) return null;
 
   const href = (target: number) => {
@@ -32,7 +39,7 @@ export function Pagination({
   return (
     <nav aria-label="Pagination" className="flex items-center justify-between gap-3 text-sm text-ink-muted">
       <span>
-        Page {page} of {lastPage} · {total} total
+        Page {page} of {approximateTotal ? `about ${lastPage}` : lastPage} · {approximateTotal ? `about ${total}` : total} total
       </span>
       <div className="flex gap-2">
         {page > 1 ? (
@@ -44,7 +51,7 @@ export function Pagination({
             Previous
           </span>
         )}
-        {page < lastPage ? (
+        {canGoNext ? (
           <Link href={href(page + 1)} className={linkClass}>
             Next
           </Link>

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireAdminContext } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadProfiles, loadVendorNames, unwrap, type AdminClient, type ProfileSummary } from "./lookups";
-import { emptyPage, optionalDate, optionalUuid, pageWindow, searchTerm, type Page, type PageParams } from "./query";
+import { emptyPage, ESTIMATE_THRESHOLD, optionalDate, optionalUuid, pageWindow, searchTerm, type Page, type PageParams } from "./query";
 
 export interface OrderListFilters extends PageParams {
   /** Matches the order code. */
@@ -47,9 +47,10 @@ export async function listOrders(filters: OrderListFilters = {}): Promise<Page<O
 
   let query = admin
     .from("orders")
-    .select("id, code, status, payment_status, total_kobo, created_at, vendor_id, customer_id, rider_id", { count: "exact" })
+    .select("id, code, status, payment_status, total_kobo, created_at, vendor_id, customer_id, rider_id", { count: "estimated" })
     .order("created_at", { ascending: false })
-    .range(from, to);
+    // One row past the page tells us whether a next page exists without trusting the estimated count.
+    .range(from, to + 1);
 
   if (term) query = query.ilike("code", `%${term}%`);
   if (parsed.status) query = query.eq("status", parsed.status);
@@ -59,15 +60,17 @@ export async function listOrders(filters: OrderListFilters = {}): Promise<Page<O
 
   const { data, error, count } = await query;
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) return { ...emptyPage<OrderListItem>(filters), total: count ?? 0 };
+  if (!data || data.length === 0) return { ...emptyPage<OrderListItem>(filters), total: count ?? 0, hasNext: false };
+  const hasNext = data.length > pageSize;
+  const pageRows = data.slice(0, pageSize);
 
   const [vendors, customers] = await Promise.all([
-    loadVendorNames(admin, data.map((order) => order.vendor_id)),
-    loadProfiles(admin, data.map((order) => order.customer_id)),
+    loadVendorNames(admin, pageRows.map((order) => order.vendor_id)),
+    loadProfiles(admin, pageRows.map((order) => order.customer_id)),
   ]);
 
   return {
-    rows: data.map((order) => ({
+    rows: pageRows.map((order) => ({
       id: order.id,
       code: order.code,
       status: order.status,
@@ -80,9 +83,11 @@ export async function listOrders(filters: OrderListFilters = {}): Promise<Page<O
       customerName: customers.get(order.customer_id)?.fullName ?? null,
       riderId: order.rider_id,
     })),
-    total: count ?? data.length,
+    total: count ?? pageRows.length,
     page,
     pageSize,
+    hasNext,
+    approximateTotal: (count ?? 0) > ESTIMATE_THRESHOLD,
   };
 }
 

@@ -3,6 +3,14 @@ import { OrderStatusBadge } from "@kiakia/ui";
 import { formatDateTime, humanize } from "../../../../_components/format";
 import { JsonView } from "../../../../_components/JsonView";
 
+const ACTOR_LABELS: Record<string, string> = {
+  customer: "the customer",
+  vendor: "the store",
+  rider: "the rider",
+  system: "KiaKia (automatic)",
+  admin: "an admin",
+};
+
 export function OrderTimeline({ events }: { events: readonly OrderEventView[] }) {
   return (
     <ol className="flex flex-col gap-4 border-l border-border pl-4">
@@ -14,7 +22,7 @@ export function OrderTimeline({ events }: { events: readonly OrderEventView[] })
             {event.fromStatus && <span className="text-xs text-ink-muted">from {humanize(event.fromStatus)}</span>}
           </div>
           <p className="mt-1 text-xs text-ink-muted">
-            {formatDateTime(event.at)} · {humanize(event.actorType)}
+            {formatDateTime(event.at)} · by {ACTOR_LABELS[event.actorType] ?? humanize(event.actorType)}
           </p>
           <div className="mt-1">
             <JsonView value={event.meta} />

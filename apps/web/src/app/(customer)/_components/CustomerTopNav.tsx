@@ -5,11 +5,10 @@ import { ArrowLeftRight, ChevronRight, MapPin, Search, ShoppingCart, User } from
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { cn } from "@kiakia/ui";
-import { useCart } from "../cart/_components/CartProvider";
+import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
+import { selectItemCount } from "@/lib/customer/store";
 import { switchToVendorAction } from "@/app/actions/session";
-import { createClient } from "@/lib/supabase/client";
 import { NotificationsButton } from "@/app/_components/NotificationsButton";
 
 // Text-only on desktop; the icon versions of these live in CustomerBottomNav,
@@ -25,60 +24,12 @@ interface CustomerTopNavProps {
 }
 
 /**
- * Default delivery address, read-only display for the top nav. Fetched
- * client-side (browser Supabase client, RLS-scoped) rather than threaded
- * through the server layout — same "read-only, cacheable" case
- * lib/supabase/client.ts calls out, and keeps this change contained to this
- * component instead of touching (customer)/layout.tsx.
- */
-function useDefaultAddressLabel() {
-  const [label, setLabel] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const supabase = createClient();
-
-    async function loadDefaultAddress() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        if (!cancelled) setLoaded(true);
-        return;
-      }
-
-      const { data } = await supabase
-        .from("addresses")
-        .select("label, line1")
-        .eq("customer_id", user.id)
-        .order("is_default", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (!cancelled) {
-        setLabel(data ? data.label || data.line1 : null);
-        setLoaded(true);
-      }
-    }
-
-    void loadDefaultAddress();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return { label, loaded };
-}
-
-/**
  * Two layouts, one breakpoint: below `lg` the bar stacks into a 56px identity
  * row over an 84px address+search row; at `lg` and up it is a single 72px
  * row. Those heights are fixed on purpose — the bar is
- * `fixed`, so (customer)/layout.tsx offsets <main> by exactly them. Anything
- * that can change this bar's height (the address line, in particular) has to
- * reserve its space even while it is still loading, or every customer page
- * jumps once the address resolves.
+ * `fixed`, so (customer)/layout.tsx offsets <main> by exactly them. The
+ * address label comes from the layout's server read via the customer store,
+ * so it is there on first paint and the bar never changes height.
  *
  * `lg` rather than `sm` because CustomerBottomNav disappears at the same
  * breakpoint: a tablet gets the stacked bar *and* the tab bar, instead of
@@ -86,8 +37,9 @@ function useDefaultAddressLabel() {
  */
 export function CustomerTopNav({ canSwitchToVendor = false }: CustomerTopNavProps) {
   const pathname = usePathname();
-  const { openCart, itemCount } = useCart();
-  const { label: defaultAddressLabel, loaded: addressLoaded } = useDefaultAddressLabel();
+  const itemCount = useCustomerStore(selectItemCount);
+  const setCartOpen = useCustomerStore((s) => s.setCartOpen);
+  const defaultAddressLabel = useCustomerStore((s) => s.addressLabel);
 
   return (
     <nav className="fixed inset-x-0 top-0 z-40 border-b border-kk-line/50 bg-kk-cream/85 backdrop-blur-xl">
@@ -104,11 +56,7 @@ export function CustomerTopNav({ canSwitchToVendor = false }: CustomerTopNavProp
           />
         </Link>
 
-        <AddressPill
-          className="ml-1 hidden xl:flex"
-          label={defaultAddressLabel}
-          loaded={addressLoaded}
-        />
+        <AddressPill className="ml-1 hidden xl:flex" label={defaultAddressLabel} />
 
         {/* Search lives inline on desktop; below lg it moves to its own row. */}
         <form action="/home" method="GET" className="hidden min-w-0 flex-1 lg:block">
@@ -155,7 +103,7 @@ export function CustomerTopNav({ canSwitchToVendor = false }: CustomerTopNavProp
 
           <button
             type="button"
-            onClick={openCart}
+            onClick={() => setCartOpen(true)}
             className="relative rounded-full p-2.5 text-kk-cocoa transition-colors hover:bg-black/5 hover:text-kk-ink"
             aria-label={`Cart${itemCount > 0 ? `, ${itemCount} ${itemCount === 1 ? "item" : "items"}` : ""}`}
           >
@@ -181,7 +129,7 @@ export function CustomerTopNav({ canSwitchToVendor = false }: CustomerTopNavProp
 
       {/* -------------------------------------- address + search row */}
       <div className="flex h-21 flex-col justify-center gap-2 px-4 sm:px-6 lg:hidden">
-        <AddressPill label={defaultAddressLabel} loaded={addressLoaded} compact />
+        <AddressPill label={defaultAddressLabel} compact />
         <form action="/home" method="GET">
           <SearchField placeholder="What are you craving?" />
         </form>
@@ -204,35 +152,15 @@ function SearchField({ placeholder }: { placeholder: string }) {
   );
 }
 
-/**
- * Renders a fixed-height skeleton rather than nothing while the address is
- * still loading — this sits inside the bar whose height the page layout is
- * hard-offset against.
- */
 function AddressPill({
   label,
-  loaded,
   compact,
   className,
 }: {
   label: string | null;
-  loaded: boolean;
   compact?: boolean;
   className?: string;
 }) {
-  if (!loaded) {
-    return (
-      <span
-        className={cn(
-          "h-4 w-40 animate-pulse rounded-full bg-kk-line/50",
-          compact ? "block" : "shrink-0",
-          className,
-        )}
-        aria-hidden="true"
-      />
-    );
-  }
-
   if (compact) {
     return (
       <Link href="/profile/addresses" className="flex items-center gap-1.5">

@@ -4,6 +4,7 @@ import { Button, Input } from "@kiakia/ui";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
 import { createClient } from "@/lib/supabase/client";
 
 export function ProfileInfo({
@@ -18,6 +19,7 @@ export function ProfileInfo({
   memberSince: string | null | undefined;
 }) {
   const router = useRouter();
+  const userId = useCustomerStore((s) => s.userId);
   const [name, setName] = useState(fullName);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -27,16 +29,8 @@ export function ProfileInfo({
     setSaving(true);
     setSaved(false);
     setError(null);
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setError("You're signed out — sign in again to save changes.");
-      setSaving(false);
-      return;
-    }
-    const { error: updateError } = await supabase.from("profiles").update({ full_name: name }).eq("id", user.id);
+    // RLS ("update own profile") is what scopes this write to the caller.
+    const { error: updateError } = await createClient().from("profiles").update({ full_name: name }).eq("id", userId);
     if (updateError) {
       setError("Couldn't save your name. Please try again.");
       setSaving(false);

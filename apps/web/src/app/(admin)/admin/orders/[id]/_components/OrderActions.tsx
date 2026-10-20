@@ -31,24 +31,24 @@ export function OrderActions({ detail, assignableRiders }: { detail: OrderDetail
       {canReassignRider && <RiderDispatch orderId={order.id} hasRider={order.rider_id !== null} riders={assignableRiders} />}
 
       {canRefund && (
-        <Section title="Refund escrow">
+        <Section title="Refund customer">
           <p className="mb-3 text-sm text-ink-muted">
-            Reverses the captured payment while it is still held in escrow. A wallet refund is instant; a gateway refund
-            also asks Monnify to send the money back to the customer&apos;s card or bank.
+            Gives the customer all their money back while it is still held until delivery. This moves money and cannot be undone.
+            A wallet refund is instant. A card or bank refund also asks Monnify to send the money back.
           </p>
           <AdminActionForm
             action={refundOrderEscrowAction}
-            submitLabel="Refund order"
+            submitLabel="Refund customer"
             variant="danger"
             reason={{ required: true }}
-            confirmLabel="I confirm this order should be refunded in full."
+            confirmLabel="I confirm the customer should be refunded in full."
             warningErrors={GATEWAY_WARNINGS}
           >
             <input type="hidden" name="orderId" value={order.id} />
-            <Field label="Refund to" htmlFor="refund-destination">
+            <Field label="Send the refund to" htmlFor="refund-destination">
               <Select id="refund-destination" name="destination" defaultValue="wallet">
-                <option value="wallet">Customer wallet (instant)</option>
-                <option value="gateway">Original payment method (Monnify)</option>
+                <option value="wallet">Their KiaKia wallet (instant)</option>
+                <option value="gateway">Their original card or bank (through Monnify)</option>
               </Select>
             </Field>
           </AdminActionForm>
@@ -56,13 +56,13 @@ export function OrderActions({ detail, assignableRiders }: { detail: OrderDetail
       )}
 
       {canRetryGatewayRefund && (
-        <Section title="Retry gateway refund">
+        <Section title="Retry card refund">
           <p className="mb-3 text-sm text-ink-muted">
-            The ledger refund went to the gateway, but no refund request has been recorded with Monnify.
+            The customer was refunded in the money records, but no refund request reached Monnify, so the money has not gone back to their card or bank yet. Retrying sends that request.
           </p>
           <AdminActionForm
             action={requestGatewayRefundAction}
-            submitLabel="Retry gateway refund"
+            submitLabel="Retry card refund"
             reason={{}}
             confirmLabel="I confirm the customer has not already been refunded outside KiaKia."
             warningErrors={GATEWAY_WARNINGS}
@@ -75,8 +75,8 @@ export function OrderActions({ detail, assignableRiders }: { detail: OrderDetail
       {canResetCode && (
         <Section title="Delivery code">
           <p className="mb-3 text-sm text-ink-muted">
-            Clears the failed-attempt lockout so the rider can try the customer&apos;s code again. Use it after confirming
-            with the customer.
+            The rider entered the customer&apos;s delivery code wrongly too many times and is locked out. This lets them try
+            again. It does not move money. Use it after confirming with the customer.
           </p>
           <ConfirmedAction
             action={resetDeliveryCodeAttemptsAction.bind(null, order.id)}

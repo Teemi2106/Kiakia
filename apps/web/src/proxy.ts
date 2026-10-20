@@ -108,10 +108,14 @@ export async function proxy(request: NextRequest) {
       },
     );
 
+    // getClaims() verifies the JWT locally (cached signing keys) and still
+    // refreshes an expired session, so the gate costs no Auth round trip.
+    // It is only the optimistic redirect: verifySession() in the DAL checks
+    // the token again, and the DB-backed account checks guard what matters.
     let user = null;
     try {
-      const { data } = await supabase.auth.getUser();
-      user = data.user;
+      const { data } = await supabase.auth.getClaims();
+      user = data?.claims ?? null;
     } catch (authError) {
       console.warn(
         "Auth check failed:",

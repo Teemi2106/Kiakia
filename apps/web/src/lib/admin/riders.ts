@@ -7,14 +7,20 @@ import { toBankDetails, type BankDetails } from "./bank";
 import { loadOwnerBalance, loadRecentPayouts, type OwnerBalance, type PayoutRecord } from "./finance";
 import { loadProfiles, unwrap, type ProfileSummary } from "./lookups";
 import { loadRecentOrders, type RecentOrderView } from "./orders";
+import { loadRecentRiderRatings, type RiderRatingView } from "./ratings";
 import { pageWindow, type Page, type PageParams } from "./query";
 
 /** Private storage bucket holding rider KYC uploads (0052). */
 const KYC_BUCKET = "rider-kyc";
 const SIGNED_URL_TTL_SECONDS = 300;
 
+export type RiderState = "pending" | "active" | "rejected" | "suspended" | "deleted";
+
 export interface RiderListFilters extends PageParams {
-  readonly kycStatus?: string;
+  /** Matches name, phone or plate number. */
+  readonly q?: string;
+  /** Approval state: pending, active, rejected or suspended; anything else is no filter. */
+  readonly state?: string;
   /** "online" or "offline"; anything else is no filter. */
   readonly availability?: string;
 }
@@ -26,6 +32,8 @@ export interface RiderListItem {
   readonly vehicleType: string | null;
   readonly plateNumber: string | null;
   readonly kycStatus: RiderRow["kyc_status"];
+  /** Suspended and deleted accounts outrank the KYC decision. */
+  readonly state: RiderState;
   readonly isOnline: boolean;
   readonly ratingAvg: number;
   readonly ratingCount: number;
@@ -36,60 +44,56 @@ export interface RiderListItem {
 }
 
 const filterSchema = z.object({
-  kycStatus: z.enum(["pending", "approved", "rejected"]).optional().catch(undefined),
+  state: z.enum(["pending", "active", "rejected", "suspended"]).optional().catch(undefined),
   availability: z.enum(["online", "offline"]).optional().catch(undefined),
 });
 
 export async function listRiders(filters: RiderListFilters = {}): Promise<Page<RiderListItem>> {
   await requireAdminContext();
-  const admin = createAdminClient();
-  const { page, pageSize, from, to } = pageWindow(filters);
+  const { page, pageSize, from } = pageWindow(filters);
   const parsed = filterSchema.parse(filters);
+  const term = filters.q?.trim().slice(0, 64) || null;
 
-  let query = admin
-    .from("riders")
-    .select("user_id, vehicle_type, plate_number, kyc_status, is_online, rating_avg, rating_count, last_ping_at, created_at", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (parsed.kycStatus) query = query.eq("kyc_status", parsed.kycStatus);
-  if (parsed.availability) query = query.eq("is_online", parsed.availability === "online");
-
-  const { data, error, count } = await query;
-  if (error) throw new Error(error.message);
-  const riders = data ?? [];
-  const riderIds = riders.map((rider) => rider.user_id);
-
-  const [profiles, pendingDocuments] = await Promise.all([
-    loadProfiles(admin, riderIds),
-    riderIds.length
-      ? admin.from("rider_documents").select("rider_id").eq("status", "pending").in("rider_id", riderIds)
-      : null,
-  ]);
-  const pendingByRider = new Map<string, number>();
-  for (const document of (pendingDocuments ? unwrap(pendingDocuments) : null) ?? []) {
-    pendingByRider.set(document.rider_id, (pendingByRider.get(document.rider_id) ?? 0) + 1);
-  }
+  const rows =
+    unwrap(
+      await createAdminClient().rpc("admin_list_riders", {
+        p_q: term,
+        p_state: parsed.state ?? null,
+        p_availability: parsed.availability ?? null,
+        p_limit: pageSize,
+        p_offset: from,
+      }),
+    ) ?? [];
 
   return {
-    rows: riders.map((rider) => ({
+    rows: rows.map((rider) => ({
       userId: rider.user_id,
-      fullName: profiles.get(rider.user_id)?.fullName ?? null,
-      phone: profiles.get(rider.user_id)?.phone ?? null,
+      fullName: rider.full_name,
+      phone: rider.phone,
       vehicleType: rider.vehicle_type,
       plateNumber: rider.plate_number,
       kycStatus: rider.kyc_status,
+      state: rider.state,
       isOnline: rider.is_online,
       ratingAvg: rider.rating_avg,
       ratingCount: rider.rating_count,
       lastPingAt: rider.last_ping_at,
-      documentsPending: pendingByRider.get(rider.user_id) ?? 0,
+      documentsPending: rider.documents_pending,
       createdAt: rider.created_at,
     })),
-    total: count ?? 0,
+    total: rows[0]?.total_count ?? 0,
     page,
     pageSize,
   };
+}
+
+/** Riders per state, for the Riders page tabs; a state nobody is in is 0. */
+export async function countRidersByState(): Promise<Record<RiderState, number>> {
+  await requireAdminContext();
+  const rows = unwrap(await createAdminClient().rpc("admin_rider_state_counts")) ?? [];
+  const counts: Record<RiderState, number> = { pending: 0, active: 0, rejected: 0, suspended: 0, deleted: 0 };
+  for (const row of rows) counts[row.state] = row.total;
+  return counts;
 }
 
 export interface RiderDocumentView {
@@ -115,6 +119,8 @@ export interface RiderDetail {
   readonly recentPayouts: readonly PayoutRecord[];
   /** Newest first, last 20 orders assigned to this rider. */
   readonly recentDeliveries: readonly RecentOrderView[];
+  /** Newest first, last 20 ratings customers left for this rider. */
+  readonly recentRatings: readonly RiderRatingView[];
 }
 
 export async function getRiderDetail(riderId: string): Promise<RiderDetail | null> {
@@ -130,12 +136,13 @@ export async function getRiderDetail(riderId: string): Promise<RiderDetail | nul
     await canManageFinance(),
   );
 
-  const [documentRows, profiles, balance, recentPayouts, recentDeliveries] = await Promise.all([
+  const [documentRows, profiles, balance, recentPayouts, recentDeliveries, recentRatings] = await Promise.all([
     admin.from("rider_documents").select("id, doc_type, storage_path, status, review_note, updated_at").eq("rider_id", riderId).order("doc_type"),
     loadProfiles(admin, [riderId]),
     loadOwnerBalance(admin, "rider", riderId),
     loadRecentPayouts(admin, "rider", riderId),
     loadRecentOrders(admin, "rider_id", riderId),
+    loadRecentRiderRatings(admin, riderId),
   ]);
 
   const documents = unwrap(documentRows) ?? [];
@@ -167,5 +174,6 @@ export async function getRiderDetail(riderId: string): Promise<RiderDetail | nul
     balance,
     recentPayouts,
     recentDeliveries,
+    recentRatings,
   };
 }

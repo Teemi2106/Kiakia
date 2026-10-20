@@ -3,10 +3,10 @@ import type { Json } from "@kiakia/db";
 import { z } from "zod";
 import { requireAdminContext } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { loadProfiles } from "./lookups";
+import { loadOrderCodes, loadProfiles, loadVendorNames } from "./lookups";
 import { emptyPage, optionalUuid, pageWindow, type Page, type PageParams } from "./query";
 
-export const AUDIT_TARGET_TYPES = ["user", "vendor", "rider", "rider_document", "order", "service_area"] as const;
+export const AUDIT_TARGET_TYPES = ["user", "vendor", "rider", "rider_document", "order", "service_area", "export"] as const;
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
 
 export interface AuditLogFilters extends PageParams {
@@ -24,6 +24,8 @@ export interface AuditLogItem {
   readonly action: string;
   readonly targetType: AuditTargetType;
   readonly targetId: string;
+  /** Who or what the action was done to (a person, store or order code); null for anything without a name. */
+  readonly targetName: string | null;
   readonly reason: string | null;
   /** Before/after values and other context the RPC recorded. */
   readonly details: Json;
@@ -62,19 +64,28 @@ export async function listAuditLog(filters: AuditLogFilters = {}): Promise<Page<
   if (error) throw new Error(error.message);
   if (!data || data.length === 0) return { ...emptyPage<AuditLogItem>(filters), total: count ?? 0 };
 
-  const actors = await loadProfiles(
-    admin,
-    data.map((entry) => entry.actor_id),
-  );
+  const idsOf = (...types: AuditTargetType[]) => data.filter((entry) => types.includes(entry.target_type)).map((entry) => entry.target_id);
+  const [people, vendors, orders] = await Promise.all([
+    loadProfiles(admin, [...data.map((entry) => entry.actor_id), ...idsOf("user", "rider")]),
+    loadVendorNames(admin, idsOf("vendor")),
+    loadOrderCodes(admin, idsOf("order")),
+  ]);
+  const targetNameOf = (type: AuditTargetType, id: string): string | null => {
+    if (type === "user" || type === "rider") return people.get(id)?.fullName ?? null;
+    if (type === "vendor") return vendors.get(id) ?? null;
+    if (type === "order") return orders.get(id) ?? null;
+    return null;
+  };
 
   return {
     rows: data.map((entry) => ({
       id: entry.id,
       actorId: entry.actor_id,
-      actorName: actors.get(entry.actor_id)?.fullName ?? null,
+      actorName: people.get(entry.actor_id)?.fullName ?? null,
       action: entry.action,
       targetType: entry.target_type,
       targetId: entry.target_id,
+      targetName: targetNameOf(entry.target_type, entry.target_id),
       reason: entry.reason,
       details: entry.details,
       createdAt: entry.created_at,

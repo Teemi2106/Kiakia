@@ -13,7 +13,7 @@ export function fail(message: string, code?: string): QueryResult<never> {
   return { data: null, error: { message, code } };
 }
 
-const CHAIN_METHODS = ["select", "eq", "neq", "is", "in", "order", "limit", "gt", "lt", "not", "or", "match"] as const;
+const CHAIN_METHODS = ["select", "eq", "neq", "is", "in", "order", "limit", "gt", "lt", "not", "or", "match", "range"] as const;
 
 /**
  * A stand-in for a Supabase PostgrestFilterBuilder. Every filter/modifier
@@ -44,7 +44,7 @@ export interface SupabaseMockOptions {
   /**
    * Extra/overriding `auth.*` method mocks (signUp, signInWithPassword,
    * resetPasswordForEmail, updateUser, signOut, ...) — merged over the
-   * default `getUser`. Each not explicitly given here throws when called,
+   * default `getUser`/`getClaims`. Each not explicitly given here throws when called,
    * same "no silent undefined" rule as `from`/`rpc`.
    */
   auth?: Record<string, ReturnType<typeof vi.fn>>;
@@ -61,7 +61,7 @@ export interface SupabaseClientMock {
   rpc: ReturnType<typeof vi.fn>;
   // Indexed so call sites can reference any auth.* method (signUp,
   // signInWithPassword, resetPasswordForEmail, ...) without a cast.
-  auth: { getUser: ReturnType<typeof vi.fn> } & Record<string, ReturnType<typeof vi.fn>>;
+  auth: { getUser: ReturnType<typeof vi.fn>; getClaims: ReturnType<typeof vi.fn> } & Record<string, ReturnType<typeof vi.fn>>;
 }
 
 export function supabaseClientMock(opts: SupabaseMockOptions = {}): SupabaseClientMock {
@@ -82,6 +82,16 @@ export function supabaseClientMock(opts: SupabaseMockOptions = {}): SupabaseClie
           opts.authUser
             ? { data: { user: opts.authUser }, error: null }
             : { data: { user: null }, error: { message: "not authenticated" } },
+        ),
+      ),
+      getClaims: vi.fn(() =>
+        Promise.resolve(
+          opts.authUser
+            ? {
+                data: { claims: { sub: opts.authUser.id, email: opts.authUser.email, phone: opts.authUser.phone } },
+                error: null,
+              }
+            : { data: null, error: { message: "not authenticated" } },
         ),
       ),
       ...opts.auth,

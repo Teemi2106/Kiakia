@@ -8,35 +8,35 @@ export function LedgerHealthPanel({ health }: { health: LedgerHealth }) {
   const unbalanced = health.unbalanced_transactions;
   const checks = [
     {
-      label: "Every transaction balances",
+      label: "Every payment is recorded on both sides",
       ok: unbalanced.count === 0,
-      detail: unbalanced.count === 0 ? "No unbalanced transactions." : `${unbalanced.count} unbalanced transaction(s).`,
+      detail: unbalanced.count === 0 ? "No payment is missing its other side." : `${unbalanced.count} payment(s) are missing their other side. Ask a developer to look.`,
     },
     {
-      label: "Total debits equal total credits",
+      label: "Both sides of the books match",
       ok: health.totals.difference_kobo === 0,
-      detail: `Debits ${money(health.totals.debit_kobo)}, credits ${money(health.totals.credit_kobo)}, difference ${money(health.totals.difference_kobo)}.`,
+      detail: `One side totals ${money(health.totals.debit_kobo)} and the other ${money(health.totals.credit_kobo)}. Difference: ${money(health.totals.difference_kobo)}.`,
     },
     {
-      label: "Escrow matches held orders",
+      label: "Money held until delivery matches the orders waiting",
       ok: health.escrow.drift_kobo === 0,
-      detail: `Held ${money(health.escrow.actual_kobo)}, expected ${money(health.escrow.expected_kobo)}, drift ${money(health.escrow.drift_kobo)}.`,
+      detail: `Held ${money(health.escrow.actual_kobo)}, expected ${money(health.escrow.expected_kobo)}, difference ${money(health.escrow.drift_kobo)}.`,
     },
     {
-      label: "No negative balances",
+      label: "Nobody has a negative balance",
       ok: health.negative_accounts.length === 0,
       detail:
         health.negative_accounts.length === 0
-          ? "No account is below zero."
-          : `${health.negative_accounts.length} account(s) below zero.`,
+          ? "Everyone's balance is zero or more."
+          : `${health.negative_accounts.length} balance(s) are below zero. Ask a developer to look.`,
     },
   ];
   const healthy = checks.every((check) => check.ok);
 
   return (
     <Section
-      title="Ledger health"
-      aside={<Badge tone={healthy ? "positive" : "danger"}>{healthy ? "All checks passing" : "Needs attention"}</Badge>}
+      title="Do the money records add up?"
+      aside={<Badge tone={healthy ? "positive" : "danger"}>{healthy ? "Everything adds up" : "Needs attention"}</Badge>}
     >
       <ul className="flex flex-col divide-y divide-border">
         {checks.map((check) => (
@@ -45,16 +45,16 @@ export function LedgerHealthPanel({ health }: { health: LedgerHealth }) {
               <p className="font-medium text-ink">{check.label}</p>
               <p className="text-ink-muted">{check.detail}</p>
             </div>
-            <Badge tone={check.ok ? "positive" : "danger"}>{check.ok ? "OK" : "Alert"}</Badge>
+            <Badge tone={check.ok ? "positive" : "danger"}>{check.ok ? "OK" : "Check"}</Badge>
           </li>
         ))}
       </ul>
 
       {unbalanced.sample.length > 0 && (
-        <Detail title="Unbalanced transactions (sample)">
+        <Detail title="Payments missing their other side (examples)">
           {unbalanced.sample.map((transaction) => (
             <li key={transaction.transaction_id}>
-              <span className="font-mono text-xs">{transaction.reference}</span>: debit {money(transaction.debit_kobo)}, credit{" "}
+              <span className="font-mono text-xs">{transaction.reference}</span>: one side {money(transaction.debit_kobo)}, the other{" "}
               {money(transaction.credit_kobo)}
             </li>
           ))}
@@ -62,10 +62,10 @@ export function LedgerHealthPanel({ health }: { health: LedgerHealth }) {
       )}
 
       {health.negative_accounts.length > 0 && (
-        <Detail title="Accounts below zero">
+        <Detail title="Balances below zero">
           {health.negative_accounts.map((account) => (
             <li key={account.account_id}>
-              {humanize(account.owner_type)} {account.kind}
+              {humanize(account.owner_type)} {account.kind === "available" ? "balance" : account.kind}
               {account.owner_id && <span className="font-mono text-xs"> {account.owner_id}</span>}: {money(account.balance_kobo)}
             </li>
           ))}

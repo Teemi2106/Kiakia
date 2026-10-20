@@ -27,41 +27,40 @@ export interface Session {
 }
 
 /**
- * Validates the session against Supabase Auth itself (`getUser()`, which
- * round-trips to revalidate the JWT) rather than trusting the decoded
- * cookie (`getSession()`), redirecting to /login if there is none.
- * Wrapped in React's `cache()` so repeated calls within one render pass
- * cost one network round trip, not N.
- */
-export const verifySession = cache(async (): Promise<Session> => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    redirect("/login");
-  }
-
-  return { userId: user.id, email: user.email ?? null, phone: user.phone ?? null };
-});
-
-/**
  * Same as verifySession() but returns null instead of redirecting when
  * there's no session — for the handful of places that need to branch on
  * "logged in or not" without forcing a redirect, e.g. the (auth) layout
  * bouncing an already-logged-in user away from /login.
+ *
+ * Identity comes from `getClaims()`, which verifies the access token's
+ * signature locally against cached signing keys, so it costs no Auth round
+ * trip (`getUser()` was one on every render). The tradeoff is that a token
+ * revoked server-side stays valid until it expires (an hour by default).
+ * That is why every privileged gate below also reads profiles.status from the
+ * database (isActiveAccount()) instead of trusting the token alone, and why
+ * RLS and the Server Action re-checks, not this identity, decide what a
+ * caller may touch. Wrapped in React's `cache()` so repeated calls within one
+ * render pass cost one verification, not N.
  */
 export const getOptionalSession = cache(async (): Promise<Session | null> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims;
 
-  if (!user) return null;
+  if (error || !claims?.sub) return null;
 
-  return { userId: user.id, email: user.email ?? null, phone: user.phone ?? null };
+  return { userId: claims.sub, email: claims.email ?? null, phone: claims.phone ?? null };
+});
+
+/** Verifies the session (see getOptionalSession()), redirecting to /login if there is none. */
+export const verifySession = cache(async (): Promise<Session> => {
+  const session = await getOptionalSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  return session;
 });
 
 /** Returns the caller's own role assignments (readable via RLS — §5's "own rows"). */

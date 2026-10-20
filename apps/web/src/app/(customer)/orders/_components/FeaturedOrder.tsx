@@ -38,6 +38,7 @@ export function FeaturedOrder({
                   src={vendorProfileImageUrl}
                   alt={vendorName}
                   fill
+                  sizes="324px"
                   className="object-cover"
                 />
               ) : (

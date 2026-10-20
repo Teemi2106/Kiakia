@@ -27,6 +27,13 @@ vi.mock("@/lib/supabase/admin", () => ({
         ),
         rider_documents: queryBuilder(ok([])),
         profiles: queryBuilder(ok([])),
+        order_ratings: queryBuilder(
+          ok([
+            { order_id: "o1", rider_rating: 5, rider_comment: "Quick", created_at: "2026-01-02T00:00:00Z" },
+            { order_id: "o2", rider_rating: null, rider_comment: null, created_at: "2026-01-01T00:00:00Z" },
+          ]),
+        ),
+        orders: queryBuilder(ok([{ id: "o1", code: "KK-1" }])),
       },
     }),
 }));
@@ -50,5 +57,15 @@ describe("getRiderDetail bank details", () => {
     const detail = await getRiderDetail(RIDER_ID);
 
     expect(detail?.bank).toMatchObject({ maskedNumber: "******6789", fullNumber: "0123456789" });
+  });
+});
+
+describe("getRiderDetail recentRatings", () => {
+  it("maps ratings with the order code and drops rows without a rider rating", async () => {
+    const detail = await getRiderDetail(RIDER_ID);
+
+    expect(detail?.recentRatings).toEqual([
+      { orderId: "o1", orderCode: "KK-1", rating: 5, comment: "Quick", createdAt: "2026-01-02T00:00:00Z" },
+    ]);
   });
 });

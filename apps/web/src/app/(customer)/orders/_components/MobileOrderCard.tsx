@@ -48,6 +48,7 @@ export function MobileOrderCard({
                 src={vendorProfileImageUrl}
                 alt={vendorName}
                 fill
+                sizes="48px"
                 className="object-cover"
               />
             ) : (

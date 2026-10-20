@@ -4,9 +4,10 @@ import { haversineDistanceM, MEAL_CATEGORIES, TERMINAL_STATUSES, type MealCatego
 import { Store } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
-import { getHomeRecommendations } from "@/lib/recommendations/get-home-recommendations";
+import { getDefaultAddressLocation } from "@/lib/customer/default-address";
 import { TrackEvent } from "../_components/TrackEvent";
 import { RealtimeRefresh } from "@/lib/realtime/RealtimeRefresh";
 import { ActiveOrderCard, type ActiveOrder } from "./_components/ActiveOrderCard";
@@ -15,7 +16,7 @@ import { CravingBlocks } from "./_components/CravingBlocks";
 import { FeaturedCarousel, type FeaturedVendor } from "./_components/FeaturedCarousel";
 import { FilterChips, type HomeSearchParams } from "./_components/FilterChips";
 import { HomeGreeting } from "./_components/HomeGreeting";
-import { PersonalizedSection } from "./_components/PersonalizedSection";
+import { RecommendedSection } from "./_components/RecommendedSection";
 import { SectionHeading } from "./_components/SectionHeading";
 import { VendorCard, type VendorCardVendor } from "./_components/VendorCard";
 import { isVendorOpenNow } from "./_lib/opening-hours";
@@ -74,20 +75,14 @@ export default async function CustomerHomePage({
   // Everything that depends on nothing but the session goes out together.
   // The customer's own state/coordinates come from their default (or first)
   // saved address — the same "deliver to" address the top nav shows
-  // (CustomerTopNav.tsx's useDefaultAddressLabel). Vendors outside this state
+  // (the nav's addressLabel, from customer_bootstrap()). Vendors outside this state
   // are excluded outright below, and the rest are ordered nearest-first by
   // these coordinates. A customer with no saved address yet has no basis to
   // filter/sort on — every vendor still shows, unfiltered, rather than an
   // empty page.
   const [{ data: customerAddress }, { data: profile }, { data: activeOrderRows }] =
     await Promise.all([
-      supabase
-        .from("addresses")
-        .select("state, location_lat, location_lng")
-        .eq("customer_id", session.userId)
-        .order("is_default", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+      getDefaultAddressLocation(session.userId),
       supabase.from("profiles").select("full_name").eq("id", session.userId).maybeSingle(),
       // Live orders, newest first. Capped because only the newest is shown in
       // full — the rest are a count linking to /orders.
@@ -165,7 +160,6 @@ export default async function CustomerHomePage({
       { data: topRated },
       { data: allVendorsRaw },
       { data: dishRows },
-      recommendations,
     ] = await Promise.all([
       liveOrderVendorQuery,
       topRatedQuery,
@@ -181,7 +175,6 @@ export default async function CustomerHomePage({
         .eq("is_available", true)
         .not("image_url", "is", null)
         .limit(60),
-      getHomeRecommendations(),
     ]);
 
     const topRatedVendors = (topRated ?? []) as VendorCardVendor[];
@@ -233,7 +226,9 @@ export default async function CustomerHomePage({
           />
         ) : (
           <div className="space-y-12">
-            <PersonalizedSection items={recommendations.items} personalised={recommendations.personalised} />
+            <Suspense fallback={<div className="h-56 animate-pulse rounded-[2rem] bg-kk-line/30" />}>
+              <RecommendedSection />
+            </Suspense>
             <CravingBlocks />
             {featured.length > 0 && (
               <section>

@@ -1,5 +1,6 @@
 "use server";
 
+import { formatNaira, koboOf } from "@kiakia/domain";
 import { revalidatePath } from "next/cache";
 import { requireAdminContext, requireFinanceContext } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -40,13 +41,30 @@ export async function recordPayoutAction(_prevState: FormState, formData: FormDa
     p_reason: parsed.data.reason ?? null,
     p_actor_id: session.userId,
   });
-  if (error) {
-    return { error: error.code === "23505" ? "That bank reference was already used for a different payout." : rpcFailureMessage(error) };
-  }
+  if (error) return { error: payoutFailureMessage(error, parsed.data.ownerType) };
 
-  revalidatePath("/admin/finance");
+  revalidatePath("/admin");
+  revalidatePath("/admin/payouts");
   revalidatePath(`/admin/${parsed.data.ownerType === "vendor" ? "vendors" : "riders"}/${parsed.data.ownerId}`);
-  return { success: true };
+  return { success: true, message: `Recorded. ${formatNaira(koboOf(parsed.data.amountKobo))} is now marked as paid.` };
+}
+
+const OVERDRAW = /available balance is (\d+) kobo, cannot pay out (\d+) kobo/;
+
+/**
+ * The RPC's own messages quote kobo, which an admin should never see, and a
+ * reused reference needs telling in words what to check. Everything else goes
+ * through the shared mapping.
+ */
+function payoutFailureMessage(error: { message: string; code?: string }, ownerType: "vendor" | "rider"): string {
+  if (error.code === "23505") {
+    return "That bank reference has already been used for a different payment. Check the reference, and look at the payment history to see whether this payout was already recorded.";
+  }
+  const overdraw = error.code === "23514" ? OVERDRAW.exec(error.message) : null;
+  if (overdraw) {
+    return `Only ${formatNaira(koboOf(Number(overdraw[1])))} is owed to this ${ownerType} now, so ${formatNaira(koboOf(Number(overdraw[2])))} is too much. Refresh the page and check the amount.`;
+  }
+  return rpcFailureMessage(error);
 }
 
 /**

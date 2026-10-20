@@ -85,7 +85,7 @@ export function useOrderTracking(orderId: string | undefined): OrderTrackingStat
     // route param, so `orderId` changing without a full remount isn't a real
     // path — no reset-to-INITIAL_STATE call here. Every setState call below
     // lives inside an async function or a callback, never directly in this
-    // synchronous effect body — matching CartProvider.tsx's own effect shape,
+    // synchronous effect body — matching the other realtime hooks' effect shape,
     // since react-hooks/set-state-in-effect flags a setState call made
     // synchronously in an effect's own body.
     let cancelled = false;

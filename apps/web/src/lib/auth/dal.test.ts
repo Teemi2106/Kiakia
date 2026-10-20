@@ -7,6 +7,8 @@ const state = {
   roles: ["customer", "admin"] as string[],
   profileStatus: "active" as string | null,
   roleQueries: [] as ReturnType<typeof queryBuilder>[],
+  authUser: { id: USER_ID, email: "a@kiakia.test", phone: null } as { id: string; email?: string | null; phone?: string | null } | null,
+  clients: [] as ReturnType<typeof supabaseClientMock>[],
 };
 
 const redirect = vi.fn((to: string): never => {
@@ -20,26 +22,58 @@ vi.mock("../supabase/server", () => ({
   createClient: () => {
     const userRoles = queryBuilder(ok(state.roles.map((role) => ({ role }))));
     state.roleQueries.push(userRoles);
-    return Promise.resolve(
-      supabaseClientMock({
-        authUser: { id: USER_ID },
-        from: {
-          user_roles: userRoles,
-          profiles: queryBuilder(ok(state.profileStatus ? { status: state.profileStatus } : null)),
-        },
-      }),
-    );
+    const client = supabaseClientMock({
+      authUser: state.authUser,
+      from: {
+        user_roles: userRoles,
+        profiles: queryBuilder(ok(state.profileStatus ? { status: state.profileStatus } : null)),
+      },
+    });
+    state.clients.push(client);
+    return Promise.resolve(client);
   },
 }));
 
-const { isPureRider, requireActiveAccount, requireAdminContext, requireFinanceContext, requireVendorContext } = await import("./dal");
+const {
+  getOptionalSession,
+  isPureRider,
+  requireActiveAccount,
+  requireAdminContext,
+  requireFinanceContext,
+  requireVendorContext,
+  verifySession,
+} = await import("./dal");
 
 beforeEach(() => {
   state.roles = ["customer", "admin"];
   state.profileStatus = "active";
   state.roleQueries = [];
+  state.clients = [];
+  state.authUser = { id: USER_ID, email: "a@kiakia.test", phone: null };
   redirect.mockClear();
   getActiveRole.mockResolvedValue("customer");
+});
+
+describe("verifySession", () => {
+  it("reads identity from the token's claims without a getUser() round trip", async () => {
+    await expect(verifySession()).resolves.toEqual({ userId: USER_ID, email: "a@kiakia.test", phone: null });
+    expect(state.clients).toHaveLength(1);
+    expect(state.clients[0].auth.getClaims).toHaveBeenCalledOnce();
+    expect(state.clients[0].auth.getUser).not.toHaveBeenCalled();
+  });
+
+  it("redirects to /login when there are no valid claims", async () => {
+    state.authUser = null;
+    await expect(verifySession()).rejects.toThrow("NEXT_REDIRECT:/login");
+  });
+});
+
+describe("getOptionalSession", () => {
+  it("returns null instead of redirecting when signed out", async () => {
+    state.authUser = null;
+    await expect(getOptionalSession()).resolves.toBeNull();
+    expect(redirect).not.toHaveBeenCalled();
+  });
 });
 
 describe("isPureRider", () => {

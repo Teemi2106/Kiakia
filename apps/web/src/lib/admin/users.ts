@@ -4,9 +4,9 @@ import { z } from "zod";
 import { requireAdminContext } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadOwnerBalance, type OwnerBalance } from "./finance";
-import { unwrap } from "./lookups";
+import { loadOrderCodes, unwrap, type AdminClient } from "./lookups";
 import { loadRecentOrders, type RecentOrderView } from "./orders";
-import { distinctIds, orIlike, pageWindow, searchTerm, type Page, type PageParams } from "./query";
+import { distinctIds, pageWindow, type Page, type PageParams } from "./query";
 
 export interface UserListFilters extends PageParams {
   /** Matches name or phone. */
@@ -39,51 +39,86 @@ const filterSchema = z.object({
 export async function listUsers(filters: UserListFilters = {}): Promise<Page<UserListItem>> {
   await requireAdminContext();
   const admin = createAdminClient();
-  const { page, pageSize, from, to } = pageWindow(filters);
+  const { page, pageSize, from } = pageWindow(filters);
   const parsed = filterSchema.parse(filters);
-  const term = searchTerm(filters.q);
+  // The RPC treats the term as a literal substring, so it only needs trimming
+  // and a length cap, not the .or()-safe reduction searchTerm() does.
+  const term = filters.q?.trim().slice(0, 64) || null;
 
-  let query = admin
-    .from("profiles")
-    .select("id, full_name, phone, status, created_at", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to);
+  const listPage = async (limit: number, offset: number) =>
+    unwrap(
+      await admin.rpc("admin_list_users", {
+        p_q: term,
+        p_status: parsed.status ?? null,
+        p_role: parsed.role ?? null,
+        p_limit: limit,
+        p_offset: offset,
+      }),
+    ) ?? [];
 
-  if (term) query = query.or(orIlike(["full_name", "phone"], term));
-  if (parsed.status) query = query.eq("status", parsed.status);
-  if (parsed.role) {
-    const holders = unwrap(await admin.from("user_roles").select("user_id").eq("role", parsed.role)) ?? [];
-    query = query.in("id", distinctIds(holders.map((holder) => holder.user_id)));
-  }
-
-  const { data, error, count } = await query;
-  if (error) throw new Error(error.message);
-  const profiles = data ?? [];
-
-  const roleRows = profiles.length
-    ? (unwrap(
-        await admin
-          .from("user_roles")
-          .select("user_id, role")
-          .in(
-            "user_id",
-            profiles.map((profile) => profile.id),
-          ),
-      ) ?? [])
-    : [];
-  const rolesByUser = new Map<string, Role[]>();
-  for (const row of roleRows) rolesByUser.set(row.user_id, [...(rolesByUser.get(row.user_id) ?? []), row.role]);
+  const rows = await listPage(pageSize, from);
+  // total_count rides on each row, so a page past the end has no row to read it from.
+  const total = rows.length > 0 || from === 0 ? (rows[0]?.total_count ?? 0) : ((await listPage(1, 0))[0]?.total_count ?? 0);
 
   return {
-    rows: profiles.map((profile) => ({
-      id: profile.id,
-      fullName: profile.full_name,
-      phone: profile.phone,
-      status: profile.status,
-      roles: [...new Set(rolesByUser.get(profile.id) ?? [])],
-      createdAt: profile.created_at,
+    rows: rows.map((row) => ({
+      id: row.id,
+      fullName: row.full_name,
+      phone: row.phone,
+      status: row.status,
+      roles: row.roles,
+      createdAt: row.created_at,
     })),
-    total: count ?? 0,
+    total,
+    page,
+    pageSize,
+  };
+}
+
+export interface CustomerListFilters extends PageParams {
+  /** Matches name or phone. */
+  readonly q?: string;
+  readonly status?: string;
+}
+
+export interface CustomerListItem {
+  readonly id: string;
+  readonly fullName: string | null;
+  readonly phone: string | null;
+  readonly status: "active" | "suspended" | "deleted";
+  readonly createdAt: string;
+  readonly orderCount: number;
+  readonly walletBalanceKobo: number;
+}
+
+/** Accounts whose only role is customer. Anyone who is also a vendor, rider or admin is found on that page instead. */
+export async function listCustomers(filters: CustomerListFilters = {}): Promise<Page<CustomerListItem>> {
+  await requireAdminContext();
+  const { page, pageSize, from } = pageWindow(filters);
+  const status = filterSchema.shape.status.parse(filters.status);
+  const term = filters.q?.trim().slice(0, 64) || null;
+
+  const rows =
+    unwrap(
+      await createAdminClient().rpc("admin_list_customers", {
+        p_q: term,
+        p_status: status ?? null,
+        p_limit: pageSize,
+        p_offset: from,
+      }),
+    ) ?? [];
+
+  return {
+    rows: rows.map((row) => ({
+      id: row.id,
+      fullName: row.full_name,
+      phone: row.phone,
+      status: row.status,
+      createdAt: row.created_at,
+      orderCount: row.order_count,
+      walletBalanceKobo: row.wallet_balance_kobo,
+    })),
+    total: rows[0]?.total_count ?? 0,
     page,
     pageSize,
   };
@@ -104,6 +139,62 @@ export interface UserDetail {
   readonly wallet: OwnerBalance | null;
   /** Orders this user placed, newest first, last 20. */
   readonly recentOrders: readonly RecentOrderView[];
+  /** Newest 20 entries on the customer wallet account; empty until the wallet exists. */
+  readonly walletActivity: readonly WalletActivityEntry[];
+}
+
+export interface WalletActivityEntry {
+  readonly id: string;
+  readonly createdAt: string;
+  /** credit adds to the wallet, debit spends from it. */
+  readonly direction: "debit" | "credit";
+  readonly amountKobo: number;
+  readonly entryType: string;
+  readonly transactionKind: "payment_capture" | "escrow_release" | "payout" | "refund" | "adjustment" | null;
+  readonly orderId: string | null;
+  readonly orderCode: string | null;
+}
+
+// Admin-tier on purpose: wallet balances are already admin-visible (support use); the bulk ledger export is finance-only.
+/** Newest ledger entries on the user's customer wallet, resolved in three batched queries (account, transactions, orders). */
+async function loadWalletActivity(admin: AdminClient, userId: string, limit = 20): Promise<WalletActivityEntry[]> {
+  const account = unwrap(
+    await admin.from("accounts").select("id").eq("owner_type", "customer").eq("owner_id", userId).eq("kind", "wallet").maybeSingle(),
+  );
+  if (!account) return [];
+
+  const entries =
+    unwrap(
+      await admin
+        .from("ledger_entries")
+        .select("id, transaction_id, direction, amount_kobo, entry_type, order_id, created_at")
+        .eq("account_id", account.id)
+        .order("created_at", { ascending: false })
+        .limit(limit),
+    ) ?? [];
+  if (entries.length === 0) return [];
+
+  const transactionIds = distinctIds(entries.map((entry) => entry.transaction_id));
+  const transactions = unwrap(await admin.from("transactions").select("id, kind, order_id").in("id", transactionIds)) ?? [];
+  const transactionById = new Map(transactions.map((transaction) => [transaction.id, transaction]));
+
+  const orderIdOf = (entry: (typeof entries)[number]) => entry.order_id ?? transactionById.get(entry.transaction_id)?.order_id ?? null;
+  const codeByOrder = await loadOrderCodes(admin, entries.map(orderIdOf));
+
+  return entries.map((entry) => {
+    const transaction = transactionById.get(entry.transaction_id);
+    const orderId = orderIdOf(entry);
+    return {
+      id: entry.id,
+      createdAt: entry.created_at,
+      direction: entry.direction,
+      amountKobo: entry.amount_kobo,
+      entryType: entry.entry_type,
+      transactionKind: transaction?.kind ?? null,
+      orderId,
+      orderCode: orderId ? (codeByOrder.get(orderId) ?? null) : null,
+    };
+  });
 }
 
 function isBanned(bannedUntil: string | null | undefined): boolean {
@@ -118,19 +209,25 @@ export async function getUserDetail(userId: string): Promise<UserDetail | null> 
   const profile = unwrap(await admin.from("profiles").select("*").eq("id", userId).maybeSingle());
   if (!profile) return null;
 
-  const [roles, authUser, wallet, recentOrders] = await Promise.all([
+  const [roles, authUser, wallet, recentOrders, walletActivity] = await Promise.all([
     admin.from("user_roles").select("role, scope_type, scope_id").eq("user_id", userId),
     admin.auth.admin.getUserById(userId),
     loadOwnerBalance(admin, "customer", userId),
     loadRecentOrders(admin, "customer_id", userId),
+    loadWalletActivity(admin, userId),
   ]);
 
   return {
     profile,
     email: authUser.data.user?.email ?? null,
     signInBanned: isBanned(authUser.data.user?.banned_until),
-    roles: (unwrap(roles) ?? []).map((row) => ({ role: row.role, scopeType: row.scope_type, scopeId: row.scope_id })),
+    roles: (unwrap(roles) ?? []).map((row) => ({
+      role: row.role,
+      scopeType: row.scope_type,
+      scopeId: row.scope_id,
+    })),
     wallet,
     recentOrders,
+    walletActivity,
   };
 }

@@ -51,7 +51,10 @@ export default async function ActiveOrdersPage() {
     // belong in "Active Orders" alongside orders that actually were placed.
     // Its own detail page (orders/[id]) still offers a payment retry.
     .neq("status", "draft")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    // Live orders are a handful in practice; the cap keeps a pathological
+    // account from pulling an unbounded list (and its items) on every refresh.
+    .limit(50);
 
   const rawOrders = realOrders ?? [];
 

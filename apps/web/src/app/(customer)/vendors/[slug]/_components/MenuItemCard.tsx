@@ -2,7 +2,7 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Loader2, Minus, Plus, UtensilsCrossed } from "lucide-react";
+import { Minus, Plus, UtensilsCrossed } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@kiakia/ui";
 import type { MenuItem } from "./types";
@@ -12,7 +12,6 @@ interface MenuItemCardProps {
   onAdd: (item: MenuItem) => void;
   onDecrement?: (item: MenuItem) => void;
   variant?: "desktop" | "mobile";
-  isAdding?: boolean;
   /** Current quantity of this exact (no-option) item already in the open
    * cart — 0 shows the plain "+" button; >0 shows a real -/qty/+ stepper
    * instead, so repeated taps adjust one cart line rather than inserting a
@@ -26,7 +25,6 @@ export function MenuItemCard({
   onAdd,
   onDecrement,
   variant = "desktop",
-  isAdding = false,
   qtyInCart = 0,
 }: MenuItemCardProps) {
   const showStepper = qtyInCart > 0 && item.optionGroups.length === 0;
@@ -95,18 +93,16 @@ export function MenuItemCard({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onDecrement?.(item)}
-                disabled={isAdding}
                 aria-label={`Remove one ${item.name}`}
                 className="flex size-8 items-center justify-center rounded-full border border-[#E4BEB8] text-[#1C1B1B] transition-colors hover:bg-[#F0EDED] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Minus className="size-4" />
               </button>
               <span className="w-4 text-center text-sm font-bold text-[#1C1B1B]" aria-live="polite">
-                {isAdding ? <Loader2 className="mx-auto size-3.5 animate-spin" /> : qtyInCart}
+                {qtyInCart}
               </span>
               <button
                 onClick={() => onAdd(item)}
-                disabled={isAdding}
                 aria-label={`Add one more ${item.name}`}
                 className="flex size-8 items-center justify-center rounded-full bg-[#B61913] text-white transition-colors hover:bg-[#9e1611] disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -116,20 +112,16 @@ export function MenuItemCard({
           ) : (
             <button
               onClick={() => onAdd(item)}
-              disabled={isSoldOut || isAdding}
+              disabled={isSoldOut}
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-full transition-colors",
-                isSoldOut || isAdding
+                isSoldOut
                   ? "cursor-not-allowed bg-[#E5E2E1] opacity-60"
                   : "bg-[rgba(218,53,41,0.1)] hover:bg-[rgba(218,53,41,0.2)]",
               )}
               aria-label={isSoldOut ? `${item.name} is sold out` : `Add ${item.name}`}
             >
-              {isAdding ? (
-                <Loader2 className="size-4 animate-spin text-[#B61913]" />
-              ) : (
-                <Plus className="size-4 text-[#B61913]" />
-              )}
+              <Plus className="size-4 text-[#B61913]" />
             </button>
           )}
         </div>

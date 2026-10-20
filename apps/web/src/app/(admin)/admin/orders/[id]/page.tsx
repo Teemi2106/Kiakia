@@ -16,6 +16,13 @@ import { OrderTimeline } from "./_components/OrderTimeline";
 
 export const metadata: Metadata = { title: "Order" };
 
+const ESCROW_LABELS = {
+  none: "No payment received",
+  held: "Held until delivery",
+  released: "Paid out after delivery",
+  refunded: "Refunded",
+} as const;
+
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdminContext();
 
@@ -31,14 +38,14 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <PageHeader
         title={`Order ${order.code}`}
-        description={`Placed ${formatDateTime(order.created_at)}`}
+        description={`Placed ${formatDateTime(order.created_at)}. Everything about this order: who is involved, what was paid, and what happened.`}
         actions={<OrderStatusBadge status={order.status} />}
       />
 
       <OrderActions detail={detail} assignableRiders={assignableRiders} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Section title="Parties">
+        <Section title="People">
           <Fields
             items={[
               {
@@ -52,7 +59,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               {
                 label: "Customer",
                 value: customer ? (
-                  <Link href={`/admin/users/${customer.id}`} className="text-brand-600 hover:underline">
+                  <Link href={`/admin/customers/${customer.id}`} className="text-brand-600 hover:underline">
                     {customer.fullName ?? customer.id}
                   </Link>
                 ) : null,
@@ -82,21 +89,21 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               { label: "Service fee", value: money(order.service_fee_kobo) },
               { label: "Discount", value: order.discount_kobo > 0 ? money(order.discount_kobo) : null },
               { label: "Total", value: <strong>{money(order.total_kobo)}</strong> },
-              { label: "Order payment", value: <StatusPill status={order.payment_status} /> },
+              { label: "Order payment", value: <StatusPill status={order.payment_status} label={order.payment_status === "pending" ? "Awaiting payment" : undefined} /> },
               { label: "Method", value: order.payment_method ? humanize(order.payment_method) : null },
               {
-                label: "Escrow",
+                label: "Customer's money",
                 value: (
                   <span className="flex flex-wrap items-center gap-2">
-                    <Badge tone={escrow.state === "held" ? "warning" : "neutral"}>{humanize(escrow.state)}</Badge>
-                    {escrow.refundDestination && <span>to {escrow.refundDestination}</span>}
+                    <Badge tone={escrow.state === "held" ? "warning" : "neutral"}>{ESCROW_LABELS[escrow.state]}</Badge>
+                    {escrow.refundDestination && <span>{escrow.refundDestination === "gateway" ? "back to their card or bank" : "to their KiaKia wallet"}</span>}
                   </span>
                 ),
               },
               ...(payment
                 ? [
-                    { label: "Provider reference", value: <span className="font-mono text-xs">{payment.providerRef}</span> },
-                    { label: "Gateway payment", value: <StatusPill status={payment.status} /> },
+                    { label: "Monnify reference", value: <span className="font-mono text-xs">{payment.providerRef}</span> },
+                    { label: "Card or bank payment", value: <StatusPill status={payment.status} /> },
                     {
                       label: "Refund",
                       value: payment.refundReference ? (
@@ -123,7 +130,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           head={
             <>
               <Th>Item</Th>
-              <Th className="text-right">Unit price</Th>
+              <Th className="text-right">Price each</Th>
               <Th className="text-right">Qty</Th>
               <Th className="text-right">Line total</Th>
             </>
@@ -143,17 +150,17 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         </Table>
       </Section>
 
-      <Section title="Timeline">
-        {events.length === 0 ? <EmptyState title="No events recorded" /> : <OrderTimeline events={events} />}
+      <Section title="What happened">
+        {events.length === 0 ? <EmptyState title="Nothing recorded yet" /> : <OrderTimeline events={events} />}
       </Section>
 
-      <Section title="Ledger entries">
-        {ledger.length === 0 ? <EmptyState title="No ledger entries" description="No payment has been captured for this order." /> : <OrderLedger entries={ledger} />}
+      <Section title="Money records">
+        {ledger.length === 0 ? <EmptyState title="No money records" description="No payment has been received for this order." /> : <OrderLedger entries={ledger} />}
       </Section>
 
-      <Section title="Dispatch offers">
+      <Section title="Offers sent to riders">
         {dispatchOffers.length === 0 ? (
-          <EmptyState title="No dispatch offers" />
+          <EmptyState title="No offers sent to riders yet" />
         ) : (
           <Table
             head={

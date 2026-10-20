@@ -1,15 +1,17 @@
 import "server-only";
+import { mealCategoryLabel } from "@kiakia/domain";
 import type { VendorRow } from "@kiakia/db";
 import { z } from "zod";
 import { requireAdminContext } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadOwnerBalance, loadRecentPayouts, type OwnerBalance, type PayoutRecord } from "./finance";
-import { loadProfiles, unwrap, type ProfileSummary } from "./lookups";
+import { loadProfiles, unwrap, type AdminClient, type ProfileSummary } from "./lookups";
 import { loadRecentOrders, type RecentOrderView } from "./orders";
-import { pageWindow, searchTerm, type Page, type PageParams } from "./query";
+import { loadRecentVendorRatings, type VendorRatingView } from "./ratings";
+import { orIlike, pageWindow, searchTerm, type Page, type PageParams } from "./query";
 
 export interface VendorListFilters extends PageParams {
-  /** Matches the store name. */
+  /** Matches the store name, or the owner's name or phone. */
   readonly q?: string;
   readonly status?: string;
 }
@@ -28,6 +30,9 @@ export interface VendorListItem {
   readonly createdAt: string;
 }
 
+/** Owner profiles a search may match; 50 uuids keep the request URL well under PostgREST's limit. */
+const OWNER_MATCH_CAP = 50;
+
 const statusSchema = z.enum(["pending", "active", "suspended"]).optional().catch(undefined);
 
 export async function listVendors(filters: VendorListFilters = {}): Promise<Page<VendorListItem>> {
@@ -43,7 +48,12 @@ export async function listVendors(filters: VendorListFilters = {}): Promise<Page
     .order("created_at", { ascending: false })
     .range(from, to);
 
-  if (term) query = query.ilike("name", `%${term}%`);
+  if (term) {
+    // An account that is both customer and vendor is found by the person's own name or phone as well as the store's.
+    const owners = unwrap(await admin.from("profiles").select("id").or(orIlike(["full_name", "phone"], term)).limit(OWNER_MATCH_CAP)) ?? [];
+    const ownerFilter = owners.length ? `,owner_user_id.in.(${owners.map((owner) => owner.id).join(",")})` : "";
+    query = query.or(`name.ilike.%${term}%${ownerFilter}`);
+  }
   if (status) query = query.eq("status", status);
 
   const { data, error, count } = await query;
@@ -71,6 +81,23 @@ export async function listVendors(filters: VendorListFilters = {}): Promise<Page
   };
 }
 
+export type VendorStatus = VendorRow["status"];
+
+/** Stores per status, for the Vendors page tabs. */
+export async function countVendorsByStatus(): Promise<Record<VendorStatus, number>> {
+  await requireAdminContext();
+  const admin = createAdminClient();
+  const statuses = ["pending", "active", "suspended"] as const;
+  const counts = await Promise.all(
+    statuses.map(async (status) => {
+      const { count, error } = await admin.from("vendors").select("id", { count: "exact", head: true }).eq("status", status);
+      if (error) throw new Error(error.message);
+      return count ?? 0;
+    }),
+  );
+  return { pending: counts[0], active: counts[1], suspended: counts[2] };
+}
+
 export interface VendorStaffView {
   readonly userId: string;
   readonly role: "vendor_staff" | "vendor_manager" | "vendor_owner";
@@ -88,6 +115,74 @@ export interface VendorDetail {
   readonly recentPayouts: readonly PayoutRecord[];
   /** Newest first, last 20. */
   readonly recentOrders: readonly RecentOrderView[];
+  /** Read-only view of the vendor's menu: categories with their items. */
+  readonly menu: VendorMenuView;
+  /** Newest first, last 20. */
+  readonly recentRatings: readonly VendorRatingView[];
+}
+
+export interface VendorMenuItemView {
+  readonly id: string;
+  readonly name: string;
+  readonly priceKobo: number;
+  readonly isAvailable: boolean;
+}
+
+export interface VendorMenuCategoryView {
+  /** Null for the group of items that have no category. */
+  readonly id: string | null;
+  readonly categoryKey: string | null;
+  readonly label: string;
+  readonly isActive: boolean;
+  readonly items: readonly VendorMenuItemView[];
+}
+
+export interface VendorMenuView {
+  readonly categories: readonly VendorMenuCategoryView[];
+  /** True when the vendor has more than MENU_ITEM_CAP items and the list was cut. */
+  readonly truncated: boolean;
+}
+
+/** Upper bound on items loaded for the read-only menu view. */
+export const MENU_ITEM_CAP = 500;
+
+async function loadVendorMenu(admin: AdminClient, vendorId: string): Promise<VendorMenuView> {
+  const [categoryRows, itemRows] = await Promise.all([
+    admin.from("menu_categories").select("id, category_key, sort_order, is_active").eq("vendor_id", vendorId).order("sort_order"),
+    // One over the cap so "exactly at the cap" is not reported as truncated.
+    admin
+      .from("menu_items")
+      .select("id, category_id, name, price_kobo, is_available, sort_order")
+      .eq("vendor_id", vendorId)
+      .order("sort_order")
+      .order("name")
+      .limit(MENU_ITEM_CAP + 1),
+  ]);
+  const categories = unwrap(categoryRows) ?? [];
+  const allItems = unwrap(itemRows) ?? [];
+  const truncated = allItems.length > MENU_ITEM_CAP;
+  const items = truncated ? allItems.slice(0, MENU_ITEM_CAP) : allItems;
+
+  const byCategory = new Map<string | null, VendorMenuItemView[]>();
+  for (const item of items) {
+    const key = item.category_id && categories.some((category) => category.id === item.category_id) ? item.category_id : null;
+    byCategory.set(key, [
+      ...(byCategory.get(key) ?? []),
+      { id: item.id, name: item.name, priceKobo: item.price_kobo, isAvailable: item.is_available },
+    ]);
+  }
+
+  const grouped: VendorMenuCategoryView[] = categories.map((category) => ({
+    id: category.id,
+    categoryKey: category.category_key,
+    label: mealCategoryLabel(category.category_key),
+    isActive: category.is_active,
+    items: byCategory.get(category.id) ?? [],
+  }));
+  const uncategorised = byCategory.get(null);
+  if (uncategorised) grouped.push({ id: null, categoryKey: null, label: "Uncategorised", isActive: true, items: uncategorised });
+
+  return { categories: grouped, truncated };
 }
 
 export async function getVendorDetail(vendorId: string): Promise<VendorDetail | null> {
@@ -98,11 +193,13 @@ export async function getVendorDetail(vendorId: string): Promise<VendorDetail | 
   const vendor = unwrap(await admin.from("vendors").select("*").eq("id", vendorId).maybeSingle());
   if (!vendor) return null;
 
-  const [staffRows, recentOrders, balance, recentPayouts] = await Promise.all([
+  const [staffRows, recentOrders, balance, recentPayouts, menu, recentRatings] = await Promise.all([
     admin.from("vendor_staff").select("user_id, role, created_at").eq("vendor_id", vendorId),
     loadRecentOrders(admin, "vendor_id", vendorId),
     loadOwnerBalance(admin, "vendor", vendorId),
     loadRecentPayouts(admin, "vendor", vendorId),
+    loadVendorMenu(admin, vendorId),
+    loadRecentVendorRatings(admin, vendorId),
   ]);
 
   const staff = unwrap(staffRows) ?? [];
@@ -121,5 +218,7 @@ export async function getVendorDetail(vendorId: string): Promise<VendorDetail | 
     balance,
     recentPayouts,
     recentOrders,
+    menu,
+    recentRatings,
   };
 }

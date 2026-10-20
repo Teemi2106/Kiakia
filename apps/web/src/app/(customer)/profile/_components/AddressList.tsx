@@ -4,6 +4,7 @@ import { Button, EmptyState, Input } from "@kiakia/ui";
 import { LocateFixed, MapPin, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
 import { createClient } from "@/lib/supabase/client";
 
 interface Address {
@@ -108,6 +109,7 @@ export function AddressList({ addresses }: { addresses: readonly Address[] }) {
 }
 
 function NewAddressForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+  const userId = useCustomerStore((s) => s.userId);
   const [label, setLabel] = useState("Home");
   const [line1, setLine1] = useState("");
   const [landmark, setLandmark] = useState("");
@@ -139,14 +141,8 @@ function NewAddressForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
       return;
     }
     setSaving(true);
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { error: insertError } = await supabase.from("addresses").insert({
-      customer_id: user.id,
+    const { error: insertError } = await createClient().from("addresses").insert({
+      customer_id: userId,
       label,
       line1,
       landmark: landmark || null,

@@ -51,6 +51,7 @@ export function RealtimeRefresh({ table, filter, topic, enabled = true }: Realti
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let retryAttempt = 0;
+    let hasSubscribed = false;
 
     function scheduleRetry() {
       if (cancelled || retryTimer) return;
@@ -81,9 +82,12 @@ export function RealtimeRefresh({ table, filter, topic, enabled = true }: Realti
           if (cancelled) return;
           if (status === "SUBSCRIBED") {
             retryAttempt = 0;
-            // Catch up on anything that changed between the initial server
-            // render and the socket actually coming up.
-            router.refresh();
+            // Catch up only after a reconnect, when events may genuinely have
+            // been missed. Doing it on the first subscribe too re-rendered
+            // the whole page (layout, bootstrap and every query) a moment
+            // after each load, to cover a window of a few hundred ms.
+            if (hasSubscribed) router.refresh();
+            hasSubscribed = true;
           } else if (status === "TIMED_OUT" || status === "CHANNEL_ERROR" || status === "CLOSED") {
             scheduleRetry();
           }

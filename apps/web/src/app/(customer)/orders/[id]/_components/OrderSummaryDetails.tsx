@@ -34,6 +34,7 @@ export function OrderSummaryDetails({
                   src={item.image_url}
                   alt={item.name_snapshot}
                   fill
+                  sizes="64px"
                   className="object-cover"
                 />
               ) : (

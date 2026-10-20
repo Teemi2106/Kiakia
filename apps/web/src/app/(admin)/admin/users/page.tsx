@@ -4,16 +4,17 @@ import { Badge, Button, EmptyState, Input, Select } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Field } from "../../_components/Field";
-import { formatDateTime, humanize } from "../../_components/format";
+import { formatDateTime } from "../../_components/format";
+import { roleLabel } from "../../_components/labels";
 import { PageHeader } from "../../_components/PageHeader";
 import { Pagination } from "../../_components/Pagination";
 import { firstParam, pageParam, type SearchParams } from "../../_components/search-params";
 import { StatusPill } from "../../_components/StatusPill";
 import { Table, Td, Th, Tr } from "../../_components/Table";
 
-export const metadata: Metadata = { title: "Users" };
+export const metadata: Metadata = { title: "Admins & access" };
 
-const ROLE_FILTERS = ["rider", "vendor_owner", "vendor_manager", "vendor_staff", "admin", "superadmin"] as const;
+const ROLE_FILTERS = ["admin", "superadmin", "rider", "vendor_owner", "vendor_manager", "vendor_staff"] as const;
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: SearchParams }) {
   await requireAdminContext();
@@ -26,10 +27,13 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-      <PageHeader title="Users" description="Customers, vendor staff, riders and admins." />
+      <PageHeader
+        title="Admins & access"
+        description="Find any account to give or take away admin access, or to suspend it. To make someone an admin, search for them, open their account and use Admin access. Day-to-day customer, vendor and rider work is on their own pages."
+      />
 
       <form method="get" action="/admin/users" className="grid gap-3 rounded-card border border-border bg-surface-raised p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Name or phone" htmlFor="q">
+        <Field label="Search by name or phone" htmlFor="q">
           <Input id="q" name="q" defaultValue={q} />
         </Field>
         <Field label="Status" htmlFor="status">
@@ -40,31 +44,31 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
             <option value="deleted">Deleted</option>
           </Select>
         </Field>
-        <Field label="Role" htmlFor="role">
+        <Field label="Has this role" htmlFor="role">
           <Select id="role" name="role" defaultValue={role ?? ""}>
             <option value="">All</option>
             {ROLE_FILTERS.map((value) => (
               <option key={value} value={value}>
-                {humanize(value)}
+                {roleLabel(value)}
               </option>
             ))}
           </Select>
         </Field>
         <div className="flex items-end gap-2">
-          <Button type="submit">Filter</Button>
+          <Button type="submit">Search</Button>
           <Link href="/admin/users" className="inline-flex h-10 items-center px-2 text-sm text-ink-muted hover:text-ink">
-            Reset
+            Clear
           </Link>
         </div>
       </form>
 
       {users.rows.length === 0 ? (
-        <EmptyState title="No users match" />
+        <EmptyState title="No accounts found" description="Try a different name or phone number, or clear the filters." />
       ) : (
         <Table
           head={
             <>
-              <Th>User</Th>
+              <Th>Person</Th>
               <Th>Status</Th>
               <Th>Roles</Th>
               <Th>Joined</Th>
@@ -75,7 +79,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
             <Tr key={user.id}>
               <Td>
                 <Link href={`/admin/users/${user.id}`} className="font-medium text-brand-600 hover:underline">
-                  {user.fullName ?? user.id}
+                  {user.fullName ?? "Unnamed account"}
                 </Link>
                 <p className="text-xs text-ink-muted">{user.phone ?? "No phone"}</p>
               </Td>
@@ -85,7 +89,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
               <Td>
                 <span className="flex flex-wrap gap-1">
                   {user.roles.map((userRole) => (
-                    <Badge key={userRole}>{humanize(userRole)}</Badge>
+                    <Badge key={userRole}>{roleLabel(userRole)}</Badge>
                   ))}
                 </span>
               </Td>

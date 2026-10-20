@@ -29,13 +29,13 @@ vi.mock("@supabase/ssr", () => ({
     capturedSetAll = opts.cookies.setAll;
     return {
       auth: {
-        getUser: async () => {
+        getClaims: async () => {
           // What a real token rotation does: hand back new cookies, then
-          // report the (still valid) user.
+          // report the (still valid) claims.
           opts.cookies.setAll([
             { name: "sb-test-auth-token", value: "NEW_VALUE", options: { path: "/" } },
           ]);
-          return { data: { user: { id: "user-1" } }, error: null };
+          return { data: { claims: { sub: "user-1" } }, error: null };
         },
       },
     };
@@ -92,7 +92,7 @@ describe("proxy session cookie handoff", () => {
   it("leaves an unauthenticated request to a public route alone", async () => {
     vi.doMock("@supabase/ssr", () => ({
       createServerClient: () => ({
-        auth: { getUser: async () => ({ data: { user: null }, error: null }) },
+        auth: { getClaims: async () => ({ data: null, error: null }) },
       }),
     }));
     const { proxy } = await import("./proxy");

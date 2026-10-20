@@ -706,7 +706,7 @@ select throws_ok(
      select t.id, a.id, d.direction, 20001, 'adjustment'
      from t, accounts a, (values ('available', 'debit'), ('gateway', 'credit')) d(kind, direction)
      where a.kind = d.kind
-       and ((a.owner_type = 'rider' and a.owner_id = (select user_id from riders limit 1)) or (a.owner_type = 'platform' and a.owner_id is null)) $$,
+       and ((a.owner_type = 'rider' and a.owner_id = tests.get_supabase_uid('ops_rider')) or (a.owner_type = 'platform' and a.owner_id is null)) $$,
   '23514', null, 'check_payee_available_not_negative rejects a raw ledger write that overdraws a rider available account, regardless of the writer'
 );
 select lives_ok(
@@ -717,7 +717,7 @@ select lives_ok(
      select t.id, a.id, d.direction, 20000, 'adjustment'
      from t, accounts a, (values ('available', 'debit'), ('gateway', 'credit')) d(kind, direction)
      where a.kind = d.kind
-       and ((a.owner_type = 'rider' and a.owner_id = (select user_id from riders limit 1)) or (a.owner_type = 'platform' and a.owner_id is null)) $$,
+       and ((a.owner_type = 'rider' and a.owner_id = tests.get_supabase_uid('ops_rider')) or (a.owner_type = 'platform' and a.owner_id is null)) $$,
   'the same raw write down to exactly zero is allowed (the trigger rejects only negative balances)'
 );
 set constraints ledger_entries_payee_available_not_negative deferred;

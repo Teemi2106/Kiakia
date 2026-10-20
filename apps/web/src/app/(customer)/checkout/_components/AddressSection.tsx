@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@kiakia/ui";
 import type { LatLng } from "@kiakia/domain";
+import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
 import { createClient } from "@/lib/supabase/client";
 import { CheckoutMapArea } from "./CheckoutMapArea";
 import type { Address } from "./types";
@@ -26,6 +27,7 @@ export function AddressSection({
   variant = "desktop",
 }: AddressSectionProps) {
   const router = useRouter();
+  const userId = useCustomerStore((s) => s.userId);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     null,
@@ -80,22 +82,11 @@ export function AddressSection({
     setSaving(true);
     setSaveError(null);
 
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setSaving(false);
-      setSaveError("You need to be signed in to save an address.");
-      return;
-    }
-
     // location is geography(point,4326): PostGIS WKT is lng-then-lat.
-    const { data: savedAddress, error: insertError } = await supabase
+    const { data: savedAddress, error: insertError } = await createClient()
       .from("addresses")
       .insert({
-        customer_id: user.id,
+        customer_id: userId,
         label: newAddress.label,
         line1: newAddress.line1,
         landmark: newAddress.landmark || null,

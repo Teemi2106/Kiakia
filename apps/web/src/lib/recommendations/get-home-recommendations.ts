@@ -10,6 +10,7 @@ import {
 } from "@kiakia/domain";
 import { isVendorOpenNow } from "@/app/(customer)/home/_lib/opening-hours";
 import { verifySession } from "@/lib/auth/dal";
+import { getDefaultAddressLocation } from "@/lib/customer/default-address";
 import { createClient } from "@/lib/supabase/server";
 
 /** What the home page renders: see RecommendationResult / RecommendedItem in @kiakia/domain. */
@@ -64,13 +65,7 @@ export async function getHomeRecommendations(): Promise<HomeRecommendations> {
     const since = new Date(now.getTime() - RECOMMENDATION_CONFIG.lookbackDays * 86_400_000).toISOString();
 
     // ---- 1. Where is the customer? (state + coordinates of the default address)
-    const { data: address, error: addressError } = await supabase
-      .from("addresses")
-      .select("state, location_lat, location_lng")
-      .eq("customer_id", session.userId)
-      .order("is_default", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data: address, error: addressError } = await getDefaultAddressLocation(session.userId);
     if (addressError) return EMPTY;
 
     // PostgREST rewrites `*` to `%` in ilike patterns, and escapeLike() does

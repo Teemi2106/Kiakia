@@ -39,7 +39,7 @@ export function OrderRows({ orders }: { orders: readonly OrderRow[] }) {
             <OrderStatusBadge status={order.status} />
           </Td>
           <Td>
-            <StatusPill status={order.paymentStatus} />
+            <StatusPill status={order.paymentStatus} label={order.paymentStatus === "pending" ? "Awaiting payment" : undefined} />
           </Td>
           <Td className="text-right">{money(order.totalKobo)}</Td>
           <Td>{formatDateTime(order.createdAt)}</Td>

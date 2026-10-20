@@ -1,8 +1,9 @@
 import "server-only";
+import type { Json } from "@kiakia/db";
 import { requireAdminContext } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { toBankDetails, type BankDetails } from "./bank";
-import { unwrap, type AdminClient } from "./lookups";
+import { loadProfiles, loadVendorNames, unwrap, type AdminClient } from "./lookups";
 import { pageWindow, type Page, type PageParams } from "./query";
 
 /** Shape of admin_dashboard_metrics() (0081). Money is kobo. */
@@ -105,50 +106,138 @@ export async function loadOwnerBalance(admin: AdminClient, ownerType: BalanceOwn
 }
 
 export interface PayoutRecord {
-  readonly transactionId: string;
+  readonly auditId: string;
+  /** The bank's reference the admin typed when recording the transfer. */
   readonly reference: string;
   readonly amountKobo: number;
   readonly createdAt: string;
+  /** The admin who recorded it. */
+  readonly recordedBy: string | null;
+  readonly note: string | null;
 }
 
-/** The owner's most recent payouts (newest first). Debits on an available account are payouts by construction (0081). */
-export async function loadRecentPayouts(admin: AdminClient, ownerType: "vendor" | "rider", ownerId: string, limit = 20): Promise<PayoutRecord[]> {
-  const account = unwrap(
-    await admin.from("accounts").select("id").eq("owner_type", ownerType).eq("owner_id", ownerId).eq("kind", "available").maybeSingle(),
-  );
-  if (!account) return [];
+type PayoutAuditRow = { id: string; actor_id: string; reason: string | null; details: Json; created_at: string };
 
-  const entries =
+/** Reads a payout.record audit row; null when its details do not carry a reference and amount. */
+function toPayoutRecord(row: PayoutAuditRow, actors: Map<string, { fullName: string | null }>): PayoutRecord | null {
+  const details = typeof row.details === "object" && row.details !== null && !Array.isArray(row.details) ? row.details : {};
+  const reference = details.external_reference;
+  const amount = details.amount_kobo;
+  if (typeof reference !== "string" || typeof amount !== "number") return null;
+  return {
+    auditId: row.id,
+    reference,
+    amountKobo: amount,
+    createdAt: row.created_at,
+    recordedBy: actors.get(row.actor_id)?.fullName ?? null,
+    note: row.reason,
+  };
+}
+
+const PAYOUT_AUDIT_COLUMNS = "id, actor_id, reason, details, created_at, target_type, target_id";
+
+/**
+ * The owner's most recent recorded payouts (newest first). Read from the audit
+ * log rather than the ledger because it also says who recorded each one;
+ * admin_record_payout writes the ledger entries and this row in one
+ * transaction, so the two cannot disagree.
+ */
+export async function loadRecentPayouts(admin: AdminClient, ownerType: "vendor" | "rider", ownerId: string, limit = 20): Promise<PayoutRecord[]> {
+  const rows =
     unwrap(
       await admin
-        .from("ledger_entries")
-        .select("transaction_id, amount_kobo, created_at")
-        .eq("account_id", account.id)
-        .eq("direction", "debit")
+        .from("admin_audit_log")
+        .select(PAYOUT_AUDIT_COLUMNS)
+        .eq("action", "payout.record")
+        .eq("target_type", ownerType)
+        .eq("target_id", ownerId)
         .order("created_at", { ascending: false })
         .limit(limit),
     ) ?? [];
-  if (entries.length === 0) return [];
+  const actors = await loadProfiles(admin, rows.map((row) => row.actor_id));
+  return rows.flatMap((row) => toPayoutRecord(row, actors) ?? []);
+}
 
-  const transactions =
-    unwrap(
-      await admin
-        .from("transactions")
-        .select("id, reference")
-        .eq("kind", "payout")
-        .in(
-          "id",
-          entries.map((entry) => entry.transaction_id),
-        ),
-    ) ?? [];
-  const references = new Map(transactions.map((transaction) => [transaction.id, transaction.reference]));
+export interface PayoutHistoryItem extends PayoutRecord {
+  readonly ownerType: "vendor" | "rider";
+  readonly ownerId: string;
+  readonly ownerName: string | null;
+}
 
-  return entries.flatMap((entry) => {
-    const reference = references.get(entry.transaction_id);
-    return reference
-      ? [{ transactionId: entry.transaction_id, reference, amountKobo: entry.amount_kobo, createdAt: entry.created_at }]
-      : [];
-  });
+/** Every recorded payout, newest first: the Payouts page's History tab. */
+export async function listPayoutHistory(params: PageParams = {}): Promise<Page<PayoutHistoryItem>> {
+  await requireAdminContext();
+  const admin = createAdminClient();
+  const { page, pageSize, from, to } = pageWindow(params);
+
+  const { data, error, count } = await admin
+    .from("admin_audit_log")
+    .select(PAYOUT_AUDIT_COLUMNS, { count: "exact" })
+    .eq("action", "payout.record")
+    .order("created_at", { ascending: false })
+    .range(from, to);
+  if (error) throw new Error(error.message);
+  const rows = data ?? [];
+
+  const [actors, vendorNames, riderProfiles] = await Promise.all([
+    loadProfiles(admin, rows.map((row) => row.actor_id)),
+    loadVendorNames(admin, rows.filter((row) => row.target_type === "vendor").map((row) => row.target_id)),
+    loadProfiles(admin, rows.filter((row) => row.target_type === "rider").map((row) => row.target_id)),
+  ]);
+
+  return {
+    rows: rows.flatMap((row) => {
+      const record = toPayoutRecord(row, actors);
+      if (!record || (row.target_type !== "vendor" && row.target_type !== "rider")) return [];
+      return [
+        {
+          ...record,
+          ownerType: row.target_type,
+          ownerId: row.target_id,
+          ownerName: row.target_type === "vendor" ? (vendorNames.get(row.target_id) ?? null) : (riderProfiles.get(row.target_id)?.fullName ?? null),
+        },
+      ];
+    }),
+    total: count ?? 0,
+    page,
+    pageSize,
+  };
+}
+
+export interface Payable {
+  readonly ownerType: "vendor" | "rider";
+  readonly ownerId: string;
+  readonly displayName: string | null;
+  /** What the platform owes them now. */
+  readonly balanceKobo: number;
+  readonly disbursedKobo: number;
+  /** Riders only; vendors have no bank details on file. Masked: this is a list view. */
+  readonly bank: BankDetails | null;
+}
+
+/** Vendors and riders the platform owes money, largest first. totalOwedKobo covers every page. */
+export async function listPayables(params: PageParams = {}): Promise<Page<Payable> & { readonly totalOwedKobo: number }> {
+  await requireAdminContext();
+  const { page, pageSize, from } = pageWindow(params);
+
+  const { data, error } = await createAdminClient().rpc("admin_list_payables", { p_limit: pageSize, p_offset: from });
+  if (error) throw new Error(error.message);
+
+  const rows = data ?? [];
+  return {
+    rows: rows.map((row) => ({
+      ownerType: row.owner_type,
+      ownerId: row.owner_id,
+      displayName: row.display_name,
+      balanceKobo: row.balance_kobo,
+      disbursedKobo: row.disbursed_kobo,
+      bank: toBankDetails({ bankName: row.bank_name, accountName: row.bank_account_name, accountNumber: row.bank_account_number }, false),
+    })),
+    total: rows[0]?.total_count ?? 0,
+    totalOwedKobo: rows[0]?.total_owed_kobo ?? 0,
+    page,
+    pageSize,
+  };
 }
 
 function toOwnerBalance(

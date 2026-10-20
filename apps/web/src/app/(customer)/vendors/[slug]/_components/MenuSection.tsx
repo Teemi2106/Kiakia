@@ -4,25 +4,19 @@
 import { MenuItemCard } from "./MenuItemCard";
 import type { MenuCategory, MenuItem } from "./types";
 
-interface CartLine {
-  cartItemId: string;
-  qty: number;
-}
-
 interface MenuSectionProps {
   category: MenuCategory;
   onAddItem: (item: MenuItem) => void;
   onDecrementItem: (item: MenuItem) => void;
-  addingItemId?: string | null;
-  cartLines: Record<string, CartLine>;
+  /** menu_item_id -> quantity of its no-option cart line. */
+  qtyByItemId: Readonly<Record<string, number>>;
 }
 
 export function MenuSection({
   category,
   onAddItem,
   onDecrementItem,
-  addingItemId = null,
-  cartLines,
+  qtyByItemId,
 }: MenuSectionProps) {
   if (category.items.length === 0) return null;
 
@@ -45,8 +39,7 @@ export function MenuSection({
             onAdd={onAddItem}
             onDecrement={onDecrementItem}
             variant="desktop"
-            isAdding={addingItemId === item.id}
-            qtyInCart={cartLines[item.id]?.qty ?? 0}
+            qtyInCart={qtyByItemId[item.id] ?? 0}
           />
         ))}
       </div>

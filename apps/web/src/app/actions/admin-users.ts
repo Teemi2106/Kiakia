@@ -75,7 +75,9 @@ export async function setUserStatusAction(_prevState: FormState, formData: FormD
   }
 
   revalidatePath("/admin/users");
+  revalidatePath("/admin/customers");
   revalidatePath(`/admin/users/${parsed.data.userId}`);
+  revalidatePath(`/admin/customers/${parsed.data.userId}`);
   return banDeferred ? { success: true, message: BAN_DEFERRED_MESSAGE } : { success: true };
 }
 
@@ -105,6 +107,8 @@ export async function setPlatformRoleAction(_prevState: FormState, formData: For
   if (error) return { error: rpcFailureMessage(error) };
 
   revalidatePath("/admin/users");
+  revalidatePath("/admin/customers");
   revalidatePath(`/admin/users/${parsed.data.userId}`);
+  revalidatePath(`/admin/customers/${parsed.data.userId}`);
   return { success: true };
 }

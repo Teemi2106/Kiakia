@@ -1,5 +1,6 @@
 import type { OrderLedgerEntryView } from "@/lib/admin/orders";
 import { formatDateTime, humanize, money } from "../../../../_components/format";
+import { accountLabel, transactionKindLabel } from "../../../../_components/labels";
 import { Table, Td, Th, Tr } from "../../../../_components/Table";
 
 export function OrderLedger({ entries }: { entries: readonly OrderLedgerEntryView[] }) {
@@ -7,11 +8,11 @@ export function OrderLedger({ entries }: { entries: readonly OrderLedgerEntryVie
     <Table
       head={
         <>
-          <Th>Transaction</Th>
+          <Th>What happened</Th>
           <Th>Account</Th>
-          <Th>Entry</Th>
-          <Th className="text-right">Debit</Th>
-          <Th className="text-right">Credit</Th>
+          <Th>Type</Th>
+          <Th className="text-right">Balance goes down</Th>
+          <Th className="text-right">Balance goes up</Th>
           <Th>When</Th>
         </>
       }
@@ -20,9 +21,9 @@ export function OrderLedger({ entries }: { entries: readonly OrderLedgerEntryVie
         <Tr key={entry.id}>
           <Td>
             <p className="font-mono text-xs">{entry.transactionReference}</p>
-            <p className="text-xs text-ink-muted">{humanize(entry.transactionKind)}</p>
+            <p className="text-xs text-ink-muted">{transactionKindLabel(entry.transactionKind)}</p>
           </Td>
-          <Td>{entry.account}</Td>
+          <Td>{accountLabel(entry.account)}</Td>
           <Td>{humanize(entry.entryType)}</Td>
           <Td className="text-right">{entry.direction === "debit" ? money(entry.amountKobo) : ""}</Td>
           <Td className="text-right">{entry.direction === "credit" ? money(entry.amountKobo) : ""}</Td>

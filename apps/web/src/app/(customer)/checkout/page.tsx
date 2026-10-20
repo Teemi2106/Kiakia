@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { verifySession } from "@/lib/auth/dal";
+import { getCustomerBootstrap } from "@/lib/customer/bootstrap";
 import { createClient } from "@/lib/supabase/server";
 import { CheckoutForm } from "./_components/CheckoutForm";
 
@@ -11,28 +12,29 @@ export default async function CheckoutPage() {
   const session = await verifySession();
   const supabase = await createClient();
 
-  const { data: cart } = await supabase
-    .from("carts")
-    .select("id, vendor_id")
-    .eq("customer_id", session.userId)
-    .eq("status", "open")
-    .maybeSingle();
+  // The open cart and its lines come from the layout's cached bootstrap
+  // (the same read that seeds the client store), so checkout opens no cart
+  // queries of its own. place_order() re-derives every price from the DB, so
+  // these lines are for display and the subtotal estimate only.
+  const { cart, lines } = await getCustomerBootstrap(session.userId);
 
-  if (!cart || !cart.vendor_id) {
+  if (!cart || lines.length === 0) {
     redirect("/cart");
   }
 
-  const [{ data: vendor }, { data: items }, { data: addresses }, { data: profile }] =
+  const items = lines.map(({ id, name_snapshot, qty, line_total_kobo }) => ({ id, name_snapshot, qty, line_total_kobo }));
+
+  // get_wallet_balance() (0045_customer_wallet.sql) answers only for
+  // auth.uid() and takes no arguments, so there is nothing to scope here.
+  // A failed read is a zero balance, not a broken checkout — the wallet
+  // option simply doesn't appear, and card checkout is unaffected.
+  const [{ data: vendor }, { data: addresses }, { data: profile }, { data: walletBalanceKobo }] =
     await Promise.all([
       supabase
         .from("vendors")
         .select("name, min_order_kobo, location_lat, location_lng")
-        .eq("id", cart.vendor_id)
+        .eq("id", cart.vendorId)
         .single(),
-      supabase
-        .from("cart_items")
-        .select("id, name_snapshot, qty, line_total_kobo")
-        .eq("cart_id", cart.id),
       supabase
         .from("addresses")
         .select(
@@ -44,26 +46,14 @@ export default async function CheckoutPage() {
       // auth.uid() here, unlike the cross-user rider/customer lookups
       // 0071_order_tracking_rider_contact.sql had to route around RLS for.
       supabase.from("profiles").select("phone").eq("id", session.userId).maybeSingle(),
+      supabase.rpc("get_wallet_balance"),
     ]);
 
-  const subtotalKobo = (items ?? []).reduce(
-    (sum, item) => sum + item.line_total_kobo,
-    0,
-  );
-
-  if (!items || items.length === 0) {
-    redirect("/cart");
-  }
+  const subtotalKobo = items.reduce((sum, item) => sum + item.line_total_kobo, 0);
 
   // Get the default address or first one
   const defaultAddress =
     addresses?.find((a) => a.is_default) ?? addresses?.[0] ?? null;
-
-  // get_wallet_balance() (0045_customer_wallet.sql) answers only for
-  // auth.uid() and takes no arguments, so there is nothing to scope here.
-  // A failed read is a zero balance, not a broken checkout — the wallet
-  // option simply doesn't appear, and card checkout is unaffected.
-  const { data: walletBalanceKobo } = await supabase.rpc("get_wallet_balance");
 
   return (
     <CheckoutForm

@@ -1,8 +1,8 @@
 import { approveVendorAction, rejectVendorAction } from "@/app/actions/admin";
 import { setVendorCommissionAction } from "@/app/actions/admin-settings";
-import { getVendorDetail } from "@/lib/admin/vendors";
+import { getVendorDetail, MENU_ITEM_CAP } from "@/lib/admin/vendors";
 import { canManageFinance, requireAdminContext } from "@/lib/auth/dal";
-import { EmptyState, Input } from "@kiakia/ui";
+import { Badge, EmptyState, Input } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,7 +11,9 @@ import { ConfirmedAction } from "../../../_components/ConfirmedAction";
 import { Field } from "../../../_components/Field";
 import { formatDateTime, formatPercent, humanize, money } from "../../../_components/format";
 import { OrderRows } from "../../../_components/OrderRows";
+import { OwnerMoney } from "../../../_components/OwnerMoney";
 import { PageHeader } from "../../../_components/PageHeader";
+import { RatingsTable } from "../../../_components/RatingsTable";
 import { Fields, Section } from "../../../_components/Section";
 import { StatusPill } from "../../../_components/StatusPill";
 import { Table, Td, Th, Tr } from "../../../_components/Table";
@@ -26,11 +28,12 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
   const detail = await getVendorDetail(id);
   if (!detail) notFound();
 
-  const { vendor, owner, staff, balance, recentPayouts, recentOrders } = detail;
+  const { vendor, owner, staff, balance, recentPayouts, recentOrders, menu, recentRatings } = detail;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-      <PageHeader title={vendor.name} description={humanize(vendor.category)} actions={<StatusPill status={vendor.status} />} />
+      <PageHeader title={vendor.name} description={`${humanize(vendor.category)} store. Review its details, handle approval, and pay what it is owed.`} actions={<StatusPill status={vendor.status} label={vendor.status === "pending" ? "Pending approval" : undefined} />}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Section title="Store">
@@ -47,36 +50,44 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
                   </Link>
                 ) : null,
               },
-              { label: "KYC", value: <StatusPill status={vendor.kyc_status} /> },
+              { label: "Identity check", value: <StatusPill status={vendor.kyc_status} /> },
               { label: "Accepting orders", value: vendor.is_accepting_orders ? "Yes" : "No" },
-              { label: "Commission", value: formatPercent(vendor.commission_bps) },
+              { label: "KiaKia's cut of each order", value: formatPercent(vendor.commission_bps) },
               { label: "Rating", value: vendor.rating_count > 0 ? `${vendor.rating_avg.toFixed(1)} (${vendor.rating_count})` : "No ratings" },
-              { label: "Created", value: formatDateTime(vendor.created_at) },
+              { label: "Applied", value: formatDateTime(vendor.created_at) },
             ]}
           />
         </Section>
 
-        <Section title="Account status">
+        <Section title="Approval and suspension">
           {vendor.status === "pending" && (
             <div className="flex flex-col gap-6">
+              <p className="text-sm text-ink-muted">
+                This store applied to sell on KiaKia. Approving it lets the store sell to customers. It does not move any money.
+              </p>
               <ConfirmedAction action={approveVendorAction.bind(null, vendor.id)} submitLabel="Approve vendor" reasonLabel="Note" />
               <ConfirmedAction
                 action={rejectVendorAction.bind(null, vendor.id)}
-                submitLabel="Reject vendor"
+                submitLabel="Reject application"
                 variant="danger"
                 reasonLabel="Reason"
-                confirmLabel="I confirm this store should be rejected."
+                confirmLabel="I confirm this store should be turned down."
               />
             </div>
           )}
           {vendor.status === "active" && (
-            <ConfirmedAction
-              action={rejectVendorAction.bind(null, vendor.id)}
-              submitLabel="Suspend vendor"
-              variant="danger"
-              reasonLabel="Reason"
-              confirmLabel="I confirm this store should be suspended and hidden from customers."
-            />
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-ink-muted">
+                Suspending hides the store from customers. It does not move any money, and you can undo it with Reinstate vendor.
+              </p>
+              <ConfirmedAction
+                action={rejectVendorAction.bind(null, vendor.id)}
+                submitLabel="Suspend vendor"
+                variant="danger"
+                reasonLabel="Reason"
+                confirmLabel="I confirm this store should be suspended and hidden from customers."
+              />
+            </div>
           )}
           {vendor.status === "suspended" && (
             <ConfirmedAction
@@ -89,19 +100,19 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
         </Section>
       </div>
 
-      <Section title="Commission">
+      <Section title="KiaKia's cut (commission)">
         <p className="mb-3 text-sm text-ink-muted">
-          Applied when escrow is released, so a change also affects orders that are already paid but not yet delivered.
+          The percentage KiaKia keeps from each order. It is taken when the money held until delivery is paid out, so a change also affects orders that are already paid but not yet delivered.
         </p>
         {financeAccess ? (
         <AdminActionForm
           action={setVendorCommissionAction}
-          submitLabel="Update commission"
+          submitLabel="Save commission"
           reason={{ required: true }}
-          confirmLabel="I confirm this commission change."
+          confirmLabel="I confirm this change to the percentage."
         >
           <input type="hidden" name="vendorId" value={vendor.id} />
-          <Field label="Commission (%)" htmlFor="commission-percent">
+          <Field label="KiaKia's cut (%)" htmlFor="commission-percent">
             <Input
               id="commission-percent"
               name="commissionPercent"
@@ -119,35 +130,28 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
         ) : (
           <Fields
             items={[
-              { label: "Commission", value: formatPercent(vendor.commission_bps) },
+              { label: "KiaKia's cut", value: formatPercent(vendor.commission_bps) },
             ]}
           />
         )}
-        {!financeAccess && <p className="mt-3 text-sm text-ink-muted">Changing the commission needs finance access.</p>}
+        {!financeAccess && <p className="mt-3 text-sm text-ink-muted">Only finance admins and superadmins can change the commission. Ask one of them.</p>}
       </Section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Section
-          title="Balance"
-          aside={
-            financeAccess ? (
-              <Link href="/admin/finance" className="text-sm text-brand-600 hover:underline">
-                Record payout
-              </Link>
-            ) : undefined
-          }
-        >
-          <Fields
-            items={[
-              { label: "Available", value: money(balance?.balanceKobo ?? 0) },
-              { label: "Paid out", value: money(balance?.disbursedKobo ?? 0) },
-            ]}
-          />
-        </Section>
+      <OwnerMoney
+        ownerType="vendor"
+        ownerId={vendor.id}
+        ownerName={vendor.name}
+        owedKobo={balance?.balanceKobo ?? 0}
+        paidKobo={balance?.disbursedKobo ?? 0}
+        bank="Bank details not on file"
+        canRecord={financeAccess}
+        payouts={recentPayouts}
+      />
 
+      <div className="grid gap-6 lg:grid-cols-2">
         <Section title="Staff">
           {staff.length === 0 ? (
-            <EmptyState title="No staff" />
+            <EmptyState title="No staff added" />
           ) : (
             <ul className="flex flex-col divide-y divide-border text-sm">
               {staff.map((member) => (
@@ -163,28 +167,53 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
         </Section>
       </div>
 
-      <Section title="Recent payouts">
-        {recentPayouts.length === 0 ? (
-          <EmptyState title="No payouts yet" />
+      <Section title="Menu">
+        {menu.categories.length === 0 ? (
+          <EmptyState title="No menu items yet" description="This store has not added anything to sell." />
         ) : (
-          <Table
-            head={
-              <>
-                <Th>Reference</Th>
-                <Th className="text-right">Amount</Th>
-                <Th>Date</Th>
-              </>
-            }
-          >
-            {recentPayouts.map((payout) => (
-              <Tr key={payout.transactionId}>
-                <Td className="font-mono text-xs">{payout.reference}</Td>
-                <Td className="text-right">{money(payout.amountKobo)}</Td>
-                <Td>{formatDateTime(payout.createdAt)}</Td>
-              </Tr>
+          <div className="flex flex-col gap-6">
+            {menu.categories.map((category) => (
+              <div key={category.id ?? category.categoryKey ?? "uncategorised"} className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium text-ink">{category.label}</h3>
+                  {!category.isActive && <Badge tone="neutral">Inactive</Badge>}
+                </div>
+                {category.items.length === 0 ? (
+                  <p className="text-sm text-ink-muted">No items</p>
+                ) : (
+                  <Table
+                    head={
+                      <>
+                        <Th>Item</Th>
+                        <Th className="text-right">Price</Th>
+                        <Th>Availability</Th>
+                      </>
+                    }
+                  >
+                    {category.items.map((item) => (
+                      <Tr key={item.id}>
+                        <Td>{item.name}</Td>
+                        <Td className="text-right">{money(item.priceKobo)}</Td>
+                        <Td>
+                          <Badge tone={item.isAvailable ? "positive" : "neutral"}>
+                            {item.isAvailable ? "Available" : "Unavailable"}
+                          </Badge>
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Table>
+                )}
+              </div>
             ))}
-          </Table>
+          </div>
         )}
+        {menu.truncated && (
+          <p className="mt-3 text-sm text-ink-muted">Showing the first {MENU_ITEM_CAP} menu items; the full menu is larger.</p>
+        )}
+      </Section>
+
+      <Section title="Recent ratings">
+        {recentRatings.length === 0 ? <EmptyState title="No ratings yet" /> : <RatingsTable ratings={recentRatings} showCustomer />}
       </Section>
 
       <Section
@@ -195,7 +224,7 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
           </Link>
         }
       >
-        {recentOrders.length === 0 ? <EmptyState title="No orders yet" /> : <OrderRows orders={recentOrders} />}
+        {recentOrders.length === 0 ? <EmptyState title="No orders yet" description="Orders placed with this store will be listed here." /> : <OrderRows orders={recentOrders} />}
       </Section>
     </div>
   );

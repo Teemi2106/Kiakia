@@ -22,7 +22,19 @@ const TONES: Record<string, BadgeTone> = {
   refunded: "neutral",
 };
 
-/** Generic status badge for vendor/rider/user/payment/offer states; orders use OrderStatusBadge. */
-export function StatusPill({ status }: { status: string }) {
-  return <Badge tone={TONES[status] ?? "neutral"}>{humanize(status)}</Badge>;
+/** Words that read better than the stored value. */
+const LABELS: Record<string, string> = {
+  success: "Successful",
+  held: "Held until delivery",
+  offered: "Offered to rider",
+  revoked: "Taken back",
+};
+
+/**
+ * Generic status badge for vendor/rider/user/payment/offer states; orders use OrderStatusBadge.
+ * `label` overrides the wording where the same stored value means something different
+ * on a page ("pending" is "Pending approval" for a store, "Awaiting payment" for an order).
+ */
+export function StatusPill({ status, label }: { status: string; label?: string }) {
+  return <Badge tone={TONES[status] ?? "neutral"}>{label ?? LABELS[status] ?? humanize(status)}</Badge>;
 }

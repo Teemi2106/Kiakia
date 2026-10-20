@@ -13,35 +13,35 @@ interface RiderDispatchProps {
 export function RiderDispatch({ orderId, hasRider, riders }: RiderDispatchProps) {
   return (
     <>
-      <Section title={hasRider ? "Unassign and re-offer" : "Offer to riders now"}>
+      <Section title={hasRider ? "Take the rider off this order" : "Offer to nearby riders now"}>
         <p className="mb-3 text-sm text-ink-muted">
           {hasRider
-            ? "Removes the current rider and puts the order back up for dispatch. If the order is already assigned, it returns to ready for pickup. The 30-minute dispatch window restarts."
-            : "Opens the order to nearby riders now. The 30-minute dispatch window restarts."}
+            ? "Removes the current rider and offers the order to other nearby riders. They have 30 minutes to accept. It does not move money, and the removed rider is not offered it again."
+            : "Offers the order to nearby riders now. They have 30 minutes to accept. It does not move money."}
         </p>
         <AdminActionForm
           action={reassignOrderRiderAction}
-          submitLabel={hasRider ? "Unassign and re-offer" : "Offer to riders"}
+          submitLabel={hasRider ? "Remove rider and offer to others" : "Offer to riders"}
           reason={{ required: true }}
-          confirmLabel="I confirm this order should be re-offered to riders."
+          confirmLabel="I confirm this order should be offered to other riders."
         >
           <input type="hidden" name="orderId" value={orderId} />
           <input type="hidden" name="riderId" value="" />
         </AdminActionForm>
       </Section>
 
-      <Section title={hasRider ? "Assign another rider" : "Assign a rider"}>
+      <Section title={hasRider ? "Assign a different rider" : "Assign a rider yourself"}>
         <p className="mb-3 text-sm text-ink-muted">
-          Assigns the selected rider directly, skipping the offer. The rider fee shown is frozen on the order.
+          Picks the rider yourself instead of waiting for someone to accept. The fee shown is what that rider will earn for this delivery.
         </p>
         {riders.length === 0 ? (
-          <p className="text-sm text-ink-muted">No eligible riders online near this vendor.</p>
+          <p className="text-sm text-ink-muted">No rider is available near this store right now. Riders must be approved, online and not busy with another order.</p>
         ) : (
           <AdminActionForm
             action={reassignOrderRiderAction}
-            submitLabel="Assign rider"
+            submitLabel="Assign this rider"
             reason={{ required: true }}
-            confirmLabel="I confirm this rider should be assigned."
+            confirmLabel="I confirm this rider should do this delivery."
           >
             <input type="hidden" name="orderId" value={orderId} />
             <fieldset className="flex flex-col gap-2">
@@ -55,7 +55,7 @@ export function RiderDispatch({ orderId, hasRider, riders }: RiderDispatchProps)
                   <span className="flex min-w-0 flex-col">
                     <span className="font-medium text-ink">{rider.fullName ?? rider.riderId}</span>
                     <span className="text-ink-muted">
-                      {rider.phone ?? "No phone"} · {(rider.pickupDistanceM / 1000).toFixed(1)} km from vendor · fee{" "}
+                      {rider.phone ?? "No phone"} · {(rider.pickupDistanceM / 1000).toFixed(1)} km from the store · earns{" "}
                       {money(rider.riderFeeKobo)} · last seen {formatDateTime(rider.lastPingAt)}
                     </span>
                   </span>

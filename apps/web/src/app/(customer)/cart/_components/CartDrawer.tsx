@@ -1,131 +1,21 @@
 // app/(customer)/cart/_components/CartDrawer.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import type { CartLineItem } from "@/lib/cart";
-import { useCart } from "./CartProvider";
-import { useOptimisticCartMutations } from "./useOptimisticCartMutations";
 import { X } from "lucide-react";
-import { CartDesktop } from "./CartDesktop";
-import { CartMobile } from "./CartMobile";
+import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
+import { CartPanels } from "./CartPanels";
 
-interface CartDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onUpdate?: () => void;
-}
-
-export function CartDrawer({ isOpen, onClose, onUpdate }: CartDrawerProps) {
-  const [items, setItems] = useState<CartLineItem[]>([]);
-  const [vendor, setVendor] = useState<{ id: string; name: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { refreshCart } = useCart();
-
-  // Pure fetch, no setState — called both from the mount/open effect below
-  // and from the optimistic-mutation hook's error-recovery path. Kept
-  // state-free so the effect can do its own inline setState instead of
-  // passing a state-setting function reference into it, which is what
-  // tripped `react-hooks/set-state-in-effect` here previously (same fix as
-  // VendorMenu.tsx's fetchCartLines this session).
-  async function fetchCartData(): Promise<{ items: CartLineItem[]; vendor: { id: string; name: string } | null }> {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return { items: [], vendor: null };
-
-    const { data: cart } = await supabase
-      .from("carts")
-      .select("id, vendor_id")
-      .eq("customer_id", user.id)
-      .eq("status", "open")
-      .maybeSingle();
-    if (!cart || !cart.vendor_id) return { items: [], vendor: null };
-
-    const [{ data: vendorData }, { data: cartItems }] = await Promise.all([
-      supabase.from("vendors").select("id, name").eq("id", cart.vendor_id).single(),
-      supabase
-        .from("cart_items")
-        .select("id, menu_item_id, name_snapshot, unit_price_kobo, qty, options_snapshot, line_total_kobo")
-        .eq("cart_id", cart.id),
-    ]);
-
-    // A separate query rather than a PostgREST embed (cart_items(menu_items(...))) —
-    // this codebase has no precedent for embeds anywhere, and packages/db's
-    // hand-maintained generated.ts declares every table's Relationships as
-    // [], so the client library cannot type an embedded select even though
-    // the real FK exists. Matches the manual-join pattern every other page
-    // in this app already uses (e.g. vendors/[slug]/page.tsx).
-    const menuItemIds = [...new Set((cartItems ?? []).map((item) => item.menu_item_id))];
-    const { data: menuItemRows } = menuItemIds.length
-      ? await supabase.from("menu_items").select("id, image_url").in("id", menuItemIds)
-      : { data: [] };
-    const imageByMenuItemId = new Map((menuItemRows ?? []).map((row) => [row.id, row.image_url]));
-
-    return {
-      items: (cartItems ?? []).map((item) => ({
-        ...item,
-        menu_item_image_url: item.menu_item_id ? (imageByMenuItemId.get(item.menu_item_id) ?? null) : null,
-      })),
-      vendor: vendorData ?? null,
-    };
-  }
-
-  // Fetch on every open (not just the first), since the cart can genuinely
-  // change while the drawer is closed (e.g. adding an item from a vendor
-  // page) — but never re-block on the full-screen spinner for it: `loading`
-  // only starts true and is only ever set false, once, on the very first
-  // fetch. Every later reopen silently refreshes `items`/`vendor` into the
-  // background without hiding what's already on screen. This also no
-  // longer depends on refreshKey — quantity changes are applied
-  // optimistically (see useOptimisticCartMutations), so a mutation no
-  // longer re-runs this effect at all, which is what used to make every
-  // +/- tap block on "Loading your cart..." instead of feeling instant.
-  useEffect(() => {
-    if (!isOpen) return;
-    let cancelled = false;
-    fetchCartData().then(({ items: fetched, vendor: fetchedVendor }) => {
-      if (cancelled) return;
-      setItems(fetched);
-      setVendor(fetchedVendor);
-      setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen]);
-
-  const { pendingId, changeQty, remove, clearAll } = useOptimisticCartMutations(items, setItems, {
-    // Silent re-fetch after a failed mutation — no spinner, just corrects
-    // local state back to whatever the server actually has.
-    onError: async () => {
-      const { items: fetched, vendor: fetchedVendor } = await fetchCartData();
-      setItems(fetched);
-      setVendor(fetchedVendor);
-    },
-    onMutated: () => {
-      refreshCart(); // syncs the header badge/CartFab count
-      onUpdate?.();
-    },
-  });
+export function CartDrawer() {
+  const isOpen = useCustomerStore((s) => s.cartOpen);
+  const setCartOpen = useCustomerStore((s) => s.setCartOpen);
+  const isEmpty = useCustomerStore((s) => s.lines.length === 0);
 
   if (!isOpen) return null;
 
-  // Show loading state (only ever true on the first open, see the effect above)
-  if (loading) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#B61913] border-t-transparent" />
-          <p className="mt-2 text-sm text-[#5B403C]">Loading your cart...</p>
-        </div>
-      </div>
-    );
-  }
+  const onClose = () => setCartOpen(false);
 
   // Empty cart state
-  if (!items.length || !vendor) {
+  if (isEmpty) {
     return (
       <>
         <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
@@ -166,22 +56,5 @@ export function CartDrawer({ isOpen, onClose, onUpdate }: CartDrawerProps) {
     );
   }
 
-  return (
-    <>
-      <div className="hidden md:block">
-        <CartDesktop items={items} vendor={vendor} onClose={onClose} pendingId={pendingId} onQtyChange={changeQty} onRemove={remove} />
-      </div>
-      <div className="md:hidden">
-        <CartMobile
-          items={items}
-          vendor={vendor}
-          onClose={onClose}
-          pendingId={pendingId}
-          onQtyChange={changeQty}
-          onRemove={remove}
-          onClearAll={clearAll}
-        />
-      </div>
-    </>
-  );
+  return <CartPanels onClose={onClose} />;
 }

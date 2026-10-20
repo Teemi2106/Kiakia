@@ -110,14 +110,9 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
   // this order's own customer only — never the assigned rider or vendor
   // staff, even though both can otherwise read this order row via
   // 0007_rls.sql's own policies. For a non-customer session this query
-  // naturally returns no row.
-  const { data: deliveryCodeRow } = await supabase
-    .from("order_delivery_codes")
-    .select("code")
-    .eq("order_id", order.id)
-    .maybeSingle();
-
-  const [{ data: vendorRow }, { count: itemCount }, { data: rawTrackingRow }] = await Promise.all([
+  // naturally returns no row. It is read in the same wave as the rest, not
+  // after them: nothing here depends on another result.
+  const [{ data: vendorRow }, { count: itemCount }, { data: rawTrackingRow }, { data: deliveryCodeRow }] = await Promise.all([
     supabase
       .from("vendors")
       .select("name, logo_url")
@@ -141,6 +136,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
     order.rider_id
       ? supabase.rpc("get_order_tracking", { p_order_id: order.id }).single()
       : Promise.resolve({ data: null }),
+    supabase.from("order_delivery_codes").select("code").eq("order_id", order.id).maybeSingle(),
   ]);
 
   const status = order.status as OrderStatus;

@@ -13,7 +13,6 @@ interface CartItemProps {
   qty: number;
   image?: string | null;
   options?: string;
-  pending: boolean;
   onQtyChange: (id: string, qty: number) => void;
   onRemove: (id: string) => void;
   variant?: "mobile" | "desktop";
@@ -27,7 +26,6 @@ export function CartItem({
   qty,
   image,
   options,
-  pending,
   onQtyChange,
   onRemove,
   variant = "mobile",
@@ -85,7 +83,6 @@ export function CartItem({
             {isDesktop && (
               <button
                 onClick={() => onRemove(id)}
-                disabled={pending}
                 className="font-inter text-xs font-medium text-[#906F6B] underline hover:text-[#5B403C] disabled:opacity-40"
               >
                 Remove
@@ -99,7 +96,7 @@ export function CartItem({
             >
               <button
                 onClick={() => onQtyChange(id, qty - 1)}
-                disabled={pending || qty <= 1}
+                disabled={qty <= 1}
                 className={`flex items-center justify-center rounded-full hover:bg-black/5 disabled:opacity-40 ${
                   isDesktop ? "h-7 w-7" : "h-8 w-8"
                 }`}
@@ -114,7 +111,6 @@ export function CartItem({
               </span>
               <button
                 onClick={() => onQtyChange(id, qty + 1)}
-                disabled={pending}
                 className={`flex items-center justify-center rounded-full bg-[#B61913] shadow-sm hover:bg-[#9e1611] disabled:opacity-40 ${
                   isDesktop
                     ? "h-7 w-7 border border-[#E5E2E1] bg-white hover:bg-gray-50"

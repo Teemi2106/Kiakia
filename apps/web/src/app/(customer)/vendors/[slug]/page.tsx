@@ -2,6 +2,7 @@
 import { mealCategoryLabel } from "@kiakia/domain";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { TrackEvent } from "../../_components/TrackEvent";
 import { VendorMenu } from "./_components/VendorMenu";
@@ -22,21 +23,25 @@ function parseOperatingHours(raw: unknown): VendorDayHours[] | null {
   return raw as VendorDayHours[];
 }
 
-export default async function VendorPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
+/** One vendor read per request, shared by the page and generateMetadata(). */
+const getVendorBySlug = cache(async (slug: string) => {
   const supabase = await createClient();
-
-  const { data: vendorRow } = await supabase
+  return supabase
     .from("vendors")
     .select(
       "id, name, slug, category, description, banner_url, logo_url, rating_avg, rating_count, avg_prep_mins, is_accepting_orders, min_order_kobo, delivery_radius_m, opening_hours, status",
     )
     .eq("slug", slug)
     .maybeSingle();
+});
+
+export default async function VendorPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const [supabase, { data: vendorRow }] = await Promise.all([createClient(), getVendorBySlug(slug)]);
 
   if (!vendorRow || vendorRow.status !== "active") {
     notFound();
@@ -155,12 +160,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("vendors")
-    .select("name, description")
-    .eq("slug", slug)
-    .maybeSingle();
+  const { data } = await getVendorBySlug(slug);
 
   return {
     title: data?.name ?? "Vendor",

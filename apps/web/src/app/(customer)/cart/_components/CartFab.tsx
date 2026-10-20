@@ -3,7 +3,8 @@
 
 import { ShoppingCart } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useCart } from "./CartProvider";
+import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
+import { selectItemCount } from "@/lib/customer/store";
 
 /**
  * Floating shortcut to the cart, so a customer mid-browse doesn't have to
@@ -13,7 +14,9 @@ import { useCart } from "./CartProvider";
  * already on the cart/checkout pages themselves.
  */
 export function CartFab() {
-  const { itemCount, isOpen, openCart } = useCart();
+  const itemCount = useCustomerStore(selectItemCount);
+  const isOpen = useCustomerStore((s) => s.cartOpen);
+  const setCartOpen = useCustomerStore((s) => s.setCartOpen);
   const pathname = usePathname();
 
   if (itemCount === 0 || isOpen) return null;
@@ -22,7 +25,7 @@ export function CartFab() {
 
   return (
     <button
-      onClick={openCart}
+      onClick={() => setCartOpen(true)}
       aria-label={`Open cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`}
       // Clears the bottom tab bar, which is now visible right up to `lg` —
       // at `sm:bottom-6` this used to sit on top of it on tablets.

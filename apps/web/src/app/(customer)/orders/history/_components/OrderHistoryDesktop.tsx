@@ -168,6 +168,7 @@ export function OrderHistoryDesktop({
                         src={logoUrl}
                         alt={getVendorName(order.vendor_id)}
                         fill
+                        sizes="64px"
                         className="object-cover"
                       />
                     ) : (

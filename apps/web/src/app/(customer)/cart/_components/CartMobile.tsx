@@ -10,10 +10,9 @@ import { OrderSummary } from "./OrderSummary";
 import { DeliveryInfo } from "./DeliveryInfo";
 
 interface CartMobileProps {
-  items: CartLineItem[];
+  items: readonly CartLineItem[];
   vendor: { id: string; name: string };
   onClose: () => void;
-  pendingId: string | null;
   onQtyChange: (id: string, qty: number) => void;
   onRemove: (id: string) => void;
   onClearAll: () => void;
@@ -24,7 +23,6 @@ export function CartMobile({
   // kept in the prop contract for parity with CartDesktop/future vendor-name display, not currently rendered
   vendor: _vendor,
   onClose,
-  pendingId,
   onQtyChange,
   onRemove,
   onClearAll,
@@ -82,7 +80,6 @@ export function CartMobile({
                   qty={item.qty}
                   image={item.menu_item_image_url}
                   options={formatCartItemOptions(item.options_snapshot)}
-                  pending={pendingId === item.id}
                   onQtyChange={onQtyChange}
                   onRemove={onRemove}
                   variant="mobile"

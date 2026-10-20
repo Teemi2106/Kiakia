@@ -196,6 +196,7 @@ export function OrderHistoryMobile({
                           src={logoUrl}
                           alt={getVendorName(order.vendor_id)}
                           fill
+                          sizes="48px"
                           className="object-cover"
                         />
                       ) : (

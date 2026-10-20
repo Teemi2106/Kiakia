@@ -2,19 +2,30 @@
 import { redirect } from "next/navigation";
 import { CustomerBottomNav } from "./_components/CustomerBottomNav";
 import { CustomerTopNav } from "./_components/CustomerTopNav";
-import { CartProvider } from "./cart/_components/CartProvider";
+import { StoreNotice } from "./_components/StoreNotice";
+import { CartDrawer } from "./cart/_components/CartDrawer";
+import { CartFab } from "./cart/_components/CartFab";
 import { getRoles, hasRole, verifySession, VENDOR_ROLES } from "@/lib/auth/dal";
 import { getActiveRole } from "@/lib/auth/active-role";
+import { getCustomerBootstrap } from "@/lib/customer/bootstrap";
+import { CustomerStoreProvider } from "@/lib/customer/CustomerStoreProvider";
 
 export default async function CustomerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Session verification stays on the server
-  await verifySession();
+  // Session verification stays on the server (a local JWT check, see dal.ts).
+  const session = await verifySession();
 
-  const roles = await getRoles();
+  // Independent reads, so one wave: roles, the active-role cookie, and the
+  // cart/unread/address bootstrap that seeds the client store. Pages under
+  // this layout read the cart through the same cached bootstrap, not their own.
+  const [roles, activeRole, snapshot] = await Promise.all([
+    getRoles(),
+    getActiveRole(),
+    getCustomerBootstrap(session.userId),
+  ]);
   const canSwitchToVendor = hasRole(roles, ...VENDOR_ROLES);
 
   // Mirror image of requireVendorContext(): a session actively in vendor
@@ -30,12 +41,12 @@ export default async function CustomerLayout({
   // requireVendorContext() then bounced right back to /home — an infinite
   // redirect loop. Only bounce when the session BOTH holds a vendor role
   // AND is actually in vendor mode.
-  if (canSwitchToVendor && (await getActiveRole()) === "vendor") {
+  if (canSwitchToVendor && activeRole === "vendor") {
     redirect("/dashboard");
   }
 
   return (
-    <CartProvider>
+    <CustomerStoreProvider snapshot={snapshot}>
       {/* CustomerTopNav is `fixed` and CustomerBottomNav is `fixed`, so
           neither takes up space in the flow — <main> has to be inset by both
           or they sit on top of the page. That offset lives here, once, rather
@@ -55,6 +66,9 @@ export default async function CustomerLayout({
         <main className="flex-1 pt-(--kk-nav-h) pb-(--kk-tabbar-h)">{children}</main>
         <CustomerBottomNav />
       </div>
-    </CartProvider>
+      <CartFab />
+      <CartDrawer />
+      <StoreNotice />
+    </CustomerStoreProvider>
   );
 }
