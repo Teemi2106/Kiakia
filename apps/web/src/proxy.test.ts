@@ -103,3 +103,23 @@ describe("proxy session cookie handoff", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 });
+
+describe("proxy unsubscribe one-click", () => {
+  beforeEach(() => vi.resetModules());
+
+  it("hands a plain POST to /unsubscribe to the one-click handler, without touching the session", async () => {
+    const { proxy } = await import("./proxy");
+    const response = await proxy(new NextRequest("https://kiakia.test/unsubscribe?token=abc", { method: "POST", body: "List-Unsubscribe=One-Click" }));
+    expect(response.headers.get("x-middleware-rewrite")).toBe("https://kiakia.test/unsubscribe/one-click?token=abc");
+    expect(capturedSetAll).toBeNull();
+  });
+
+  it("leaves the confirm button's Server Action POST and ordinary GETs alone", async () => {
+    const { proxy } = await import("./proxy");
+    const action = await proxy(new NextRequest("https://kiakia.test/unsubscribe?token=abc", { method: "POST", headers: { "next-action": "id" }, body: "x" }));
+    expect(action.headers.get("x-middleware-rewrite")).toBeNull();
+    const page = await proxy(new NextRequest("https://kiakia.test/unsubscribe?token=abc"));
+    expect(page.headers.get("x-middleware-rewrite")).toBeNull();
+    expect(page.status).toBe(200); // not an auth redirect: the page is public
+  });
+});

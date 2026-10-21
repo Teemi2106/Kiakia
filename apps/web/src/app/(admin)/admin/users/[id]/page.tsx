@@ -5,11 +5,13 @@ import { Badge, EmptyState, Select } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { AdminActionForm } from "../../../_components/AdminActionForm";
 import { Field } from "../../../_components/Field";
 import { formatDateTime, humanize, money } from "../../../_components/format";
 import { roleLabel } from "../../../_components/labels";
 import { OrderRows } from "../../../_components/OrderRows";
+import { PersonMessages } from "../../../_components/PersonMessages";
 import { PageHeader } from "../../../_components/PageHeader";
 import { Fields, Section } from "../../../_components/Section";
 import { StatusPill } from "../../../_components/StatusPill";
@@ -241,6 +243,12 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
       >
         {recentOrders.length === 0 ? <EmptyState title="No orders yet" description="Orders this account places will be listed here." /> : <OrderRows orders={recentOrders} />}
       </Section>
+
+      {profile.status !== "deleted" && (
+        <Suspense fallback={<div className="h-48 animate-pulse rounded-card bg-border/60" aria-hidden="true" />}>
+          <PersonMessages userId={profile.id} personName={profile.full_name} />
+        </Suspense>
+      )}
     </div>
   );
 }

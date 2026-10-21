@@ -5,11 +5,13 @@ import { Badge, EmptyState } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { ConfirmedAction } from "../../../_components/ConfirmedAction";
 import { formatDateTime, humanize } from "../../../_components/format";
 import { MaskedAccountNumber } from "../../../_components/MaskedAccountNumber";
 import { OrderRows } from "../../../_components/OrderRows";
 import { OwnerMoney } from "../../../_components/OwnerMoney";
+import { PersonMessages } from "../../../_components/PersonMessages";
 import { PageHeader } from "../../../_components/PageHeader";
 import { RatingsTable } from "../../../_components/RatingsTable";
 import { Fields, Section } from "../../../_components/Section";
@@ -124,6 +126,10 @@ export default async function AdminRiderDetailPage({ params }: { params: Promise
       <Section title="Recent deliveries">
         {recentDeliveries.length === 0 ? <EmptyState title="No deliveries yet" description="Orders this rider delivers will be listed here." /> : <OrderRows orders={recentDeliveries} />}
       </Section>
+
+      <Suspense fallback={<div className="h-48 animate-pulse rounded-card bg-border/60" aria-hidden="true" />}>
+        <PersonMessages userId={rider.user_id} personName={profile?.fullName ?? null} />
+      </Suspense>
     </div>
   );
 }

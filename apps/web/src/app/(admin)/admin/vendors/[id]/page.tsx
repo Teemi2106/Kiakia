@@ -6,12 +6,14 @@ import { Badge, EmptyState, Input } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { AdminActionForm } from "../../../_components/AdminActionForm";
 import { ConfirmedAction } from "../../../_components/ConfirmedAction";
 import { Field } from "../../../_components/Field";
 import { formatDateTime, formatPercent, humanize, money } from "../../../_components/format";
 import { OrderRows } from "../../../_components/OrderRows";
 import { OwnerMoney } from "../../../_components/OwnerMoney";
+import { PersonMessages } from "../../../_components/PersonMessages";
 import { PageHeader } from "../../../_components/PageHeader";
 import { RatingsTable } from "../../../_components/RatingsTable";
 import { Fields, Section } from "../../../_components/Section";
@@ -226,6 +228,12 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
       >
         {recentOrders.length === 0 ? <EmptyState title="No orders yet" description="Orders placed with this store will be listed here." /> : <OrderRows orders={recentOrders} />}
       </Section>
+
+      {owner && (
+        <Suspense fallback={<div className="h-48 animate-pulse rounded-card bg-border/60" aria-hidden="true" />}>
+          <PersonMessages userId={owner.id} personName={owner.fullName} />
+        </Suspense>
+      )}
     </div>
   );
 }

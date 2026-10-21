@@ -955,7 +955,7 @@ export interface Database {
           id: string;
           actor_id: string;
           action: string;
-          target_type: "user" | "vendor" | "rider" | "rider_document" | "order" | "service_area" | "export" | "platform_setting";
+          target_type: "user" | "vendor" | "rider" | "rider_document" | "order" | "service_area" | "export" | "platform_setting" | "message";
           target_id: string;
           reason: string | null;
           details: Json;
@@ -976,6 +976,102 @@ export interface Database {
           unit: "bps" | "kobo";
           updated_at: string;
           updated_by: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // Messaging (0094_messaging_core.sql) - hand-authored. RLS on everywhere.
+      // message_preferences: the owner may SELECT own row and UPDATE the two
+      // marketing columns; absent row = both false. Writer of record is
+      // set_message_preferences(). All other messaging tables: no client access,
+      // service_role SELECT only; writes go through the RPCs below.
+      message_preferences: {
+        Row: {
+          user_id: string;
+          marketing_email: boolean;
+          marketing_sms: boolean;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: { marketing_email?: boolean; marketing_sms?: boolean };
+        Relationships: [];
+      };
+      message_consent_events: {
+        Row: {
+          id: string;
+          user_id: string;
+          channel: "email" | "sms";
+          granted: boolean;
+          source: "user" | "unsubscribe_link" | "provider_bounce" | "provider_complaint" | "admin";
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      message_settings: {
+        Row: {
+          key:
+            | "rider_offer_sms_enabled"
+            | "rider_offer_sms_delay_seconds"
+            | "rider_offer_sms_hourly_cap"
+            | "promo_broadcasts_per_day"
+            | "transactional_broadcasts_per_day"
+            | "direct_messages_per_actor_hour"
+            | "broadcast_recipient_cap"
+            | "max_send_attempts";
+          value_int: number;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      message_broadcasts: {
+        Row: {
+          id: string;
+          created_by: string;
+          channel: "email" | "sms";
+          category: "transactional" | "promotional";
+          audience: Json;
+          audience_label: string;
+          subject: string | null;
+          body: string;
+          recipient_count: number;
+          reason: string;
+          request_hash: string;
+          idempotency_key: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      message_outbox: {
+        Row: {
+          id: string;
+          broadcast_id: string | null;
+          kind: "broadcast" | "direct" | "rider_offer" | "system";
+          channel: "email" | "sms";
+          category: "transactional" | "promotional";
+          recipient_user_id: string | null;
+          to_address: string | null;
+          subject: string | null;
+          body: string;
+          status: "queued" | "sending" | "sent" | "delivered" | "failed" | "suppressed";
+          suppress_reason: "no_address" | "no_consent" | "suspended" | "expired" | "rate_limited" | "opted_out" | null;
+          attempts: number;
+          next_attempt_at: string;
+          expires_at: string | null;
+          provider: string | null;
+          provider_message_id: string | null;
+          error: string | null;
+          dedupe_key: string | null;
+          created_by: string | null;
+          created_at: string;
+          sent_at: string | null;
+          delivered_at: string | null;
         };
         Insert: never;
         Update: never;
@@ -2134,6 +2230,150 @@ export interface Database {
           order_code: string | null;
         }[];
       };
+      // --- Messaging RPCs (0094 / 0095 / 0096) - hand-authored. ---
+      // Audience shape (strict; unknown keys rejected):
+      //   {kind:"role", role:"customer", segment?: "all"|"ordered_30d"|"inactive_30d"}
+      //   {kind:"role", role:"vendor",   segment?: "all"|"active"|"pending"|"suspended"}
+      //   {kind:"role", role:"rider",    segment?: "all"|"active"|"pending"|"online"}
+      //   {kind:"user", user_id: uuid}
+      set_message_preferences: {
+        Args: { p_marketing_email?: boolean | null; p_marketing_sms?: boolean | null };
+        Returns: { user_id: string; marketing_email: boolean; marketing_sms: boolean; updated_at: string };
+      };
+      get_message_preferences: {
+        Args: Record<string, never>;
+        Returns: { marketing_email: boolean; marketing_sms: boolean }[];
+      };
+      message_opt_out: {
+        Args: { p_user_id: string; p_channel: "email" | "sms"; p_source?: "unsubscribe_link" | "provider_bounce" | "provider_complaint" | "admin" };
+        Returns: boolean;
+      };
+      admin_audience_preview: {
+        Args: { p_audience: Json; p_channel: "email" | "sms"; p_category: "transactional" | "promotional" };
+        Returns: {
+          recipient_count: number;
+          suppressed_count: number;
+          suppressed_reasons: { no_address: number; no_consent: number; suspended: number };
+          sample: { user_id: string; display_name: string; role: "customer" | "vendor" | "rider" | "admin" }[];
+        };
+      };
+      admin_create_broadcast: {
+        Args: {
+          p_actor_id: string;
+          p_audience: Json;
+          p_channel: "email" | "sms";
+          p_category: "transactional" | "promotional";
+          p_subject: string | null;
+          p_body: string;
+          p_reason: string;
+          p_idempotency_key?: string | null;
+        };
+        Returns: string;
+      };
+      admin_send_message: {
+        Args: {
+          p_actor_id: string;
+          p_user_id: string;
+          p_channel: "email" | "sms";
+          p_subject: string | null;
+          p_body: string;
+          p_reason: string;
+        };
+        Returns: string;
+      };
+      admin_list_broadcasts: {
+        Args: { p_limit?: number; p_offset?: number };
+        Returns: {
+          id: string;
+          created_at: string;
+          created_by_name: string;
+          channel: "email" | "sms";
+          category: "transactional" | "promotional";
+          audience_label: string;
+          subject: string | null;
+          body: string;
+          recipient_count: number;
+          queued: number;
+          sent: number;
+          delivered: number;
+          failed: number;
+          suppressed: number;
+          total_count: number;
+        }[];
+      };
+      admin_get_broadcast: {
+        Args: { p_id: string };
+        Returns: {
+          id: string;
+          created_at: string;
+          created_by: string;
+          created_by_name: string;
+          channel: "email" | "sms";
+          category: "transactional" | "promotional";
+          audience: Json;
+          audience_label: string;
+          subject: string | null;
+          body: string;
+          reason: string;
+          recipient_count: number;
+          counts: {
+            queued: number;
+            sent: number;
+            delivered: number;
+            failed: number;
+            suppressed: number;
+            suppressed_reasons: { no_address: number; no_consent: number; suspended: number };
+          };
+          failures: { user_id: string | null; display_name: string; error: string | null; attempts: number }[];
+        };
+      };
+      admin_list_user_messages: {
+        Args: { p_user_id: string; p_limit?: number };
+        Returns: {
+          id: string;
+          created_at: string;
+          channel: "email" | "sms";
+          category: "transactional" | "promotional";
+          kind: "broadcast" | "direct" | "rider_offer" | "system";
+          subject: string | null;
+          body: string;
+          status: "queued" | "sending" | "sent" | "delivered" | "failed" | "suppressed";
+          suppress_reason: "no_address" | "no_consent" | "suspended" | "expired" | "rate_limited" | "opted_out" | null;
+          error: string | null;
+          sent_at: string | null;
+          delivered_at: string | null;
+          broadcast_id: string | null;
+        }[];
+      };
+      // Worker / webhook / cron functions (service_role only).
+      message_claim_batch: {
+        Args: { p_limit?: number };
+        Returns: Database["public"]["Tables"]["message_outbox"]["Row"][];
+      };
+      message_mark_sent: {
+        Args: { p_id: string; p_provider: string; p_provider_message_id: string };
+        Returns: boolean;
+      };
+      message_mark_failed: {
+        Args: { p_id: string; p_error: string; p_permanent?: boolean };
+        Returns: "queued" | "failed" | "suppressed" | "ignored";
+      };
+      message_mark_suppressed: {
+        Args: { p_id: string; p_reason: "no_address" | "no_consent" | "suspended" | "expired" | "opted_out" };
+        Returns: boolean;
+      };
+      message_apply_provider_event: {
+        Args: {
+          p_provider: string;
+          p_provider_message_id: string | null;
+          p_outbox_id: string | null;
+          p_event: "delivered" | "failed" | "bounced" | "complained";
+          p_detail?: string | null;
+        };
+        Returns: "applied" | "ignored" | "not_found";
+      };
+      scrub_message_outbox: { Args: Record<string, never>; Returns: number };
+      enqueue_rider_offer_sms: { Args: Record<string, never>; Returns: number };
     };
     Enums: {
       order_status: OrderStatus;

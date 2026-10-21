@@ -4,9 +4,11 @@ import { cn } from "@kiakia/ui";
 import {
   Bike,
   Flag,
+  Hourglass,
   HandCoins,
   KeyRound,
   LayoutDashboard,
+  MessageSquare,
   Landmark,
   Settings,
   ScrollText,
@@ -23,6 +25,7 @@ const NAV_GROUPS = [
     heading: "Day to day",
     items: [
       { href: "/admin/orders", label: "Orders", Icon: ShoppingBag },
+      { href: "/admin/dispatch", label: "Waiting for a rider", Icon: Hourglass },
       { href: "/admin/flagged-orders", label: "Problems to review", Icon: Flag },
     ],
   },
@@ -32,6 +35,7 @@ const NAV_GROUPS = [
       { href: "/admin/customers", label: "Customers", Icon: UserRound },
       { href: "/admin/vendors", label: "Vendors", Icon: Store },
       { href: "/admin/riders", label: "Riders", Icon: Bike },
+      { href: "/admin/messages", label: "Messages", Icon: MessageSquare },
     ],
   },
   {

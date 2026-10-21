@@ -36,4 +36,6 @@ export interface VendorSettings {
   locationLng: number | null;
   staff: StaffMember[];
   currentUserRole: VendorStaffRole;
+  /** The signed-in person's own promotion choices (not the store's). */
+  marketing: { marketingEmail: boolean; marketingSms: boolean };
 }

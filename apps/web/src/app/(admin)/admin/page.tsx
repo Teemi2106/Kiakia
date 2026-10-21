@@ -1,4 +1,5 @@
 import { getDashboardMetrics, getMoneySummary, listPayables, parseMoneyRange } from "@/lib/admin/finance";
+import { countWaitingForRider } from "@/lib/admin/dispatch";
 import { listFlaggedOrders } from "@/lib/admin/flagged";
 import { listOrders, type OrderListItem } from "@/lib/admin/orders";
 import { countVendorsByStatus } from "@/lib/admin/vendors";
@@ -30,7 +31,7 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
   await requireAdminContext();
   const range = parseMoneyRange(firstParam((await searchParams).range));
 
-  const [metrics, moneySummary, flagged, readyOrders, arrivedOrders, failedOrders, vendorCounts, owed] = await Promise.all([
+  const [metrics, moneySummary, flagged, readyOrders, arrivedOrders, failedOrders, vendorCounts, owed, waitingForRider] = await Promise.all([
     getDashboardMetrics(),
     getMoneySummary(range),
     listFlaggedOrders({ pageSize: 5 }),
@@ -39,6 +40,7 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
     listOrders({ status: "failed_delivery", pageSize: 5 }),
     countVendorsByStatus(),
     listPayables({ pageSize: 1 }),
+    countWaitingForRider(),
   ]);
 
   const { stuck_orders: stuck, capture_anomalies_7d: anomalies, gateway_refunds: refunds } = metrics;
@@ -52,13 +54,20 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
       />
 
       <Section title="Needs attention">
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <AttentionCount label="Vendors waiting for approval" count={vendorCounts.pending} href="/admin/vendors?status=pending" />
           <AttentionCount
             label="Riders waiting for approval"
             count={metrics.riders.pending_kyc}
             href="/admin/riders?state=pending"
             hint={`${metrics.riders.documents_pending} documents to check`}
+          />
+          <AttentionCount
+            label="Orders waiting for a rider"
+            count={waitingForRider}
+            href="/admin/dispatch"
+            tone="warning"
+            hint={waitingForRider > 0 ? "Ready, but no rider has the order" : undefined}
           />
           <AttentionCount label="Payment problems this week" count={anomalyTotal} href="/admin/flagged-orders" />
           <AttentionCount
@@ -173,7 +182,7 @@ function Metric({
   return href ? <Link href={href}>{body}</Link> : body;
 }
 
-function AttentionCount({ label, count, href, hint }: { label: string; count: number; href: string; hint?: string }) {
+function AttentionCount({ label, count, href, hint, tone = "danger" }: { label: string; count: number; href: string; hint?: string; tone?: "danger" | "warning" }) {
   return (
     <li>
       <Link
@@ -184,7 +193,7 @@ function AttentionCount({ label, count, href, hint }: { label: string; count: nu
           {label}
           {hint && <span className="block text-xs text-ink-muted">{hint}</span>}
         </span>
-        <Badge tone={count > 0 ? "danger" : "positive"}>{count > 0 ? count : "None"}</Badge>
+        <Badge tone={count > 0 ? tone : "positive"}>{count > 0 ? count : "None"}</Badge>
       </Link>
     </li>
   );

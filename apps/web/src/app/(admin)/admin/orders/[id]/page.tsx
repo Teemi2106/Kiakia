@@ -1,4 +1,6 @@
+import { getWaitingForOrder } from "@/lib/admin/dispatch";
 import { getOrderDetail, listAssignableRiders } from "@/lib/admin/orders";
+import { formatWaiting } from "@/lib/admin/dispatch-info";
 import { requireAdminContext } from "@/lib/auth/dal";
 import { Badge, EmptyState, OrderStatusBadge } from "@kiakia/ui";
 import type { Metadata } from "next";
@@ -13,6 +15,8 @@ import { Table, Td, Th, Tr } from "../../../_components/Table";
 import { OrderActions } from "./_components/OrderActions";
 import { OrderLedger } from "./_components/OrderLedger";
 import { OrderTimeline } from "./_components/OrderTimeline";
+import { RedispatchButton } from "../../../_components/RedispatchButton";
+import { WaitingReason } from "../../../_components/WaitingReason";
 
 export const metadata: Metadata = { title: "Order" };
 
@@ -27,7 +31,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   await requireAdminContext();
 
   const { id } = await params;
-  const detail = await getOrderDetail(id);
+  const [detail, waiting] = await Promise.all([getOrderDetail(id), getWaitingForOrder(id)]);
   if (!detail) notFound();
 
   const assignableRiders = detail.canReassignRider ? await listAssignableRiders(id) : [];
@@ -41,6 +45,14 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         description={`Placed ${formatDateTime(order.created_at)}. Everything about this order: who is involved, what was paid, and what happened.`}
         actions={<OrderStatusBadge status={order.status} />}
       />
+
+      {waiting && (
+        <div role="status" className="flex flex-col gap-3 rounded-card border border-warning bg-warning-surface px-4 py-3">
+          <p className="text-sm font-semibold text-ink">This order is waiting for a rider (for {formatWaiting(waiting.waitingSeconds)}).</p>
+          <WaitingReason order={waiting} />
+          <RedispatchButton orderId={waiting.orderId} />
+        </div>
+      )}
 
       <OrderActions detail={detail} assignableRiders={assignableRiders} />
 

@@ -3,6 +3,7 @@
 
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { Clock, MapPin, Store, TrendingUp } from "lucide-react";
+import { MarketingPreferences } from "@/app/_components/MarketingPreferences";
 import { SettingsForm } from "../_components/SettingsForm";
 import type { VendorSettings } from "./types";
 
@@ -62,6 +63,8 @@ export function GeneralSettings({ vendor }: GeneralSettingsProps) {
           </p>
         </div>
       </div>
+
+      <MarketingPreferences initial={vendor.marketing} />
     </div>
   );
 }

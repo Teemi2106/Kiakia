@@ -37,6 +37,9 @@ const mockPort = new URL(mockUrl).port;
 // One id for the whole run, shared with the worker process through the env.
 process.env.E2E_RUN_ID ??= Date.now().toString(36);
 
+// Signs the unsubscribe links the messages spec builds; the Next server below gets the same value.
+process.env.E2E_UNSUBSCRIBE_SECRET ??= "e2e-unsubscribe-secret-value";
+
 export default defineConfig({
   testDir: "./e2e/cycle",
   fullyParallel: false,
@@ -87,6 +90,7 @@ export default defineConfig({
         MONNIFY_CONTRACT_CODE: "e2e-contract",
         MONNIFY_BASE_URL: mockUrl,
         MONNIFY_REDIRECT_BASE_URL: baseURL,
+        MESSAGE_UNSUBSCRIBE_SECRET: process.env.E2E_UNSUBSCRIBE_SECRET,
         // Set (to harmless dummies) rather than left unset: an unset key would
         // let a value from .env.local through.
         NEXT_PUBLIC_MAPBOX_TOKEN: "pk.e2e-local-dummy-token",

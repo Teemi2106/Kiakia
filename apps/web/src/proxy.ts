@@ -29,6 +29,15 @@ function supabaseHost(): string | null {
 }
 
 export async function proxy(request: NextRequest) {
+  // RFC 8058 one-click unsubscribe POSTs to the same /unsubscribe?token=... URL the confirm page lives at.
+  // A page cannot answer a POST that is not a Server Action (those carry a Next-Action header), so hand it
+  // to the route handler. Public on purpose: the signed token is the credential, there is no session.
+  if (request.method === "POST" && request.nextUrl.pathname === "/unsubscribe" && !request.headers.has("next-action")) {
+    const target = request.nextUrl.clone();
+    target.pathname = "/unsubscribe/one-click";
+    return NextResponse.rewrite(target);
+  }
+
   const nonce = generateNonce();
   const csp = buildContentSecurityPolicy(nonce, supabaseHost());
 

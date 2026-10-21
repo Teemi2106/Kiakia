@@ -1,5 +1,17 @@
 import { nairaToKobo } from "@kiakia/domain";
 import { z } from "zod";
+import {
+  DISPATCH_SETTING_KEYS,
+  dispatchRangeError,
+  parseDispatchInput,
+} from "@/lib/admin/dispatch-settings-info";
+import { isValidSegment } from "@/lib/messaging/audience";
+import { EMAIL_BODY_MAX_CHARS, needsWideEncoding, smsMaxChars, SUBJECT_MAX_CHARS, WORST_CASE_FIRST_NAME, WORST_CASE_STORE_NAME } from "@/lib/messaging/limits";
+import { renderTemplate, unknownPlaceholders } from "@/lib/messaging/templates";
+
+function worstCaseRender(text: string): string {
+  return renderTemplate(text, { first_name: WORST_CASE_FIRST_NAME, store_name: WORST_CASE_STORE_NAME });
+}
 
 /**
  * Input schemas for the admin Server Actions. Every id is a uuid and every
@@ -106,6 +118,33 @@ export const setPlatformFeeSchema = z
     }
   });
 
+/**
+ * A rider-matching setting. `input` is what the admin typed (km, a count, or
+ * minutes, per the setting) and is converted to the stored unit here.
+ * The RPC re-checks the range and writes the audit row.
+ */
+export const setDispatchSettingSchema = z
+  .object({
+    key: z.enum(DISPATCH_SETTING_KEYS, { message: "Unknown setting" }),
+    input: z.string().trim().min(1, "Enter a value"),
+    reason: requiredReason,
+  })
+  .transform((value, ctx) => {
+    const parsed = parseDispatchInput(value.key, value.input);
+    if (parsed === null) {
+      ctx.addIssue({ code: "custom", path: ["input"], message: "Enter a plain number, for example 5 or 7.5." });
+      return z.NEVER;
+    }
+    const rangeError = dispatchRangeError(value.key, parsed);
+    if (rangeError) {
+      ctx.addIssue({ code: "custom", path: ["input"], message: rangeError });
+      return z.NEVER;
+    }
+    return { key: value.key, value: parsed, reason: value.reason };
+  });
+
+export const redispatchOrderSchema = z.object({ orderId: uuidSchema });
+
 export const updateServiceAreaSchema = z.object({
   serviceAreaId: uuidSchema,
   baseDeliveryFeeKobo: feeNairaSchema("Base delivery fee"),
@@ -159,6 +198,92 @@ export const rejectDocumentSchema = z.object({
 
 /** Optional free-text reason carried by the one-click approve/reject buttons. */
 export const optionalReasonSchema = optionalReason;
+
+/**
+ * Admin messages (broadcasts and one-to-one). The length limits mirror
+ * admin_create_broadcast / admin_send_message; see lib/messaging/limits.ts.
+ */
+export const audienceSchema = z
+  .discriminatedUnion("kind", [
+    z.object({ kind: z.literal("role"), role: z.enum(["customer", "vendor", "rider"]), segment: z.string().min(1) }),
+    z.object({ kind: z.literal("user"), user_id: uuidSchema }),
+  ])
+  .refine((audience) => audience.kind === "user" || isValidSegment(audience.role, audience.segment), {
+    message: "Pick a valid group of people to send to",
+  });
+
+const channelSchema = z.enum(["email", "sms"], { message: "Choose email or text message" });
+
+function checkMessageContent(
+  value: { channel: "email" | "sms"; category: "transactional" | "promotional"; subject?: string; body: string; audience?: z.infer<typeof audienceSchema> },
+  ctx: z.RefinementCtx,
+) {
+  const issue = (path: "subject" | "body", message: string) => ctx.addIssue({ code: "custom", path: [path], message });
+
+  if (value.channel === "email" && !value.subject) issue("subject", "Add a subject for the email");
+  if (/[\x01-\x1f\x7f]/.test(value.subject ?? "")) issue("subject", "The subject must be a single line");
+  if (/[\x01-\x08\x0b-\x1f\x7f]/.test(value.body)) issue("body", "The message has characters that cannot be sent. Remove them or retype that part.");
+
+  const unknown = [...unknownPlaceholders(value.body), ...unknownPlaceholders(value.subject ?? "")];
+  if (unknown.length > 0) {
+    issue("body", `${unknown[0]} is not something we can fill in. Use only {{first_name}} or {{store_name}}.`);
+  }
+  const storeName = [value.body, value.subject ?? ""].some((text) => /\{\{\s*store_name\s*\}\}/i.test(text));
+  if (storeName && value.audience && !(value.audience.kind === "role" && value.audience.role === "vendor")) {
+    issue("body", "{{store_name}} only works when you are writing to vendors");
+  }
+
+  // The database checks the longest the text could become, with a 40-character first name and a 60-character store name.
+  const worst = worstCaseRender(value.body);
+  if (value.channel === "sms") {
+    const limit = smsMaxChars(worst, value.category === "promotional");
+    if (worst.length > limit) {
+      issue(
+        "body",
+        needsWideEncoding(worst)
+          ? `This text has special characters or emoji, so it can be at most ${limit} characters once names are filled in. Shorten it or remove them.`
+          : `A text message can be at most ${limit} characters once names are filled in`,
+      );
+    }
+  } else {
+    if (worstCaseRender(value.subject ?? "").length > SUBJECT_MAX_CHARS) issue("subject", `Keep the subject under ${SUBJECT_MAX_CHARS} characters`);
+    if (worst.length > EMAIL_BODY_MAX_CHARS) issue("body", `An email can be at most ${EMAIL_BODY_MAX_CHARS} characters`);
+  }
+}
+
+const subjectSchema = z
+  .string()
+  .trim()
+  .max(1000, "That subject is too long")
+  .transform((value) => value || undefined)
+  .optional();
+
+/** Browsers send line breaks as CRLF; the database stores a plain line feed. */
+const bodySchema = z
+  .string()
+  .transform((value) => value.replace(/\r\n/g, "\n").trim())
+  .pipe(z.string().min(1, "Write the message").max(EMAIL_BODY_MAX_CHARS * 2, "That message is too long"));
+
+export const broadcastSchema = z
+  .object({
+    audience: audienceSchema,
+    channel: channelSchema,
+    category: z.enum(["transactional", "promotional"]),
+    subject: subjectSchema,
+    body: bodySchema,
+    reason: requiredReason,
+  })
+  .superRefine(checkMessageContent);
+
+export const directMessageSchema = z
+  .object({
+    userId: uuidSchema,
+    channel: channelSchema,
+    subject: subjectSchema,
+    body: bodySchema,
+    reason: requiredReason,
+  })
+  .superRefine((value, ctx) => checkMessageContent({ ...value, category: "transactional", audience: { kind: "user", user_id: value.userId } }, ctx));
 
 /** First zod issue as a single form-level message. */
 export function firstIssue(error: z.ZodError): string {

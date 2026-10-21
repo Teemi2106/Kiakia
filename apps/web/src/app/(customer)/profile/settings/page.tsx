@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { loadMarketingPreferences } from "@/lib/messaging/preferences";
+import { MarketingPreferences } from "@/app/_components/MarketingPreferences";
 import { ProfileInfo } from "../_components/ProfileInfo";
 
 export const metadata: Metadata = { title: "Account Settings" };
@@ -12,11 +14,10 @@ export default async function ProfileSettingsPage() {
   const session = await verifySession();
   const supabase = await createClient();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, phone, created_at")
-    .eq("id", session.userId)
-    .single();
+  const [{ data: profile }, marketing] = await Promise.all([
+    supabase.from("profiles").select("full_name, phone, created_at").eq("id", session.userId).single(),
+    loadMarketingPreferences(session.userId),
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-30 sm:px-6 sm:py-18">
@@ -36,6 +37,7 @@ export default async function ProfileSettingsPage() {
         phone={profile?.phone}
         memberSince={profile?.created_at}
       />
+      <MarketingPreferences initial={marketing} />
     </div>
   );
 }

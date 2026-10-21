@@ -82,6 +82,24 @@ enabled = true
 import_map = "./functions/web-push/deno.json"
 entrypoint = "./functions/web-push/index.ts"
 
+[functions.message-worker]
+enabled = true
+# verify_jwt = false: the caller (pg_cron -> invoke_message_worker(), migration
+# 0096) authenticates with the shared `x-worker-secret` header instead, checked
+# in constant time against MESSAGE_WORKER_SECRET. See
+# supabase/functions/message-worker/index.ts's header.
+verify_jwt = false
+import_map = "./functions/message-worker/deno.json"
+entrypoint = "./functions/message-worker/index.ts"
+
+[functions.message-webhooks]
+enabled = true
+# Public provider callbacks (Resend / Termii): Svix signature or shared token is
+# the only authority. See supabase/functions/message-webhooks/index.ts.
+verify_jwt = false
+import_map = "./functions/message-webhooks/deno.json"
+entrypoint = "./functions/message-webhooks/index.ts"
+
 # pgTAP helpers for images that do not ship supabase_test_helpers (see 0013 and
 # test_helpers_shim.sql). Local/CI only: db push does not run seeds.
 [db.seed]

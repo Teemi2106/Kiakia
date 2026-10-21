@@ -28,6 +28,11 @@ const serverOnlySchema = z.object({
   // Cloudflare WAF 403s init-transaction for a localhost redirectUrl, so local
   // dev points this at a tunnel while NEXT_PUBLIC_SITE_URL stays localhost.
   MONNIFY_REDIRECT_BASE_URL: z.string().url().optional(),
+  // Signs the unsubscribe links in promotional emails and texts. The Edge
+  // sending worker mints the tokens with this same value; /unsubscribe verifies
+  // them. Optional so dev and CI boot without it: the unsubscribe route refuses
+  // every token (and says so) until it is set. See lib/messaging/unsubscribe.ts.
+  MESSAGE_UNSUBSCRIBE_SECRET: z.string().min(1).optional(),
 });
 
 const serverOnly = serverOnlySchema.parse({
@@ -37,6 +42,7 @@ const serverOnly = serverOnlySchema.parse({
   MONNIFY_CONTRACT_CODE: process.env.MONNIFY_CONTRACT_CODE,
   MONNIFY_BASE_URL: process.env.MONNIFY_BASE_URL,
   MONNIFY_REDIRECT_BASE_URL: process.env.MONNIFY_REDIRECT_BASE_URL || undefined,
+  MESSAGE_UNSUBSCRIBE_SECRET: process.env.MESSAGE_UNSUBSCRIBE_SECRET || undefined,
 });
 
 export const serverEnv = { ...clientEnv, ...serverOnly };

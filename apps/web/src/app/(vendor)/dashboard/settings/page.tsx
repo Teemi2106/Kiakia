@@ -1,6 +1,7 @@
 // app/(vendor)/settings/page.tsx
 import { getVendorForCurrentUser, verifySession } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { loadMarketingPreferences } from "@/lib/messaging/preferences";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SettingsDesktop } from "./_components/SettingsDesktop";
@@ -21,7 +22,7 @@ function parseOperatingHours(raw: unknown): DayHours[] | null {
 
 export default async function VendorSettingsPage() {
   const session = await verifySession();
-  const vendor = await getVendorForCurrentUser();
+  const [vendor, marketing] = await Promise.all([getVendorForCurrentUser(), loadMarketingPreferences(session.userId)]);
   if (!vendor) notFound();
 
   // No FK PostgREST can embed on directly (vendor_staff.user_id references
@@ -65,6 +66,7 @@ export default async function VendorSettingsPage() {
     locationLng: vendor.location_lng,
     staff,
     currentUserRole,
+    marketing,
   };
 
   return (

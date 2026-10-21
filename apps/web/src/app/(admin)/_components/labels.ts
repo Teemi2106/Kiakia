@@ -36,6 +36,10 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   "order.reassign_rider": "Changed the rider on an order",
   "service_area.update": "Changed delivery fees for an area",
   "platform_fee.set": "Changed a platform fee",
+  "dispatch_setting.set": "Changed rider matching",
+  "order.redispatch": "Sent an order to riders again",
+  "message.broadcast": "Sent a message to a group",
+  "message.send": "Sent a message to one person",
   "export.orders": "Downloaded the orders list",
   "export.ledger": "Downloaded the money records",
 };
@@ -55,6 +59,7 @@ const AUDIT_TARGET_LABELS: Record<string, string> = {
   service_area: "Delivery area",
   export: "Download",
   platform_setting: "Platform fee",
+  message: "Message",
 };
 
 export function auditTargetLabel(type: string): string {

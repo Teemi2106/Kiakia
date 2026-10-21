@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { loadOrderCodes, loadProfiles, loadVendorNames } from "./lookups";
 import { emptyPage, optionalUuid, pageWindow, type Page, type PageParams } from "./query";
 
-export const AUDIT_TARGET_TYPES = ["user", "vendor", "rider", "rider_document", "order", "service_area", "export", "platform_setting"] as const;
+export const AUDIT_TARGET_TYPES = ["user", "vendor", "rider", "rider_document", "order", "service_area", "export", "platform_setting", "message"] as const;
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
 
 export interface AuditLogFilters extends PageParams {
