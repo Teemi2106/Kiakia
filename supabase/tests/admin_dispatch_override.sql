@@ -25,7 +25,7 @@
 -- away (fee 215000, above the 135000 the order can fund).
 
 begin;
-select plan(96);
+select plan(104);
 
 create temp table base_counts as select count(*)::int as ledger_entries from ledger_entries;
 grant select on base_counts to service_role;
@@ -46,8 +46,8 @@ from (values ('_quote_rider_fee(uuid, uuid)'), ('_rider_assign_blocker(uuid, uui
 cross join (values ('anon'), ('authenticated'), ('service_role')) as r(role);
 
 select ok(
-  (select pg_get_triggerdef(oid) like '%WHEN%new.status = ''offered''%' from pg_trigger where tgname = 'dispatch_offers_notify_rider'),
-  'the new-offer push only fires for rows inserted as offered (a forced assignment inserts an accepted one)'
+  (select pg_get_triggerdef(oid) like '%WHEN%new.status = ''offered''%' from pg_trigger where tgname = 'dispatch_offers_queue_push'),
+  'the new-offer push (outbox trigger, 0103; was dispatch_offers_notify_rider) only fires for rows inserted as offered (a forced assignment inserts an accepted one)'
 );
 
 -- ---------------------------------------------------------------------------
@@ -79,13 +79,14 @@ update riders set is_online = false where user_id = tests.get_supabase_uid('dd_r
 update riders set last_ping_at = now() - interval '10 minutes' where user_id = tests.get_supabase_uid('dd_rd');
 update riders set kyc_status = 'pending' where user_id = tests.get_supabase_uid('dd_re');
 
+-- Orders are 'paid': the sequential engine (0101) refuses to offer an unpaid order.
 -- total 560000, subtotal 500000 at 15% commission: the order can fund a rider fee up to 135000.
 create function pg_temp.mk_order(p_n text, p_status order_status, p_rider uuid default null, p_clocks boolean default false)
 returns void language sql as $$
-  insert into orders (id, customer_id, vendor_id, service_area_id, status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo,
+  insert into orders (id, customer_id, vendor_id, service_area_id, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo,
                       delivery_address, delivery_location, rider_id, rider_fee_kobo, assigned_at, ready_at, first_dispatched_at, dispatch_cycle_started_at)
   values (('dd000000-0000-7000-8000-0000000000' || p_n)::uuid, tests.get_supabase_uid('dd_customer'),
-          'dd000000-0000-7000-8000-000000000101', 'dd000000-0000-7000-8000-000000000201', p_status,
+          'dd000000-0000-7000-8000-000000000101', 'dd000000-0000-7000-8000-000000000201', p_status, 'paid',
           500000, 50000, 10000, 0, 560000, '{"line1": "1 DD Street"}'::jsonb, st_geogfromtext('POINT(7.45 9.05)'),
           p_rider, case when p_rider is null then 0 else 65000 end,
           case when p_rider is not null and p_status = 'rider_assigned' then now() - interval '1 hour' end,
@@ -111,15 +112,29 @@ select pg_temp.mk_order('14', 'arrived');
 select pg_temp.mk_order('15', 'delivered');
 select pg_temp.mk_order('16', 'cancelled_by_platform');
 select pg_temp.mk_order('17', 'placed');
+select pg_temp.mk_order('18', 'ready_for_pickup');
 
 -- 01 rider_assigned ra   02 preparing (early accept) rb   03 ready, nobody offered, stale cycle
 -- 04 ready, offers to rk/rl, assigned to rj   05 twin of 04: rk accepts   06 preparing twin of 07: rl early-accepts
 -- 07 preparing, assigned to rm   08 rider_assigned rn, swapped to ro   09 ready, refusal target
 -- 10 preparing with rg (rg is "busy")   11 ready, offered to far rh   12-17 refused statuses
-insert into dispatch_offers (order_id, rider_id, status, responded_at) values
-  ('dd000000-0000-7000-8000-000000000001'::uuid, tests.get_supabase_uid('dd_ra'), 'accepted', now()), ('dd000000-0000-7000-8000-000000000002'::uuid, tests.get_supabase_uid('dd_rb'), 'accepted', now()), ('dd000000-0000-7000-8000-000000000008'::uuid, tests.get_supabase_uid('dd_rn'), 'accepted', now());
-insert into dispatch_offers (order_id, rider_id, status) values
-  ('dd000000-0000-7000-8000-000000000004'::uuid, tests.get_supabase_uid('dd_rk'), 'offered'), ('dd000000-0000-7000-8000-000000000004'::uuid, tests.get_supabase_uid('dd_rl'), 'offered'), ('dd000000-0000-7000-8000-000000000005'::uuid, tests.get_supabase_uid('dd_rk'), 'offered'), ('dd000000-0000-7000-8000-000000000006'::uuid, tests.get_supabase_uid('dd_rl'), 'offered'), ('dd000000-0000-7000-8000-000000000011'::uuid, tests.get_supabase_uid('dd_rh'), 'offered');
+-- 18 ready, offered to busy rg (SEQUENTIAL: one live offer per order, so the two "cannot accept" riders get their own order)
+-- Sequential dispatch (0100+): one live ('offered') offer per order. Order 04's history is rl's earlier
+-- attempt (expired, attempt 1) then rk's live offer (attempt 2); every row carries explicit cycle/attempt numbers.
+insert into dispatch_offers (order_id, rider_id, status, responded_at, cycle_no, attempt_no) values
+  ('dd000000-0000-7000-8000-000000000001'::uuid, tests.get_supabase_uid('dd_ra'), 'accepted', now(), 1, 1), ('dd000000-0000-7000-8000-000000000002'::uuid, tests.get_supabase_uid('dd_rb'), 'accepted', now(), 1, 1), ('dd000000-0000-7000-8000-000000000008'::uuid, tests.get_supabase_uid('dd_rn'), 'accepted', now(), 1, 1),
+  ('dd000000-0000-7000-8000-000000000004'::uuid, tests.get_supabase_uid('dd_rl'), 'expired', now(), 1, 1);
+insert into dispatch_offers (order_id, rider_id, status, cycle_no, attempt_no) values
+  ('dd000000-0000-7000-8000-000000000004'::uuid, tests.get_supabase_uid('dd_rk'), 'offered', 1, 2), ('dd000000-0000-7000-8000-000000000005'::uuid, tests.get_supabase_uid('dd_rk'), 'offered', 1, 1), ('dd000000-0000-7000-8000-000000000006'::uuid, tests.get_supabase_uid('dd_rl'), 'offered', 1, 1), ('dd000000-0000-7000-8000-000000000011'::uuid, tests.get_supabase_uid('dd_rh'), 'offered', 1, 1);
+-- Dispatch state rows (the accept trigger makes these in production; these fixture orders are inserted past that point).
+-- 02/06/07 are early orders whose dispatch window is already open (start_at in the past). 09/18 are parked far in the
+-- future so the global sweep further down does not hand them a live offer (and with it a rider) behind the test's back.
+insert into order_dispatch (order_id, state, cycle_no, attempt_no, expected_ready_at, start_at, next_check_at) values
+  ('dd000000-0000-7000-8000-000000000002', 'assigned', 1, 1, now() + interval '10 minutes', now() - interval '5 minutes', null),
+  ('dd000000-0000-7000-8000-000000000006', 'offered', 1, 1, now() + interval '10 minutes', now() - interval '5 minutes', now() + interval '45 seconds'),
+  ('dd000000-0000-7000-8000-000000000007', 'scheduled', 0, 0, now() + interval '10 minutes', now() - interval '5 minutes', now() + interval '1 day'),
+  ('dd000000-0000-7000-8000-000000000009', 'scheduled', 0, 0, now(), now(), now() + interval '1 day'),
+  ('dd000000-0000-7000-8000-000000000018', 'scheduled', 0, 0, now(), now(), now() + interval '1 day');
 insert into order_rider_locations (order_id, rider_id, lat, lng) values ('dd000000-0000-7000-8000-000000000001'::uuid, tests.get_supabase_uid('dd_ra'), 9.5, 7.5), ('dd000000-0000-7000-8000-000000000008'::uuid, tests.get_supabase_uid('dd_rn'), 9.5, 7.505);
 
 -- ---------------------------------------------------------------------------
@@ -178,9 +193,11 @@ select is((select count(*)::int from order_rider_locations where order_id = 'dd0
 select is((select count(*)::int from rider_notifications where rider_id = tests.get_supabase_uid('dd_ra') and order_id = 'dd000000-0000-7000-8000-000000000001'::uuid), 1, 'the removed rider is notified');
 select ok((select first_dispatched_at > now() - interval '1 minute' and dispatch_cycle_started_at > now() - interval '1 minute' from orders where id = 'dd000000-0000-7000-8000-000000000001'::uuid), 'the dispatch trigger restarted the rider clock and cycle');
 select ok((select ready_at < now() - interval '1 hour' from orders where id = 'dd000000-0000-7000-8000-000000000001'::uuid), 'ready_at is left alone');
-select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and status = 'offered' and rider_id in (tests.get_supabase_uid('dd_rj'), tests.get_supabase_uid('dd_rk'))), 2, 'other eligible riders were offered the order');
-select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and rider_id in (tests.get_supabase_uid('dd_rb'), tests.get_supabase_uid('dd_rg'), tests.get_supabase_uid('dd_rf'))), 0, '... but not riders already on an order (rb, rg) or suspended (rf)');
-select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and rider_id in (tests.get_supabase_uid('dd_rc'), tests.get_supabase_uid('dd_rd'), tests.get_supabase_uid('dd_re'), tests.get_supabase_uid('dd_rh'))), 0, 'ineligible riders (offline, stale, unapproved, unfundable) were not offered');
+-- SEQUENTIAL: the re-offer asks ONE rider (old: every eligible rider at once). rk and rl already hold a live offer on
+-- orders 05/06, so the engine skips them; the three free riders left are rj, rm, ro (identical position, so any of them);
+-- the removed rider ra (revoked) is never asked again.
+select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and status = 'offered'), 1, 'the re-offer creates exactly ONE live offer (sequential dispatch, one rider at a time)');
+select ok((select rider_id in (tests.get_supabase_uid('dd_rj'), tests.get_supabase_uid('dd_rm'), tests.get_supabase_uid('dd_ro')) from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and status = 'offered'), '... held by a nearest eligible free rider (rj, rm or ro); never the removed rider, nor rk/rl who hold a live offer elsewhere');
 select is((select count(*)::int from admin_audit_log where target_id = 'dd000000-0000-7000-8000-000000000001'::uuid and action = 'order.reassign_rider' and reason = 'rider stopped answering'), 1, 'exactly one audit row');
 select is(
   (select details - 'live_offers' from admin_audit_log where target_id = 'dd000000-0000-7000-8000-000000000001'::uuid),
@@ -196,17 +213,42 @@ select is((select count(*)::int from order_events where order_id = 'dd000000-000
 
 -- A nudge (order 03: ready, nobody on offer) - before the sweep below would do it first.
 select is((select status::text from admin_reassign_order_rider('dd000000-0000-7000-8000-000000000003'::uuid, null, 'nobody was offered', tests.get_supabase_uid('dd_admin'))), 'ready_for_pickup', 'a nudge on a ready order with no offers keeps its status');
-select ok(exists (select 1 from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000003'::uuid and status = 'offered'), '... and creates offers');
+select is((select rider_id from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000003'::uuid and status = 'offered'), tests.get_supabase_uid('dd_ra'), '... and creates ONE live offer, to the nearest eligible rider (ra sits on the vendor)');
 select is((select first_dispatched_at < now() - interval '30 minutes' from orders where id = 'dd000000-0000-7000-8000-000000000003'::uuid), true, '... without touching first_dispatched_at');
 
 reset role;
-update dispatch_offers set status = 'expired' where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and status = 'offered';
--- ra is the nearest rider; a revoked one must not use up the single slot.
-select is(_dispatch_offer_batch('dd000000-0000-7000-8000-000000000001'::uuid, now() + interval '1 hour', 1), 1, 'a revoked rider does not take up a slot in the batch');
-update dispatch_offers set status = 'expired' where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and status = 'offered';
+create function pg_temp.expire_live(p_order uuid) returns void language sql as $$
+  update dispatch_offers set status = 'expired', close_reason = 'timeout' where order_id = p_order and status = 'offered';
+$$;
+create function pg_temp.advance(p_order uuid) returns jsonb language plpgsql as $$
+begin
+  perform 1 from orders where id = p_order for update;
+  return _dispatch_advance(p_order, 'test');
+end $$;
+create temp table first_holder as select rider_id from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and status = 'offered';
+select pg_temp.expire_live('dd000000-0000-7000-8000-000000000001'::uuid);
+-- ra is the nearest rider; a revoked one must not use up the single slot. (Sequential: after the live offer times out the
+-- NEXT rider gets exactly one offer, and it is neither ra nor the rider who just let it lapse.)
+select is(_dispatch_offer_batch('dd000000-0000-7000-8000-000000000001'::uuid, now() + interval '1 hour', 1), 1, 'a revoked rider does not take up the slot: after a timeout exactly one more offer is made');
+select ok((select rider_id not in (tests.get_supabase_uid('dd_ra'), (select rider_id from first_holder)) from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and status = 'offered'), '... to the next rider, not the removed one and not the one who just let the offer lapse');
+-- walk the rest of the cycle one rider at a time
+select pg_temp.expire_live('dd000000-0000-7000-8000-000000000001'::uuid);
+select pg_temp.advance('dd000000-0000-7000-8000-000000000001'::uuid);
+select is((select count(distinct rider_id)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and rider_id in (tests.get_supabase_uid('dd_rj'), tests.get_supabase_uid('dd_rm'), tests.get_supabase_uid('dd_ro'))), 3, 'walking the cycle asks each free eligible rider (rj, rm, ro) in turn, one live offer at a time');
+select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and status = 'offered'), 1, '... and there is never more than one live offer');
+select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and rider_id in (tests.get_supabase_uid('dd_rb'), tests.get_supabase_uid('dd_rg'), tests.get_supabase_uid('dd_rf'))), 0, '... never asking riders already on an order (rb, rg) or suspended (rf)');
+select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and rider_id in (tests.get_supabase_uid('dd_rc'), tests.get_supabase_uid('dd_rd'), tests.get_supabase_uid('dd_re'), tests.get_supabase_uid('dd_rh'))), 0, '... nor ineligible riders (offline, stale, unapproved, unfundable)');
+select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and rider_id in (tests.get_supabase_uid('dd_rk'), tests.get_supabase_uid('dd_rl'))), 0, '... nor riders who already hold a live offer on another order (rk, rl)');
+select pg_temp.expire_live('dd000000-0000-7000-8000-000000000001'::uuid);
+update order_dispatch set next_check_at = now() where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid;
 select tests.authenticate_as_service_role();
 select sweep_dispatch_offers();
-select is((select status from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and rider_id = tests.get_supabase_uid('dd_ra')), 'revoked', 'neither the batch nor the sweep ever re-offers the removed rider');
+select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and rider_id = tests.get_supabase_uid('dd_ra')), 1, 'neither the batch nor the sweep (which now starts a fresh cycle) ever creates a second offer for the removed rider');
+select is((select status from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000001'::uuid and rider_id = tests.get_supabase_uid('dd_ra')), 'revoked', '... and the removed rider''s only offer stays revoked');
+-- ra's offer on order 03 (the nudge above) lapses so ra is free for the early re-offer of order 02 below.
+reset role;
+select pg_temp.expire_live('dd000000-0000-7000-8000-000000000003'::uuid);
+select tests.authenticate_as_service_role();
 
 -- ---------------------------------------------------------------------------
 -- Re-offer while preparing (order 02, early-accepted by rb)
@@ -215,7 +257,8 @@ select is((select status from dispatch_offers where order_id = 'dd000000-0000-70
 select is((select status::text from admin_reassign_order_rider('dd000000-0000-7000-8000-000000000002'::uuid, null, 'rider unreachable', tests.get_supabase_uid('dd_admin'))), 'preparing', 're-offer of an early-accepted order keeps its status');
 select is((select rider_id from orders where id = 'dd000000-0000-7000-8000-000000000002'::uuid), null, '... clears the rider');
 select is((select status from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000002'::uuid and rider_id = tests.get_supabase_uid('dd_rb')), 'revoked', '... revokes their offer');
-select ok(exists (select 1 from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000002'::uuid and rider_id = tests.get_supabase_uid('dd_ra') and status = 'offered'), '... and offers the order right away to another rider');
+select ok(exists (select 1 from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000002'::uuid and rider_id = tests.get_supabase_uid('dd_ra') and status = 'offered'), '... and offers the order right away to ONE other rider (the nearest, ra)');
+select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000002'::uuid and status = 'offered'), 1, '... with exactly one live offer on it');
 select is((select count(*)::int from order_events where order_id = 'dd000000-0000-7000-8000-000000000002'::uuid and actor_type = 'admin' and from_status = 'preparing' and to_status = 'preparing'), 1, '... with a same-status admin event');
 
 -- ---------------------------------------------------------------------------
@@ -226,8 +269,9 @@ select is((select status::text from admin_reassign_order_rider('dd000000-0000-70
 select is((select rider_id from orders where id = 'dd000000-0000-7000-8000-000000000004'::uuid), tests.get_supabase_uid('dd_rj'), '... with that rider');
 select ok((select assigned_at > now() - interval '1 minute' from orders where id = 'dd000000-0000-7000-8000-000000000004'::uuid), '... assigned_at stamped');
 select is((select status from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000004'::uuid and rider_id = tests.get_supabase_uid('dd_rj')), 'accepted', 'their offer row is accepted');
-select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000004'::uuid and status = 'offered'), 0, 'every other live offer is expired');
-select is((select status from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000004'::uuid and rider_id = tests.get_supabase_uid('dd_rk')), 'expired', '... including the one that was live');
+select is((select count(*)::int from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000004'::uuid and status = 'offered'), 0, 'no live offer is left on the order');
+select is((select status from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000004'::uuid and rider_id = tests.get_supabase_uid('dd_rk')), 'superseded', '... the one that was live is superseded (was expired before the sequential contract)');
+select is((select status from dispatch_offers where order_id = 'dd000000-0000-7000-8000-000000000004'::uuid and rider_id = tests.get_supabase_uid('dd_rl')), 'expired', '... and the earlier lapsed attempt stays expired');
 select is((select count(*)::int from rider_notifications where rider_id = tests.get_supabase_uid('dd_rj') and order_id = 'dd000000-0000-7000-8000-000000000004'::uuid), 1, 'the new rider is notified');
 select is((select count(*)::int from order_events where order_id = 'dd000000-0000-7000-8000-000000000004'::uuid and actor_type = 'admin' and from_status = 'ready_for_pickup' and to_status = 'rider_assigned' and meta->>'new_rider_id' = tests.get_supabase_uid('dd_rj')::text), 1, 'one admin event ready_for_pickup -> rider_assigned');
 select is((select details->>'mode' from admin_audit_log where target_id = 'dd000000-0000-7000-8000-000000000004'::uuid), 'assign', 'audited as an assign');
@@ -287,11 +331,11 @@ select tests.authenticate_as('dd_rh');
 select throws_ok(format($$ select accept_dispatch_offer(%L::uuid) $$, 'dd000000-0000-7000-8000-000000000011'), '23514', null, 'accept_dispatch_offer still refuses an unfundable rider');
 select tests.clear_authentication();
 
--- rg already holds order 10, so an offer on 11 cannot become a second job.
+-- rg already holds order 10, so an offer on 18 cannot become a second job. (Own order: one live offer per order.)
 reset role;
-insert into dispatch_offers (order_id, rider_id, status) values ('dd000000-0000-7000-8000-000000000011'::uuid, tests.get_supabase_uid('dd_rg'), 'offered');
+insert into dispatch_offers (order_id, rider_id, status, cycle_no, attempt_no) values ('dd000000-0000-7000-8000-000000000018'::uuid, tests.get_supabase_uid('dd_rg'), 'offered', 1, 1);
 select tests.authenticate_as('dd_rg');
-select throws_ok(format($$ select accept_dispatch_offer(%L::uuid) $$, 'dd000000-0000-7000-8000-000000000011'), '23514', 'accept_dispatch_offer: rider already has an active order', 'a rider already on an order cannot accept another');
+select throws_ok(format($$ select accept_dispatch_offer(%L::uuid) $$, 'dd000000-0000-7000-8000-000000000018'), '23514', 'accept_dispatch_offer: rider already has an active order', 'a rider already on an order cannot accept another');
 select tests.clear_authentication();
 
 select tests.authenticate_as_service_role();

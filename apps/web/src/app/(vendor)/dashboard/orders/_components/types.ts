@@ -1,4 +1,6 @@
 // app/(vendor)/orders/_components/types.ts
+import type { VendorDispatchState } from "@/lib/vendor/self-delivery";
+
 export interface OrderItem {
   id: string;
   name: string;
@@ -21,6 +23,10 @@ export interface Order {
   items?: OrderItem[];
   delivery_address?: string;
   customer_note?: string | null; // Allow null
+  /** Who delivers: a KiaKia rider (default) or the store itself. */
+  delivery_by?: "rider" | "vendor";
+  /** Only for a ready order with no rider yet: what the dispatch is doing. */
+  dispatch?: VendorDispatchState | null;
   courier?: string;
   eta?: string;
   image?: string | null;

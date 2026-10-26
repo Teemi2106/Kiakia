@@ -71,7 +71,7 @@ select is((select value_int from platform_settings where key = 'service_fee_bps'
   'the service fee defaults to 200 bps (2%), the previously hard-coded rate');
 select is((select value_int from platform_settings where key = 'default_vendor_commission_bps'), 1500::bigint,
   'the default vendor commission defaults to 1500 bps (15%), the previous column default');
-select is((select count(*) from platform_settings), 2::bigint, 'exactly the two known fees are seeded');
+select is((select count(*) from platform_settings where key in ('service_fee_bps', 'default_vendor_commission_bps')), 2::bigint, 'exactly the two known fees are seeded (dispatch keys, 0097, are separate)');
 
 -- A vendor inserted without a commission gets the default (a column default that reads the setting).
 insert into vendors (id, owner_user_id, name, slug, status)

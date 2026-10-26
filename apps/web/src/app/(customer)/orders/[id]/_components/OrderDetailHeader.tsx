@@ -6,11 +6,14 @@ import { CheckCircle2, Clock, Package, Truck, AlertCircle } from "lucide-react";
 interface OrderDetailHeaderProps {
   status: string;
   vendorName: string;
+  /** The store delivers this order itself, so the copy must not talk about a rider. */
+  deliveredByStore?: boolean;
 }
 
 export function OrderDetailHeader({
   status,
   vendorName,
+  deliveredByStore = false,
 }: OrderDetailHeaderProps) {
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -27,7 +30,7 @@ export function OrderDetailHeader({
       case "arrived":
         return {
           icon: Truck,
-          title: status === "arrived" ? "Rider Has Arrived!" : "Order On The Way!",
+          title: status === "arrived" ? (deliveredByStore ? "Almost There!" : "Rider Has Arrived!") : "Order On The Way!",
           subtitle: `Your order from ${vendorName} is on its way to you.`,
           bgColor: "bg-[rgba(254,142,39,0.1)]",
           iconColor: "bg-[#FE8E27]",
@@ -37,8 +40,8 @@ export function OrderDetailHeader({
       case "picked_up":
         return {
           icon: Truck,
-          title: "Rider On The Way to Vendor!",
-          subtitle: `A rider is heading to ${vendorName} to pick up your order.`,
+          title: deliveredByStore ? "Order On The Way!" : "Rider On The Way to Vendor!",
+          subtitle: deliveredByStore ? `${vendorName} is delivering your order themselves.` : `A rider is heading to ${vendorName} to pick up your order.`,
           bgColor: "bg-[rgba(254,142,39,0.1)]",
           iconColor: "bg-[#FE8E27]",
           iconBg: "text-[#653200]",

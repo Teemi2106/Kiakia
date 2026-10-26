@@ -19,6 +19,8 @@ interface AdminActionFormProps {
    * succeeded and only a follow-up is unconfirmed, so "failed" styling would mislead.
    */
   warningErrors?: readonly string[];
+  /** Keeps the submit button off while the typed input is known to be wrong. */
+  submitDisabled?: boolean;
 }
 
 /**
@@ -27,7 +29,7 @@ interface AdminActionFormProps {
  * submission, which would wipe a half-typed reason when the server rejects it;
  * here the form is only reset on success.
  */
-export function AdminActionForm({ action, submitLabel, variant, children, reason, confirmLabel, warningErrors }: AdminActionFormProps) {
+export function AdminActionForm({ action, submitLabel, variant, children, reason, confirmLabel, warningErrors, submitDisabled }: AdminActionFormProps) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, {});
   const [confirmed, setConfirmed] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -96,7 +98,7 @@ export function AdminActionForm({ action, submitLabel, variant, children, reason
       )}
 
       <div>
-        <Button type="submit" variant={variant} loading={pending} disabled={pending || (confirmLabel ? !confirmed : false)}>
+        <Button type="submit" variant={variant} loading={pending} disabled={pending || submitDisabled === true || (confirmLabel ? !confirmed : false)}>
           {submitLabel}
         </Button>
       </div>

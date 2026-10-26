@@ -3,12 +3,15 @@
 
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { Bell, BellRing, CheckCheck } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
 import { useWebPushSubscription } from "@/lib/push/useWebPushSubscription";
 
 interface Notification {
   id: string;
+  /** The order this notification is about, when it is about one. */
+  order_id: string | null;
   title: string;
   body: string;
   is_read: boolean;
@@ -211,7 +214,7 @@ function NotificationsMenu({
 
     const { data } = await createClient()
       .from("notifications")
-      .select("id, title, body, is_read, created_at")
+      .select("id, order_id, title, body, is_read, created_at")
       .eq(column, value)
       .order("created_at", { ascending: false })
       .limit(FEED_LIMIT);
@@ -301,6 +304,15 @@ function NotificationsMenu({
                       <p className="font-inter text-sm font-semibold text-[#1C1B1B]">{n.title}</p>
                       <p className="mt-0.5 font-inter text-xs text-[#5B403C]">{n.body}</p>
                       <p className="mt-1 font-inter text-[11px] text-[#5B403C]/70">{timeAgo(n.created_at)}</p>
+                      {n.order_id && (
+                        <Link
+                          href={column === "vendor_id" ? `/dashboard/orders/${n.order_id}` : `/orders/${n.order_id}/tracking`}
+                          onClick={() => setIsOpen(false)}
+                          className="mt-1 inline-block font-inter text-xs font-semibold text-[#B61913] hover:underline"
+                        >
+                          Open order
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </li>

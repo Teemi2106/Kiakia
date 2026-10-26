@@ -37,6 +37,7 @@ export function OrderDetailDesktop({
         <OrderDetailHeader
           status={order.status}
           vendorName={vendor?.name || "Vendor"}
+          deliveredByStore={order.delivered_by_store}
         />
 
         {/* Order Content */}

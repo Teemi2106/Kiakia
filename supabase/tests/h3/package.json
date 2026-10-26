@@ -1,0 +1,13 @@
+{
+  "name": "kiakia-h3-test-vectors",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Dev-only tooling: generates h3-js reference vectors for supabase/tests/h3_core.sql. Not part of the pnpm workspace; never a runtime dependency.",
+  "type": "module",
+  "scripts": {
+    "vectors": "node generate-vectors.mjs"
+  },
+  "devDependencies": {
+    "h3-js": "4.5.0"
+  }
+}

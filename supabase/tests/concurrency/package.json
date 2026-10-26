@@ -1,0 +1,13 @@
+{
+  "name": "kiakia-dispatch-concurrency",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Dev-only multi-session concurrency harness for the sequential dispatch (migrations 0099-0106). Not part of the pnpm workspace; never a runtime dependency. Runs ONLY against the isolated e2e Supabase stack.",
+  "type": "module",
+  "scripts": {
+    "start": "node run.mjs"
+  },
+  "dependencies": {
+    "pg": "8.13.1"
+  }
+}

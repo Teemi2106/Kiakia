@@ -4,6 +4,7 @@
 import { useEffect } from "react";
 import { X, Clock, Info, CheckCircle, Truck, XCircle } from "lucide-react";
 import { formatNaira, koboOf } from "@kiakia/domain";
+import { DeliverySection } from "../../../_components/DeliverySection";
 import type { Order } from "./types";
 
 /** Every status once a rider is in the loop — the vendor has nothing left to
@@ -246,8 +247,16 @@ export function OrderModal({
             </section>
           )}
 
+          <DeliverySection
+            orderId={order.id}
+            status={order.status}
+            deliveryBy={order.delivery_by}
+            dispatch={order.dispatch}
+            deliveryFeeKobo={order.delivery_fee_kobo ?? 0}
+          />
+
           {/* Rider handoff */}
-          {RIDER_HANDLING_STATUSES.has(order.status) && (
+          {order.delivery_by !== "vendor" && RIDER_HANDLING_STATUSES.has(order.status) && (
             <section className="border-2 border-[#E4BEB8] rounded-2xl p-4 bg-[#FCF9F8] text-center">
               <Truck className="mx-auto size-5 text-[#5B403C]" />
               <p className="mt-2 font-inter text-sm font-bold text-[#1C1B1B]">

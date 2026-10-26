@@ -83,14 +83,27 @@ values (
   st_geogfromtext('POINT(7.45 9.05)')
 );
 
--- rider_a has an active offer (what the dispatch trigger would have
--- created); rider_c also genuinely has one (simulating an offer made
--- before rider_c's later KYC rejection/pending state) — used below to prove
--- the KYC check applies even to a real, non-forged offer.
-insert into dispatch_offers (order_id, rider_id, status)
+-- SEQUENTIAL DISPATCH (0100+): at most ONE live ('offered') offer per order
+-- (dispatch_offers_one_live_per_order). rider_a holds the live offer on order
+-- 41 (what the engine would have created: cycle 1, attempt 1). rider_c's
+-- genuine offer (made before a later KYC rejection/pending state) lives on its
+-- OWN order 43, so the KYC check is still proved against a real, non-forged
+-- offer without two live offers on one order.
+insert into orders (id, customer_id, vendor_id, service_area_id, status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_location)
+values (
+  '00000000-0000-7000-8000-000000000043',
+  tests.get_supabase_uid('customer_a'),
+  '00000000-0000-7000-8000-000000000040',
+  '00000000-0000-7000-8000-000000000042',
+  'ready_for_pickup', 500000, 50000, 10000, 0, 560000,
+  '{"line1": "1 Test Street"}'::jsonb,
+  st_geogfromtext('POINT(7.45 9.05)')
+);
+
+insert into dispatch_offers (order_id, rider_id, status, cycle_no, attempt_no)
 values
-  ('00000000-0000-7000-8000-000000000041', tests.get_supabase_uid('rider_a'), 'offered'),
-  ('00000000-0000-7000-8000-000000000041', tests.get_supabase_uid('rider_c'), 'offered');
+  ('00000000-0000-7000-8000-000000000041', tests.get_supabase_uid('rider_a'), 'offered', 1, 1),
+  ('00000000-0000-7000-8000-000000000043', tests.get_supabase_uid('rider_c'), 'offered', 1, 1);
 
 -- rider_b has no offer at all on this order — must be rejected outright.
 select tests.authenticate_as('rider_b');
@@ -98,7 +111,7 @@ select throws_ok(
   $$ select accept_dispatch_offer('00000000-0000-7000-8000-000000000041'::uuid) $$,
   'P0001',
   'accept_dispatch_offer: no active offer for this rider on this order',
-  'a rider without an active offer on this order cannot accept it'
+  'a rider without an active offer on this order cannot accept it (the live offer belongs to rider_a)'
 );
 
 -- rider_c genuinely has an 'offered' row but is not kyc-approved — must be
@@ -106,7 +119,7 @@ select throws_ok(
 -- (0023_rider_dispatch_kyc_hardening.sql, BLOCKING 4).
 select tests.authenticate_as('rider_c');
 select throws_ok(
-  $$ select accept_dispatch_offer('00000000-0000-7000-8000-000000000041'::uuid) $$,
+  $$ select accept_dispatch_offer('00000000-0000-7000-8000-000000000043'::uuid) $$,
   'P0001',
   'accept_dispatch_offer: rider is not kyc-approved',
   'a rider with a genuine offer but unapproved KYC cannot accept it'
@@ -156,8 +169,8 @@ select is(
 -- accept_dispatch_offer() checks independently of dispatch_offers.status.
 select tests.clear_authentication();
 reset role; -- fixture insert as the owner: dispatch_offers has no INSERT policy for anon/authenticated
-insert into dispatch_offers (order_id, rider_id, status)
-values ('00000000-0000-7000-8000-000000000041', tests.get_supabase_uid('rider_b'), 'offered');
+insert into dispatch_offers (order_id, rider_id, status, cycle_no, attempt_no)
+values ('00000000-0000-7000-8000-000000000041', tests.get_supabase_uid('rider_b'), 'offered', 1, 2);
 select tests.authenticate_as('rider_b');
 select throws_ok(
   $$ select accept_dispatch_offer('00000000-0000-7000-8000-000000000041'::uuid) $$,

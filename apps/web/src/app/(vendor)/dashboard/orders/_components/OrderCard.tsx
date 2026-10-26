@@ -49,6 +49,14 @@ export function OrderCard({ order, isActive, onClick }: OrderCardProps) {
         </div>
         <StatusBadge status={order.status} />
       </div>
+      {order.dispatch?.state === "no_rider_nearby" && order.delivery_by !== "vendor" && (
+        <p className="mb-2 rounded-lg bg-[#FFDCC5] px-3 py-2 text-xs font-semibold text-[#934B00]">
+          No rider is near you right now. Open this order to choose what to do.
+        </p>
+      )}
+      {order.delivery_by === "vendor" && order.status !== "delivered" && (
+        <p className="mb-2 rounded-lg bg-[#F0EDED] px-3 py-2 text-xs font-semibold text-[#5B403C]">You are delivering this order.</p>
+      )}
       <div className="flex justify-between items-center text-[#5B403C]">
         <span className="text-sm">
           {order.items?.length || 0} Items •{" "}

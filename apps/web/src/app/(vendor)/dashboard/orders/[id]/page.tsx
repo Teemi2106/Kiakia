@@ -7,8 +7,13 @@ import { Bike, ChevronLeft, Info, MapPin, Phone, Utensils } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { loadDeliveryInfo } from "@/lib/vendor/delivery-info";
+import { DeliverySection } from "../../../_components/DeliverySection";
 import { VendorOrderActions } from "../../../_components/VendorOrderActions";
 import { StatusBadge } from "../_components/StatusBadge";
+
+/** Once a self-delivered order is ready, its steps are the delivery panel above, not the rider-waiting actions. */
+const SELF_DELIVERY_STEP_STATUSES = new Set(["ready_for_pickup", "picked_up", "in_transit", "arrived"]);
 
 export const metadata: Metadata = { title: "Order detail" };
 
@@ -47,9 +52,11 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
   // phone at all — `profiles`/`riders` are both own-row-only under RLS
   // (0007_rls.sql), so a direct query for another user's row silently
   // returns nothing. See that migration's own header.
-  const { data: rawTrackingRow } = order.rider_id
-    ? await supabase.rpc("get_order_tracking", { p_order_id: order.id }).single()
-    : { data: null };
+  const [deliveryInfo, { data: rawTrackingRow }] = await Promise.all([
+    loadDeliveryInfo(supabase, [{ id: order.id, status: order.status }]),
+    order.rider_id ? supabase.rpc("get_order_tracking", { p_order_id: order.id }).single() : Promise.resolve({ data: null }),
+  ]);
+  const delivery = deliveryInfo.get(order.id);
 
   const trackingRow = rawTrackingRow as GetOrderTrackingRow | null;
 
@@ -61,6 +68,12 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
         table="orders"
         filter={`id=eq.${order.id}`}
         topic={`vendor-order-${order.id}`}
+        enabled={!isTerminalStatus(order.status as OrderStatus)}
+      />
+      <RealtimeRefresh
+        table="notifications"
+        filter={`vendor_id=eq.${vendor.id}`}
+        topic={`vendor-order-notifications-${order.id}`}
         enabled={!isTerminalStatus(order.status as OrderStatus)}
       />
       <Link
@@ -76,12 +89,26 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
         <StatusBadge status={order.status} />
       </div>
 
+      <div className="mt-6">
+        <DeliverySection
+          orderId={order.id}
+          status={order.status}
+          deliveryBy={delivery?.deliveryBy}
+          dispatch={delivery?.dispatch}
+          deliveryFeeKobo={order.delivery_fee_kobo}
+        />
+      </div>
+
       <div className="mt-6 rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
         <h2 className="font-inter text-sm font-bold uppercase tracking-wider text-[#1C1B1B]">
           Manage Order
         </h2>
         <div className="mt-4">
-          <VendorOrderActions orderId={order.id} status={order.status} />
+          {delivery?.deliveryBy === "vendor" && SELF_DELIVERY_STEP_STATUSES.has(order.status) ? (
+            <p className="text-center text-xs text-[#5B403C]">You are delivering this order yourself. Use the steps above.</p>
+          ) : (
+            <VendorOrderActions orderId={order.id} status={order.status} />
+          )}
         </div>
       </div>
 

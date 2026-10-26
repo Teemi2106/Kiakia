@@ -17,7 +17,7 @@
 // Types
 // ---------------------------------------------------------------------------
 
-export type Channel = "email" | "sms";
+export type Channel = "email" | "sms" | "push";
 export type Category = "transactional" | "promotional";
 
 /** A claimed message_outbox row (the columns the worker uses). */
@@ -31,6 +31,9 @@ export interface OutboxRow {
   subject: string | null;
   body: string;
   attempts: number;
+  /** Push rows only: the structured payload ({type, orderId, offerId}); null otherwise. */
+  data?: Record<string, unknown> | null;
+  expires_at?: string | null;
 }
 
 export type SendResult =

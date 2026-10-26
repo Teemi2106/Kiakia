@@ -14,11 +14,14 @@ import Link from "next/link";
 import type { OrderStatus } from "@kiakia/domain";
 import { DeliveryCodeSection } from "../../delivered/_components/DeliveryCodeSection";
 import { trackingHeadline } from "./statusCopy";
+import { DeliveredByCard } from "./DeliveredByCard";
 import type { TimelineStep, Driver, Vendor } from "./types";
 
 interface TrackingMobileProps {
   steps: TimelineStep[];
   driver?: Driver;
+  /** The store delivers this order itself: no rider card, no "waiting for a rider". */
+  deliveredByStore?: boolean;
   vendor: Vendor;
   orderId?: string; // Add orderId
   orderCode: string;
@@ -30,6 +33,7 @@ interface TrackingMobileProps {
 export function TrackingMobile({
   steps,
   driver,
+  deliveredByStore,
   vendor,
   orderId,
   orderCode,
@@ -132,7 +136,11 @@ export function TrackingMobile({
               order yet (e.g. still `placed`/`preparing`), so this is
               omitted rather than shown with fabricated details when
               `driver` is unset. */}
-          {driver ? (
+          {deliveredByStore ? (
+            <div className="mb-4">
+              <DeliveredByCard storeName={vendor.name} compact />
+            </div>
+          ) : driver ? (
             <div className="mb-4 flex items-center justify-between rounded-xl border border-[#F0EDED] bg-white p-3 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 overflow-hidden rounded-full bg-[#EAE7E7]">

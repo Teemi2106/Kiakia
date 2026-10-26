@@ -16,6 +16,7 @@ export function DispatchSettingForm({ info, currentValue, current }: { info: Dis
       action={setDispatchSettingAction}
       submitLabel="Save"
       reason={{ required: true, label: "Why are you changing it?" }}
+      submitDisabled={preview.problem}
       confirmLabel="I understand this applies to orders from now on, and offers already sent are unchanged."
     >
       <input type="hidden" name="key" value={info.key} />

@@ -4,6 +4,7 @@
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { CheckCircle, Clock, Info, MapPin, Truck, Utensils, X } from "lucide-react";
 import Image from "next/image";
+import { DeliverySection } from "../../../_components/DeliverySection";
 import { StatusBadge } from "./StatusBadge";
 import type { Order } from "./types";
 
@@ -76,6 +77,8 @@ function ManageOrderActions({ order, onStatusChange }: OrderDetailProps) {
     );
   }
 
+  if (order.delivery_by === "vendor") return null;
+
   if (RIDER_HANDLING_STATUSES.has(order.status)) {
     return (
       <div className="flex items-center gap-3 rounded-xl bg-[#F6F3F2] p-4">
@@ -140,6 +143,14 @@ export function OrderDetail({ order, onStatusChange }: OrderDetailProps) {
             <span className="text-sm font-medium text-[#5B403C]">Order placed</span>
           </div>
         </div>
+
+        <DeliverySection
+          orderId={order.id}
+          status={order.status}
+          deliveryBy={order.delivery_by}
+          dispatch={order.dispatch}
+          deliveryFeeKobo={order.delivery_fee_kobo ?? 0}
+        />
 
         {/* Manage Order — a full-width action bar, not a squeezed sidebar
             column, so the primary action is never the visually smallest

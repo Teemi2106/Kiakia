@@ -1,6 +1,7 @@
 // app/(customer)/orders/[id]/tracking/page.tsx
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { isDeliveredByStore } from "@/lib/customer/delivered-by";
 import type { Database } from "@kiakia/db";
 import type { OrderStatus } from "@kiakia/domain";
 import type { Metadata } from "next";
@@ -112,7 +113,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
   // 0007_rls.sql's own policies. For a non-customer session this query
   // naturally returns no row. It is read in the same wave as the rest, not
   // after them: nothing here depends on another result.
-  const [{ data: vendorRow }, { count: itemCount }, { data: rawTrackingRow }, { data: deliveryCodeRow }] = await Promise.all([
+  const [{ data: vendorRow }, { count: itemCount }, { data: rawTrackingRow }, { data: deliveryCodeRow }, deliveredByStore] = await Promise.all([
     supabase
       .from("vendors")
       .select("name, logo_url")
@@ -137,6 +138,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
       ? supabase.rpc("get_order_tracking", { p_order_id: order.id }).single()
       : Promise.resolve({ data: null }),
     supabase.from("order_delivery_codes").select("code").eq("order_id", order.id).maybeSingle(),
+    isDeliveredByStore(supabase, order.id),
   ]);
 
   const status = order.status as OrderStatus;
@@ -178,6 +180,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
           steps={steps}
           driver={driver}
           vendor={vendor}
+          deliveredByStore={deliveredByStore}
           orderId={id}
           orderCode={order.code}
           status={status}
@@ -189,6 +192,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
           steps={steps}
           driver={driver}
           vendor={vendor}
+          deliveredByStore={deliveredByStore}
           orderId={id}
           orderCode={order.code}
           status={status}

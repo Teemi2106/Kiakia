@@ -59,7 +59,9 @@ function writeConfig() {
   mkdirSync(stackDir, { recursive: true });
   cpSync(repoSupabase, path.join(stackDir, "supabase"), {
     recursive: true,
-    filter: (src) => !/[\\/]\.(temp|branches)([\\/]|$)/.test(src),
+    // node_modules (dev-only tooling under supabase/tests/*) holds pnpm symlinks that
+    // cannot be copied on Windows without privileges (EPERM) and is never needed here.
+    filter: (src) => !/[\\/](\.(temp|branches)|node_modules)([\\/]|$)/.test(src),
   });
   const configPath = path.join(stackDir, "supabase", "config.toml");
   let toml = readFileSync(configPath, "utf8");

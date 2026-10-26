@@ -33,23 +33,24 @@ grant all on _cron_present to public;
 select ok(
   case when (select yes from _cron_present)
        then (select count(*) = 4 from cron.job where jobname in
-              ('sweep-dispatch-offers','dispatch-orders-nearing-prep-completion','purge-customer-events','prune-cron-run-details'))
+              ('dispatch-tick','purge-dispatch-events','purge-customer-events','prune-cron-run-details'))
+            and not exists (select 1 from cron.job where jobname in ('sweep-dispatch-offers','dispatch-orders-nearing-prep-completion'))
        else true end,
-  'all four jobs are registered (or pg_cron is absent)'
+  'all four jobs are registered and the two pre-0103 dispatch jobs are gone (or pg_cron is absent)'
 );
 
 select is(
   case when (select yes from _cron_present)
-       then (select schedule from cron.job where jobname = 'sweep-dispatch-offers') else '15 seconds' end,
-  '15 seconds',
-  'the dispatch sweep runs every 15 seconds'
+       then (select schedule from cron.job where jobname = 'dispatch-tick') else '5 seconds' end,
+  '5 seconds',
+  'the dispatch worker runs every 5 seconds (0103; was the 15 s sweep)'
 );
 
 select ok(
   case when (select yes from _cron_present)
-       then (select command ilike '%set role service_role%sweep_dispatch_offers()%' from cron.job where jobname = 'sweep-dispatch-offers')
+       then (select command = 'call dispatch_tick();' from cron.job where jobname = 'dispatch-tick')
        else true end,
-  'the sweep command switches to service_role before calling the function'
+  'the worker command is a single CALL (a procedure that commits per order cannot run in a multi-statement command)'
 );
 
 -- idempotent: a second call neither duplicates nor changes job ids
@@ -70,15 +71,15 @@ select is(
 do $$
 begin
   if exists (select 1 from pg_extension where extname = 'pg_cron') then
-    perform cron.alter_job((select jobid from cron.job where jobname = 'sweep-dispatch-offers'), schedule => '30 seconds');
+    perform cron.alter_job((select jobid from cron.job where jobname = 'dispatch-tick'), schedule => '30 seconds');
     perform cron.alter_job((select jobid from cron.job where jobname = 'purge-customer-events'), active => false);
   end if;
 end $$;
 do $$ begin perform _ensure_scheduled_jobs(); end $$;
 select is(
   case when (select yes from _cron_present)
-       then (select schedule from cron.job where jobname = 'sweep-dispatch-offers') else '15 seconds' end,
-  '15 seconds',
+       then (select schedule from cron.job where jobname = 'dispatch-tick') else '5 seconds' end,
+  '5 seconds',
   'a drifted schedule is restored'
 );
 select is(
@@ -124,8 +125,8 @@ insert into orders (id, customer_id, vendor_id, subtotal_kobo, delivery_fee_kobo
 values ('00000000-0000-7000-8000-0000000093a2', tests.get_supabase_uid('customer_a'),
         '00000000-0000-7000-8000-0000000093a1', 1000, 0, 0, 0, 1000, '{}'::jsonb, st_geogfromtext('POINT(7.45 9.05)'));
 
-insert into dispatch_offers (order_id, rider_id, status) values
-  ('00000000-0000-7000-8000-0000000093a2', tests.get_supabase_uid('rider_a'), 'offered');
+insert into dispatch_offers (order_id, rider_id, status, cycle_no, attempt_no) values
+  ('00000000-0000-7000-8000-0000000093a2', tests.get_supabase_uid('rider_a'), 'offered', 1, 1);
 insert into rider_notifications (rider_id, order_id, title, body) values
   (tests.get_supabase_uid('rider_a'), null, 't', 'b');
 

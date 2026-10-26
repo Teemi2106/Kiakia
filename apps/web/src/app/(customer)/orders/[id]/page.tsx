@@ -2,6 +2,7 @@
 import { restoreCartFromOrderAction, retryPaymentAction } from "@/app/actions/orders";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
+import { isDeliveredByStore } from "@/lib/customer/delivered-by";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapMonnifyPaymentMethod, verifyTransaction } from "@/lib/monnify";
 import { RealtimeRefresh } from "@/lib/realtime/RealtimeRefresh";
@@ -116,7 +117,7 @@ export default async function OrderDetailPage({
   // "vendor staff read their vendor orders" policies), this query
   // naturally returns no row, so `code` below is undefined for them — that
   // is the fix, not an oversight.
-  const [{ data: vendor }, { data: rawItems }, { data: deliveryCodeRow }, { data: menuItemRows }] = await Promise.all([
+  const [{ data: vendor }, { data: rawItems }, { data: deliveryCodeRow }, { data: menuItemRows }, deliveredByStore] = await Promise.all([
     supabase
       .from("vendors")
       .select("name, logo_url")
@@ -130,6 +131,7 @@ export default async function OrderDetailPage({
     // The dish photos: this vendor's menu images, joined to the items in JS below.
     // Fetched beside the items rather than after them (it only needs the vendor).
     supabase.from("menu_items").select("id, image_url").eq("vendor_id", orderRow.vendor_id).not("image_url", "is", null),
+    isDeliveredByStore(supabase, orderRow.id),
   ]);
 
   // order_items itself has no image column — the item's photo lives on
@@ -147,7 +149,7 @@ export default async function OrderDetailPage({
     image_url: imageByMenuItemId.get(item.menu_item_id) ?? null,
   }));
 
-  const order = { ...orderRow, delivery_code: deliveryCodeRow?.code ?? null };
+  const order = { ...orderRow, delivery_code: deliveryCodeRow?.code ?? null, delivered_by_store: deliveredByStore };
 
   // Check if payment is needed
   const needsPayment =

@@ -317,11 +317,13 @@ values (
 -- expires_at explicitly in the past - simulating an offer nobody ever
 -- accepted or declined, left behind because sweep_dispatch_offers() (0055)
 -- is not scheduled anywhere (0057 task 3).
-insert into dispatch_offers (order_id, rider_id, status, expires_at)
+insert into dispatch_offers (order_id, rider_id, status, cycle_no, attempt_no, offered_at, expires_at)
 values (
   '00000000-0000-7000-8000-0000000000a2',
   tests.get_supabase_uid('kyc_rider_b'),
   'offered',
+  1, 1,
+  now() - interval '6 minutes',  -- expires_at is immutable and must follow offered_at; an already-lapsed offer is inserted as such
   now() - interval '5 minutes'
 );
 

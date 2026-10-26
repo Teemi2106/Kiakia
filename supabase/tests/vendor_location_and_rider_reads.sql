@@ -125,8 +125,8 @@ values (
 insert into order_delivery_codes (order_id, code)
 values ('00000000-0000-7000-8000-000000000051', '4321');
 
-insert into dispatch_offers (order_id, rider_id, status)
-values ('00000000-0000-7000-8000-000000000051', tests.get_supabase_uid('rider_a'), 'offered');
+insert into dispatch_offers (order_id, rider_id, status, cycle_no, attempt_no)
+values ('00000000-0000-7000-8000-000000000051', tests.get_supabase_uid('rider_a'), 'offered', 1, 1);
 
 -- An unauthenticated caller must be rejected outright — including on THIS
 -- order specifically, where rider_id is still NULL (no rider assigned yet).

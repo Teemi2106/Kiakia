@@ -1,4 +1,4 @@
-import { getWaitingForOrder } from "@/lib/admin/dispatch";
+import { getDispatchHistory, getWaitingForOrder } from "@/lib/admin/dispatch";
 import { getOrderDetail, listAssignableRiders } from "@/lib/admin/orders";
 import { formatWaiting } from "@/lib/admin/dispatch-info";
 import { requireAdminContext } from "@/lib/auth/dal";
@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import { Fields, Section } from "../../../_components/Section";
 import { formatAddress, formatDateTime, humanize, money } from "../../../_components/format";
 import { JsonView } from "../../../_components/JsonView";
+import { DispatchHistory } from "../../../_components/DispatchHistory";
 import { PageHeader } from "../../../_components/PageHeader";
 import { StatusPill } from "../../../_components/StatusPill";
 import { Table, Td, Th, Tr } from "../../../_components/Table";
@@ -31,12 +32,14 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   await requireAdminContext();
 
   const { id } = await params;
-  const [detail, waiting] = await Promise.all([getOrderDetail(id), getWaitingForOrder(id)]);
+  const [detail, waiting, history] = await Promise.all([getOrderDetail(id), getWaitingForOrder(id), getDispatchHistory(id)]);
   if (!detail) notFound();
 
   const assignableRiders = detail.canReassignRider ? await listAssignableRiders(id) : [];
 
-  const { order, items, events, payment, ledger, escrow, dispatchOffers, vendor, customer, rider } = detail;
+  const deliveredByStore = detail.order.delivery_by === "vendor";
+
+  const { order, items, events, payment, ledger, escrow, vendor, customer, rider } = detail;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -46,7 +49,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         actions={<OrderStatusBadge status={order.status} />}
       />
 
-      {waiting && (
+      {waiting && !deliveredByStore && (
         <div role="status" className="flex flex-col gap-3 rounded-card border border-warning bg-warning-surface px-4 py-3">
           <p className="text-sm font-semibold text-ink">This order is waiting for a rider (for {formatWaiting(waiting.waitingSeconds)}).</p>
           <WaitingReason order={waiting} />
@@ -78,8 +81,13 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               },
               { label: "Customer phone", value: customer?.phone },
               {
-                label: "Rider",
-                value: rider ? (
+                label: deliveredByStore ? "Delivered by" : "Rider",
+                value: deliveredByStore ? (
+                  <span className="flex flex-wrap items-center gap-2">
+                    <Badge tone="neutral">The store</Badge>
+                    <span className="text-ink-muted">The store delivers this order itself. No rider is involved.</span>
+                  </span>
+                ) : rider ? (
                   <Link href={`/admin/riders/${rider.id}`} className="text-brand-600 hover:underline">
                     {rider.fullName ?? rider.id}
                   </Link>
@@ -170,37 +178,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         {ledger.length === 0 ? <EmptyState title="No money records" description="No payment has been received for this order." /> : <OrderLedger entries={ledger} />}
       </Section>
 
-      <Section title="Offers sent to riders">
-        {dispatchOffers.length === 0 ? (
-          <EmptyState title="No offers sent to riders yet" />
-        ) : (
-          <Table
-            head={
-              <>
-                <Th>Rider</Th>
-                <Th>Status</Th>
-                <Th>Offered</Th>
-                <Th>Responded</Th>
-              </>
-            }
-          >
-            {dispatchOffers.map((offer) => (
-              <Tr key={offer.id}>
-                <Td>
-                  <Link href={`/admin/riders/${offer.riderId}`} className="text-brand-600 hover:underline">
-                    {offer.riderName ?? offer.riderId}
-                  </Link>
-                </Td>
-                <Td>
-                  <StatusPill status={offer.status} />
-                </Td>
-                <Td>{formatDateTime(offer.offeredAt)}</Td>
-                <Td>{offer.respondedAt ? formatDateTime(offer.respondedAt) : "—"}</Td>
-              </Tr>
-            ))}
-          </Table>
-        )}
-      </Section>
+      {history && <DispatchHistory history={history} />}
     </div>
   );
 }

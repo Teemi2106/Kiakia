@@ -56,3 +56,4 @@ supabase/.temp
 test-results/
 playwright-report/
 .next-perf-*/
+.next-build-check/

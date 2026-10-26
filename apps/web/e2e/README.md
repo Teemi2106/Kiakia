@@ -25,10 +25,23 @@ through the real UI.
 | 3b | checkout creates a draft / pending-payment order and redirects to (mock) Monnify |
 | 4a-4e | webhook: bad, missing or wrong-secret signature is a 401; a signed webhook that *claims* payment is ignored while Monnify says PENDING; a real payment marks the order paid, holds escrow and books a balanced ledger; replays do not double-credit; an under-payment is not placed, is credited to the wallet and shows under admin "Problems to review" |
 | 5a-5c | vendor accepts, starts preparing and marks ready in the real UI; customer and vendor notifications are asserted |
-| 6a-6c | dispatch: offers to both riders, one declines (final), the other's offer expires and is re-dispatched; accept; tracking page shows the rider; picked up, on the way, arrived |
+| 5b/5c | two riders online, the nearer one (rider 2) is the ONLY one asked (one live offer; the other sees nothing and cannot accept); the vendor's order page says "Finding a rider: asking riders one at a time, nearest first." |
+| 6a-6c | dispatch is sequential: the nearest rider declines (final) and the next is asked immediately; the next rider's offer lapses (15 s, set in 5b) and a new round asks them again; accept; tracking page shows the rider; picked up, on the way, arrived |
 | 7a/7b | delivery code is readable only by the customer; wrong codes are rejected and 5 of them lock the rider out; admin resets the lockout in the UI; the right code releases escrow (vendor = subtotal minus commission, rider = `orders.rider_fee_kobo`, platform = residual); the whole order's ledger sums to zero; a retried verify does not release twice |
 | 8a-8c | `/admin/payouts` lists the vendor and rider with the right naira amounts; payouts are recorded (partial, then remainder); a reused bank reference is rejected; an identical re-submit does not pay twice; balances reach zero; history and the audit log list every payout |
 | 9a/9b | a vendor rejection unwinds escrow into the customer's wallet; an admin gateway refund unwinds escrow and sends a refund request to Monnify |
+
+### Sequential dispatch: `cycle/yy-sequential-dispatch.spec.ts`
+
+Follows `full-cycle.spec.ts` (alphabetical order, same store/customer/riders/superadmin, so run the whole cycle):
+
+* the admin saves "Offer time (seconds)" in Settings > Rider matching (out-of-range value cannot be saved);
+* an order being prepared is *scheduled*: no offers while two riders are online, `start_at` matches the stored basis,
+  the vendor sees "Food expected ready at" / "Rider search starts around", admin lists it under "Search starts later";
+  "Need more time?" +10 min moves both lines; "ready in 1 minute" starts the search while the order is still preparing,
+  one rider (the nearest) is asked, accepts early, the food is ready, the delivery completes and the ledger releases;
+* decline -> the next rider is asked immediately, `/admin/dispatch` shows "Waiting for <rider> to answer" with the new rider,
+  the per-order history lists every rider asked with the outcome, a lapse starts a new round.
 
 ### What is real and what is stood in
 
@@ -45,8 +58,12 @@ Stood in:
 * **The rider app** lives in another repository. Its RPCs (`register_rider`, `submit_rider_document`,
   `set_rider_online`, `update_rider_location`, `accept_dispatch_offer`, `transition_order`,
   `verify_delivery_and_release_escrow`, ...) are called with supabase-js as a signed-in rider.
-* **The dispatch scheduler**: no migration schedules `sweep_dispatch_offers()`; the test backdates the offer and
-  calls it with the service role, exactly as a scheduler would.
+* **The dispatch scheduler is real**: pg_cron's `dispatch-tick` (every 5 s, migration 0103) runs on this stack and
+  advances lapsed offers and starts due searches by itself. The specs wait for it (`support/dispatch.ts`
+  `advanceUntil`); only if it has not acted 20 s after the due time do they call `sweep_dispatch_offers()` once per poll as a
+  stand-in and record a `cron-fallback` annotation. Offer rows are immutable, so nothing is back-dated: the offer time is
+  shortened to 15 s with `admin_set_dispatch_setting` and the lapse is waited for. Orders a failed earlier run left in the
+  kitchen would be offered to a new run's riders by that tick, so each spec first retires them (`retireStaleDispatchOrders`).
 * **Side orders** for the failure paths (4e, 9a, 9b) are created over the API as the customer (cart ->
   `place_order`) plus the pending `payments` row the checkout writes; the UI path for an order is covered by the
   main order.

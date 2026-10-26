@@ -186,16 +186,6 @@ export interface OrderEscrowView {
   readonly refundDestination: "wallet" | "gateway" | null;
 }
 
-export interface OrderDispatchOfferView {
-  readonly id: string;
-  readonly riderId: string;
-  readonly riderName: string | null;
-  readonly status: "offered" | "accepted" | "expired" | "declined" | "revoked";
-  readonly offeredAt: string;
-  readonly expiresAt: string;
-  readonly respondedAt: string | null;
-}
-
 /**
  * Statuses at which admin_reassign_order_rider() (0083) can change an order's rider:
  * nothing has been picked up yet. From picked_up onward it refuses.
@@ -213,7 +203,6 @@ export interface OrderDetail {
   /** Oldest first. */
   readonly ledger: readonly OrderLedgerEntryView[];
   readonly escrow: OrderEscrowView;
-  readonly dispatchOffers: readonly OrderDispatchOfferView[];
   /**
    * Whether to show the dispatch override. With a rider on the order it offers "unassign and re-offer"
    * and "assign another rider"; without one, "offer to riders now" and "assign a rider".
@@ -232,7 +221,7 @@ export async function getOrderDetail(orderId: string): Promise<OrderDetail | nul
   const order = unwrap(await admin.from("orders").select("*").eq("id", orderId).maybeSingle());
   if (!order) return null;
 
-  const [items, events, payment, entries, offers, vendor, profiles] = await Promise.all([
+  const [items, events, payment, entries, vendor, profiles] = await Promise.all([
     admin.from("order_items").select("id, name_snapshot, unit_price_kobo, qty, options_snapshot, line_total_kobo").eq("order_id", orderId),
     admin.from("order_events").select("id, from_status, to_status, actor_type, actor_id, at, meta").eq("order_id", orderId).order("at", { ascending: true }),
     admin
@@ -243,22 +232,19 @@ export async function getOrderDetail(orderId: string): Promise<OrderDetail | nul
       .limit(1)
       .maybeSingle(),
     admin.from("ledger_entries").select("id, transaction_id, account_id, direction, amount_kobo, entry_type, created_at").eq("order_id", orderId).order("created_at", { ascending: true }),
-    admin.from("dispatch_offers").select("id, rider_id, status, offered_at, expires_at, responded_at").eq("order_id", orderId).order("offered_at", { ascending: true }),
     admin.from("vendors").select("id, name, status").eq("id", order.vendor_id).maybeSingle(),
     loadProfiles(admin, [order.customer_id, order.rider_id]),
   ]);
 
   const ledgerEntries = unwrap(entries) ?? [];
-  const offerRows = unwrap(offers) ?? [];
 
-  const [accounts, transactions, offerRiders] = await Promise.all([
+  const [accounts, transactions] = await Promise.all([
     ledgerEntries.length
       ? admin.from("accounts").select("id, owner_type, owner_id, kind").in("id", [...new Set(ledgerEntries.map((entry) => entry.account_id))])
       : null,
     ledgerEntries.length
       ? admin.from("transactions").select("id, reference, kind").in("id", [...new Set(ledgerEntries.map((entry) => entry.transaction_id))])
       : null,
-    loadProfiles(admin, offerRows.map((offer) => offer.rider_id)),
   ]);
   const accountById = new Map((accounts ? unwrap(accounts) ?? [] : []).map((account) => [account.id, account]));
   const transactionById = new Map((transactions ? unwrap(transactions) ?? [] : []).map((transaction) => [transaction.id, transaction]));
@@ -315,16 +301,7 @@ export async function getOrderDetail(orderId: string): Promise<OrderDetail | nul
       : null,
     ledger,
     escrow: deriveEscrow(ledger),
-    dispatchOffers: offerRows.map((offer) => ({
-      id: offer.id,
-      riderId: offer.rider_id,
-      riderName: offerRiders.get(offer.rider_id)?.fullName ?? null,
-      status: offer.status,
-      offeredAt: offer.offered_at,
-      expiresAt: offer.expires_at,
-      respondedAt: offer.responded_at,
-    })),
-    canReassignRider: REASSIGNABLE_STATUSES.includes(order.status),
+    canReassignRider: REASSIGNABLE_STATUSES.includes(order.status) && order.delivery_by !== "vendor",
     vendor: unwrap(vendor),
     customer: profiles.get(order.customer_id) ?? null,
     rider: order.rider_id ? (profiles.get(order.rider_id) ?? null) : null,

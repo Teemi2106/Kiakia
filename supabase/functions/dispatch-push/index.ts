@@ -34,7 +34,7 @@
 // a non-2xx status purely for observability.
 
 import { createClient } from "@supabase/supabase-js";
-import { buildOfferPushMessages, deadTokensFrom, sendExpoPushMessages } from "./expo.ts";
+import { buildOfferPushMessages, deadTokensFrom, sendExpoPushMessages } from "../_shared/expo.ts";
 
 // Auto-injected into every deployed Edge Function by the platform — not set
 // via `supabase secrets set`, same as monnify-webhook's own copy of these

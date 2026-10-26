@@ -5,6 +5,7 @@ import { RealtimeRefresh } from "@/lib/realtime/RealtimeRefresh";
 import { ClipboardList } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { loadDeliveryInfo } from "@/lib/vendor/delivery-info";
 import { OrdersWrapper } from "./_components/OrdersWrapper";
 import type { Order, OrderItem } from "./_components/types";
 
@@ -87,7 +88,7 @@ export default async function VendorOrdersPage() {
 
   const orderIds = rawOrders.map((order) => order.id);
 
-  const [{ data: itemRows }, { data: contactRows }] = await Promise.all([
+  const [{ data: itemRows }, { data: contactRows }, deliveryInfo] = await Promise.all([
     supabase
       .from("order_items")
       .select("id, order_id, menu_item_id, name_snapshot, qty, options_snapshot, line_total_kobo")
@@ -97,6 +98,11 @@ export default async function VendorOrdersPage() {
     // This SECURITY DEFINER read is scoped to this vendor's in-flight orders
     // (0077_input_and_exposure_hardening.sql).
     supabase.rpc("get_vendor_order_customers", { p_order_ids: orderIds }),
+    // Who delivers, and for a ready order with no rider, what dispatch is doing.
+    loadDeliveryInfo(
+      supabase,
+      rawOrders.map((order) => ({ id: order.id, status: order.status })),
+    ),
   ]);
 
   const imageByMenuItemId = new Map((menuImageRows ?? []).map((m) => [m.id, m.image_url]));
@@ -131,6 +137,8 @@ export default async function VendorOrdersPage() {
       items: itemsByOrderId.get(order.id) ?? [],
       delivery_address: formatAddress(order.delivery_address),
       customer_note: order.delivery_note,
+      delivery_by: deliveryInfo.get(order.id)?.deliveryBy,
+      dispatch: deliveryInfo.get(order.id)?.dispatch ?? null,
     };
   });
 
@@ -140,6 +148,12 @@ export default async function VendorOrdersPage() {
         table="orders"
         filter={`vendor_id=eq.${vendor.id}`}
         topic={`vendor-orders-${vendor.id}`}
+      />
+      {/* The "no rider near you" notice is a new notification, not an order change. */}
+      <RealtimeRefresh
+        table="notifications"
+        filter={`vendor_id=eq.${vendor.id}`}
+        topic={`vendor-orders-notifications-${vendor.id}`}
       />
       <OrdersWrapper orders={orders} />
     </>

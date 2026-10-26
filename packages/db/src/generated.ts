@@ -82,6 +82,8 @@ export interface OrderRow {
    * for rows offered since this timestamp, not forever, so an exhausted
    * pool loops back to the closest rider again instead of going silent. */
   dispatch_cycle_started_at: string | null;
+  /** 0098: 'rider' (dispatch) or 'vendor' (self-delivery; no rider, delivery fee to the vendor). */
+  delivery_by: "rider" | "vendor";
   placed_at: string | null;
   accepted_at: string | null;
   ready_at: string | null;
@@ -220,6 +222,8 @@ export interface Database {
           body: string;
           is_read: boolean;
           created_at: string;
+          /** 0098: machine tag for system notifications, unique per order (e.g. 'no_rider_nearby'). */
+          kind: string | null;
         };
         // 0038_customer_notifications.sql:39 revokes insert/delete from both
         // authenticated and anon outright (rows are written only by the two
@@ -338,6 +342,8 @@ export interface Database {
           is_online: boolean;
           current_location: string | null;
           last_ping_at: string | null;
+          /** 0100: H3 cell (resolution 9) of current_location, kept by a trigger; null when unknown. */
+          h3_cell: number | null;
           // rating_avg/rating_count (0073_order_ratings.sql) - maintained
           // only by submit_order_rating(), never recomputed from scratch.
           rating_avg: number;
@@ -357,6 +363,7 @@ export interface Database {
           is_online?: boolean;
           current_location?: string | null;
           last_ping_at?: string | null;
+          h3_cell?: number | null;
           rating_avg?: number;
           rating_count?: number;
           bank_name?: string | null;
@@ -770,6 +777,8 @@ export interface Database {
           rider_pickup_distance_m: number | null;
           first_dispatched_at: string | null;
           dispatch_cycle_started_at: string | null;
+          /** 0098: who delivers - 'rider' (dispatch) or 'vendor' (vendor_start_self_delivery, irreversible). */
+          delivery_by: "rider" | "vendor";
           placed_at: string | null;
           accepted_at: string | null;
           ready_at: string | null;
@@ -968,14 +977,43 @@ export interface Database {
       // platform_settings (0092_platform_fees.sql) - admin-set platform fees,
       // one row per key. service_role may SELECT only; the sole writer is
       // admin_set_platform_fee(). Keys: service_fee_bps, default_vendor_commission_bps.
+      // 0097/0098 add the dispatch keys (written by admin_set_dispatch_setting):
+      // dispatch_radius_m, dispatch_max_riders, dispatch_widen_after_seconds,
+      // dispatch_location_max_age_seconds, dispatch_notify_vendor_after_seconds.
+      // 0100 adds dispatch_offer_timeout_seconds, dispatch_h3_resolution,
+      // dispatch_h3_initial_ring, dispatch_h3_max_ring, dispatch_secure_buffer_seconds,
+      // dispatch_default_travel_seconds, dispatch_default_speed_kmh (kmh),
+      // dispatch_road_factor_pct (pct), dispatch_min_history_samples,
+      // dispatch_vendor_arrival_radius_m.
       platform_settings: {
         Row: {
           key: string;
           id: string;
           value_int: number;
-          unit: "bps" | "kobo";
+          unit: "bps" | "kobo" | "m" | "count" | "seconds" | "kmh" | "pct";
           updated_at: string;
           updated_by: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // dispatch_attempts (0097) - why an order got no offers: one row per
+      // (order, tier), only written by a round that created zero offers. service_role SELECT only.
+      dispatch_attempts: {
+        Row: {
+          order_id: string;
+          tier: "base" | "widened";
+          first_attempt_at: string;
+          attempted_at: string;
+          attempts: number;
+          /** null = no distance cap */
+          radius_m: number | null;
+          online_riders: number;
+          eligible_riders: number;
+          riders_in_range: number;
+          riders_fundable: number;
+          offers_created: number;
         };
         Insert: never;
         Update: never;
@@ -1053,14 +1091,15 @@ export interface Database {
           id: string;
           broadcast_id: string | null;
           kind: "broadcast" | "direct" | "rider_offer" | "system";
-          channel: "email" | "sms";
+          // 0103: "push" = rider dispatch-offer push (Expo); to_address null, tokens resolved at send time.
+          channel: "email" | "sms" | "push";
           category: "transactional" | "promotional";
           recipient_user_id: string | null;
           to_address: string | null;
           subject: string | null;
           body: string;
           status: "queued" | "sending" | "sent" | "delivered" | "failed" | "suppressed";
-          suppress_reason: "no_address" | "no_consent" | "suspended" | "expired" | "rate_limited" | "opted_out" | null;
+          suppress_reason: "no_address" | "no_consent" | "suspended" | "expired" | "rate_limited" | "opted_out" | "no_push_token" | null;
           attempts: number;
           next_attempt_at: string;
           expires_at: string | null;
@@ -1072,6 +1111,8 @@ export interface Database {
           created_at: string;
           sent_at: string | null;
           delivered_at: string | null;
+          // 0103: structured payload of a push row ({type, orderId, offerId}); null for email/SMS.
+          data: Json | null;
         };
         Insert: never;
         Update: never;
@@ -1082,7 +1123,7 @@ export interface Database {
           id: string;
           order_id: string;
           rider_id: string;
-          status: "offered" | "accepted" | "expired" | "declined" | "revoked";
+          status: "offered" | "accepted" | "expired" | "declined" | "revoked" | "superseded" | "cancelled";
           offered_at: string;
           // expires_at (0028_dispatch_offer_lifecycle.sql) was missing from
           // this hand-authored file entirely until this round (0051) - a
@@ -1091,11 +1132,101 @@ export interface Database {
           // offer once this has passed.
           expires_at: string;
           responded_at: string | null;
+          // 0100: one row per offer, never re-opened. attempt_no is per order;
+          // UNIQUE (order_id, cycle_no, attempt_no). At most one 'offered' and one
+          // 'accepted' row per order (partial unique indexes).
+          cycle_no: number;
+          attempt_no: number;
+          ring: number | null;
+          radius_m: number | null;
+          distance_m: number | null;
+          eta_seconds: number | null;
+          close_reason: string | null;
         };
         // Written only by dispatch_order_to_nearby_riders() (the
         // ready_for_pickup trigger), accept_dispatch_offer(),
         // decline_dispatch_offer(), and sweep_dispatch_offers() (0055) - no
         // authenticated-reachable write path exists (0019_rider_dispatch.sql).
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // order_dispatch (0100) - 1:1 dispatch state per order (service_role SELECT only).
+      order_dispatch: {
+        Row: {
+          order_id: string;
+          state: "scheduled" | "searching" | "offered" | "assigned" | "needs_attention" | "stopped";
+          cycle_no: number;
+          attempt_no: number;
+          ring: number | null;
+          next_check_at: string | null;
+          expected_ready_at: string | null;
+          start_at: string | null;
+          start_basis: Json;
+          dispatch_started_at: string | null;
+          assigned_at: string | null;
+          assigned_eta_at: string | null;
+          current_eta_at: string | null;
+          eta_updated_at: string | null;
+          rider_arrived_vendor_at: string | null;
+          needs_attention_since: string | null;
+          attention_reason: string | null;
+          error_count: number;
+          last_error: string | null;
+          // 0109 - consecutive engine runs that found riders but could not ask any (rider locked / failed the re-check).
+          busy_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // dispatch_events (0100) - append-only engine log, 90 day retention (service_role SELECT only).
+      dispatch_events: {
+        Row: {
+          id: string;
+          at: string;
+          order_id: string;
+          cycle_no: number;
+          attempt_no: number;
+          offer_id: string | null;
+          rider_id: string | null;
+          event:
+            | "scheduled" | "start_recomputed" | "cycle_started" | "ring_expanded" | "offer_created"
+            | "offer_accepted" | "offer_declined" | "offer_expired" | "offer_cancelled" | "offer_superseded"
+            | "accept_conflict" | "stale_accept_rejected" | "no_candidates" | "needs_attention" | "tick_error"
+            | "prep_estimate_changed" | "ready_early" | "prep_overrun" | "eta_increased" | "rider_at_vendor" | "push_failed" | "tick_lag"
+            | "start_calc_failed" | "dispatch_busy";
+          data: Json;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // rider_offer_responses (0102) - rate-limit log for offer responses; internal, no client access.
+      rider_offer_responses: {
+        Row: {
+          rider_id: string;
+          at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // dispatch_area_stats (0104) - per service-area cache of the learned rider speed and secure buffer, refreshed by
+      // the dispatch tick at most every 10 minutes (service_role SELECT only).
+      dispatch_area_stats: {
+        Row: {
+          service_area_id: string;
+          speed_kmh: number;
+          speed_source: "history" | "default";
+          speed_samples: number;
+          secure_buffer_s: number;
+          buffer_source: "history" | "default";
+          buffer_samples: number;
+          refreshed_at: string;
+        };
         Insert: never;
         Update: never;
         Relationships: [];
@@ -1526,6 +1657,9 @@ export interface Database {
           rider_phone: string | null;
           rider_vehicle_type: string | null;
           rider_plate_number: string | null;
+          /** 0098 */
+          delivery_by: "rider" | "vendor";
+          vendor_name: string;
         };
       };
       // approve_rider / reject_rider (0027_rider_kyc_admin_approval.sql) — mirrors
@@ -1955,6 +2089,110 @@ export interface Database {
           updated_by: string | null;
         };
       };
+      // ---- Dispatch settings and vendor no-rider flow (0097 / 0098), hand-authored ----
+      // admin_set_dispatch_setting - service_role only, ADMIN tier, audited (dispatch_setting.set).
+      admin_set_dispatch_setting: {
+        Args: {
+          p_key:
+            | "dispatch_radius_m"
+            | "dispatch_max_riders"
+            | "dispatch_widen_after_seconds"
+            | "dispatch_notify_vendor_after_seconds"
+            | "dispatch_location_max_age_seconds"
+            | "dispatch_offer_timeout_seconds"
+            | "dispatch_h3_resolution"
+            | "dispatch_h3_initial_ring"
+            | "dispatch_h3_max_ring"
+            | "dispatch_secure_buffer_seconds"
+            | "dispatch_default_travel_seconds"
+            | "dispatch_default_speed_kmh"
+            | "dispatch_road_factor_pct"
+            | "dispatch_min_history_samples"
+            | "dispatch_vendor_arrival_radius_m";
+          p_value: number;
+          p_reason: string;
+          p_actor_id: string;
+        };
+        Returns: {
+          key: string;
+          id: string;
+          value_int: number;
+          unit: "bps" | "kobo" | "m" | "count" | "seconds" | "kmh" | "pct";
+          updated_at: string;
+          updated_by: string | null;
+        };
+      };
+      // jsonb - shape documented in 0097/0098/0102 (settings, online_riders, needs_attention_count,
+      // stuck_orders[] with dispatch_state/live_offer/cycle_no/attempts_made/start_at/expected_ready_at/
+      // needs_attention/attention_reason, upcoming[]). reason: scheduled | waiting_for_rider_reply |
+      // no_online_riders | none_in_range | fee_exceeds_order_budget | all_declined_or_expired | needs_attention.
+      admin_dispatch_status: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+      // 0109 - dispatch timer health for /admin (service_role only, read-only, never raises for a missing cron/vault schema):
+      // { cron_available: boolean, tick_job_present: boolean, tick_last_run_at: string | null, tick_last_status: string | null,
+      //   tick_overdue_seconds: number | null (now - last SUCCESSFUL run; null when never), oldest_overdue_next_check_seconds: number | null,
+      //   orders_overdue: number, worker_secrets_present: boolean, queued_push_oldest_seconds: number | null, healthy: boolean, problems: string[] }
+      admin_dispatch_health: { Args: Record<string, never>; Returns: Json };
+      // 0105 - dispatch metrics document (hand-added; shape in docs/dispatch-design.md Sprint 2B). service_role only.
+      admin_dispatch_metrics: { Args: { p_since?: string }; Returns: Json };
+      // 0102 - {order, dispatch, offers[], events[] (latest 200)} as jsonb. service_role only.
+      admin_dispatch_order_history: {
+        Args: { p_order_id: string };
+        Returns: Json;
+      };
+      // 0102 - rider RPCs on the shared accept/decline core (authenticated only).
+      // outcome: accepted | already_yours | taken | expired | withdrawn | declined | not_found | ineligible.
+      respond_to_dispatch_offer: {
+        Args: { p_offer_id: string; p_action: "accept" | "decline" };
+        Returns: Json;
+      };
+      get_dispatch_offer: {
+        Args: { p_offer_id: string };
+        Returns: Json;
+      };
+      // 0104 - vendor staff revise the ready time (accepted/preparing, rider delivery, 1-180 min, max 10 per order).
+      // Returns { order_id, expected_ready_at, start_at, rider_notified }.
+      vendor_update_prep_estimate: {
+        Args: { p_order_id: string; p_ready_in_minutes: number };
+        Returns: Json;
+      };
+      // 0099 H3 library (service_role only; pure functions).
+      h3_latlng_to_cell: { Args: { p_lat: number; p_lng: number; p_res: number }; Returns: number };
+      h3_get_resolution: { Args: { p_cell: number }; Returns: number };
+      h3_is_valid_cell: { Args: { p_cell: number }; Returns: boolean };
+      h3_is_pentagon: { Args: { p_cell: number }; Returns: boolean };
+      h3_cell_to_parent: { Args: { p_cell: number; p_res: number }; Returns: number };
+      h3_cell_to_descendant_range: { Args: { p_cell: number; p_child_res: number }; Returns: { lo: number; hi: number }[] };
+      h3_grid_disk: { Args: { p_origin: number; p_k: number }; Returns: number[] };
+      h3_grid_disk_distances: { Args: { p_origin: number; p_k: number }; Returns: { cell: number; k: number }[] };
+      // 0100 - deletes dispatch_events older than 90 days; returns the number deleted (service_role).
+      purge_dispatch_events: { Args: Record<string, never>; Returns: number };
+      // 0103 - dispatch_tick(p_batch int default 200) is a PROCEDURE (pg_cron `call dispatch_tick();`, COMMIT per
+      // order), so it is not an RPC and has no entry here. _dispatch_tick_run(p_limit, p_trigger) is its
+      // transaction-safe twin (service_role; jsonb {processed, offers_expired, offers_created, orders_cancelled, errors}).
+      // sweep_dispatch_offers() / dispatch_orders_nearing_prep_completion() keep their shapes as wrappers.
+      _dispatch_tick_run: { Args: { p_limit?: number; p_trigger?: string }; Returns: Json };
+      // {offers_created, riders_in_range, radius_m, tier, outcome, offer_id, live_offer} as jsonb.
+      admin_redispatch_order: {
+        Args: {
+          p_order_id: string;
+          p_reason: string;
+          p_actor_id: string;
+          p_widen?: boolean;
+        };
+        Returns: Json;
+      };
+      // authenticated-only vendor RPCs (staff of the order's vendor, active account).
+      vendor_dispatch_state: { Args: { p_order_id: string }; Returns: Json };
+      vendor_expand_rider_search: { Args: { p_order_id: string }; Returns: Json };
+      vendor_start_self_delivery: { Args: { p_order_id: string }; Returns: Json };
+      vendor_advance_self_delivery: {
+        Args: { p_order_id: string; p_to_status: "picked_up" | "in_transit" | "arrived" };
+        Returns: Json;
+      };
+      vendor_complete_self_delivery: { Args: { p_order_id: string; p_code: string }; Returns: Json };
       // get_service_fee_bps (0092) - the live customer service fee rate (bps).
       get_service_fee_bps: {
         Args: Record<string, never>;
@@ -2359,7 +2597,7 @@ export interface Database {
         Returns: "queued" | "failed" | "suppressed" | "ignored";
       };
       message_mark_suppressed: {
-        Args: { p_id: string; p_reason: "no_address" | "no_consent" | "suspended" | "expired" | "opted_out" };
+        Args: { p_id: string; p_reason: "no_address" | "no_consent" | "suspended" | "expired" | "opted_out" | "no_push_token" };
         Returns: boolean;
       };
       message_apply_provider_event: {

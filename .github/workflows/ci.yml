@@ -79,6 +79,12 @@ jobs:
       - name: lint, typecheck, test, build
         run: pnpm turbo run lint typecheck test build
 
+      # Edge Function logic (Expo push + messaging helpers) is plain TypeScript with node:test; Deno is not
+      # needed. A directory argument does not work on Node 22 (it is resolved as a module), so use a glob.
+      # monnify-webhook/monnify.test.ts is a Deno test and is deliberately not matched.
+      - name: Edge Function unit tests (node --test)
+        run: node --experimental-strip-types --test "supabase/functions/_shared/*.test.ts"
+
   pgtap:
     name: pgTAP (RLS + transition_order)
     runs-on: ubuntu-latest
@@ -92,9 +98,55 @@ jobs:
       - name: Start local Supabase and apply migrations
         run: supabase start
 
+      # Explicit file list on purpose: supabase/tests/ also holds NON-pgTAP files in subfolders
+      # (h3/bench-discovery.sql is a psql-variable benchmark, h3/migration.template.sql a template,
+      # concurrency/ is a Node harness). Only the top-level *.sql files are pgTAP suites.
       - name: Run pgTAP tests
-        run: supabase test db
+        run: supabase test db $(ls supabase/tests/*.sql)
 
       - name: Stop Supabase
         if: always()
         run: supabase stop
+
+  # The multi-session race harness (supabase/tests/concurrency, see its README). pgTAP runs in one
+  # transaction and cannot prove anything about two backends at once. It needs its OWN isolated stack
+  # (it commits rows and refuses the default ports), which apps/web/e2e/support/stack.mjs creates
+  # (project kiakia-e2ecycle, db :58322; it also serves the monnify-webhook function, which makes the
+  # start slow). A reduced scale keeps this job to a few minutes; run the full scale (no --scale)
+  # locally before a release. NOT yet run on a GitHub runner: if the stack start proves flaky there,
+  # this job is the one to demote to a manual workflow (the README still lists the local recipe).
+  concurrency:
+    name: dispatch concurrency harness (scale 0.25)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start the isolated e2e stack (replays every migration + seed)
+        run: SUPABASE_CLI=supabase pnpm --filter web e2e:cycle:up
+
+      - name: Run the harness
+        working-directory: supabase/tests/concurrency
+        run: |
+          pnpm install --ignore-workspace --frozen-lockfile
+          node run.mjs --scale 0.25 --db-url postgresql://postgres:postgres@127.0.0.1:58322/postgres
+
+      - name: Tear the stack down
+        if: always()
+        run: SUPABASE_CLI=supabase pnpm --filter web e2e:cycle:down

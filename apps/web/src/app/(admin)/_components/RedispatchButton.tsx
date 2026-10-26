@@ -6,9 +6,9 @@ import { Button } from "@kiakia/ui";
 import { startTransition, useActionState, useState, type FormEvent } from "react";
 
 /**
- * "Send to riders again" for an order that is ready with no rider. Asks first,
+ * "Send to riders again" for an order that has no rider. Asks first,
  * disables itself while the request runs (a second click cannot send twice),
- * and shows the result in words: "Sent to 3 riders" or "No riders in range".
+ * and shows the result in words: "Asking 1 rider now", "A rider is already being asked" or "No riders in range".
  */
 export function RedispatchButton({ orderId }: { orderId: string }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(redispatchOrderAction, {});
@@ -27,7 +27,7 @@ export function RedispatchButton({ orderId }: { orderId: string }) {
       <input type="hidden" name="orderId" value={orderId} />
       {asking && !pending ? (
         <div className="flex flex-col gap-2 rounded-control border border-border px-3 py-2 text-sm text-ink">
-          <p>Send this order to riders again? Riders in range with the current settings will get an offer. It does not move any money.</p>
+          <p>Ask riders for this order again? The nearest rider who can take it is asked now, using the current settings. If a rider is already being asked, nothing changes. It does not move any money.</p>
           <div className="flex gap-2">
             <Button type="submit" size="sm">
               Yes, send it

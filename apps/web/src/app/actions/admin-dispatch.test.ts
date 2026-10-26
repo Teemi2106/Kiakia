@@ -79,6 +79,37 @@ describe("setDispatchSettingAction", () => {
     expect(rpc).toHaveBeenCalledWith("admin_set_dispatch_setting", expect.objectContaining({ p_key: "dispatch_notify_vendor_after_seconds", p_value: 60 }));
   });
 
+  it.each([
+    ["dispatch_offer_timeout_seconds", "45", 45],
+    ["dispatch_h3_resolution", "9", 9],
+    ["dispatch_h3_initial_ring", "0", 0],
+    ["dispatch_default_travel_seconds", "10", 600],
+    ["dispatch_road_factor_pct", "135", 135],
+    ["dispatch_vendor_arrival_radius_m", "100", 100],
+  ])("accepts the sequential-dispatch setting %s = %s (stored as %d)", async (key, value, stored) => {
+    const rpc = useClient({ admin_set_dispatch_setting: ok({}) });
+    expect((await setDispatchSettingAction({}, formData({ ...base, key, value }))).success).toBe(true);
+    expect(rpc).toHaveBeenCalledWith("admin_set_dispatch_setting", expect.objectContaining({ p_key: key, p_value: stored }));
+  });
+
+  it.each([
+    ["dispatch_offer_timeout_seconds", "14"],
+    ["dispatch_offer_timeout_seconds", "121"],
+    ["dispatch_h3_resolution", "10"],
+    ["dispatch_h3_max_ring", "0"],
+    ["dispatch_road_factor_pct", "99"],
+    ["dispatch_default_speed_kmh", "4"],
+  ])("rejects %s = %s before the RPC", async (key, value) => {
+    const rpc = useClient({ admin_set_dispatch_setting: ok({}) });
+    expect((await setDispatchSettingAction({}, formData({ ...base, key, value }))).error).toBeTruthy();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("shows the database's first-search-vs-furthest-search refusal", async () => {
+    useClient({ admin_set_dispatch_setting: fail("admin_set_dispatch_setting: dispatch_h3_initial_ring (9) cannot be larger than dispatch_h3_max_ring (8)", "23514") });
+    expect((await setDispatchSettingAction({}, formData({ ...base, key: "dispatch_h3_initial_ring", value: "9" }))).error).toContain("cannot be larger");
+  });
+
   it("no longer knows a global widened distance", async () => {
     const rpc = useClient({ admin_set_dispatch_setting: ok({}) });
     const result = await setDispatchSettingAction({}, formData({ ...base, key: "dispatch_widened_radius_m", value: "10" }));
@@ -130,13 +161,20 @@ describe("setDispatchSettingAction", () => {
 });
 
 describe("redispatchOrderAction", () => {
-  it("reports how many riders were sent the order", async () => {
-    const rpc = useClient({ admin_redispatch_order: ok({ offers_created: 3, riders_in_range: null }) });
+  it("reports that a rider is being asked now", async () => {
+    const rpc = useClient({ admin_redispatch_order: ok({ offers_created: 1, riders_in_range: 4, outcome: "offered", live_offer: false }) });
     const result = await redispatchOrderAction({}, formData({ orderId: ORDER_ID }));
-    expect(result).toEqual({ success: true, message: "Sent to 3 riders." });
+    expect(result).toEqual({ success: true, message: "Asking 1 rider now." });
     expect(rpc).toHaveBeenCalledWith("admin_redispatch_order", expect.objectContaining({ p_order_id: ORDER_ID, p_actor_id: ADMIN_ID }));
     expect(revalidatePath).toHaveBeenCalledWith("/admin/dispatch");
     expect(revalidatePath).toHaveBeenCalledWith(`/admin/orders/${ORDER_ID}`);
+  });
+
+  it("says a rider is already being asked when a live offer was kept", async () => {
+    useClient({ admin_redispatch_order: ok({ offers_created: 0, riders_in_range: 4, live_offer: true }) });
+    const result = await redispatchOrderAction({}, formData({ orderId: ORDER_ID }));
+    expect(result.success).toBe(true);
+    expect(result.message).toMatch(/^A rider is already being asked/);
   });
 
   it("says 'No riders in range' when none were offered", async () => {
@@ -164,7 +202,7 @@ describe("redispatchOrderAction", () => {
     expect(second.error).toMatch(/already being sent/);
     expect(rpc).toHaveBeenCalledTimes(1);
     release(ok({ offers_created: 2 }));
-    expect((await first).message).toBe("Sent to 2 riders.");
+    expect((await first).message).toBe("Asking 2 riders now.");
     useClient({ admin_redispatch_order: ok({ offers_created: 1 }) });
     expect((await redispatchOrderAction({}, formData({ orderId: ORDER_ID }))).success).toBe(true);
   });

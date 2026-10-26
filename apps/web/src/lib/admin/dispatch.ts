@@ -2,19 +2,25 @@ import "server-only";
 import { requireAdminContext } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cache } from "react";
-import { DISPATCH_SETTING_KEYS, type DispatchSettingKey, type DispatchSettingsValues } from "./dispatch-settings-info";
-import { mapStatusPayload, type DispatchStatusPayload, type WaitingOrder } from "./dispatch-info";
+import { z } from "zod";
+import { readDispatchHistory, type DispatchHistory } from "./dispatch-history";
+import { readDispatchStatus, type DispatchStatus, type WaitingOrder } from "./dispatch-info";
+import { readDispatchMetrics, type DispatchMetrics } from "./dispatch-metrics";
+import {
+  DISPATCH_DEFAULTS,
+  DISPATCH_SETTING_KEYS,
+  DISPATCH_VALUE_FIELD,
+  type DispatchSettingKey,
+  type DispatchSettingsValues,
+} from "./dispatch-settings-info";
 import { loadProfiles, unwrap } from "./lookups";
 
 /**
  * Loaders for the "Waiting for a rider" page, the Overview tile, the order page
- * notice and the Rider matching settings. The page, the tile and the notice all
- * read admin_dispatch_status() (0097), the single source of truth for "ready,
- * no rider"; settings come from platform_settings.
- *
- * TODO(0097): admin_dispatch_status is not in packages/db's generated types
- * until they are regenerated. fetchStatus() calls it through a narrow cast;
- * remove the cast once the type exists.
+ * notice, the per-order history, the metrics panel and the Rider matching
+ * settings. The page, the tile and the notice all read admin_dispatch_status()
+ * (0097/0102), the single source of truth for "ready, no rider"; settings come
+ * from platform_settings.
  */
 
 export interface DispatchSettingValue {
@@ -30,18 +36,14 @@ export interface DispatchSettings {
   readonly rows: readonly DispatchSettingValue[];
 }
 
-/** Used only when a setting row is missing: the 0097 defaults. */
-const FALLBACK: DispatchSettingsValues = { radiusM: 0, maxRiders: 10, widenAfterSeconds: 60, notifyVendorAfterSeconds: 45 };
-
-/** Pure: turns the raw platform_settings rows into the values the page and the action need. */
+/** Pure: turns the raw platform_settings rows into the values the page and the action need. A missing row falls back to the shipped default. */
 export function toDispatchValues(rows: readonly { key: string; value: number }[]): DispatchSettingsValues {
-  const byKey = new Map(rows.map((row) => [row.key, row.value]));
-  return {
-    radiusM: byKey.get("dispatch_radius_m") ?? FALLBACK.radiusM,
-    maxRiders: byKey.get("dispatch_max_riders") ?? FALLBACK.maxRiders,
-    widenAfterSeconds: byKey.get("dispatch_widen_after_seconds") ?? FALLBACK.widenAfterSeconds,
-    notifyVendorAfterSeconds: byKey.get("dispatch_notify_vendor_after_seconds") ?? FALLBACK.notifyVendorAfterSeconds,
-  };
+  const values: Record<keyof DispatchSettingsValues, number> = { ...DISPATCH_DEFAULTS };
+  for (const key of DISPATCH_SETTING_KEYS) {
+    const row = rows.find((candidate) => candidate.key === key);
+    if (row) values[DISPATCH_VALUE_FIELD[key]] = row.value;
+  }
+  return values;
 }
 
 const SETTING_KEYS: readonly string[] = DISPATCH_SETTING_KEYS;
@@ -102,29 +104,64 @@ export async function listRecentDispatchChanges(limit = 8): Promise<DispatchChan
   });
 }
 
-type StatusRpc = (fn: string) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
-
 /** One admin_dispatch_status() call per request, shared by the page, the tile and the order notice. */
-const fetchStatus = cache(async (): Promise<WaitingOrder[]> => {
-  const admin = createAdminClient();
-  const rpc = admin.rpc.bind(admin) as unknown as StatusRpc;
-  const { data, error } = await rpc("admin_dispatch_status");
+const fetchStatus = cache(async (): Promise<DispatchStatus> => {
+  const { data, error } = await createAdminClient().rpc("admin_dispatch_status");
   if (error) throw new Error(error.message);
-  return mapStatusPayload(data as DispatchStatusPayload | null);
+  return readDispatchStatus(data);
 });
 
-/** Orders that are ready with no rider, longest wait first (the database caps this at 50). */
-export async function listWaitingForRider(): Promise<WaitingOrder[]> {
+/** Everything the Waiting for a rider page shows: orders with no rider (longest wait first, capped at 50 by the database) and the upcoming ones. */
+export async function getDispatchStatus(): Promise<DispatchStatus> {
   await requireAdminContext();
   return fetchStatus();
 }
 
-/** How many orders are ready with no rider: the Overview tile. Same call as the page. */
-export async function countWaitingForRider(): Promise<number> {
-  return (await listWaitingForRider()).length;
+export async function listWaitingForRider(): Promise<readonly WaitingOrder[]> {
+  return (await getDispatchStatus()).orders;
+}
+
+export interface DispatchOverview {
+  /** Orders the system has flagged (two rounds with no accept, errors, nobody nearby for a while). */
+  readonly needsAttention: number;
+  /** Orders with no rider yet that are being searched for or waiting on someone. */
+  readonly waiting: number;
+  /** Of those, how many have a rider being asked right now. */
+  readonly askingNow: number;
+  /** Accepted orders whose search starts later. */
+  readonly startingLater: number;
+}
+
+/** The Overview tile's numbers, from the same call as the page. */
+export async function getDispatchOverview(): Promise<DispatchOverview> {
+  const status = await getDispatchStatus();
+  return {
+    needsAttention: status.needsAttentionCount,
+    waiting: status.orders.length,
+    askingNow: status.orders.filter((order) => order.liveOffer !== null).length,
+    startingLater: status.upcoming.length,
+  };
 }
 
 /** The waiting-for-a-rider entry for one order, or null when it has a rider or has not been waiting long. */
 export async function getWaitingForOrder(orderId: string): Promise<WaitingOrder | null> {
   return (await listWaitingForRider()).find((order) => order.orderId === orderId) ?? null;
+}
+
+/** Every rider asked for one order, how each answered, and the key events. Null when the order does not exist. */
+export async function getDispatchHistory(orderId: string): Promise<DispatchHistory | null> {
+  await requireAdminContext();
+  if (!z.string().uuid().safeParse(orderId).success) return null;
+  const { data, error } = await createAdminClient().rpc("admin_dispatch_order_history", { p_order_id: orderId });
+  if (error?.code === "P0002") return null;
+  if (error) throw new Error(error.message);
+  return readDispatchHistory(data);
+}
+
+/** The last 7 days (the database's default window). */
+export async function getDispatchMetrics(): Promise<DispatchMetrics> {
+  await requireAdminContext();
+  const { data, error } = await createAdminClient().rpc("admin_dispatch_metrics", {});
+  if (error) throw new Error(error.message);
+  return readDispatchMetrics(data);
 }

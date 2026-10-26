@@ -19,6 +19,7 @@ import {
 } from "../support/supabase";
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { getMockRefunds, sendMonnifyWebhook, setMockTransaction } from "../support/monnify-webhook";
+import { advanceUntil, liveOffer, offersFor, retireStaleDispatchOrders, setDispatchSettingAs } from "../support/dispatch";
 
 /**
  * ONE order, signup to payout, against a throwaway local Supabase stack
@@ -108,6 +109,8 @@ test.describe("full cycle: signup -> order -> payment -> delivery -> payout", ()
 
   test.afterAll(async () => {
     await Promise.all([customerCtx?.close(), vendorCtx?.close(), adminCtx?.close()]);
+    // 5b shortened the offer time so the lapse in 6a is quick; leave the stack the way the next spec expects it.
+    if (S.adminId) await setDispatchSettingAs(S.adminId, "dispatch_offer_timeout_seconds", 45).catch(() => undefined);
   });
 
   // ------------------------------------------------------------------ 0
@@ -449,15 +452,21 @@ test.describe("full cycle: signup -> order -> payment -> delivery -> payout", ()
     expect(titles).toEqual(expect.arrayContaining(["Order placed!", "Order accepted", "Order in the kitchen"]));
   });
 
-  test("5b. a second rider is approved and both riders go online with a location (rider RPCs)", async () => {
+  test("5b. a second rider is approved and both riders go online with a location (rider RPCs); rider 2 is the nearer one", async () => {
     S.rider2 = await registerRiderLikeTheApp(cycleUsers.rider2);
     // Rider 2's approval is not the thing under test (rider 1 already went through the admin UI),
     // so it is done with the same service-role RPC the admin action calls.
     ok(await svc().rpc("approve_rider", { p_rider_id: S.rider2.userId, p_actor_id: S.adminId, p_reason: "e2e second rider" }), "approve_rider");
+    // Offers are sequential and the tick cron runs on this stack: an order a failed earlier run left in the kitchen
+    // would be offered to these riders too, so retire those first (the order under test is kept).
+    await retireStaleDispatchOrders([S.orderId]);
+    // Rider answer time 15 s (the minimum) so the lapse in 6a takes seconds, not 45 s of wall clock. Restored in afterAll.
+    await setDispatchSettingAs(S.adminId, "dispatch_offer_timeout_seconds", 15);
 
+    // Rider 2 is ~160 m from the store, rider 1 ~310 m: sequential dispatch asks rider 2 first.
     for (const [rider, at] of [
-      [S.rider, { lat: 9.051, lng: 7.451 }],
-      [S.rider2, { lat: 9.052, lng: 7.452 }],
+      [S.rider, { lat: 9.052, lng: 7.452 }],
+      [S.rider2, { lat: 9.051, lng: 7.451 }],
     ] as const) {
       const online = ok(await rider.db.rpc("set_rider_online", { p_is_online: true }), "set_rider_online") as { is_online: boolean };
       expect(online.is_online).toBe(true);
@@ -465,9 +474,16 @@ test.describe("full cycle: signup -> order -> payment -> delivery -> payout", ()
     }
     const riders = ok(await svc().from("riders").select("user_id, is_online, last_ping_at").in("user_id", [S.rider.userId, S.rider2.userId]), "riders");
     expect(riders.every((r: { is_online: boolean; last_ping_at: string | null }) => r.is_online && r.last_ping_at)).toBe(true);
+
+    // Accepted and preparing, food not ready yet: dispatch is scheduled for a predicted time, so nobody is asked and no
+    // offer exists even though two eligible riders are online.
+    expect(await offersFor(S.orderId)).toEqual([]);
+    const scheduled = ok(await svc().from("order_dispatch").select("state, start_at").eq("order_id", S.orderId).single(), "order_dispatch");
+    expect(scheduled.state).toBe("scheduled");
+    expect(new Date(scheduled.start_at).getTime()).toBeGreaterThan(Date.now());
   });
 
-  test("5c. vendor (real UI) marks the order ready; the customer is notified and dispatch offers go out", async () => {
+  test("5c. vendor (real UI) marks the order ready; the customer is notified and dispatch asks the nearest rider first", async () => {
     // The stack outlives a run, so riders left online by an earlier run (or by admin-forms.spec) would be
     // offered this order too. Take every rider except this run's two offline so the offer set is exact.
     ok(await svc().from("riders").update({ is_online: false }).not("user_id", "in", `(${S.rider.userId},${S.rider2.userId})`), "park other riders");
@@ -483,45 +499,78 @@ test.describe("full cycle: signup -> order -> payment -> delivery -> payout", ()
     const vendorTitles = ok(await svc().from("notifications").select("title").eq("vendor_id", S.vendorId).eq("order_id", S.orderId), "vendor notes").map((n: { title: string }) => n.title);
     expect(vendorTitles).toEqual(["New order"]);
 
-    // Dispatch (trigger on ready_for_pickup): both online, approved riders were offered the order.
-    const offers = ok(await svc().from("dispatch_offers").select("rider_id, status").eq("order_id", S.orderId), "offers") as Array<{ rider_id: string; status: string }>;
-    expect(offers.map((o) => o.rider_id).sort()).toEqual([S.rider.userId, S.rider2.userId].sort());
-    expect(offers.every((o) => o.status === "offered")).toBe(true);
+    // Dispatch (trigger on ready_for_pickup) starts at once, whatever start_at said: ONE rider is asked, the nearest
+    // (rider 2). Rider 1 is online and eligible but is not offered anything until rider 2 answers or lapses.
+    const offers = await offersFor(S.orderId);
+    expect(offers).toHaveLength(1);
+    expect(offers[0]).toMatchObject({ rider_id: S.rider2.userId, status: "offered", cycle_no: 1, attempt_no: 1 });
+    expect(new Date(offers[0].expires_at).getTime()).toBeGreaterThan(Date.now());
+    expect((await liveOffer(S.orderId))?.rider_id).toBe(S.rider2.userId);
 
-    // Each rider sees only their own offer (RLS), and can read what it is for.
-    const mine = ok(await S.rider.db.from("dispatch_offers").select("rider_id").eq("order_id", S.orderId), "rider's offers") as Array<{ rider_id: string }>;
-    expect(mine).toEqual([{ rider_id: S.rider.userId }]);
-    const details = ok(await S.rider.db.rpc("get_rider_offer_details", { p_order_id: S.orderId }), "offer details") as Array<{ order_code: string; total_kobo: number }>;
+    // Each rider sees only their own offer (RLS): rider 2 has the live one, rider 1 sees nothing yet.
+    const mine = ok(await S.rider2.db.from("dispatch_offers").select("rider_id, status").eq("order_id", S.orderId), "rider 2's offers") as Array<{ rider_id: string; status: string }>;
+    expect(mine).toEqual([{ rider_id: S.rider2.userId, status: "offered" }]);
+    expect(ok(await S.rider.db.from("dispatch_offers").select("rider_id").eq("order_id", S.orderId), "rider 1's offers")).toEqual([]);
+    const details = ok(await S.rider2.db.rpc("get_rider_offer_details", { p_order_id: S.orderId }), "offer details") as Array<{ order_code: string; total_kobo: number }>;
     expect(details[0].order_code).toBe(S.orderCode);
+    // Rider 1 holds no offer, so it can neither read the order's details nor accept it.
+    const notMine = await S.rider.db.rpc("get_rider_offer_details", { p_order_id: S.orderId });
+    expect(notMine.error !== null || (notMine.data as unknown[]).length === 0).toBe(true);
+    expect((await S.rider.db.rpc("accept_dispatch_offer", { p_order_id: S.orderId })).error).not.toBeNull();
+    expect((await mainOrder())!.status).toBe("ready_for_pickup");
+
+    // The vendor's order page says how the search works, in the store's words.
+    await gotoHydrated(vendor, `/dashboard/orders/${S.orderId}`);
+    await expect(vendor.getByText("Finding a rider: asking riders one at a time, nearest first.")).toBeVisible();
+    // The food is ready: nothing left to revise.
+    await expect(vendor.getByRole("button", { name: "Need more time?" })).toHaveCount(0);
   });
 
-  test("6a. an unaccepted offer expires and is re-dispatched; an explicit decline is final", async () => {
-    // Rider 2 explicitly declines.
+  test("6a. the nearest rider declines and the next one is asked immediately; an unanswered offer lapses and a new round asks again; a decline is final", async () => {
+    // Rider 2 (the one holding the single live offer) declines. No tick, no sweep: the decline itself advances.
     ok(await S.rider2.db.rpc("decline_dispatch_offer", { p_order_id: S.orderId }), "decline");
-    // Rider 1 never answers: push the offer past its 60s TTL and run the sweep exactly as the scheduler would.
-    ok(await svc().from("dispatch_offers").update({ expires_at: new Date(Date.now() - 5_000).toISOString() }).eq("order_id", S.orderId).eq("rider_id", S.rider.userId), "backdate offer");
-    const swept = ok(await svc().rpc("sweep_dispatch_offers"), "sweep") as Array<{ offers_expired: number; offers_created: number; orders_cancelled: number }>;
-    expect(swept[0].offers_expired).toBeGreaterThanOrEqual(1);
-    expect(swept[0].orders_cancelled).toBe(0);
+    await expect.poll(async () => (await liveOffer(S.orderId))?.rider_id, { timeout: 5_000, message: "the next rider should be offered straight after the decline" }).toBe(S.rider.userId);
+    const afterDecline = await offersFor(S.orderId);
+    expect(afterDecline).toHaveLength(2);
+    expect(afterDecline[0]).toMatchObject({ rider_id: S.rider2.userId, status: "declined", attempt_no: 1, cycle_no: 1 });
+    expect(afterDecline[1]).toMatchObject({ rider_id: S.rider.userId, status: "offered", attempt_no: 2, cycle_no: 1 });
+    expect(new Date(afterDecline[1].expires_at).getTime()).toBeGreaterThan(Date.now());
+    // The asked rider sees the live one.
+    expect(ok(await S.rider.db.from("dispatch_offers").select("status").eq("order_id", S.orderId), "rider 1's offers")).toEqual([{ status: "offered" }]);
 
-    const offers = ok(await svc().from("dispatch_offers").select("rider_id, status, expires_at").eq("order_id", S.orderId), "offers") as Array<{ rider_id: string; status: string; expires_at: string }>;
-    const r1 = offers.find((o) => o.rider_id === S.rider.userId)!;
-    const r2 = offers.find((o) => o.rider_id === S.rider2.userId)!;
-    expect(r2.status).toBe("declined"); // never re-offered
-    expect(r1.status).toBe("offered"); // re-dispatched with a fresh window
-    expect(new Date(r1.expires_at).getTime()).toBeGreaterThan(Date.now());
+    // Rider 1 never answers. The scheduler (pg_cron dispatch-tick, every 5 s) closes the lapsed offer; nobody is left in
+    // this round (rider 2 declined for good, rider 1 was just asked), so a NEW round asks rider 1 again.
+    const lapsesAt = new Date(afterDecline[1].expires_at).getTime();
+    const { usedFallback } = await advanceUntil(async () => (await offersFor(S.orderId)).some((o) => o.status === "offered" && o.attempt_no === 3), {
+      timeoutMs: 90_000,
+      cronGraceMs: Math.max(0, lapsesAt - Date.now()) + 20_000, // the 15 s offer plus a few ticks; only then call the scheduler by hand
+    });
+    if (usedFallback) test.info().annotations.push({ type: "cron-fallback", description: "pg_cron dispatch-tick did not advance the lapsed offer within 20 s of its expiry; sweep_dispatch_offers() was called as the scheduler" });
+
+    const afterLapse = await offersFor(S.orderId);
+    expect(afterLapse).toHaveLength(3);
+    expect(afterLapse[0].status).toBe("declined"); // never re-offered
+    expect(afterLapse[1]).toMatchObject({ rider_id: S.rider.userId, status: "expired", attempt_no: 2, cycle_no: 1 });
+    expect(afterLapse[2]).toMatchObject({ rider_id: S.rider.userId, status: "offered", attempt_no: 3, cycle_no: 2 });
+    expect(afterLapse.filter((o) => o.rider_id === S.rider2.userId)).toHaveLength(1); // the decliner was not asked again in the new round
+    expect(new Date(afterLapse[2].expires_at).getTime()).toBeGreaterThan(Date.now());
     expect((await mainOrder())!.status).toBe("ready_for_pickup"); // still waiting, not cancelled
 
     // A declined rider cannot accept afterwards.
     const lateAccept = await S.rider2.db.rpc("accept_dispatch_offer", { p_order_id: S.orderId });
     expect(lateAccept.error).not.toBeNull();
+    expect((await mainOrder())!.rider_id).toBeNull();
   });
 
-  test("6b. rider 1 accepts; the order is assigned, the vendor and customer are told, and the tracking page shows the rider", async () => {
+  test("6b. rider 1 accepts the live offer; the order is assigned, the vendor and customer are told, and the tracking page shows the rider", async () => {
     const accepted = ok(await S.rider.db.rpc("accept_dispatch_offer", { p_order_id: S.orderId }), "accept") as { status: string; rider_id: string; rider_fee_kobo: number };
     expect(accepted).toMatchObject({ status: "rider_assigned", rider_id: S.rider.userId });
     expect(accepted.rider_fee_kobo).toBeGreaterThan(0);
     S.riderFeeKobo = accepted.rider_fee_kobo;
+
+    // Exactly one accepted offer, no live offer left, and the history ends in the acceptance.
+    expect((await offersFor(S.orderId)).map((o) => o.status)).toEqual(["declined", "expired", "accepted"]);
+    expect(await liveOffer(S.orderId)).toBeNull();
 
     const order = (await mainOrder())!;
     expect(order).toMatchObject({ status: "rider_assigned", rider_id: S.rider.userId });

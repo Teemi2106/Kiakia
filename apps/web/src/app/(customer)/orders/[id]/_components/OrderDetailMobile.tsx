@@ -47,6 +47,7 @@ export function OrderDetailMobile({
           <OrderDetailHeader
             status={order.status}
             vendorName={vendor?.name || "Vendor"}
+            deliveredByStore={order.delivered_by_store}
           />
         </div>
 

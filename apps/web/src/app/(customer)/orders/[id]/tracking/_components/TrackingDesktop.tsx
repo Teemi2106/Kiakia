@@ -5,6 +5,7 @@ import type { OrderStatus } from "@kiakia/domain";
 import { DeliveryCodeSection } from "../../delivered/_components/DeliveryCodeSection";
 import { Timeline } from "./Timeline";
 import { DriverCard } from "./DriverCard";
+import { DeliveredByCard } from "./DeliveredByCard";
 import { VendorCard } from "./VendorCard";
 import { MapArea } from "./MapArea";
 import { isTrackingTerminal, trackingHeadline } from "./statusCopy";
@@ -14,6 +15,8 @@ interface TrackingDesktopProps {
   steps: TimelineStep[];
   driver?: Driver;
   vendor: Vendor;
+  /** The store delivers this order itself: no rider card, no "waiting for a rider". */
+  deliveredByStore?: boolean;
   orderId?: string;
   orderCode: string;
   status: OrderStatus;
@@ -25,6 +28,7 @@ export function TrackingDesktop({
   steps,
   driver,
   vendor,
+  deliveredByStore,
   orderId,
   orderCode,
   status,
@@ -84,7 +88,9 @@ export function TrackingDesktop({
                 THIS order yet (e.g. still `placed`/`preparing`), so this is
                 omitted rather than shown with fabricated details when
                 `driver` is unset. */}
-            {driver ? (
+            {deliveredByStore ? (
+              <DeliveredByCard storeName={vendor.name} />
+            ) : driver ? (
               <DriverCard driver={driver} />
             ) : (
               <div className="rounded-xl border border-[#E4BEB8] bg-white p-4 text-center text-sm text-[#5B403C] shadow-sm">

@@ -7,19 +7,6 @@ import { field, rpcFailureMessage, type FormState } from "@/lib/admin/action-hel
 import { parseRedispatchResult, redispatchMessage } from "@/lib/admin/dispatch-info";
 import { firstIssue, redispatchOrderSchema, setDispatchSettingSchema } from "@/lib/validation/admin";
 
-/**
- * TODO(0097): admin_set_dispatch_setting / admin_redispatch_order are not in
- * packages/db's generated types until migration 0097 lands. Calls go through
- * this narrow cast; remove it (and call admin.rpc directly) once they are.
- */
-interface RpcResult {
-  data: unknown;
-  error: { message: string; code?: string } | null;
-}
-function callRpc(name: "admin_set_dispatch_setting" | "admin_redispatch_order", args: Record<string, unknown>): PromiseLike<RpcResult> {
-  return (createAdminClient() as unknown as { rpc(fn: string, args: Record<string, unknown>): PromiseLike<RpcResult> }).rpc(name, args);
-}
-
 /** Who may change rider matching. The RPC enforces the same tier; a "no" from it is turned into this wording. */
 const SETTING_PERMISSION_MESSAGE = "Only admins can change rider matching. Ask an admin or a superadmin to do it.";
 
@@ -31,10 +18,10 @@ function revalidateDispatch() {
 }
 
 /**
- * Sets one rider-matching setting (distance, riders per offer, widen delay,
- * notify-store delay, location freshness). The typed value is validated here;
- * the RPC re-checks the range and writes the audit row. Applies to orders from
- * now on; offers already sent are unchanged.
+ * Sets one rider-matching setting (any of the 15 dispatch_* keys). The typed
+ * value is validated here against the key's bounds; the RPC re-checks the range
+ * and the "first search <= furthest search" rule, and writes the audit row.
+ * Applies to orders from now on; offers already sent are unchanged.
  */
 export async function setDispatchSettingAction(_prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await requireAdminContext();
@@ -46,7 +33,7 @@ export async function setDispatchSettingAction(_prevState: FormState, formData: 
   });
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
-  const { error } = await callRpc("admin_set_dispatch_setting", {
+  const { error } = await createAdminClient().rpc("admin_set_dispatch_setting", {
     p_key: parsed.data.key,
     p_value: parsed.data.value,
     p_reason: parsed.data.reason,
@@ -62,9 +49,9 @@ export async function setDispatchSettingAction(_prevState: FormState, formData: 
 const inFlight = new Set<string>();
 
 /**
- * Sends a ready order with no rider to riders again, using the current
- * settings. Moves no money. The result ("Sent to 3 riders" / "No riders in
- * range") is shown on the button that was pressed.
+ * Sends an order with no rider to riders again, using the current
+ * settings. Moves no money. The result ("Asking 1 rider now" / "A rider is
+ * already being asked" / "No riders in range") is shown on the button that was pressed.
  */
 export async function redispatchOrderAction(_prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await requireAdminContext();
@@ -76,7 +63,7 @@ export async function redispatchOrderAction(_prevState: FormState, formData: For
   if (inFlight.has(orderId)) return { error: "This order is already being sent to riders. Give it a moment." };
   inFlight.add(orderId);
   try {
-    const { data, error } = await callRpc("admin_redispatch_order", {
+    const { data, error } = await createAdminClient().rpc("admin_redispatch_order", {
       p_order_id: orderId,
       p_reason: "Sent to riders again from the Waiting for a rider page",
       p_actor_id: session.userId,

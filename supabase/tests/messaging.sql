@@ -16,7 +16,7 @@
 -- no-double-claim property is asserted on the claimed set.
 
 begin;
-select plan(218);
+select plan(219);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures
@@ -691,18 +691,26 @@ insert into orders (id, code, customer_id, vendor_id, service_area_id, status, s
    'ready_for_pickup', 500000, 500000, '{"line1":"77 Hidden Street Secretland"}'::jsonb, st_geogfromtext('POINT(7.55 9.55)'), 2500),
   ('bf100000-0000-7000-8000-000000000032', 'MSG-ORD-2', tests.get_supabase_uid('m_c1'), 'bf100000-0000-7000-8000-000000000011', 'bf100000-0000-7000-8000-000000000001',
    'ready_for_pickup', 500000, 500000, '{"line1":"78 Hidden Street Secretland"}'::jsonb, st_geogfromtext('POINT(7.55 9.55)'), 2500);
+-- Sequential dispatch (0100+) allows ONE live offer per order (dispatch_offers_one_live_per_order). The rider-level skip rules below
+-- (offline, suspended, no phone, not approved, already accepted, kill switch) are independent of the order, so each of those
+-- offers now sits on its own order 33..38 (same shape as order 31) instead of five riders sharing one order.
+insert into orders (id, code, customer_id, vendor_id, service_area_id, status, subtotal_kobo, total_kobo, delivery_address, delivery_location, distance_m)
+select ('bf100000-0000-7000-8000-0000000000' || n)::uuid, 'MSG-ORD-' || (n::int - 30), tests.get_supabase_uid('m_c1'), 'bf100000-0000-7000-8000-000000000011', 'bf100000-0000-7000-8000-000000000001',
+       'ready_for_pickup', 500000, 500000, ('{"line1":"' || n || ' Hidden Street Secretland"}')::jsonb, st_geogfromtext('POINT(7.55 9.55)'), 2500
+from unnest(array['33', '34', '35', '36', '37', '38']) n;
 
--- order 1: r1 (should text), r2 offline, r5 suspended, r6 no phone, r3 not approved; order 2: r1 again (cap test) + fresh offer for r2
-insert into dispatch_offers (id, order_id, rider_id, status, offered_at, expires_at) values
-  ('bf100000-0000-7000-8000-000000000041', 'bf100000-0000-7000-8000-000000000031', tests.get_supabase_uid('m_r1'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds'),
-  ('bf100000-0000-7000-8000-000000000042', 'bf100000-0000-7000-8000-000000000031', tests.get_supabase_uid('m_r2'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds'),
-  ('bf100000-0000-7000-8000-000000000043', 'bf100000-0000-7000-8000-000000000031', tests.get_supabase_uid('m_r5'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds'),
-  ('bf100000-0000-7000-8000-000000000044', 'bf100000-0000-7000-8000-000000000031', tests.get_supabase_uid('m_r6'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds'),
-  ('bf100000-0000-7000-8000-000000000045', 'bf100000-0000-7000-8000-000000000031', tests.get_supabase_uid('m_r3'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds'),
-  ('bf100000-0000-7000-8000-000000000046', 'bf100000-0000-7000-8000-000000000031', tests.get_supabase_uid('m_r4'), 'accepted', now() - interval '20 seconds', now() + interval '40 seconds');
--- plus an offer to r1 that is too fresh / about to expire (separate orders would be needed; reuse order 2)
-insert into dispatch_offers (id, order_id, rider_id, status, offered_at, expires_at) values
-  ('bf100000-0000-7000-8000-000000000047', 'bf100000-0000-7000-8000-000000000032', tests.get_supabase_uid('m_r1'), 'offered', now() - interval '3 seconds', now() + interval '57 seconds');
+-- order 31: r1 (should text); order 33: r2 offline; 34: r5 suspended; 35: r6 no phone; 36: r3 not approved; 38: r4 already accepted;
+-- order 32: r1 again, too fresh (cap test); order 37 comes later (kill switch). One live offer per order, explicit cycle/attempt.
+insert into dispatch_offers (id, order_id, rider_id, status, offered_at, expires_at, cycle_no, attempt_no) values
+  ('bf100000-0000-7000-8000-000000000041', 'bf100000-0000-7000-8000-000000000031', tests.get_supabase_uid('m_r1'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds', 1, 1),
+  ('bf100000-0000-7000-8000-000000000042', 'bf100000-0000-7000-8000-000000000033', tests.get_supabase_uid('m_r2'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds', 1, 1),
+  ('bf100000-0000-7000-8000-000000000043', 'bf100000-0000-7000-8000-000000000034', tests.get_supabase_uid('m_r5'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds', 1, 1),
+  ('bf100000-0000-7000-8000-000000000044', 'bf100000-0000-7000-8000-000000000035', tests.get_supabase_uid('m_r6'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds', 1, 1),
+  ('bf100000-0000-7000-8000-000000000045', 'bf100000-0000-7000-8000-000000000036', tests.get_supabase_uid('m_r3'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds', 1, 1),
+  ('bf100000-0000-7000-8000-000000000046', 'bf100000-0000-7000-8000-000000000038', tests.get_supabase_uid('m_r4'), 'accepted', now() - interval '20 seconds', now() + interval '40 seconds', 1, 1);
+-- plus an offer to r1 that is too fresh / about to expire (on its own order 32)
+insert into dispatch_offers (id, order_id, rider_id, status, offered_at, expires_at, cycle_no, attempt_no) values
+  ('bf100000-0000-7000-8000-000000000047', 'bf100000-0000-7000-8000-000000000032', tests.get_supabase_uid('m_r1'), 'offered', now() - interval '3 seconds', now() + interval '57 seconds', 1, 1);
 delete from message_outbox where kind = 'rider_offer' and dedupe_key like 'w:%';
 
 select tests.authenticate_as('m_c1');
@@ -710,7 +718,9 @@ select throws_ok($$ select enqueue_rider_offer_sms() $$, '42501', null, 'a signe
 select tests.authenticate_as_service_role();
 
 select is(enqueue_rider_offer_sms(), 1, 'one SMS queued: only the online, approved, active rider with a phone and an open offer older than 12 s');
-select is((select count(*) from message_outbox where kind = 'rider_offer' and dedupe_key like 'offer:%'), 1::bigint, '... exactly one rider_offer row');
+-- 0103: every live offer also queues a PUSH row (kind rider_offer, dedupe offer:<id>:push); the SMS assertions below look at channel 'sms' only.
+select is((select count(*) from message_outbox where kind = 'rider_offer' and channel = 'sms' and dedupe_key like 'offer:%'), 1::bigint, '... exactly one rider_offer SMS row');
+select is((select count(*) from message_outbox where kind = 'rider_offer' and channel = 'push' and dedupe_key like 'offer:%:push'), 6::bigint, '... next to the 6 push rows the offer trigger queued (one per live offer 041-045 and 047; the accepted 046 queues none)');
 select is((select recipient_user_id from message_outbox where dedupe_key = 'offer:bf100000-0000-7000-8000-000000000041:sms'), tests.get_supabase_uid('m_r1'), '... for r1');
 select is((select channel || '/' || category || '/' || status || '/' || to_address from message_outbox where dedupe_key = 'offer:bf100000-0000-7000-8000-000000000041:sms'),
   'sms/transactional/queued/+2348010000021', 'transactional SMS to the rider''s phone');
@@ -728,7 +738,7 @@ select matches((select body from message_outbox where dedupe_key = 'offer:bf1000
   'the fee shown is the same estimate get_rider_offer_details gives the rider');
 
 select is(enqueue_rider_offer_sms(), 0, 'rerun: nothing new (idempotent)');
-select is((select count(*) from message_outbox where dedupe_key like 'offer:%'), 1::bigint, '... still one row per offer');
+select is((select count(*) from message_outbox where channel = 'sms' and dedupe_key like 'offer:%'), 1::bigint, '... still one SMS row per offer');
 select is((select count(*) from message_outbox where dedupe_key = 'offer:bf100000-0000-7000-8000-000000000042:sms'), 0::bigint, 'offline rider skipped');
 select is((select count(*) from message_outbox where dedupe_key = 'offer:bf100000-0000-7000-8000-000000000043:sms'), 0::bigint, 'suspended rider skipped');
 select is((select count(*) from message_outbox where dedupe_key = 'offer:bf100000-0000-7000-8000-000000000044:sms'), 0::bigint, 'rider without a phone skipped');
@@ -738,7 +748,10 @@ select is((select count(*) from message_outbox where dedupe_key = 'offer:bf10000
 
 -- the fresh offer becomes eligible once old enough; hourly cap of 1 then suppresses it
 reset role;
-update dispatch_offers set offered_at = now() - interval '15 seconds' where id = 'bf100000-0000-7000-8000-000000000047';
+-- offered_at / expires_at are immutable (0100): the offer is replaced by the same offer, made 15 s ago.
+delete from dispatch_offers where id = 'bf100000-0000-7000-8000-000000000047';
+insert into dispatch_offers (id, order_id, rider_id, status, offered_at, expires_at, cycle_no, attempt_no) values
+  ('bf100000-0000-7000-8000-000000000047', 'bf100000-0000-7000-8000-000000000032', tests.get_supabase_uid('m_r1'), 'offered', now() - interval '15 seconds', now() + interval '45 seconds', 1, 1);
 update message_settings set value_int = 1 where key = 'rider_offer_sms_hourly_cap';
 select tests.authenticate_as_service_role();
 select is(enqueue_rider_offer_sms(), 0, 'with the per-rider hourly cap reached nothing more is queued');
@@ -748,8 +761,8 @@ reset role;
 update message_settings set value_int = 6 where key = 'rider_offer_sms_hourly_cap';
 -- kill switch
 update message_settings set value_int = 0 where key = 'rider_offer_sms_enabled';
-insert into dispatch_offers (id, order_id, rider_id, status, offered_at, expires_at) values
-  ('bf100000-0000-7000-8000-000000000048', 'bf100000-0000-7000-8000-000000000032', tests.get_supabase_uid('m_r2'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds');
+insert into dispatch_offers (id, order_id, rider_id, status, offered_at, expires_at, cycle_no, attempt_no) values
+  ('bf100000-0000-7000-8000-000000000048', 'bf100000-0000-7000-8000-000000000037', tests.get_supabase_uid('m_r2'), 'offered', now() - interval '20 seconds', now() + interval '40 seconds', 1, 1);
 update riders set is_online = true where user_id = tests.get_supabase_uid('m_r2');
 select tests.authenticate_as_service_role();
 select is(enqueue_rider_offer_sms(), 0, 'the kill switch (rider_offer_sms_enabled = 0) stops all rider SMS');

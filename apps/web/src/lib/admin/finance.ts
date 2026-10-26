@@ -18,8 +18,10 @@ export interface DashboardMetrics {
   readonly riders: { readonly online: number; readonly pending_kyc: number; readonly documents_pending: number };
   readonly vendors_suspended: number;
   readonly stuck_orders: {
-    /** ready_for_pickup, no rider, ready for more than 15 minutes. */
+    /** ready, no rider, waiting more than 60 s: the same orders as admin_dispatch_status (0097). */
     readonly ready_without_rider: number;
+    /** The same, waiting more than 15 minutes. */
+    readonly ready_without_rider_over_15m: number;
     /** arrived and locked out of the delivery code (5 failed attempts). */
     readonly delivery_code_locked: number;
     /** failed_delivery with the payment still paid, i.e. escrow neither released nor refunded. */

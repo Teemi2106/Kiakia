@@ -11,7 +11,9 @@
 --      sweep do not).
 --   3. an expired offer is never re-offered in a later cycle, because
 --      dispatch_offers is UNIQUE(order_id, rider_id) and the sweep inserts
---      with ON CONFLICT DO NOTHING.
+--      with ON CONFLICT DO NOTHING. (Sequential dispatch, 0100+: there is no
+--      pair-unique and no re-opening; the equivalent guarantee is that after
+--      the lapse a NEW offer row, in a later cycle, goes to the same rider.)
 --   4. an order whose vendor has no location sits at ready_for_pickup
 --      forever (sweep `continue`s before the 30 minute give-up).
 --   5. accept_dispatch_offer() accepts a rider so far away that rider_fee
@@ -19,7 +21,7 @@
 --      release_escrow() later refuses with "negative payout share".
 
 begin;
-select plan(5);
+select plan(8);
 
 select tests.create_supabase_user('qa_customer');
 select tests.create_supabase_user('qa_vendor_owner');
@@ -52,6 +54,14 @@ values ('00000000-0000-7000-8000-0000000000a2', tests.get_supabase_uid('qa_custo
 select tests.authenticate_as('qa_vendor_owner');
 select transition_order('00000000-0000-7000-8000-0000000000a2'::uuid, 'ready_for_pickup', 'vendor', tests.get_supabase_uid('qa_vendor_owner'), '{}'::jsonb);
 
+-- Sequential dispatch: the ready trigger made ONE live offer, to the fresh rider (the stale one is skipped).
+select tests.authenticate_as_service_role();
+select is(
+  (select array_agg(rider_id) from dispatch_offers where order_id = '00000000-0000-7000-8000-0000000000a2' and status = 'offered'),
+  array[tests.get_supabase_uid('qa_rider_fresh')],
+  'the ready trigger made exactly one live offer, to the fresh rider (sequential dispatch)'
+);
+
 -- (1) privacy
 select tests.authenticate_as('qa_rider_fresh');
 select is(
@@ -68,27 +78,51 @@ select is(
   'the ready_for_pickup trigger must skip a rider whose last_ping_at is older than 5 minutes'
 );
 
--- (3) expired offers never re-offered
+-- Offer columns (expires_at, offered_at, cycle_no, attempt_no, ...) are immutable once a row exists, so a
+-- lapsed offer cannot be faked by UPDATE. This helper swaps the live offer for an identical one that was
+-- already past its expiry when it was inserted (same rider/cycle/attempt, offered 3 minutes ago).
+reset role;
+create function pg_temp.lapse_live(p_order uuid) returns void language plpgsql as $$
+declare
+  r record;
+begin
+  delete from dispatch_offers where order_id = p_order and status = 'offered' returning * into r;
+  insert into dispatch_offers (order_id, rider_id, status, cycle_no, attempt_no, offered_at, expires_at)
+  values (r.order_id, r.rider_id, 'offered', r.cycle_no, r.attempt_no, now() - interval '3 minutes', now() - interval '1 second');
+end $$;
+select tests.authenticate_as_service_role();
+
+-- (3) expired offers: the next cycle asks the still-eligible rider again
 -- Everything in a pgTAP file runs in ONE transaction, so now() is frozen: the
 -- fixture offer's offered_at and the order's dispatch_cycle_started_at are the
 -- same instant as the sweep's own now(), and 0076's cycle rule
 -- (offered_at >= cycle start => already asked this cycle) would exclude the rider
 -- forever. In production each sweep tick is its own transaction. Age the offer and
 -- the cycle into the past so the expired-offer re-open path is what is exercised.
-update dispatch_offers set expires_at = now() - interval '1 second', offered_at = now() - interval '3 minutes'
- where order_id = '00000000-0000-7000-8000-0000000000a2' and status = 'offered';
+reset role;
+select pg_temp.lapse_live('00000000-0000-7000-8000-0000000000a2'::uuid);
+select tests.authenticate_as_service_role();
 update orders set dispatch_cycle_started_at = now() - interval '5 minutes' where id = '00000000-0000-7000-8000-0000000000a2';
 select sweep_dispatch_offers();
 select sweep_dispatch_offers();
 select is(
-  (select status from dispatch_offers where order_id = '00000000-0000-7000-8000-0000000000a2' and rider_id = tests.get_supabase_uid('qa_rider_fresh')),
-  'offered',
-  'an expired, still-eligible rider is re-offered in the next cycle'
+  (select status from dispatch_offers where order_id = '00000000-0000-7000-8000-0000000000a2' and rider_id = tests.get_supabase_uid('qa_rider_fresh') order by attempt_no limit 1),
+  'expired',
+  'the lapsed offer is closed as expired by the sweep (old: re-opened in place)'
+);
+select is(
+  (select count(*)::int from dispatch_offers where order_id = '00000000-0000-7000-8000-0000000000a2' and rider_id = tests.get_supabase_uid('qa_rider_fresh') and status = 'offered' and cycle_no > 1),
+  1,
+  'an expired, still-eligible rider is re-offered in the NEXT cycle, as a new offer row (exactly one live offer)'
+);
+select is(
+  (select count(*)::int from dispatch_offers where order_id = '00000000-0000-7000-8000-0000000000a2' and status = 'offered'),
+  1,
+  '... and the repeated sweep did not create a second live offer for the order'
 );
 
 -- (5) rider too far for the order to pay: accept must be refused up front
-update dispatch_offers set status = 'offered', expires_at = now() + interval '2 minutes'
- where order_id = '00000000-0000-7000-8000-0000000000a2' and rider_id = tests.get_supabase_uid('qa_rider_fresh');
+-- (the rider's live offer from the new cycle is still open; only the rider's position changes)
 update riders set current_location = st_geogfromtext('POINT(7.95 9.95)') where user_id = tests.get_supabase_uid('qa_rider_fresh');
 select tests.authenticate_as('qa_rider_fresh');
 select throws_ok(
@@ -103,8 +137,9 @@ select tests.authenticate_as_service_role();
 update vendors set location = null where id = '00000000-0000-7000-8000-0000000000a1';
 -- The rider's offer from the steps above is still live ('offered'), and the sweep
 -- (rightly) leaves an order with a live offer alone, so let it lapse first.
-update dispatch_offers set expires_at = now() - interval '1 second'
- where order_id = '00000000-0000-7000-8000-0000000000a2' and status = 'offered';
+reset role;
+select pg_temp.lapse_live('00000000-0000-7000-8000-0000000000a2'::uuid);
+select tests.authenticate_as_service_role();
 update orders set first_dispatched_at = now() - interval '40 minutes' where id = '00000000-0000-7000-8000-0000000000a2' and rider_id is null;
 select sweep_dispatch_offers();
 select isnt(

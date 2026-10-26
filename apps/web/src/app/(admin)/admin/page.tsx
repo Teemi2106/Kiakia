@@ -1,5 +1,6 @@
 import { getDashboardMetrics, getMoneySummary, listPayables, parseMoneyRange } from "@/lib/admin/finance";
-import { countWaitingForRider } from "@/lib/admin/dispatch";
+import { getDispatchOverview } from "@/lib/admin/dispatch";
+import { getDispatchHealth } from "@/lib/admin/dispatch-health";
 import { listFlaggedOrders } from "@/lib/admin/flagged";
 import { listOrders, type OrderListItem } from "@/lib/admin/orders";
 import { countVendorsByStatus } from "@/lib/admin/vendors";
@@ -7,6 +8,7 @@ import { requireAdminContext } from "@/lib/auth/dal";
 import { Badge, Card, CardBody, EmptyState, OrderStatusBadge } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DispatchHealthNotice } from "../_components/DispatchHealthNotice";
 import { formatDateTime, humanize, money } from "../_components/format";
 import { ANOMALY_LABELS } from "../_components/labels";
 import { PageHeader } from "../_components/PageHeader";
@@ -31,7 +33,7 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
   await requireAdminContext();
   const range = parseMoneyRange(firstParam((await searchParams).range));
 
-  const [metrics, moneySummary, flagged, readyOrders, arrivedOrders, failedOrders, vendorCounts, owed, waitingForRider] = await Promise.all([
+  const [metrics, moneySummary, flagged, readyOrders, arrivedOrders, failedOrders, vendorCounts, owed, dispatch, health] = await Promise.all([
     getDashboardMetrics(),
     getMoneySummary(range),
     listFlaggedOrders({ pageSize: 5 }),
@@ -40,7 +42,8 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
     listOrders({ status: "failed_delivery", pageSize: 5 }),
     countVendorsByStatus(),
     listPayables({ pageSize: 1 }),
-    countWaitingForRider(),
+    getDispatchOverview(),
+    getDispatchHealth(),
   ]);
 
   const { stuck_orders: stuck, capture_anomalies_7d: anomalies, gateway_refunds: refunds } = metrics;
@@ -53,6 +56,8 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
         description={`What is happening on KiaKia, and what needs you. Updated ${formatDateTime(metrics.generated_at)}.`}
       />
 
+      {health.state === "unhealthy" && <DispatchHealthNotice health={health} />}
+
       <Section title="Needs attention">
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <AttentionCount label="Vendors waiting for approval" count={vendorCounts.pending} href="/admin/vendors?status=pending" />
@@ -63,11 +68,17 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
             hint={`${metrics.riders.documents_pending} documents to check`}
           />
           <AttentionCount
+            label="Rider search needs you"
+            count={dispatch.needsAttention}
+            href="/admin/dispatch"
+            hint={dispatch.needsAttention > 0 ? "No rider accepted, or the search is stuck" : undefined}
+          />
+          <AttentionCount
             label="Orders waiting for a rider"
-            count={waitingForRider}
+            count={dispatch.waiting}
             href="/admin/dispatch"
             tone="warning"
-            hint={waitingForRider > 0 ? "Ready, but no rider has the order" : undefined}
+            hint={dispatch.waiting > 0 || dispatch.startingLater > 0 ? `${dispatch.askingNow} being asked now, ${dispatch.startingLater} starting later` : undefined}
           />
           <AttentionCount label="Payment problems this week" count={anomalyTotal} href="/admin/flagged-orders" />
           <AttentionCount
@@ -77,6 +88,11 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
             hint={owed.total > 0 ? `${money(owed.totalOwedKobo)} owed` : undefined}
           />
         </ul>
+        {health.state !== "unhealthy" && (
+          <div className="mt-3">
+            <DispatchHealthNotice health={health} />
+          </div>
+        )}
       </Section>
 
       <MoneySection summary={moneySummary} range={range} />
@@ -112,7 +128,7 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
 
       <Section title="Orders that need a hand">
         <ul className="grid gap-3 sm:grid-cols-3">
-          <AttentionCount label="Ready for pickup, no rider after 15 minutes" count={stuck.ready_without_rider} href="/admin/orders?status=ready_for_pickup" />
+          <AttentionCount label="Ready for pickup, no rider after 15 minutes" count={stuck.ready_without_rider_over_15m} href="/admin/dispatch" />
           <AttentionCount label="Delivery code locked after too many wrong tries" count={stuck.delivery_code_locked} href="/admin/orders?status=arrived" />
           <AttentionCount label="Delivery failed, customer's money still held" count={stuck.failed_delivery_escrow_held} href="/admin/orders?status=failed_delivery" />
         </ul>

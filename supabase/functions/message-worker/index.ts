@@ -1,9 +1,11 @@
 // supabase/functions/message-worker/index.ts
 //
-// Drains message_outbox (migrations 0094-0096): claims a batch with the SQL
+// Drains message_outbox (migrations 0094-0096, 0103): claims a batch with the SQL
 // function message_claim_batch() (FOR UPDATE SKIP LOCKED, queued -> sending,
-// attempts + 1, 5-minute lease), sends each row through Resend (email) or
-// Termii (SMS), and records the outcome with message_mark_sent /
+// attempts + 1, 5-minute lease), sends each row through Resend (email), Termii
+// (SMS) or Expo (push: rider dispatch offers, resolved to the rider's
+// rider_push_tokens at send time; no token = suppressed 'no_push_token', not a
+// failure; DeviceNotRegistered tokens are pruned), and records the outcome with message_mark_sent /
 // message_mark_failed / message_mark_suppressed. Retry/backoff/give-up policy
 // lives in SQL (message_mark_failed: 30 s, 2 m, 8 m, 32 m, 60 m, 5 attempts).
 //
@@ -24,6 +26,7 @@
 // or key.
 
 import { createClient } from "@supabase/supabase-js";
+import { sendOutboxPush } from "../_shared/expo.ts";
 import {
   buildEmail,
   buildSms,
@@ -90,7 +93,8 @@ Deno.serve(async (req: Request) => {
 // deno-lint-ignore no-explicit-any
 async function processRow(supabase: any, cfg: ReturnType<typeof loadConfig>, row: OutboxRow): Promise<Outcome> {
   try {
-    if (!row.to_address) {
+    // A push has no address: its destinations are the recipient's device tokens, read below.
+    if (row.channel !== "push" && !row.to_address) {
       await supabase.rpc("message_mark_suppressed", { p_id: row.id, p_reason: "no_address" });
       return "suppressed";
     }
@@ -100,6 +104,9 @@ async function processRow(supabase: any, cfg: ReturnType<typeof loadConfig>, row
     if (cfg.mode === "fake") {
       provider = "fake";
       result = sendViaFake(row);
+    } else if (row.channel === "push") {
+      provider = "expo";
+      return await processPush(supabase, row);
     } else if (row.channel === "email") {
       provider = "resend";
       let unsubscribeUrl: string | undefined;
@@ -134,6 +141,37 @@ async function processRow(supabase: any, cfg: ReturnType<typeof loadConfig>, row
     await supabase.rpc("message_mark_failed", { p_id: row.id, p_error: "worker_exception", p_permanent: false });
     return "queued";
   }
+}
+
+// deno-lint-ignore no-explicit-any
+async function processPush(supabase: any, row: OutboxRow): Promise<Outcome> {
+  let tokens: string[] = [];
+  if (row.recipient_user_id) {
+    const { data, error } = await supabase.from("rider_push_tokens").select("token").eq("rider_id", row.recipient_user_id);
+    if (error) {
+      // Cannot tell "no tokens" from "could not look": retry rather than drop the push.
+      return await record(supabase, row, "expo", { ok: false, permanent: false, error: "token_lookup_failed" });
+    }
+    tokens = ((data ?? []) as { token: string }[]).map((r) => r.token);
+  }
+
+  const outcome = await sendOutboxPush(row, tokens);
+
+  if (outcome.dead.length > 0 && row.recipient_user_id) {
+    // Housekeeping: Expo says these devices are gone (uninstall / revoked permission).
+    const { error } = await supabase.from("rider_push_tokens").delete().eq("rider_id", row.recipient_user_id).in("token", outcome.dead);
+    if (error) console.error("message-worker: token prune failed", row.id, error.code);
+  }
+
+  if (outcome.kind === "no_tokens") {
+    await supabase.rpc("message_mark_suppressed", { p_id: row.id, p_reason: "no_push_token" });
+    console.log(JSON.stringify({ id: row.id, channel: "push", outcome: "suppressed", reason: "no_push_token", pruned: outcome.dead.length }));
+    return "suppressed";
+  }
+  if (outcome.kind === "sent") {
+    return await record(supabase, row, "expo", { ok: true, providerMessageId: outcome.providerMessageId });
+  }
+  return await record(supabase, row, "expo", { ok: false, permanent: outcome.permanent, error: outcome.error });
 }
 
 // deno-lint-ignore no-explicit-any
