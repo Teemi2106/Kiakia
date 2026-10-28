@@ -114,8 +114,8 @@ export function Header({ account }: { account: Account | null }) {
               src="/assets/logo-mark.png"
               alt="KiaKia"
               width={1104}
-              height={247}
-              className="h-8 w-auto mix-blend-multiply sm:h-9"
+              height={270}
+              className="h-8 w-auto max-w-none mix-blend-multiply sm:h-9"
               preload
             />
           </Link>
@@ -237,8 +237,8 @@ export function Header({ account }: { account: Account | null }) {
             src="/assets/logo-mark.png"
             alt="KiaKia"
             width={1104}
-            height={247}
-            className="h-7 w-auto mix-blend-multiply"
+            height={270}
+            className="h-7 w-auto max-w-none mix-blend-multiply"
           />
           <button
             type="button"

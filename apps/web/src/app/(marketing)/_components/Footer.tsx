@@ -48,7 +48,7 @@ export function Footer() {
                 src="/assets/logo-mark.png"
                 alt="KiaKia"
                 width={1104}
-                height={247}
+                height={270}
                 className="h-7 w-auto"
               />
             </Link>

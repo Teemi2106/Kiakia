@@ -24,8 +24,8 @@ export default async function AdminLayout({
             src="/assets/logo-mark.png"
             alt="KiaKia"
             width={1104}
-            height={247}
-            className="h-7 w-auto mix-blend-multiply"
+            height={270}
+            className="h-7 w-auto max-w-none mix-blend-multiply"
             preload
           />
           <span className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Admin</span>
