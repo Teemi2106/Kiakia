@@ -32,6 +32,13 @@ export const phoneSchema = z
     return normalized;
   });
 
+// Blank means "not given"; anything typed must still be a valid number.
+const optionalPhoneSchema = z
+  .string()
+  .nullish()
+  .transform((value) => (value?.trim() ? value : undefined))
+  .pipe(phoneSchema.optional());
+
 export const emailSchema = z.string().trim().email("Enter a valid email address");
 
 export const passwordSchema = z
@@ -45,6 +52,19 @@ export const registerSchema = z
     fullName: z.string().trim().min(2, "Enter your full name"),
     email: emailSchema,
     phone: phoneSchema,
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+export const customerRegisterSchema = z
+  .object({
+    fullName: z.string().trim().min(2, "Enter your full name"),
+    email: emailSchema,
+    phone: optionalPhoneSchema,
     password: passwordSchema,
     confirmPassword: z.string(),
   })

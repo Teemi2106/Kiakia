@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { emailSchema, loginSchema, passwordSchema, registerSchema } from "@/lib/validation/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { customerRegisterSchema, emailSchema, loginSchema, passwordSchema, registerSchema } from "@/lib/validation/auth";
 import { serverEnv } from "@/lib/env.server";
 import { getRoles, hasRole, isPureRider, VENDOR_ROLES } from "@/lib/auth/dal";
 import { clearActiveRole, setActiveRole } from "@/lib/auth/active-role";
@@ -21,8 +22,25 @@ export interface FormState {
   readonly success?: string;
 }
 
+const PHONE_TAKEN_MESSAGE = "That phone number is already linked to an account. Sign in, or use a different number.";
+
+/**
+ * profiles.phone is unique, and a taken number makes the signup trigger fail,
+ * which Supabase Auth surfaces as an opaque 500. Asking first turns that into
+ * a real message. Fails open: if the lookup itself errors, signUp() still runs
+ * and the database constraint remains the authority.
+ */
+async function isPhoneTaken(phone: string): Promise<boolean> {
+  const { data, error } = await createAdminClient().rpc("phone_in_use", { p_phone: phone });
+  if (error) {
+    console.error("[auth] phone_in_use lookup failed", error.message);
+    return false;
+  }
+  return data === true;
+}
+
 export async function registerAction(_prevState: FormState, formData: FormData): Promise<FormState> {
-  const parsed = registerSchema.safeParse({
+  const parsed = customerRegisterSchema.safeParse({
     fullName: formData.get("fullName"),
     email: formData.get("email"),
     phone: formData.get("phone"),
@@ -34,12 +52,16 @@ export async function registerAction(_prevState: FormState, formData: FormData):
     return { error: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
   }
 
+  if (parsed.data.phone && (await isPhoneTaken(parsed.data.phone))) {
+    return { error: PHONE_TAKEN_MESSAGE };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      data: { full_name: parsed.data.fullName, phone: parsed.data.phone },
+      data: { full_name: parsed.data.fullName, ...(parsed.data.phone ? { phone: parsed.data.phone } : {}) },
       emailRedirectTo: `${serverEnv.NEXT_PUBLIC_SITE_URL}/login`,
     },
   });
@@ -48,6 +70,7 @@ export async function registerAction(_prevState: FormState, formData: FormData):
     if (error.message.toLowerCase().includes("already registered")) {
       return { error: "An account with that email already exists." };
     }
+    console.error("[auth] signUp failed", { status: error.status, code: error.code, message: error.message });
     return { error: "We couldn't create your account. Please try again." };
   }
 
@@ -84,6 +107,10 @@ export async function vendorRegisterAction(_prevState: FormState, formData: Form
     return { error: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
   }
 
+  if (await isPhoneTaken(parsed.data.phone)) {
+    return { error: PHONE_TAKEN_MESSAGE };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
@@ -98,6 +125,7 @@ export async function vendorRegisterAction(_prevState: FormState, formData: Form
     if (error.message.toLowerCase().includes("already registered")) {
       return { error: "An account with that email already exists." };
     }
+    console.error("[auth] signUp failed", { status: error.status, code: error.code, message: error.message });
     return { error: "We couldn't create your account. Please try again." };
   }
 

@@ -2612,6 +2612,7 @@ export interface Database {
       };
       scrub_message_outbox: { Args: Record<string, never>; Returns: number };
       enqueue_rider_offer_sms: { Args: Record<string, never>; Returns: number };
+      phone_in_use: { Args: { p_phone: string }; Returns: boolean };
     };
     Enums: {
       order_status: OrderStatus;

@@ -42,7 +42,7 @@ export default function RegisterPage() {
       footer={<AuthSwap prompt="Already have an account?" href="/login" cta="Sign in" />}
       legal={<AuthLegal verb="creating an account," />}
     >
-      <RegisterForm />
+      <RegisterForm phoneOptional />
     </AuthShell>
   );
 }

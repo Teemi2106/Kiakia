@@ -15,9 +15,11 @@ interface RegisterFormProps {
   action?: typeof registerAction;
   /** Where the post-signup "sign in" button points. */
   signInHref?: string;
+  /** Customers add a phone at checkout, so signup can skip it; vendors still need it up front. */
+  phoneOptional?: boolean;
 }
 
-export function RegisterForm({ action = registerAction, signInHref = "/login" }: RegisterFormProps) {
+export function RegisterForm({ action = registerAction, signInHref = "/login", phoneOptional = false }: RegisterFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   // "Check your email to confirm" — the account exists, so the form has
@@ -66,11 +68,11 @@ export function RegisterForm({ action = registerAction, signInHref = "/login" }:
         <AuthField
           name="phone"
           type="tel"
-          label="Phone number"
+          label={phoneOptional ? "Phone number (optional)" : "Phone number"}
           icon={Phone}
           autoComplete="tel"
           hint="0801 234 5678 or +234 801 234 5678. We only use this to reach you about a delivery."
-          required
+          required={!phoneOptional}
         />
 
         <AuthPasswordField
