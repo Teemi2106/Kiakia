@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AuthLegal, AuthShell, AuthSwap } from "../_components/AuthShell";
 import { DeliveryCodeCard } from "../_components/AuthStage";
+import { safeNextPath } from "@/lib/auth/safe-next";
 import { RegisterForm } from "../_components/RegisterForm";
 
 export const metadata: Metadata = {
@@ -15,7 +16,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RegisterPage() {
+export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const next = safeNextPath((await searchParams).next);
+  const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
+
   return (
     <AuthShell
       backHref="/"
@@ -39,10 +43,10 @@ export default function RegisterPage() {
       }}
       title="Create your account"
       subtitle="Two minutes now, and every order after this one takes seconds."
-      footer={<AuthSwap prompt="Already have an account?" href="/login" cta="Sign in" />}
+      footer={<AuthSwap prompt="Already have an account?" href={loginHref} cta="Sign in" />}
       legal={<AuthLegal verb="creating an account," />}
     >
-      <RegisterForm phoneOptional />
+      <RegisterForm phoneOptional next={next} />
     </AuthShell>
   );
 }

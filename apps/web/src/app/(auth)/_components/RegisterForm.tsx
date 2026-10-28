@@ -17,9 +17,11 @@ interface RegisterFormProps {
   signInHref?: string;
   /** Customers add a phone at checkout, so signup can skip it; vendors still need it up front. */
   phoneOptional?: boolean;
+  /** Same-origin path to return to once signed in (already validated by the page). */
+  next?: string | null;
 }
 
-export function RegisterForm({ action = registerAction, signInHref = "/login", phoneOptional = false }: RegisterFormProps) {
+export function RegisterForm({ action = registerAction, signInHref = "/login", phoneOptional = false, next = null }: RegisterFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   // "Check your email to confirm" — the account exists, so the form has
@@ -44,6 +46,7 @@ export function RegisterForm({ action = registerAction, signInHref = "/login", p
   return (
     <div className="rounded-3xl border border-kk-line/50 bg-white/80 p-6 shadow-[0_24px_60px_-40px_rgba(28,27,27,0.45)] backdrop-blur-sm sm:p-7">
       <form action={formAction} className="flex flex-col gap-4">
+        {next ? <input type="hidden" name="next" value={next} /> : null}
         <AuthError message={state.error} />
 
         <AuthField

@@ -7,6 +7,7 @@ import { customerRegisterSchema, emailSchema, loginSchema, passwordSchema, regis
 import { serverEnv } from "@/lib/env.server";
 import { getRoles, hasRole, isPureRider, VENDOR_ROLES } from "@/lib/auth/dal";
 import { clearActiveRole, setActiveRole } from "@/lib/auth/active-role";
+import { safeNextPath } from "@/lib/auth/safe-next";
 
 /**
  * Email + password, per the Figma registration/login screens (switched
@@ -56,13 +57,17 @@ export async function registerAction(_prevState: FormState, formData: FormData):
     return { error: PHONE_TAKEN_MESSAGE };
   }
 
+  // Where to go once signed in (e.g. back to checkout with a cart in hand).
+  const next = safeNextPath(formData.get("next"));
+  const loginUrl = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName, ...(parsed.data.phone ? { phone: parsed.data.phone } : {}) },
-      emailRedirectTo: `${serverEnv.NEXT_PUBLIC_SITE_URL}/login`,
+      emailRedirectTo: `${serverEnv.NEXT_PUBLIC_SITE_URL}${loginUrl}`,
     },
   });
 
@@ -80,7 +85,7 @@ export async function registerAction(_prevState: FormState, formData: FormData):
   // bounce off proxy.ts. Handle both without assuming the project's config.
   if (data.session) {
     await setActiveRole("customer");
-    redirect("/home");
+    redirect(next ?? "/home");
   }
 
   return { success: "Check your email to confirm your account, then sign in." };
@@ -176,7 +181,7 @@ export async function loginAction(_prevState: FormState, formData: FormData): Pr
   }
 
   await setActiveRole("customer");
-  redirect("/home");
+  redirect(safeNextPath(formData.get("next")) ?? "/home");
 }
 
 /**

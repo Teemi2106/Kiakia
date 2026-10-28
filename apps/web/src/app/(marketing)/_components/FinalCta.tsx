@@ -51,7 +51,7 @@ export function FinalCta({ account }: { account: MarketingAccount | null }) {
             ) : (
               <>
                 <Link
-                  href="/register"
+                  href="/home"
                   className="kk-shine group inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-white px-8 font-inter text-base font-semibold text-kk-red shadow-[0_20px_45px_-20px_rgba(0,0,0,0.6)] transition-transform duration-300 hover:-translate-y-0.5 sm:w-auto"
                 >
                   Order something now

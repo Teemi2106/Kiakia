@@ -5,44 +5,65 @@ import { CustomerTopNav } from "./_components/CustomerTopNav";
 import { StoreNotice } from "./_components/StoreNotice";
 import { CartDrawer } from "./cart/_components/CartDrawer";
 import { CartFab } from "./cart/_components/CartFab";
-import { getRoles, hasRole, verifySession, VENDOR_ROLES } from "@/lib/auth/dal";
+import { getOptionalSession, getRoles, hasRole, VENDOR_ROLES } from "@/lib/auth/dal";
 import { getActiveRole } from "@/lib/auth/active-role";
 import { getCustomerBootstrap } from "@/lib/customer/bootstrap";
 import { CustomerStoreProvider } from "@/lib/customer/CustomerStoreProvider";
+import { GUEST_USER_ID } from "@/lib/customer/guest-cart";
+import type { CustomerSnapshot } from "@/lib/customer/types";
+
+/** What a signed-out visitor starts from; their cart is restored from the browser on the client. */
+const GUEST_SNAPSHOT: CustomerSnapshot = {
+  userId: GUEST_USER_ID,
+  cart: null,
+  lines: [],
+  unreadCount: 0,
+  addressLabel: null,
+};
 
 export default async function CustomerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Session verification stays on the server (a local JWT check, see dal.ts).
-  const session = await verifySession();
+  // Browsing and filling a cart are open to signed-out visitors, so the
+  // layout no longer redirects them: pages that need an account (orders,
+  // profile, checkout) still gate themselves, and the proxy bounces those
+  // routes to /login. Session verification stays on the server (a local JWT
+  // check, see dal.ts).
+  const session = await getOptionalSession();
 
-  // Independent reads, so one wave: roles, the active-role cookie, and the
-  // cart/unread/address bootstrap that seeds the client store. Pages under
-  // this layout read the cart through the same cached bootstrap, not their own.
-  const [roles, activeRole, snapshot] = await Promise.all([
-    getRoles(),
-    getActiveRole(),
-    getCustomerBootstrap(session.userId),
-  ]);
-  const canSwitchToVendor = hasRole(roles, ...VENDOR_ROLES);
+  let snapshot = GUEST_SNAPSHOT;
+  let canSwitchToVendor = false;
 
-  // Mirror image of requireVendorContext(): a session actively in vendor
-  // mode doesn't land in the customer surface just by typing /home — it
-  // has to switch back via switchToCustomerAction first.
-  //
-  // S3 (independent security review): this used to bounce on
-  // getActiveRole() === "vendor" alone, before checking roles. If the
-  // session's kk_active_role cookie is "vendor" but the account no longer
-  // holds a vendor role (role revoked, or a stale cookie from
-  // vendorLoginAction sending a non-vendor account to /onboarding without
-  // resetting it — see auth.ts), this bounced to /dashboard, which
-  // requireVendorContext() then bounced right back to /home — an infinite
-  // redirect loop. Only bounce when the session BOTH holds a vendor role
-  // AND is actually in vendor mode.
-  if (canSwitchToVendor && activeRole === "vendor") {
-    redirect("/dashboard");
+  if (session) {
+    // Independent reads, so one wave: roles, the active-role cookie, and the
+    // cart/unread/address bootstrap that seeds the client store. Pages under
+    // this layout read the cart through the same cached bootstrap, not their own.
+    const [roles, activeRole, bootstrap] = await Promise.all([
+      getRoles(),
+      getActiveRole(),
+      getCustomerBootstrap(session.userId),
+    ]);
+    snapshot = bootstrap;
+    canSwitchToVendor = hasRole(roles, ...VENDOR_ROLES);
+
+    // Mirror image of requireVendorContext(): a session actively in vendor
+    // mode doesn't land in the customer surface just by typing /home — it
+    // has to switch back via switchToCustomerAction first.
+    //
+    // S3 (independent security review): this used to bounce on
+    // getActiveRole() === "vendor" alone, before checking roles. If the
+    // session's kk_active_role cookie is "vendor" but the account no longer
+    // holds a vendor role (role revoked, or a stale cookie from
+    // vendorLoginAction sending a non-vendor account to /onboarding without
+    // resetting it — see auth.ts), this bounced to /dashboard, which
+    // requireVendorContext() then bounced right back to /home — an infinite
+    // redirect loop. Only bounce when the session BOTH holds a vendor role
+    // AND is actually in vendor mode.
+    if (canSwitchToVendor && activeRole === "vendor") {
+      redirect("/dashboard");
+    }
   }
 
   return (

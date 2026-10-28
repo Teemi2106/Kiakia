@@ -127,7 +127,7 @@ export function Hero({ account }: { account: MarketingAccount | null }) {
             ) : (
               <>
                 <Link
-                  href="/register"
+                  href="/home"
                   className="kk-shine group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-kk-red px-8 font-inter text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(182,25,19,0.95)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-kk-red-deep"
                 >
                   Order something now

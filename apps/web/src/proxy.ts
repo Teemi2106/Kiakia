@@ -4,9 +4,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { clientEnv } from "./lib/env.client";
 import { buildContentSecurityPolicy, generateNonce } from "./lib/security/csp";
 
+// "/home" and "/cart" are deliberately absent: browsing and filling a cart
+// are open to signed-out visitors (the cart lives in their browser until they
+// sign in). Placing an order still requires an account, via /checkout.
 const PROTECTED_PREFIXES = [
-  "/home",
-  "/cart",
   "/checkout",
   "/orders",
   "/profile",
@@ -137,7 +138,10 @@ export async function proxy(request: NextRequest) {
 
     if (requiresAuth(pathname) && !user) {
       const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("next", pathname);
+      // Straight to checkout would render before the browser's signed-out
+      // cart has been folded into the account, so it comes back via the
+      // hand-off page, which waits for that and then continues to /checkout.
+      loginUrl.searchParams.set("next", pathname === "/checkout" ? "/checkout/continue" : pathname);
 
       // Carry over whatever setAll() wrote before replacing the response.
       // Assigning a fresh NextResponse here used to discard those cookies

@@ -184,7 +184,7 @@ export function Header({ account }: { account: Account | null }) {
                   Log in
                 </Link>
                 <Link
-                  href="/register"
+                  href="/home"
                   className="kk-shine group inline-flex items-center gap-2 rounded-full bg-kk-red px-5 py-2.5 font-inter text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(182,25,19,0.9)] transition-colors hover:bg-kk-red-deep"
                 >
                   Order now
@@ -297,7 +297,7 @@ export function Header({ account }: { account: Account | null }) {
           ) : (
             <>
               <Link
-                href="/register"
+                href="/home"
                 onClick={closeMenu}
                 className="flex items-center justify-center gap-2 rounded-2xl bg-kk-red px-4 py-3.5 font-inter text-sm font-semibold text-white"
               >

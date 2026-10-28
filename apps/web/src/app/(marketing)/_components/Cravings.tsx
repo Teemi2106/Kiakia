@@ -158,7 +158,7 @@ export function Cravings() {
         {CRAVINGS.map((craving) => (
           <Link
             key={craving.label}
-            href="/register"
+            href="/home"
             className="group relative aspect-[4/5] w-[218px] shrink-0 snap-start overflow-hidden rounded-[28px] shadow-[0_25px_50px_-30px_rgba(90,25,20,0.6)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_35px_70px_-30px_rgba(90,25,20,0.7)] sm:w-[248px]"
           >
             {craving.image ? (

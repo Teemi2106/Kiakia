@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@kiakia/ui";
 import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
-import { selectItemCount } from "@/lib/customer/store";
+import { selectIsGuest, selectItemCount } from "@/lib/customer/store";
 import { switchToVendorAction } from "@/app/actions/session";
 import { NotificationsButton } from "@/app/_components/NotificationsButton";
 
@@ -38,6 +38,7 @@ interface CustomerTopNavProps {
 export function CustomerTopNav({ canSwitchToVendor = false }: CustomerTopNavProps) {
   const pathname = usePathname();
   const itemCount = useCustomerStore(selectItemCount);
+  const isGuest = useCustomerStore(selectIsGuest);
   const setCartOpen = useCustomerStore((s) => s.setCartOpen);
   const defaultAddressLabel = useCustomerStore((s) => s.addressLabel);
 
@@ -115,15 +116,34 @@ export function CustomerTopNav({ canSwitchToVendor = false }: CustomerTopNavProp
             )}
           </button>
 
-          <NotificationsButton audience="customer" />
+          {isGuest ? (
+            <div className="ml-1 flex items-center gap-1.5">
+              <Link
+                href="/login"
+                className="rounded-full px-3 py-2 font-inter text-sm font-semibold text-kk-ink transition-colors hover:bg-black/5"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/register"
+                className="hidden rounded-full bg-kk-red px-4 py-2 font-inter text-sm font-semibold text-white transition-colors hover:bg-kk-red/90 sm:block"
+              >
+                Sign up
+              </Link>
+            </div>
+          ) : (
+            <>
+              <NotificationsButton audience="customer" />
 
-          <Link
-            href="/profile"
-            aria-label="Your profile"
-            className="hidden size-9 items-center justify-center rounded-full border border-kk-line bg-white text-kk-cocoa transition-colors hover:border-kk-red/50 hover:text-kk-red lg:flex"
-          >
-            <User className="size-[18px]" />
-          </Link>
+              <Link
+                href="/profile"
+                aria-label="Your profile"
+                className="hidden size-9 items-center justify-center rounded-full border border-kk-line bg-white text-kk-cocoa transition-colors hover:border-kk-red/50 hover:text-kk-red lg:flex"
+              >
+                <User className="size-[18px]" />
+              </Link>
+            </>
+          )}
         </div>
       </div>
 

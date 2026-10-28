@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import { createCustomerStore, type CustomerState, type CustomerStore } from "./store";
+import { GUEST_USER_ID } from "./guest-cart";
 import type { CustomerSnapshot } from "./types";
 
 const StoreContext = createContext<CustomerStore | null>(null);
@@ -32,6 +33,18 @@ export function CustomerStoreProvider({
 function CustomerStoreBoundary({ snapshot, children }: { snapshot: CustomerSnapshot; children: React.ReactNode }) {
   const [store] = useState(() => createCustomerStore(snapshot));
   const seeded = useRef(snapshot);
+
+  // localStorage only exists in the browser, so the signed-out cart is read
+  // here rather than seeded by the server. A signed-in mount does the reverse:
+  // it folds whatever cart this browser built before signing in into the
+  // account's cart (a no-op when there is none).
+  useEffect(() => {
+    const state = store.getState();
+    if (snapshot.userId === GUEST_USER_ID) state.loadGuestCart();
+    else void state.mergeGuestCart();
+    // Once per mount: the boundary is keyed by user, so a sign-in remounts it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store]);
 
   useEffect(() => {
     if (seeded.current === snapshot) return;

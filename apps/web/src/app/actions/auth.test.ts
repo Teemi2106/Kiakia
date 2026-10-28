@@ -7,6 +7,13 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(() => Promise.resolve(mockClient.current)),
 }));
 
+// registerAction asks phone_in_use() through the admin client before signing
+// up; mocked so no test reaches a real project.
+const phoneInUse = vi.fn(() => Promise.resolve<{ data: boolean; error: null }>({ data: false, error: null }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({ rpc: () => phoneInUse() }),
+}));
+
 // vendorLoginAction's role check goes through the DAL, not straight to
 // Supabase — mocked at the module boundary same as orders.test.ts, so these
 // tests control "does this account hold a vendor role" directly instead of
@@ -48,6 +55,10 @@ const VALID_REGISTER_FORM = {
   password: "abcd1234",
   confirmPassword: "abcd1234",
 };
+
+beforeEach(() => {
+  phoneInUse.mockClear();
+});
 
 function formData(fields: Record<string, string>): FormData {
   const fd = new FormData();
@@ -110,6 +121,47 @@ describe("registerAction", () => {
     expect(result.success).toBeTruthy();
     expect(result.error).toBeUndefined();
   });
+
+  it("tells the user a taken phone number is taken, without calling signUp", async () => {
+    phoneInUse.mockResolvedValueOnce({ data: true, error: null });
+    const signUp = vi.fn(() => Promise.resolve({ data: { session: null }, error: null }));
+    mockClient.current = supabaseClientMock({ auth: { signUp } });
+
+    const result = await registerAction({}, formData(VALID_REGISTER_FORM));
+
+    expect(result.error).toMatch(/phone number is already linked/i);
+    expect(signUp).not.toHaveBeenCalled();
+  });
+
+  it("signs up without a phone number, and without asking whether it is taken", async () => {
+    const signUp = vi.fn((..._args: unknown[]) => Promise.resolve({ data: { session: null }, error: null }));
+    mockClient.current = supabaseClientMock({ auth: { signUp } });
+
+    const result = await registerAction({}, formData({ ...VALID_REGISTER_FORM, phone: "" }));
+
+    expect(result.success).toBeTruthy();
+    expect(phoneInUse).not.toHaveBeenCalled();
+    expect(signUp.mock.calls[0]?.[0]).toMatchObject({ options: { data: { full_name: "Ada Lovelace" } } });
+    expect(JSON.stringify(signUp.mock.calls[0]?.[0])).not.toContain('"phone"');
+  });
+
+  it("goes to the page the visitor came from once signed in", async () => {
+    mockClient.current = supabaseClientMock({
+      auth: { signUp: vi.fn(() => Promise.resolve({ data: { session: { access_token: "x" } }, error: null })) },
+    });
+    await expect(
+      registerAction({}, formData({ ...VALID_REGISTER_FORM, next: "/checkout/continue" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/checkout/continue");
+  });
+
+  it("ignores a next target that leaves the site", async () => {
+    mockClient.current = supabaseClientMock({
+      auth: { signUp: vi.fn(() => Promise.resolve({ data: { session: { access_token: "x" } }, error: null })) },
+    });
+    await expect(registerAction({}, formData({ ...VALID_REGISTER_FORM, next: "//evil.com" }))).rejects.toThrow(
+      "NEXT_REDIRECT:/home",
+    );
+  });
 });
 
 describe("loginAction", () => {
@@ -135,6 +187,26 @@ describe("loginAction", () => {
       "NEXT_REDIRECT:/home",
     );
     expect(setActiveRole).toHaveBeenCalledWith("customer");
+  });
+
+  it("returns to the page the visitor was sent from, e.g. the checkout hand-off", async () => {
+    getRoles.mockResolvedValueOnce([]);
+    mockClient.current = supabaseClientMock({
+      auth: { signInWithPassword: vi.fn(() => Promise.resolve({ error: null })) },
+    });
+    await expect(
+      loginAction({}, formData({ email: "ada@example.com", password: "abcd1234", next: "/checkout/continue" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/checkout/continue");
+  });
+
+  it("falls back to /home when next is not a same-site path", async () => {
+    getRoles.mockResolvedValueOnce([]);
+    mockClient.current = supabaseClientMock({
+      auth: { signInWithPassword: vi.fn(() => Promise.resolve({ error: null })) },
+    });
+    await expect(
+      loginAction({}, formData({ email: "ada@example.com", password: "abcd1234", next: "https://evil.com" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/home");
   });
 
   it("redirects to /dashboard on success for an account that holds a vendor role", async () => {

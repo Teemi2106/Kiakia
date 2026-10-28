@@ -5,7 +5,7 @@ import { Store } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { verifySession } from "@/lib/auth/dal";
+import { getOptionalSession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { getDefaultAddressLocation } from "@/lib/customer/default-address";
 import { TrackEvent } from "../_components/TrackEvent";
@@ -69,7 +69,10 @@ export default async function CustomerHomePage({
   searchParams: Promise<HomeSearchParams>;
 }) {
   const { q, category, open, quick, sort } = await searchParams;
-  const session = await verifySession();
+  // Browsing is public: a signed-out visitor gets the same vendor list, just
+  // without a saved address, greeting or live-order card.
+  const session = await getOptionalSession();
+  const userId = session?.userId ?? null;
   const supabase = await createClient();
 
   // Everything that depends on nothing but the session goes out together.
@@ -82,14 +85,16 @@ export default async function CustomerHomePage({
   // empty page.
   const [{ data: customerAddress }, { data: profile }, { data: activeOrderRows }] =
     await Promise.all([
-      getDefaultAddressLocation(session.userId),
-      supabase.from("profiles").select("full_name").eq("id", session.userId).maybeSingle(),
+      userId ? getDefaultAddressLocation(userId) : Promise.resolve({ data: null }),
+      userId
+        ? supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle()
+        : Promise.resolve({ data: null }),
       // Live orders, newest first. Capped because only the newest is shown in
       // full — the rest are a count linking to /orders.
-      supabase
+      (userId ? supabase
         .from("orders")
         .select("id, code, status, total_kobo, vendor_id")
-        .eq("customer_id", session.userId)
+        .eq("customer_id", userId)
         .not("status", "in", `(${TERMINAL_STATUS_LIST})`)
         // Same reasoning as /orders' own query: a "draft" order is an
         // abandoned or not-yet-completed checkout, not a real order the
@@ -97,7 +102,8 @@ export default async function CustomerHomePage({
         // "LIVE ORDER" with a progress bar implying the kitchen has it.
         .neq("status", "draft")
         .order("created_at", { ascending: false })
-        .limit(10),
+        .limit(10)
+        : Promise.resolve({ data: null })),
     ]);
 
   const customerState = customerAddress?.state?.trim() || null;
@@ -202,7 +208,7 @@ export default async function CustomerHomePage({
     return (
       <HomeShell
         firstName={firstName}
-        customerId={session.userId}
+        customerId={userId}
         activeOrder={toActiveOrder(newestLiveOrder, liveOrderVendor?.name ?? null)}
         otherActiveCount={Math.max(liveOrders.length - 1, 0)}
         categories={categories}
@@ -226,9 +232,12 @@ export default async function CustomerHomePage({
           />
         ) : (
           <div className="space-y-12">
-            <Suspense fallback={<div className="h-56 animate-pulse rounded-[2rem] bg-kk-line/30" />}>
-              <RecommendedSection />
-            </Suspense>
+            {/* Personalised from the customer's own history, so only for a signed-in visitor. */}
+            {userId && (
+              <Suspense fallback={<div className="h-56 animate-pulse rounded-[2rem] bg-kk-line/30" />}>
+                <RecommendedSection />
+              </Suspense>
+            )}
             <CravingBlocks />
             {featured.length > 0 && (
               <section>
@@ -338,7 +347,7 @@ export default async function CustomerHomePage({
   return (
     <HomeShell
       firstName={firstName}
-      customerId={session.userId}
+      customerId={userId}
       activeOrder={toActiveOrder(newestLiveOrder, liveOrderVendor?.name ?? null)}
       otherActiveCount={Math.max(liveOrders.length - 1, 0)}
       categories={categories}
@@ -522,7 +531,7 @@ function HomeShell({
   children,
 }: {
   firstName: string | null;
-  customerId: string;
+  customerId: string | null;
   activeOrder: ActiveOrder | null;
   otherActiveCount: number;
   categories: readonly MealCategoryPreset[];
@@ -533,11 +542,13 @@ function HomeShell({
 }) {
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 pb-12 pt-5 sm:px-6 sm:pb-16 sm:pt-8">
-      <RealtimeRefresh
-        table="orders"
-        filter={`customer_id=eq.${customerId}`}
-        topic={`customer-home-${customerId}`}
-      />
+      {customerId && (
+        <RealtimeRefresh
+          table="orders"
+          filter={`customer_id=eq.${customerId}`}
+          topic={`customer-home-${customerId}`}
+        />
+      )}
       <HomeGreeting firstName={firstName} heroImageUrl={heroImageUrl} />
 
       {activeOrder && (

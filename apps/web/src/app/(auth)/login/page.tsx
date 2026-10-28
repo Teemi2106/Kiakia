@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AuthLegal, AuthShell, AuthSwap } from "../_components/AuthShell";
 import { LiveOrderCard } from "../_components/AuthStage";
+import { safeNextPath } from "@/lib/auth/safe-next";
 import { LoginForm } from "../_components/LoginForm";
 
 export const metadata: Metadata = {
@@ -14,7 +15,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const next = safeNextPath((await searchParams).next);
+  const registerHref = next ? `/register?next=${encodeURIComponent(next)}` : "/register";
+
   return (
     <AuthShell
       backHref="/"
@@ -38,10 +42,10 @@ export default function LoginPage() {
       }}
       title="Welcome back"
       subtitle="Enter your details to get back to fast, reliable delivery."
-      footer={<AuthSwap prompt="New to KiaKia?" href="/register" cta="Create an account" />}
+      footer={<AuthSwap prompt="New to KiaKia?" href={registerHref} cta="Create an account" />}
       legal={<AuthLegal verb="signing in," />}
     >
-      <LoginForm />
+      <LoginForm next={next} />
     </AuthShell>
   );
 }
