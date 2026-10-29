@@ -6,7 +6,6 @@
 import { ArrowLeft, BellRing, Bike, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { RiderRoute } from "@/app/_components/RiderRoute";
 import { getMarketingAccount } from "@/lib/auth/marketing-account";
 import { Footer } from "../_components/Footer";
 import { Header } from "../_components/Header";
@@ -49,7 +48,7 @@ export default async function RidePage() {
           <div className="kk-blob -right-32 top-20 size-[460px] bg-kk-red/20" />
         </div>
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:px-8">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div>
             <p className="flex items-center gap-3 font-inter text-[11px] font-semibold uppercase tracking-[0.28em] text-kk-red">
               <span className="h-px w-8 bg-kk-red/50" />
@@ -75,9 +74,6 @@ export default async function RidePage() {
             </Link>
           </div>
 
-          <div className="mx-auto w-full max-w-[420px] rounded-[40px] border border-white bg-white/70 p-4 shadow-[0_40px_80px_-40px_rgba(90,25,20,0.5)] backdrop-blur">
-            <RiderRoute label="Delivered" className="h-auto w-full" />
-          </div>
         </div>
 
         <div className="relative mx-auto mt-16 grid max-w-7xl gap-8 px-4 sm:px-6 md:grid-cols-3 lg:px-8">

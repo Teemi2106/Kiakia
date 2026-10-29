@@ -8,7 +8,7 @@ import { RegisterForm } from "@/app/(auth)/_components/RegisterForm";
 export const metadata: Metadata = {
   title: "Become a Vendor",
   description:
-    "Partner with KiaKia to reach customers nearby, dispatch riders automatically, and get paid the moment an order is delivered.",
+    "Partner with KiaKia to reach more customers, dispatch riders automatically, and get paid the moment an order is delivered.",
 };
 
 export default function VendorRegisterPage() {

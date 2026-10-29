@@ -3,9 +3,8 @@
 
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import { Bike, MapPinOff, Store } from "lucide-react";
+import { Bike, Loader2, MapPinOff, Store } from "lucide-react";
 import { isTerminalStatus, type OrderStatus } from "@kiakia/domain";
-import { RiderRoute } from "@/app/_components/RiderRoute";
 import { clientEnv } from "@/lib/env.client";
 import { useDrivingRoute } from "@/lib/maps/directions";
 import { useOrderTracking } from "./useOrderTracking";
@@ -22,7 +21,7 @@ import { trackingPhaseFor } from "./trackingPhase";
 const MapboxMap = dynamic(() => import("./MapboxMap"), {
   ssr: false,
   loading: () => (
-    <MapMessage icon={<RiderRoute className="size-36" />} message="Loading map…" />
+    <MapMessage icon={<Loader2 className="size-5 animate-spin" />} message="Loading map…" />
   ),
 });
 
@@ -126,7 +125,7 @@ function TrackedMap({
   if (tracking.loading) {
     return (
       <MapMessage
-        icon={<RiderRoute className="size-36" />}
+        icon={<Loader2 className="size-5 animate-spin text-kk-cocoa" />}
         message="Loading map…"
       />
     );

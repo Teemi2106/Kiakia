@@ -6,7 +6,6 @@
 import { ArrowRight, Bike, ClipboardCheck, MapPin, Store, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { RiderRoute } from "@/app/_components/RiderRoute";
 import { getMarketingAccount } from "@/lib/auth/marketing-account";
 import { Footer } from "../_components/Footer";
 import { Header } from "../_components/Header";
@@ -15,14 +14,14 @@ import { Reveal } from "../_components/Reveal";
 export const metadata: Metadata = {
   title: "Partner with KiaKia",
   description:
-    "KiaKia puts your kitchen or shop in front of hungry customers nearby, sends a rider for every order, and pays you when it is delivered.",
+    "KiaKia puts your kitchen or shop in front of hungry customers, sends a rider for every order, and pays you when it is delivered.",
 };
 
 const BENEFITS = [
   {
     icon: MapPin,
-    title: "Customers on your street",
-    body: "People nearby see your menu first. You are not competing with kitchens across the city.",
+    title: "Customers ready to order",
+    body: "Your menu goes in front of people who are hungry right now and looking for their next meal.",
   },
   {
     icon: Bike,
@@ -56,18 +55,17 @@ export default async function PartnerPage() {
           <div className="kk-blob -right-32 top-20 size-[460px] bg-kk-red/20" />
         </div>
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:px-8">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div>
             <p className="flex items-center gap-3 font-inter text-[11px] font-semibold uppercase tracking-[0.28em] text-kk-red">
               <span className="h-px w-8 bg-kk-red/50" />
               For kitchens and shops
             </p>
             <h1 className="mt-5 font-sora text-[clamp(2.25rem,6vw,4.25rem)] font-extrabold leading-[1] tracking-[-0.04em] text-kk-ink">
-              Your food, at every door
-              <br /> around you.
+              Your food, at every door.
             </h1>
             <p className="mt-6 max-w-xl font-inter text-lg leading-8 text-kk-cocoa sm:text-xl">
-              KiaKia is how nearby customers find you, order from you and get their food fast fast.
+              KiaKia is how customers find you, order from you and get their food fast fast.
               You cook. We bring the customers and the riders.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -87,9 +85,6 @@ export default async function PartnerPage() {
             </div>
           </div>
 
-          <div className="mx-auto w-full max-w-[420px] rounded-[40px] border border-white bg-white/70 p-4 shadow-[0_40px_80px_-40px_rgba(90,25,20,0.5)] backdrop-blur">
-            <RiderRoute label="Your customer" className="h-auto w-full" />
-          </div>
         </div>
       </section>
 
