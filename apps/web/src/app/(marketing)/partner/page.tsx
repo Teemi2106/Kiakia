@@ -59,7 +59,7 @@ export default async function PartnerPage() {
           <div>
             <p className="flex items-center gap-3 font-inter text-[11px] font-semibold uppercase tracking-[0.28em] text-kk-red">
               <span className="h-px w-8 bg-kk-red/50" />
-              For kitchens and shops
+              For kitchens and vendors
             </p>
             <h1 className="mt-5 font-sora text-[clamp(2.25rem,6vw,4.25rem)] font-extrabold leading-[1] tracking-[-0.04em] text-kk-ink">
               Your food, at every door.
