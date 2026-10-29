@@ -259,6 +259,48 @@ export const canManageFinance = cache(async (): Promise<boolean> => hasRole(awai
  */
 export const isSuperadmin = cache(async (): Promise<boolean> => hasRole(await getPlatformRoles(), "superadmin"));
 
+export interface FleetMembership {
+  readonly fleetId: string;
+  readonly fleetName: string;
+}
+
+/**
+ * The fleet (rider management company) the signed-in user manages, or null.
+ * Read with the user's OWN JWT through the "read own fleet membership" and
+ * "managers read their fleet" policies (0113), so it fails closed: a missing
+ * row, an unreadable table or a suspended fleet all mean "not a fleet manager".
+ * The fleet id used for every console query comes from here, never from a
+ * request parameter.
+ */
+export const getFleetMembership = cache(async (): Promise<FleetMembership | null> => {
+  const session = await verifySession();
+  const supabase = await createClient();
+  const { data: membership } = await supabase.from("fleet_managers").select("fleet_id").eq("user_id", session.userId).maybeSingle();
+  if (!membership) return null;
+
+  const { data: fleet } = await supabase.from("fleets").select("id, name, status").eq("id", membership.fleet_id).maybeSingle();
+  if (!fleet || fleet.status !== "active") return null;
+
+  return { fleetId: fleet.id, fleetName: fleet.name };
+});
+
+/**
+ * Gates the (fleet) route group and every fleet Server Action: the caller must
+ * manage an active fleet and hold an active account. Like admin there is no
+ * mode switch; membership itself is the credential. Returns the fleet so
+ * callers scope everything to it.
+ */
+export async function requireFleetContext(redirectTo = "/home"): Promise<{ session: Session; fleet: FleetMembership }> {
+  const session = await verifySession();
+  const [fleet, active] = await Promise.all([getFleetMembership(), isActiveAccount()]);
+
+  if (!fleet || !active) {
+    redirect(redirectTo);
+  }
+
+  return { session, fleet };
+}
+
 /**
  * Looks up the single vendor the current session's user staffs (§ this
  * plan's "one vendor per account in this release" — register_vendor()

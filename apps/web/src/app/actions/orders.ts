@@ -1,6 +1,7 @@
 "use server";
 
 import type { Json, OrderStatus } from "@kiakia/db";
+import { normalizeNigerianState } from "@kiakia/domain";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireActiveAccount, requireVendorContext, verifySession } from "@/lib/auth/dal";
@@ -233,7 +234,7 @@ export async function placeOrderAction(
   } else {
     const line1 = formData.get("line1") as string | null;
     const city = (formData.get("city") as string | null) || "Abuja";
-    const state = (formData.get("state") as string | null) || "FCT";
+    const state = normalizeNigerianState(formData.get("state") as string | null) ?? "FCT";
     const landmark = (formData.get("landmark") as string | null) || null;
     const lat = formData.get("lat") as string | null;
     const lng = formData.get("lng") as string | null;

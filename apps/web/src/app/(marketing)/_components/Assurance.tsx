@@ -1,5 +1,5 @@
 // app/(marketing)/_components/Assurance.tsx
-import { MapPinned, ShieldCheck, Store } from "lucide-react";
+import { MapPinned, Store } from "lucide-react";
 import { Reveal } from "./Reveal";
 
 /**
@@ -12,12 +12,6 @@ import { Reveal } from "./Reveal";
  * there for anyone who genuinely wants the mechanics.
  */
 const ASSURANCES = [
-  {
-    icon: ShieldCheck,
-    title: "Your money is safe",
-    body: "We hold it until the food is actually in your hand. If it never arrives, it never moves.",
-    tint: "bg-kk-mint/25 text-kk-mint",
-  },
   {
     icon: MapPinned,
     title: "You can see the whole trip",
@@ -43,7 +37,7 @@ export function Assurance() {
         <div className="kk-blob -right-24 -top-20 size-[380px] bg-kk-red/25" />
       </div>
 
-      <div className="relative mx-auto grid max-w-7xl gap-8 md:grid-cols-3 md:gap-10">
+      <div className="relative mx-auto grid max-w-7xl gap-8 md:grid-cols-2 md:gap-10">
         {ASSURANCES.map((item, i) => (
           <Reveal key={item.title} delay={i * 100}>
             <div className="flex gap-4">

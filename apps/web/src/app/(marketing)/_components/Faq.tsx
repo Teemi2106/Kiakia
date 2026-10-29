@@ -14,7 +14,7 @@ const QUESTIONS = [
   },
   {
     q: "What can I actually order?",
-    a: "Whatever is being cooked and sold around you — rice and stews, suya, swallow and soups, shawarma, small chops, breakfast, drinks. Plus the shops, for groceries and the thing you forgot to buy on the way home.",
+    a: "Whatever is being cooked and sold around you: rice and stews, suya, swallow and soups, amala, shawarma, small chops, breakfast and drinks.",
   },
   {
     q: "Do I need to install anything?",
@@ -26,11 +26,11 @@ const QUESTIONS = [
   },
   {
     q: "Is my money safe?",
-    a: "Yes. It leaves your account at checkout and stops with us — not with the vendor, and not ours to spend. It is only paid out once the food is in your hand, so if an order never arrives there is nothing to chase and no refund queue to join.",
+    a: "Yes. It leaves your account at checkout and stops with us, not with the vendor, and it is not ours to spend. It is only paid out once the food is in your hand, so if an order never arrives there is nothing to chase and no refund queue to join.",
   },
   {
     q: "I run a kitchen. When do I get paid?",
-    a: "The same moment the customer takes delivery — not on a weekly cycle, and never clawed back by a chargeback weeks later. The money was already committed before you started cooking.",
+    a: "The same moment the customer takes delivery. Not on a weekly cycle, and never clawed back by a chargeback weeks later. The money was already committed before you started cooking.",
   },
 ] as const;
 

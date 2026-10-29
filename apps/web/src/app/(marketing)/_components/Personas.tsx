@@ -35,7 +35,7 @@ export function Personas() {
                 </span>
                 <h3 className="mt-7 font-sora text-3xl font-extrabold tracking-tight">Order</h3>
                 <p className="mt-3 font-inter text-[15px] leading-7 text-white/80">
-                  Dinner, groceries, that thing you forgot at the shop. Tap it, watch it come, eat
+                  Dinner, lunch, that late-night craving. Tap it, watch it come, eat
                   it. That is the whole app.
                 </p>
                 <ul className="mt-7 space-y-2.5 font-inter text-sm text-white/85">
@@ -78,7 +78,7 @@ export function Personas() {
                   <Bullet tone="dark">Menu, hours and orders in one dashboard</Bullet>
                 </ul>
                 <Link
-                  href="/vendor/register"
+                  href="/partner"
                   className="group/cta mt-9 inline-flex items-center justify-center gap-2 self-start rounded-2xl bg-kk-ink px-7 py-3.5 font-inter text-[15px] font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-kk-ink-deep"
                 >
                   Become a vendor

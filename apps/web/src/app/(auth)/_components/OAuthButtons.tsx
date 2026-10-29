@@ -27,7 +27,7 @@ export function OAuthButtons() {
       </div>
 
       <p className="mt-3.5 text-center font-inter text-[11px] text-kk-cocoa/55">
-        Social sign-in is coming soon — use email and password for now.
+        Social sign-in is coming soon, so use email and password for now.
       </p>
     </div>
   );

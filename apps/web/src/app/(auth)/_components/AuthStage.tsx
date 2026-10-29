@@ -169,7 +169,7 @@ export function LiveOrderCard() {
       <div className="mt-5 flex items-center gap-2.5 rounded-2xl bg-white/[0.06] px-3.5 py-3">
         <Lock className="size-4 shrink-0 text-kk-mint" />
         <p className="font-inter text-[12px] leading-5 text-white/65">
-          ₦8,450 held safely — released by your code at the door.
+          ₦8,450 held safely, released by your code at the door.
         </p>
       </div>
     </div>
@@ -263,7 +263,7 @@ const VENDOR_PITCH = [
   {
     icon: Wallet,
     title: "Same-day settlement",
-    body: "Delivery confirmed, funds released — no weekly payout wait.",
+    body: "Delivery confirmed, funds released, no weekly payout wait.",
   },
 ] as const;
 

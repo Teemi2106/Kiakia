@@ -58,10 +58,10 @@ export function FinalCta({ account }: { account: MarketingAccount | null }) {
                   <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
                 <Link
-                  href="/vendor/register"
+                  href="/partner"
                   className="inline-flex h-14 w-full items-center justify-center rounded-2xl border border-white/35 px-8 font-inter text-base font-semibold text-white transition-colors duration-300 hover:bg-white/10 sm:w-auto"
                 >
-                  Sell on KiaKia
+                  Partner with KiaKia
                 </Link>
               </>
             )}

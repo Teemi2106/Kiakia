@@ -1,7 +1,7 @@
 // app/(marketing)/_components/Hero.tsx
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Bike, Flame, ShieldCheck, Store, Timer } from "lucide-react";
+import { ArrowRight, BadgeCheck, Bike, Flame, Store, Timer } from "lucide-react";
 import { switchToCustomerAction, switchToVendorAction } from "@/app/actions/session";
 import type { MarketingAccount } from "@/lib/auth/marketing-account";
 
@@ -12,8 +12,8 @@ import type { MarketingAccount } from "@/lib/auth/marketing-account";
  * one fifth of the 11s cycle in marketing.css, so exactly one word is up at
  * any moment.
  */
-const CRAVINGS = ["Jollof", "Suya", "Shawarma", "Swallow", "Groceries"] as const;
-const SIZER = "Groceries";
+const CRAVINGS = ["Jollof", "Suya", "Shawarma", "Swallow", "Amala"] as const;
+const SIZER = "Shawarma";
 const WORD_STAGGER_MS = 11_000 / CRAVINGS.length;
 
 export function Hero({ account }: { account: MarketingAccount | null }) {
@@ -92,9 +92,8 @@ export function Hero({ account }: { account: MarketingAccount | null }) {
             className="kk-enter mt-8 max-w-xl font-inter text-lg leading-8 text-kk-cocoa sm:text-xl"
             style={{ "--kk-delay": "200ms" } as React.CSSProperties}
           >
-            Still steaming when you open the bag. Order from a kitchen on your own street, watch
-            your rider close in, and eat —{" "}
-            <span className="font-semibold text-kk-ink">most orders land in under 30 minutes</span>.
+            From your favourite food spots to new meals worth discovering, find what you&apos;re
+            craving and get it delivered straight to your door. Good food, just a few taps away.
           </p>
 
           <div
@@ -134,11 +133,11 @@ export function Hero({ account }: { account: MarketingAccount | null }) {
                   <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
                 <Link
-                  href="/vendor/register"
+                  href="/partner"
                   className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl border border-kk-line bg-white/70 px-7 font-inter text-base font-semibold text-kk-ink backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-kk-ink/25 hover:bg-white"
                 >
                   <Store className="size-5 text-kk-orange-deep" />
-                  Sell on KiaKia
+                  Partner with KiaKia
                 </Link>
               </>
             )}
@@ -154,11 +153,6 @@ export function Hero({ account }: { account: MarketingAccount | null }) {
                 <span className="relative size-2 rounded-full bg-kk-green" />
               </span>
               Kitchens near you are cooking right now
-            </span>
-            <span className="hidden h-4 w-px bg-kk-line sm:block" />
-            <span className="inline-flex items-center gap-2 text-kk-cocoa/75">
-              <ShieldCheck className="size-4 text-kk-green" />
-              Your money is safe till it lands
             </span>
           </div>
         </div>

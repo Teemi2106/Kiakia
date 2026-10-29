@@ -185,6 +185,8 @@ export interface RiderRow {
   bank_name: string | null;
   bank_account_name: string | null;
   bank_account_number: string | null;
+  // 0113: the fleet that manages this rider; null = KiaKia-direct.
+  fleet_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -352,6 +354,8 @@ export interface Database {
           bank_name: string | null;
           bank_account_name: string | null;
           bank_account_number: string | null;
+          /** 0113: the fleet that manages this rider; null = KiaKia-direct. Written only by admin_set_rider_fleet(). */
+          fleet_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -384,6 +388,31 @@ export interface Database {
           bank_account_name?: string | null;
           bank_account_number?: string | null;
         };
+        Relationships: [];
+      };
+      // fleets / fleet_managers (0113_fleets.sql) - rider management companies.
+      // Written only by the admin_*_fleet* RPCs (service_role).
+      fleets: {
+        Row: {
+          id: string;
+          name: string;
+          status: "active" | "suspended";
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      fleet_managers: {
+        Row: {
+          user_id: string;
+          fleet_id: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
       // order_ratings (0073_order_ratings.sql) - one row per delivered
@@ -964,7 +993,7 @@ export interface Database {
           id: string;
           actor_id: string;
           action: string;
-          target_type: "user" | "vendor" | "rider" | "rider_document" | "order" | "service_area" | "export" | "platform_setting" | "message";
+          target_type: "user" | "vendor" | "rider" | "rider_document" | "order" | "service_area" | "export" | "platform_setting" | "message" | "fleet";
           target_id: string;
           reason: string | null;
           details: Json;
@@ -2071,6 +2100,74 @@ export interface Database {
           p_actor_id: string;
         };
         Returns: boolean;
+      };
+      // Fleets (0113_fleets.sql) - all service_role only.
+      admin_create_fleet: {
+        Args: { p_actor_id: string; p_name: string; p_reason?: string | null };
+        Returns: string;
+      };
+      admin_set_fleet_status: {
+        Args: { p_actor_id: string; p_fleet_id: string; p_status: "active" | "suspended"; p_reason?: string | null };
+        Returns: boolean;
+      };
+      admin_add_fleet_manager: {
+        Args: { p_actor_id: string; p_fleet_id: string; p_user_id: string; p_reason?: string | null };
+        Returns: boolean;
+      };
+      admin_remove_fleet_manager: {
+        Args: { p_actor_id: string; p_fleet_id: string; p_user_id: string; p_reason?: string | null };
+        Returns: boolean;
+      };
+      admin_set_rider_fleet: {
+        Args: { p_actor_id: string; p_rider_id: string; p_fleet_id: string | null; p_reason?: string | null };
+        Returns: boolean;
+      };
+      fleet_list_riders: {
+        Args: { p_fleet_id: string };
+        Returns: {
+          user_id: string;
+          full_name: string;
+          phone: string | null;
+          vehicle_type: string | null;
+          kyc_status: string;
+          is_online: boolean;
+          is_live: boolean | null;
+          last_ping_at: string | null;
+          lat: number | null;
+          lng: number | null;
+          order_id: string | null;
+          order_code: string | null;
+          order_status: string | null;
+          vendor_name: string | null;
+          dest_city: string | null;
+          dest_lat: number | null;
+          dest_lng: number | null;
+        }[];
+      };
+      // Admin heatmap (0115_admin_heatmap.sql) - service_role only, read-only.
+      admin_demand_cells: {
+        Args: { p_hours?: number; p_min_orders?: number };
+        Returns: { lat: number; lng: number; orders: number }[];
+      };
+      admin_live_riders: {
+        Args: Record<string, never>;
+        Returns: {
+          user_id: string;
+          full_name: string;
+          lat: number;
+          lng: number;
+          is_live: boolean;
+          on_delivery: boolean;
+          fleet_name: string | null;
+        }[];
+      };
+      fleet_demand_cells: {
+        Args: { p_fleet_id: string; p_hours?: number };
+        Returns: { lat: number; lng: number; orders: number }[];
+      };
+      fleet_send_message: {
+        Args: { p_actor_id: string; p_fleet_id: string; p_rider_ids: string[]; p_body: string };
+        Returns: number;
       };
       // admin_set_platform_fee (0092) - service_role only, finance tier, audited.
       admin_set_platform_fee: {

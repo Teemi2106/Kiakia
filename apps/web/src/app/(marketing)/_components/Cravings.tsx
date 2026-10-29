@@ -70,9 +70,8 @@ const CRAVINGS: readonly Craving[] = [
     hintTone: "text-white/75",
   },
   {
-    label: "Groceries",
-    hint: "The thing you forgot",
-    image: "/assets/cravings/groceries.jpg",
+    label: "Amala",
+    hint: "Ewedu, gbegiri, and a good stew",
     tone: "bg-kk-green text-white",
     hintTone: "text-white/75",
   },
@@ -125,12 +124,12 @@ export function Cravings() {
               On the menu
             </p>
             <h2 className="mt-5 font-sora text-[clamp(2rem,4.8vw,3.5rem)] font-extrabold leading-[1.02] tracking-[-0.035em] text-kk-ink">
-              So — what are you
+              So, what are you
               <br className="hidden sm:block" /> actually craving?
             </h2>
             <p className="mt-5 max-w-lg font-inter text-lg leading-8 text-kk-cocoa">
-              Whatever you just pictured, somebody a few streets away is already making it. Pick it,
-              and it is on a bike before you have decided what to drink with it.
+              Whatever you&apos;re in the mood for, KiaKia got you covered. Explore the menu,
+              discover new favourites, add them to cart and let KiaKia get it to you.
             </p>
           </div>
 
@@ -203,11 +202,11 @@ export function Cravings() {
         <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 font-inter text-sm text-kk-cocoa">
           <span className="inline-flex items-center gap-2">
             <MapPin className="size-4 text-kk-red" />
-            Only kitchens close enough to still be hot when they reach you
+            Your favourites, all in one place.
           </span>
           <span className="inline-flex items-center gap-2">
             <Clock className="size-4 text-kk-orange-deep" />
-            Live opening hours, so nothing you tap is already shut
+            See who&apos;s serving, right now.
           </span>
         </div>
       </div>

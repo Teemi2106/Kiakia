@@ -5,6 +5,8 @@ import { LocateFixed, MapPin, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useOptimistic, useState, useTransition } from "react";
 import { ActionToast } from "@/app/_components/ActionToast";
+import { StateSelect } from "@/app/_components/StateSelect";
+import { useDeviceLocation } from "@/lib/geo/useDeviceLocation";
 import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
 import { createClient } from "@/lib/supabase/client";
 
@@ -179,23 +181,24 @@ function NewAddressForm({
   const [city, setCity] = useState(draft?.city ?? "Abuja");
   const [state, setState] = useState(draft?.state ?? "FCT");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(draft?.coords ?? null);
-  const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function useMyLocation() {
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
-        setLocating(false);
-      },
-      () => {
-        setError("Couldn't get your location. Please enable location access.");
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10_000 },
-    );
-  }
+  // Asked for on open (unless a failed save handed back a draft that already has
+  // a position). Fills state/city from where they are; the street is only
+  // suggested when they haven't typed one.
+  const {
+    locate: useMyLocation,
+    locating,
+    error: locationError,
+  } = useDeviceLocation({
+    auto: !draft,
+    onFound: (found, address) => {
+      setCoords(found);
+      if (address?.state) setState(address.state);
+      if (address?.city) setCity(address.city);
+      if (address?.line1) setLine1((current) => current || address.line1 || "");
+    },
+  });
 
   function save() {
     if (!line1 || !coords) {
@@ -249,11 +252,10 @@ function NewAddressForm({
           </div>
           <div>
             <label className="font-inter text-xs font-semibold uppercase tracking-wide text-[#5B403C]">State</label>
-            <Input
-              placeholder="State"
+            <StateSelect
               value={state}
-              onChange={(e) => setState(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border-[#E5E2E1] font-inter text-sm text-[#1C1B1B] focus:border-[#B61913]"
+              onChange={setState}
+              className="mt-1.5"
             />
           </div>
         </div>
@@ -266,7 +268,9 @@ function NewAddressForm({
           <LocateFixed className="size-4" />
           {locating ? "Locating…" : coords ? "Location captured" : "Use my current location"}
         </button>
-        {error && <p className="font-inter text-xs font-medium text-[#BA1A1A]">{error}</p>}
+        {(error ?? locationError) && (
+          <p className="font-inter text-xs font-medium text-[#BA1A1A]">{error ?? locationError}</p>
+        )}
         <div className="flex gap-2">
           <Button
             onClick={save}

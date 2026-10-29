@@ -5,7 +5,7 @@ import { CustomerTopNav } from "./_components/CustomerTopNav";
 import { StoreNotice } from "./_components/StoreNotice";
 import { CartDrawer } from "./cart/_components/CartDrawer";
 import { CartFab } from "./cart/_components/CartFab";
-import { getOptionalSession, getRoles, hasRole, VENDOR_ROLES } from "@/lib/auth/dal";
+import { getFleetMembership, getOptionalSession, getRoles, hasRole, VENDOR_ROLES } from "@/lib/auth/dal";
 import { getActiveRole } from "@/lib/auth/active-role";
 import { getCustomerBootstrap } from "@/lib/customer/bootstrap";
 import { CustomerStoreProvider } from "@/lib/customer/CustomerStoreProvider";
@@ -35,17 +35,21 @@ export default async function CustomerLayout({
 
   let snapshot = GUEST_SNAPSHOT;
   let canSwitchToVendor = false;
+  let isFleetManager = false;
 
   if (session) {
     // Independent reads, so one wave: roles, the active-role cookie, and the
     // cart/unread/address bootstrap that seeds the client store. Pages under
     // this layout read the cart through the same cached bootstrap, not their own.
-    const [roles, activeRole, bootstrap] = await Promise.all([
+    const [roles, activeRole, bootstrap, fleet] = await Promise.all([
       getRoles(),
       getActiveRole(),
       getCustomerBootstrap(session.userId),
+      getFleetMembership(),
     ]);
     snapshot = bootstrap;
+    // Only a link to /fleet: that route's own gate decides whether it opens.
+    isFleetManager = fleet !== null;
     canSwitchToVendor = hasRole(roles, ...VENDOR_ROLES);
 
     // Mirror image of requireVendorContext(): a session actively in vendor
@@ -83,7 +87,7 @@ export default async function CustomerLayout({
           BottomNav's floating 72px slab plus its edge clearance, which
           disappears at the same `lg` breakpoint. */}
       <div className="flex min-h-screen flex-col bg-kk-cream [--kk-nav-h:141px] [--kk-tabbar-h:7.5rem] lg:[--kk-nav-h:73px] lg:[--kk-tabbar-h:0px]">
-        <CustomerTopNav canSwitchToVendor={canSwitchToVendor} />
+        <CustomerTopNav canSwitchToVendor={canSwitchToVendor} isFleetManager={isFleetManager} />
         <main className="flex-1 pt-(--kk-nav-h) pb-(--kk-tabbar-h)">{children}</main>
         <CustomerBottomNav />
       </div>

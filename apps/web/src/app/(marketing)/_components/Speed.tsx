@@ -19,8 +19,8 @@ const MECHANICS = [
     body: "The moment a vendor accepts, the offer goes out to every rider around them together. Whoever taps first is already moving.",
   },
   {
-    title: "Down the road, not across town",
-    body: "Kitchens and shops from your own area. Short trips are fast because of the map, not because someone had to ride like a maniac.",
+    title: "Down the road and across town",
+    body: "From your neighbourhood favourites to spots worth the trip, KiaKia brings the food and essentials you love closer to you. Wherever your cravings take you, we make getting what you want easier.",
   },
 ] as const;
 
@@ -58,19 +58,17 @@ export function Speed() {
 
             <h2 className="min-w-0 font-sora font-extrabold leading-[0.85] tracking-[-0.05em]">
               <span className="block bg-gradient-to-r from-kk-red via-kk-red to-kk-orange bg-clip-text text-[clamp(3.25rem,13vw,9rem)] text-transparent">
-                Kia kia
+                KiaKia
               </span>
               <span className="mt-3 block text-[clamp(1.5rem,4vw,2.75rem)] leading-[1.05] tracking-[-0.03em] text-kk-ink">
-                means <span className="text-kk-cocoa">quick quick.</span>
+                means <span className="text-kk-cocoa">fast fast.</span>
               </span>
             </h2>
           </div>
 
           <p className="mt-8 max-w-2xl font-inter text-lg leading-8 text-kk-cocoa sm:text-xl">
-            Not &ldquo;your order has been received.&rdquo; Not a forty-minute window that quietly
-            turns into ninety. Kia kia is a promise about{" "}
-            <span className="font-semibold text-kk-ink">right now</span> — and the whole thing is
-            built around keeping it.
+            No vague estimates. No wondering where your food is. With KiaKia, you can follow your
+            order in real time and see exactly what&apos;s happening, every step of the way.
           </p>
         </Reveal>
 

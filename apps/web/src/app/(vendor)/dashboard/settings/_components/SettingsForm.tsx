@@ -2,6 +2,8 @@
 
 import { updateVendorSettingsAction, type FormState } from "@/app/actions/vendor";
 import { Button, Input, Textarea } from "@kiakia/ui";
+import { normalizeNigerianState } from "@kiakia/domain";
+import { StateSelect } from "@/app/_components/StateSelect";
 import { useActionState, useState } from "react";
 import type { ChangeEvent } from "react";
 
@@ -24,6 +26,9 @@ const initialState: FormState = {};
 export function SettingsForm({ vendor }: { vendor: VendorSettings }) {
   const [state, formAction, pending] = useActionState(updateVendorSettingsAction, initialState);
   const [bannerPreview, setBannerPreview] = useState<string | null>(vendor.bannerUrl);
+  // Existing stores may hold an older free-typed spelling ("Abuja"); map it onto
+  // the list so saving the form migrates it, and leave it blank if unrecognised.
+  const [storeState, setStoreState] = useState(normalizeNigerianState(vendor.state) ?? "");
 
   function handleBannerChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -96,7 +101,7 @@ export function SettingsForm({ vendor }: { vendor: VendorSettings }) {
           <p className="text-xs text-[#5B403C]">
             Customers outside this state will never see your store on the home page listing.
           </p>
-          <Input id="state" name="state" required defaultValue={vendor.state ?? ""} className="mt-1 w-full" />
+          <StateSelect id="state" name="state" value={storeState} onChange={setStoreState} className="mt-1" />
         </div>
       </div>
 

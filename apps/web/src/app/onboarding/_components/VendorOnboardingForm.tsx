@@ -5,25 +5,31 @@ import { Button, Input, Select, Textarea } from "@kiakia/ui";
 import { VENDOR_CATEGORIES } from "@kiakia/domain";
 import { LocateFixed } from "lucide-react";
 import { useActionState, useState } from "react";
+import { StateSelect } from "@/app/_components/StateSelect";
+import { useDeviceLocation } from "@/lib/geo/useDeviceLocation";
 
 const initialState: FormState = {};
 
 export function VendorOnboardingForm() {
   const [state, formAction, pending] = useActionState(registerVendorAction, initialState);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [locating, setLocating] = useState(false);
+  const [storeState, setStoreState] = useState("");
+  const [addressLine, setAddressLine] = useState("");
 
-  function useMyLocation() {
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
-        setLocating(false);
-      },
-      () => setLocating(false),
-      { enableHighAccuracy: true, timeout: 10_000 },
-    );
-  }
+  // Asked for as soon as the form opens; fills the state (and a street, if
+  // none typed yet) so the vendor usually only has to confirm.
+  const {
+    locate: useMyLocation,
+    locating,
+    error: locationError,
+  } = useDeviceLocation({
+    auto: true,
+    onFound: (found, address) => {
+      setCoords(found);
+      if (address?.state) setStoreState(address.state);
+      if (address?.line1) setAddressLine((current) => current || address.line1 || "");
+    },
+  });
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
@@ -49,15 +55,22 @@ export function VendorOnboardingForm() {
         <label htmlFor="addressLine" className="text-sm font-medium text-ink">
           Store Address
         </label>
-        <Input id="addressLine" name="addressLine" required className="mt-1 w-full" />
+        <Input
+          id="addressLine"
+          name="addressLine"
+          required
+          value={addressLine}
+          onChange={(e) => setAddressLine(e.target.value)}
+          className="mt-1 w-full"
+        />
       </div>
       <div>
         <label htmlFor="state" className="text-sm font-medium text-ink">
           State
         </label>
-        {/* Free-typed, same as the customer address form's State field — customers
+        {/* Picked from the fixed list, same as the customer address forms — customers
             in a different state than this value will never see this store listed. */}
-        <Input id="state" name="state" required placeholder="e.g. Oyo" className="mt-1 w-full" />
+        <StateSelect id="state" name="state" value={storeState} onChange={setStoreState} className="mt-1" />
       </div>
       <div>
         <label htmlFor="landmark" className="text-sm font-medium text-ink">
@@ -81,6 +94,7 @@ export function VendorOnboardingForm() {
         <LocateFixed className="size-4" />
         {locating ? "Locating…" : coords ? "Location captured" : "Use my current location"}
       </button>
+      {locationError && <p className="text-xs text-danger">{locationError}</p>}
       {coords && (
         <>
           <input type="hidden" name="lat" value={coords.lat} />

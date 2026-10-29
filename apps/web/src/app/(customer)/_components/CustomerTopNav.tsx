@@ -1,7 +1,7 @@
 // app/(customer)/_components/CustomerTopNav.tsx
 "use client";
 
-import { ArrowLeftRight, ChevronRight, MapPin, Search, ShoppingCart, User } from "lucide-react";
+import { ArrowLeftRight, ChevronRight, MapPin, Search, ShoppingCart, Truck, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,6 +21,8 @@ const NAV_LINKS = [
 
 interface CustomerTopNavProps {
   canSwitchToVendor?: boolean;
+  /** Shown to accounts that manage a fleet; links to the fleet console. */
+  isFleetManager?: boolean;
 }
 
 /**
@@ -35,7 +37,7 @@ interface CustomerTopNavProps {
  * breakpoint: a tablet gets the stacked bar *and* the tab bar, instead of
  * falling into a gap where the destination links have nowhere to live.
  */
-export function CustomerTopNav({ canSwitchToVendor = false }: CustomerTopNavProps) {
+export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = false }: CustomerTopNavProps) {
   const pathname = usePathname();
   const itemCount = useCustomerStore(selectItemCount);
   const isGuest = useCustomerStore(selectIsGuest);
@@ -88,6 +90,17 @@ export function CustomerTopNav({ canSwitchToVendor = false }: CustomerTopNavProp
         <span aria-hidden="true" className="hidden h-6 w-px bg-kk-line/70 lg:block" />
 
         <div className="ml-auto flex items-center gap-0.5 lg:ml-0 lg:gap-1">
+          {isFleetManager && (
+            <Link
+              href="/fleet"
+              className="flex items-center gap-1.5 rounded-full p-2.5 font-inter text-xs font-medium text-kk-cocoa transition-colors hover:bg-black/5 hover:text-kk-ink xl:px-3.5"
+              aria-label="Open fleet dashboard"
+              title="Open fleet dashboard"
+            >
+              <Truck className="size-[18px]" />
+              <span className="hidden xl:inline">Fleet</span>
+            </Link>
+          )}
           {canSwitchToVendor && (
             <form action={switchToVendorAction}>
               <button

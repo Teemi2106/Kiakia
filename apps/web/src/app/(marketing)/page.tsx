@@ -24,13 +24,13 @@ import { FinalCta } from "./_components/FinalCta";
 import { Footer } from "./_components/Footer";
 
 const DESCRIPTION =
-  "Jollof, suya, shawarma, groceries — from kitchens and shops on your own street, at your door in under 30 minutes. Order on KiaKia and watch your rider the whole way.";
+  "Jollof, suya, shawarma, amala and more, from kitchens on your own street, at your door in under 30 minutes. Order on KiaKia and watch your rider the whole way.";
 
 export const metadata: Metadata = {
   title: "Fast. Fresh. Reliable.",
   description: DESCRIPTION,
   openGraph: {
-    title: "KiaKia — Fast. Fresh. Reliable.",
+    title: "KiaKia | Fast. Fresh. Reliable.",
     description: DESCRIPTION,
     images: ["/assets/hero-banner.png"],
   },

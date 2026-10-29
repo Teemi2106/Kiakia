@@ -142,10 +142,12 @@ describe("updateVendorSettingsAction", () => {
 
     const result = await updateVendorSettingsAction(
       {},
-      formData({ vendorId: "vendor-1", name: "Mama Put Kitchen", isAcceptingOrders: "on" }),
+      formData({ vendorId: "vendor-1", name: "Mama Put Kitchen", state: "Abuja", isAcceptingOrders: "on" }),
     );
 
     expect(result.success).toBe(true);
+    // Older free-typed spellings are stored under the canonical state name.
+    expect(capturedPayload).toMatchObject({ state: "FCT" });
     expect(capturedPayload).toBeDefined();
     expect(capturedPayload).not.toHaveProperty("status");
     expect(capturedPayload).not.toHaveProperty("kyc_status");
@@ -159,8 +161,21 @@ describe("updateVendorSettingsAction", () => {
     const update = vi.fn(() => ({ eq }));
     state.adminClient.current = { from: vi.fn(() => ({ update })) } as never;
 
-    const result = await updateVendorSettingsAction({}, formData({ vendorId: "vendor-1", name: "Mama Put Kitchen" }));
+    const result = await updateVendorSettingsAction(
+      {},
+      formData({ vendorId: "vendor-1", name: "Mama Put Kitchen", state: "Oyo" }),
+    );
     expect(result.error).toBe("Could not save your settings.");
+  });
+
+  it("rejects a state that is not on the Nigerian states list", async () => {
+    state.client.current = supabaseClientMock({ from: { vendor_staff: queryBuilder(ok({ vendor_id: "vendor-1" })) } });
+
+    const result = await updateVendorSettingsAction(
+      {},
+      formData({ vendorId: "vendor-1", name: "Mama Put Kitchen", state: "Texas" }),
+    );
+    expect(result.error).toBe("Choose your store's state from the list.");
   });
 });
 

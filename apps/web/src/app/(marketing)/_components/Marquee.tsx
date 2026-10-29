@@ -15,12 +15,11 @@ const CRAVINGS = [
 ] as const;
 
 const PROMISES = [
-  "Kia kia — quick quick",
+  "KiaKia means fast fast",
   "Kitchens on your street",
   "Live rider tracking",
   "No batching, ever",
   "Hot when it reaches you",
-  "Your money is safe",
 ] as const;
 
 function Band({ items, reverse }: { items: readonly string[]; reverse?: boolean }) {

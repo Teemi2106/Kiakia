@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { Input } from "@kiakia/ui";
 import type { LatLng } from "@kiakia/domain";
 import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
+import { StateSelect } from "@/app/_components/StateSelect";
+import { useDeviceLocation } from "@/lib/geo/useDeviceLocation";
 import { createClient } from "@/lib/supabase/client";
 import { CheckoutMapArea } from "./CheckoutMapArea";
 import type { Address } from "./types";
@@ -32,8 +34,6 @@ export function AddressSection({
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     null,
   );
-  const [locating, setLocating] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showMap] = useState(true);
@@ -45,31 +45,26 @@ export function AddressSection({
     state: "FCT",
   });
 
-  const useMyLocation = () => {
-    setLocating(true);
-    setLocationError(null);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        setLocating(false);
-        // Coordinates are captured for the addresses.location geography
-        // column (required, NOT NULL) — they are NOT reverse-geocoded into
-        // the street fields, which the customer types themselves. Adding
-        // reverse geocoding would mean a second Mapbox API surface; not
-        // done here rather than half-done.
-      },
-      () => {
-        setLocationError(
-          "Couldn't get your location. Please enable location access and try again.",
-        );
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10_000 },
-    );
-  };
+  // Coordinates fill the addresses.location geography column (required, NOT
+  // NULL). The reverse-geocoded state/city are prefilled too, so the customer
+  // normally only confirms them; the street is suggested only if still empty.
+  // Requested automatically as soon as the "add address" form opens.
+  const {
+    locate: useMyLocation,
+    locating,
+    error: locationError,
+  } = useDeviceLocation({
+    auto: isAddingNew,
+    onFound: (found, resolved) => {
+      setCoords(found);
+      setNewAddress((current) => ({
+        ...current,
+        state: resolved?.state ?? current.state,
+        city: resolved?.city ?? current.city,
+        line1: current.line1 || resolved?.line1 || "",
+      }));
+    },
+  });
 
   const handleSaveAddress = async () => {
     if (!newAddress.line1 || !coords) {
@@ -248,12 +243,10 @@ export function AddressSection({
               <label className="font-inter text-xs font-medium text-[#5B403C]">
                 State
               </label>
-              <Input
+              <StateSelect
                 value={newAddress.state}
-                onChange={(e) =>
-                  setNewAddress({ ...newAddress, state: e.target.value })
-                }
-                className="mt-1 w-full"
+                onChange={(state) => setNewAddress({ ...newAddress, state })}
+                className="mt-1"
               />
             </div>
           </div>

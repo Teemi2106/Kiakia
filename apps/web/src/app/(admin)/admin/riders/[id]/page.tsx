@@ -1,11 +1,15 @@
 import { approveRiderAction, rejectRiderAction } from "@/app/actions/admin";
+import { setRiderFleetAction } from "@/app/actions/admin-fleets";
+import { listFleetOptions } from "@/lib/admin/fleets";
 import { getRiderDetail } from "@/lib/admin/riders";
 import { canManageFinance, requireAdminContext } from "@/lib/auth/dal";
-import { Badge, EmptyState } from "@kiakia/ui";
+import { Badge, EmptyState, Select } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { AdminActionForm } from "../../../_components/AdminActionForm";
+import { Field } from "../../../_components/Field";
 import { ConfirmedAction } from "../../../_components/ConfirmedAction";
 import { formatDateTime, humanize } from "../../../_components/format";
 import { MaskedAccountNumber } from "../../../_components/MaskedAccountNumber";
@@ -25,7 +29,7 @@ export default async function AdminRiderDetailPage({ params }: { params: Promise
   const financeAccess = await canManageFinance();
 
   const { id } = await params;
-  const detail = await getRiderDetail(id);
+  const [detail, fleets] = await Promise.all([getRiderDetail(id), listFleetOptions()]);
   if (!detail) notFound();
 
   const { rider, bank, profile, documents, balance, recentPayouts, recentDeliveries, recentRatings } = detail;
@@ -67,6 +71,25 @@ export default async function AdminRiderDetailPage({ params }: { params: Promise
         />
       </Section>
 
+
+      <Section title="Fleet">
+        <p className="mb-3 text-sm text-ink-muted">
+          A fleet is a rider management company. Its managers can see this rider&apos;s status and location and text them. Leave it empty if KiaKia manages this rider directly. It does not change which orders they are offered.
+        </p>
+        <AdminActionForm action={setRiderFleetAction} submitLabel="Save fleet">
+          <input type="hidden" name="riderId" value={rider.user_id} />
+          <Field label="Fleet" htmlFor="rider-fleet">
+            <Select id="rider-fleet" name="fleetId" defaultValue={rider.fleet_id ?? ""} className="w-full">
+              <option value="">No fleet (KiaKia manages directly)</option>
+              {fleets.map((fleet) => (
+                <option key={fleet.id} value={fleet.id}>
+                  {fleet.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </AdminActionForm>
+      </Section>
 
       <Section title="Identity documents">
         <RiderDocuments documents={documents} />

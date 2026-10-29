@@ -1,5 +1,5 @@
 // app/(customer)/home/page.tsx
-import { EmptyState } from "@kiakia/ui";
+import { cn, EmptyState } from "@kiakia/ui";
 import { haversineDistanceM, MEAL_CATEGORIES, TERMINAL_STATUSES, type MealCategoryPreset, type OrderStatus } from "@kiakia/domain";
 import { Store } from "lucide-react";
 import type { Metadata } from "next";
@@ -215,6 +215,7 @@ export default async function CustomerHomePage({
         activeCategory={category}
         homeSearchParams={{ q, category, open, quick, sort }}
         heroImageUrl={featured[0]?.dishImageUrl}
+        showHero
       >
         {!hasAnyVendors ? (
           <EmptyState
@@ -353,6 +354,7 @@ export default async function CustomerHomePage({
       categories={categories}
       activeCategory={category}
       homeSearchParams={{ q, category, open, quick, sort }}
+      showHero={false}
     >
       {q?.trim() && <TrackEvent eventType="search" searchQuery={q.trim().slice(0, 80)} />}
       <div className="space-y-12">
@@ -528,6 +530,7 @@ function HomeShell({
   activeCategory,
   homeSearchParams,
   heroImageUrl,
+  showHero,
   children,
 }: {
   firstName: string | null;
@@ -538,6 +541,10 @@ function HomeShell({
   activeCategory?: string;
   homeSearchParams: HomeSearchParams;
   heroImageUrl?: string | null;
+  /** The hero only opens the default browse view. Once a chip, search or
+   * category is applied the customer wants their results, not the banner
+   * pushing them down the page again. */
+  showHero: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -549,17 +556,22 @@ function HomeShell({
           topic={`customer-home-${customerId}`}
         />
       )}
-      <HomeGreeting firstName={firstName} heroImageUrl={heroImageUrl} />
+      {showHero && <HomeGreeting firstName={firstName} heroImageUrl={heroImageUrl} />}
 
       {activeOrder && (
-        <div className="mt-4">
+        <div className={showHero ? "mt-4" : undefined}>
           <ActiveOrderCard order={activeOrder} otherActiveCount={otherActiveCount} />
         </div>
       )}
 
       {/* Browse controls. Grouped into one panel so the category rail and the
           filter chips read as a single toolbar rather than two loose rows. */}
-      <div className="mt-10 space-y-4 rounded-3xl border border-kk-line/40 bg-white/65 p-4 shadow-[0_20px_50px_-45px_rgba(66,29,20,0.5)] sm:p-5">
+      <div
+        className={cn(
+          "space-y-4 rounded-3xl border border-kk-line/40 bg-white/65 p-4 shadow-[0_20px_50px_-45px_rgba(66,29,20,0.5)] sm:p-5",
+          (showHero || activeOrder) && "mt-10",
+        )}
+      >
         <div className="flex items-center gap-3">
           <Store className="size-4 shrink-0 text-kk-red" />
           <h2 className="font-inter text-[11px] font-semibold uppercase tracking-[0.22em] text-kk-cocoa">

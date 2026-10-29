@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { setActiveRole } from "@/lib/auth/active-role";
 import { uploadVendorImage } from "@/lib/storage/vendor-media";
 import type { Json } from "@kiakia/db";
+import { normalizeNigerianState } from "@kiakia/domain";
 
 const VENDOR_STAFF_ROLES = ["vendor_staff", "vendor_manager", "vendor_owner"] as const;
 type VendorStaffRole = (typeof VENDOR_STAFF_ROLES)[number];
@@ -55,7 +56,7 @@ export async function registerVendorAction(_prevState: FormState, formData: Form
   const description = (formData.get("description") as string | null) || null;
   const addressLine = (formData.get("addressLine") as string | null) || null;
   const landmark = (formData.get("landmark") as string | null) || null;
-  const state = (formData.get("state") as string | null)?.trim() || null;
+  const state = normalizeNigerianState(formData.get("state") as string | null);
   const lat = formData.get("lat") as string | null;
   const lng = formData.get("lng") as string | null;
 
@@ -63,7 +64,7 @@ export async function registerVendorAction(_prevState: FormState, formData: Form
     return { error: "Enter your store name." };
   }
   if (!state) {
-    return { error: "Enter your store's state." };
+    return { error: "Choose your store's state from the list." };
   }
 
   const supabase = await createClient();
@@ -154,6 +155,11 @@ export async function updateVendorSettingsAction(_prevState: FormState, formData
     bannerUrl = uploaded.url;
   }
 
+  const storeState = normalizeNigerianState(formData.get("state") as string | null);
+  if (!storeState) {
+    return { error: "Choose your store's state from the list." };
+  }
+
   const admin = createAdminClient();
   const { error } = await admin
     .from("vendors")
@@ -162,7 +168,7 @@ export async function updateVendorSettingsAction(_prevState: FormState, formData
       description: (formData.get("description") as string | null) || null,
       address_line: (formData.get("addressLine") as string | null) || null,
       landmark: (formData.get("landmark") as string | null) || null,
-      state: (formData.get("state") as string | null)?.trim() || null,
+      state: storeState,
       avg_prep_mins: Number(formData.get("avgPrepMins")) || 20,
       min_order_kobo: Math.round(Number(formData.get("minOrderNaira")) * 100) || 0,
       delivery_radius_m: Number(formData.get("deliveryRadiusM")) || 3000,

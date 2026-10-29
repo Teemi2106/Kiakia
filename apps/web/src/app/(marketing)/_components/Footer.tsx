@@ -1,7 +1,7 @@
 // app/(marketing)/_components/Footer.tsx
 import Image from "next/image";
 import Link from "next/link";
-import { Lock, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 
 const COLUMNS = [
   {
@@ -17,7 +17,7 @@ const COLUMNS = [
   {
     heading: "Partners",
     links: [
-      { label: "Become a vendor", href: "/vendor/register" },
+      { label: "Become a vendor", href: "/partner" },
       { label: "Vendor login", href: "/vendor/login" },
     ],
   },
@@ -54,16 +54,12 @@ export function Footer() {
             </Link>
             <p className="mt-6 max-w-xs font-inter text-[15px] leading-7 text-white/55">
               Hot food and everyday goods from the kitchens and shops around your street,
-              at your door kia kia.
+              at your door, fast fast.
             </p>
             <div className="mt-6 flex flex-col gap-2.5 font-inter text-[13px] text-white/45">
               <span className="inline-flex items-center gap-2">
                 <Zap className="size-4 text-kk-red" />
-                Kia kia — quick quick
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Lock className="size-4 text-kk-mint" />
-                Your money is safe
+                KiaKia means fast fast
               </span>
             </div>
           </div>

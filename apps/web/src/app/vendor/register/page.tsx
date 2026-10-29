@@ -8,7 +8,7 @@ import { RegisterForm } from "@/app/(auth)/_components/RegisterForm";
 export const metadata: Metadata = {
   title: "Become a Vendor",
   description:
-    "Sell on KiaKia — reach customers nearby, dispatch riders automatically, and get paid the moment an order is delivered.",
+    "Partner with KiaKia to reach customers nearby, dispatch riders automatically, and get paid the moment an order is delivered.",
 };
 
 export default function VendorRegisterPage() {
@@ -21,7 +21,7 @@ export default function VendorRegisterPage() {
       stage={{
         imageSrc: "/assets/hero-banner.png",
         altText: "A vendor plating a fresh order in their kitchen",
-        eyebrow: "Sell on KiaKia",
+        eyebrow: "Partner with KiaKia",
         heading: (
           <>
             Grow your food
@@ -35,7 +35,7 @@ export default function VendorRegisterPage() {
         footnote: "Every store is reviewed by the KiaKia team before customers can see it. You can follow its status on your dashboard.",
       }}
       title="Partner with KiaKia"
-      subtitle="Create your account first — you'll add your store details and menu next."
+      subtitle="Create your account first. You'll add your store details and menu next."
       footer={<AuthSwap prompt="Already a vendor?" href="/vendor/login" cta="Sign in" />}
       legal={
         <p className="text-center font-inter text-xs leading-5 text-kk-cocoa/65">

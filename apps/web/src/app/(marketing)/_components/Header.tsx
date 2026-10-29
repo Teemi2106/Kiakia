@@ -17,7 +17,7 @@ interface Account {
 const NAV = [
   { label: "What we deliver", href: "/#cravings" },
   { label: "How it works", href: "/#how-it-works" },
-  { label: "For vendors", href: "/vendor/register" },
+  { label: "For vendors", href: "/partner" },
   { label: "FAQ", href: "/#faq" },
 ] as const;
 

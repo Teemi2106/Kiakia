@@ -6,7 +6,7 @@ const STEPS = [
   {
     n: "01",
     title: "Find your craving",
-    body: "Real kitchens and shops from your own area — real menus, real prices, live opening hours. Nothing you tap turns out to be shut.",
+    body: "Real kitchens from your own area, with real menus, real prices and live opening hours. Nothing you tap turns out to be shut.",
     icon: Search,
     tint: "text-kk-red",
   },
@@ -20,7 +20,7 @@ const STEPS = [
   {
     n: "03",
     title: "Eat",
-    body: "A rider brings it straight over — no detours, no other drops. You give a 4-digit code at the door, take your bag, and that is the whole ceremony.",
+    body: "A rider brings it straight over, with no detours and no other drops. You give a 4-digit code at the door, take your bag, and that is the whole ceremony.",
     icon: Utensils,
     tint: "text-kk-green",
   },
