@@ -1,6 +1,6 @@
 import { addFleetManagerAction, removeFleetManagerAction, setFleetStatusAction } from "@/app/actions/admin-fleets";
 import { getFleetDetail } from "@/lib/admin/fleets";
-import { requireAdminContext } from "@/lib/auth/dal";
+import { isSuperadmin, requireAdminContext } from "@/lib/auth/dal";
 import { Badge } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: "Fleet" };
 export default async function AdminFleetDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdminContext();
   const { id } = await params;
-  const fleet = await getFleetDetail(id);
+  const [fleet, canManageManagers] = await Promise.all([getFleetDetail(id), isSuperadmin()]);
   if (!fleet) notFound();
 
   const nextStatus = fleet.status === "active" ? "suspended" : "active";
@@ -53,28 +53,34 @@ export default async function AdminFleetDetailPage({ params }: { params: Promise
                   <p className="font-medium text-ink">{manager.fullName ?? "Unnamed"}</p>
                   <p className="text-xs text-ink-muted">{manager.phone ?? "No phone"}</p>
                 </div>
-                <div className="w-full max-w-xs">
-                  <AdminActionForm action={removeFleetManagerAction} submitLabel="Remove" variant="danger">
-                    <input type="hidden" name="fleetId" value={fleet.id} />
-                    <input type="hidden" name="userId" value={manager.userId} />
-                  </AdminActionForm>
-                </div>
+                {canManageManagers && (
+                  <div className="w-full max-w-xs">
+                    <AdminActionForm action={removeFleetManagerAction} submitLabel="Remove" variant="danger">
+                      <input type="hidden" name="fleetId" value={fleet.id} />
+                      <input type="hidden" name="userId" value={manager.userId} />
+                    </AdminActionForm>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
         )}
 
-        <div className="mt-4 border-t border-border pt-4">
-          <p className="mb-3 text-sm text-ink-muted">
-            Add someone who already has a KiaKia account. They sign in as normal and open <span className="font-medium text-ink">/fleet</span>. A person can manage one fleet.
-          </p>
-          <AdminActionForm action={addFleetManagerAction} submitLabel="Add manager">
-            <input type="hidden" name="fleetId" value={fleet.id} />
-            <Field label="Who is the manager?" htmlFor="manager-search">
-              <AccountPicker id="manager-search" name="userId" />
-            </Field>
-          </AdminActionForm>
-        </div>
+        {canManageManagers ? (
+          <div className="mt-4 border-t border-border pt-4">
+            <p className="mb-3 text-sm text-ink-muted">
+              Add someone who already has a KiaKia account. They sign in as normal and open <span className="font-medium text-ink">/fleet</span>. A person can manage one fleet.
+            </p>
+            <AdminActionForm action={addFleetManagerAction} submitLabel="Add manager">
+              <input type="hidden" name="fleetId" value={fleet.id} />
+              <Field label="Who is the manager?" htmlFor="manager-search">
+                <AccountPicker id="manager-search" name="userId" />
+              </Field>
+            </AdminActionForm>
+          </div>
+        ) : (
+          <p className="mt-4 border-t border-border pt-4 text-sm text-ink-muted">Only a superadmin can add or remove fleet managers.</p>
+        )}
       </Section>
 
       <Section title={`Riders (${fleet.riders.length})`}>

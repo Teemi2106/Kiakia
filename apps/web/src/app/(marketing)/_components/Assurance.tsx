@@ -20,8 +20,8 @@ const ASSURANCES = [
   },
   {
     icon: Store,
-    title: "Real kitchens only",
-    body: "Every vendor is checked before they can take a single order. No ghost listings, no guessing.",
+    title: "Verified kitchens",
+    body: "Every vendor is verified by the KiaKia team before they can take a single order.",
     tint: "bg-white/10 text-white",
   },
 ] as const;

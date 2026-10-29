@@ -1,7 +1,7 @@
 // app/(marketing)/_components/FinalCta.tsx
 import Link from "next/link";
-import { ArrowRight, Store } from "lucide-react";
-import { switchToCustomerAction, switchToVendorAction } from "@/app/actions/session";
+import { ArrowRight } from "lucide-react";
+import { switchToCustomerAction } from "@/app/actions/session";
 import type { MarketingAccount } from "@/lib/auth/marketing-account";
 import { Reveal } from "./Reveal";
 
@@ -21,7 +21,7 @@ export function FinalCta({ account }: { account: MarketingAccount | null }) {
             Let us fix that.
           </h2>
           <p className="mx-auto mt-6 max-w-xl font-inter text-lg leading-8 text-white/75">
-            Free to join, nothing to install. Pick a kitchen and we will have it at your door kia kia.
+            Free to join, nothing to install. Pick a kitchen and we will have it at your door fast fast.
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -36,17 +36,6 @@ export function FinalCta({ account }: { account: MarketingAccount | null }) {
                     <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
                   </button>
                 </form>
-                {account.isVendor && (
-                  <form action={switchToVendorAction} className="w-full sm:w-auto">
-                    <button
-                      type="submit"
-                      className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl border border-white/35 px-8 font-inter text-base font-semibold text-white transition-colors duration-300 hover:bg-white/10 sm:w-auto"
-                    >
-                      <Store className="size-5" />
-                      Vendor dashboard
-                    </button>
-                  </form>
-                )}
               </>
             ) : (
               <>
@@ -56,12 +45,6 @@ export function FinalCta({ account }: { account: MarketingAccount | null }) {
                 >
                   Order something now
                   <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-                <Link
-                  href="/partner"
-                  className="inline-flex h-14 w-full items-center justify-center rounded-2xl border border-white/35 px-8 font-inter text-base font-semibold text-white transition-colors duration-300 hover:bg-white/10 sm:w-auto"
-                >
-                  Partner with KiaKia
                 </Link>
               </>
             )}

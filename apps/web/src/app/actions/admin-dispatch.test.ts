@@ -133,10 +133,10 @@ describe("setDispatchSettingAction", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it("requires a reason", async () => {
+  it("records a default reason when none is given", async () => {
     const rpc = useClient({ admin_set_dispatch_setting: ok({}) });
-    expect((await setDispatchSettingAction({}, formData({ ...base, reason: " " }))).error).toMatch(/reason/i);
-    expect(rpc).not.toHaveBeenCalled();
+    await setDispatchSettingAction({}, formData({ ...base, reason: " " }));
+    expect(rpc).toHaveBeenCalledWith("admin_set_dispatch_setting", expect.objectContaining({ p_reason: "Rider matching setting changed" }));
   });
 
   it("re-checks the admin role on the server", async () => {

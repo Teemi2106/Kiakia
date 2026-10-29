@@ -234,9 +234,8 @@ describe("reassignOrderRiderAction", () => {
     expect(rpc).toHaveBeenCalledWith("admin_reassign_order_rider", expect.objectContaining({ p_rider_id: NEW_RIDER, p_actor_id: ADMIN_ID }));
   });
 
-  it("requires a reason and a well-formed order and rider before the RPC", async () => {
+  it("requires a well-formed order and rider before the RPC", async () => {
     const rpc = useReassign(ok({}));
-    expect((await reassignOrderRiderAction({}, formData({ orderId: ORDER_ID, reason: " " }))).error).toBeTruthy();
     expect(await reassignOrderRiderAction({}, formData({ ...base, orderId: "nope" }))).toEqual({ error: "Invalid id" });
     expect(await reassignOrderRiderAction({}, formData({ ...base, riderId: "nope" }))).toEqual({ error: "Invalid id" });
     expect(rpc).not.toHaveBeenCalled();

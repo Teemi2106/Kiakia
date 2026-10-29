@@ -22,7 +22,7 @@ export function RiderDispatch({ orderId, hasRider, riders }: RiderDispatchProps)
         <AdminActionForm
           action={reassignOrderRiderAction}
           submitLabel={hasRider ? "Remove rider and offer to others" : "Offer to riders"}
-          reason={{ required: true }}
+          reason={{}}
           confirmLabel="I confirm this order should be offered to other riders."
         >
           <input type="hidden" name="orderId" value={orderId} />
@@ -40,7 +40,7 @@ export function RiderDispatch({ orderId, hasRider, riders }: RiderDispatchProps)
           <AdminActionForm
             action={reassignOrderRiderAction}
             submitLabel="Assign this rider"
-            reason={{ required: true }}
+            reason={{}}
             confirmLabel="I confirm this rider should do this delivery."
           >
             <input type="hidden" name="orderId" value={orderId} />

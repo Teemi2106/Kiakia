@@ -14,7 +14,6 @@ import {
   type AudienceRole,
   type Channel,
 } from "@/lib/messaging/audience";
-import { REASON_MAX_CHARS, REASON_MIN_CHARS } from "@/lib/messaging/limits";
 import { smsStats, segmentLabel } from "@/lib/messaging/sms";
 import { firstNameOf } from "@/lib/messaging/templates";
 import { Field } from "../../../_components/Field";
@@ -60,7 +59,6 @@ function ComposeFormInner({
   const [person, setPerson] = useState<PersonHit | null>(null);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [reason, setReason] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
 
   const audience: Audience | null = useMemo(() => {
@@ -162,7 +160,6 @@ function ComposeFormInner({
     if (!audience) return "Choose the person to send to.";
     if (channel === "email" && !subject.trim()) return "Add a subject for the email.";
     if (!body.trim()) return "Write the message.";
-    if (reason.trim().length < REASON_MIN_CHARS) return "Say why you are sending this (at least 3 characters). It is saved in the activity log.";
     if (previewLoading) return "Still counting who will get this. Try again in a moment.";
     if (!preview) return previewError ?? "We could not work out who would get this.";
     if (preview.recipientCount === 0) return "Nobody would get this message. Change who it goes to.";
@@ -176,7 +173,6 @@ function ComposeFormInner({
   const channelId = useId();
   const audienceId = useId();
   const segmentId = useId();
-  const reasonId = useId();
 
   if (state.success) {
     return (
@@ -289,21 +285,6 @@ function ComposeFormInner({
             allowStoreName={kind === "role" && role === "vendor"}
             promotional={purpose === "promotional"}
           />
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor={reasonId} className="text-sm font-medium text-ink">
-              Why are you sending this?
-            </label>
-            <Input
-              id={reasonId}
-              name="reason"
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              maxLength={REASON_MAX_CHARS}
-              placeholder="For example: the app will be down for maintenance on Sunday"
-            />
-            <p className="text-xs text-ink-muted">Only admins see this. It is saved in the activity log.</p>
-          </div>
         </fieldset>
 
         <div className="grid gap-5 rounded-card border border-border bg-surface-sunken/50 p-4 lg:grid-cols-2">

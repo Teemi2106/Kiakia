@@ -18,7 +18,6 @@ import { Cravings } from "./_components/Cravings";
 import { Speed } from "./_components/Speed";
 import { HowItWorks } from "./_components/HowItWorks";
 import { Assurance } from "./_components/Assurance";
-import { Personas } from "./_components/Personas";
 import { Faq } from "./_components/Faq";
 import { FinalCta } from "./_components/FinalCta";
 import { Footer } from "./_components/Footer";
@@ -48,7 +47,6 @@ export default async function MarketingHome() {
       <Speed />
       <HowItWorks />
       <Assurance />
-      <Personas />
       <Faq />
       <FinalCta account={account} />
       <Footer />

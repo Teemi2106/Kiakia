@@ -34,6 +34,18 @@ const optionalReason = z
   .optional();
 
 /**
+ * For routine actions: the admin may skip the reason, and the audit log gets a
+ * plain description instead (the RPCs still require a non-empty reason).
+ */
+const reasonOrDefault = (fallback: string) =>
+  z
+    .string()
+    .trim()
+    .max(1000, "Keep the reason under 1000 characters")
+    .optional()
+    .transform((value) => value || fallback);
+
+/**
  * Naira as typed by an admin ("1234", "1,234.50") to whole kobo. Strict: at
  * most two decimals, no signs or exponents, so float parsing can never round
  * a typed amount to a different kobo value.
@@ -127,7 +139,7 @@ export const setDispatchSettingSchema = z
   .object({
     key: z.enum(DISPATCH_SETTING_KEYS, { message: "Unknown setting" }),
     input: z.string().trim().min(1, "Enter a value"),
-    reason: requiredReason,
+    reason: reasonOrDefault("Rider matching setting changed"),
   })
   .transform((value, ctx) => {
     const parsed = parseDispatchInput(value.key, value.input);
@@ -154,7 +166,7 @@ export const updateServiceAreaSchema = z.object({
   // Explicit "true"/"false" (a select or radio) rather than a checkbox: an absent
   // checkbox would silently deactivate the area.
   isActive: z.enum(["true", "false"]).transform((value) => value === "true"),
-  reason: requiredReason,
+  reason: reasonOrDefault("Service area updated"),
 });
 
 export const recordPayoutSchema = z.object({
@@ -188,7 +200,7 @@ export const reassignOrderRiderSchema = z.object({
     .transform((value) => value || undefined)
     .pipe(uuidSchema.optional())
     .optional(),
-  reason: requiredReason,
+  reason: reasonOrDefault("Rider changed on this order by an admin"),
 });
 
 export const rejectDocumentSchema = z.object({
@@ -271,7 +283,7 @@ export const broadcastSchema = z
     category: z.enum(["transactional", "promotional"]),
     subject: subjectSchema,
     body: bodySchema,
-    reason: requiredReason,
+    reason: reasonOrDefault("Message sent from the admin messages page"),
   })
   .superRefine(checkMessageContent);
 
@@ -281,7 +293,7 @@ export const directMessageSchema = z
     channel: channelSchema,
     subject: subjectSchema,
     body: bodySchema,
-    reason: requiredReason,
+    reason: reasonOrDefault("Message sent from the admin messages page"),
   })
   .superRefine((value, ctx) => checkMessageContent({ ...value, category: "transactional", audience: { kind: "user", user_id: value.userId } }, ctx));
 

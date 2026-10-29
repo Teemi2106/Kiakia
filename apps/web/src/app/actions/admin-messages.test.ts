@@ -127,7 +127,6 @@ describe("sendBroadcastAction", () => {
 
   describe("validation happens before the RPC", () => {
     it.each([
-      ["a missing reason", { reason: "  " }, /reason/i],
       ["an email with no subject", { subject: "" }, /subject/i],
       ["an empty body", { body: "   " }, /write the message/i],
       ["a text over 612 characters", { channel: "sms", body: "a".repeat(613) }, /612/],
@@ -185,7 +184,6 @@ describe("sendMessageAction", () => {
   it("validates before the RPC and explains a person with no phone number in words", async () => {
     const rpc = mockRpc({ admin_send_message: fail("admin_send_message: the user has no phone number on file (a confirmed email / a phone number is required)", "23514") });
     expect((await sendMessageAction({}, message({ userId: "nope" }))).error).toBeTruthy();
-    expect((await sendMessageAction({}, message({ reason: "" }))).error).toMatch(/reason/i);
     expect(rpc).not.toHaveBeenCalled();
     expect((await sendMessageAction({}, message())).error).toBe("This person has no phone number on file, so we cannot text them. Try email instead.");
   });

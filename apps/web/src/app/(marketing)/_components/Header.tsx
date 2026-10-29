@@ -18,6 +18,7 @@ const NAV = [
   { label: "What we deliver", href: "/#cravings" },
   { label: "How it works", href: "/#how-it-works" },
   { label: "For vendors", href: "/partner" },
+  { label: "For riders", href: "/ride" },
   { label: "FAQ", href: "/#faq" },
 ] as const;
 
@@ -265,12 +266,6 @@ export function Header({ account }: { account: Account | null }) {
               {item.label}
             </Link>
           ))}
-          <span className="cursor-not-allowed py-4 font-sora text-2xl font-semibold text-kk-cocoa/45">
-            For riders
-            <span className="ml-2 align-middle font-inter text-[11px] font-semibold uppercase tracking-widest text-kk-orange-deep">
-              soon
-            </span>
-          </span>
         </nav>
 
         <div className="flex flex-col gap-3 border-t border-kk-line/60 p-5">

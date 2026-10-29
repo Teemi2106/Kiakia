@@ -17,7 +17,7 @@ export function ServiceAreaForm({ area }: { area: ServiceAreaView }) {
     <AdminActionForm
       action={updateServiceAreaAction}
       submitLabel="Save changes"
-      reason={{ required: true }}
+      reason={{}}
       confirmLabel="I confirm these fees apply to new orders in this area."
     >
       <p className="text-sm text-ink-muted">

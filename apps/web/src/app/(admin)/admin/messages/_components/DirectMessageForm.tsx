@@ -1,10 +1,9 @@
 "use client";
 
-import { Button, Input, Select } from "@kiakia/ui";
+import { Button, Select } from "@kiakia/ui";
 import { startTransition, useActionState, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { sendMessageAction, type SendState } from "@/app/actions/admin-messages";
 import { CHANNEL_LABELS, type Channel } from "@/lib/messaging/audience";
-import { REASON_MAX_CHARS } from "@/lib/messaging/limits";
 import { firstNameOf } from "@/lib/messaging/templates";
 import { Field } from "../../../_components/Field";
 import { MessageFields } from "./MessageFields";
@@ -19,11 +18,9 @@ export function DirectMessageForm({ userId, personName }: { userId: string; pers
   const [channel, setChannel] = useState<Channel>("email");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [reason, setReason] = useState("");
   const lock = useRef(false);
   const submissionId = useRef<string | null>(null);
   const channelId = useId();
-  const reasonId = useId();
 
   useEffect(() => {
     lock.current = false; // the action answered; a new attempt is allowed
@@ -35,7 +32,6 @@ export function DirectMessageForm({ userId, personName }: { userId: string; pers
     setCleared(state);
     setSubject("");
     setBody("");
-    setReason("");
   }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -67,14 +63,6 @@ export function DirectMessageForm({ userId, personName }: { userId: string; pers
       <MessageFields channel={channel} subject={subject} body={body} onSubject={setSubject} onBody={setBody} allowStoreName={false} promotional={false} />
 
       <MessagePreview channel={channel} subject={subject} body={body} sampleFirstName={firstNameOf(personName) || "there"} sampleStoreName="" />
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor={reasonId} className="text-sm font-medium text-ink">
-          Why are you sending this?
-        </label>
-        <Input id={reasonId} name="reason" value={reason} onChange={(event) => setReason(event.target.value)} maxLength={REASON_MAX_CHARS} required minLength={3} />
-        <p className="text-xs text-ink-muted">Only admins see this. It is saved in the activity log.</p>
-      </div>
 
       <p className="text-xs text-ink-muted">This is a service message, so it is sent even if the person has not agreed to promotions. It cannot be taken back once sent.</p>
 

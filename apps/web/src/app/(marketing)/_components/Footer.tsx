@@ -19,6 +19,7 @@ const COLUMNS = [
     links: [
       { label: "Become a vendor", href: "/partner" },
       { label: "Vendor login", href: "/vendor/login" },
+      { label: "Ride with KiaKia", href: "/ride" },
     ],
   },
   {

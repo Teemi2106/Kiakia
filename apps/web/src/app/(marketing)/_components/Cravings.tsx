@@ -69,12 +69,6 @@ const CRAVINGS: readonly Craving[] = [
     tone: "bg-kk-orange-deep text-white",
     hintTone: "text-white/75",
   },
-  {
-    label: "Amala",
-    hint: "Ewedu, gbegiri, and a good stew",
-    tone: "bg-kk-green text-white",
-    hintTone: "text-white/75",
-  },
 ] as const;
 
 export function Cravings() {

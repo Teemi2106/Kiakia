@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { field, rpcFailureMessage, type FormState } from "@/lib/admin/action-helpers";
 import { listUsers } from "@/lib/admin/users";
-import { requireAdminContext } from "@/lib/auth/dal";
+import { isSuperadmin, requireAdminContext } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { firstIssue } from "@/lib/validation/admin";
 import {
@@ -55,9 +55,12 @@ export async function searchAccountsAction(query: string): Promise<AccountMatch[
   return page.rows.map((user) => ({ id: user.id, fullName: user.fullName, phone: user.phone }));
 }
 
+const SUPERADMIN_ONLY = "Only a superadmin can add or remove fleet managers. Ask a superadmin to do it.";
+
 /** Adds an existing account, chosen from the search picker, as a manager of the fleet. */
 export async function addFleetManagerAction(_prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await requireAdminContext();
+  if (!(await isSuperadmin())) return { error: SUPERADMIN_ONLY };
   const parsed = addFleetManagerSchema.safeParse({
     fleetId: field(formData, "fleetId"),
     userId: field(formData, "userId"),
@@ -79,6 +82,7 @@ export async function addFleetManagerAction(_prevState: FormState, formData: For
 
 export async function removeFleetManagerAction(_prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await requireAdminContext();
+  if (!(await isSuperadmin())) return { error: SUPERADMIN_ONLY };
   const parsed = removeFleetManagerSchema.safeParse({
     fleetId: field(formData, "fleetId"),
     userId: field(formData, "userId"),

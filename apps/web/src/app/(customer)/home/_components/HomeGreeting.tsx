@@ -1,29 +1,9 @@
 // app/(customer)/home/_components/HomeGreeting.tsx
-import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-
-/**
- * Explicitly Africa/Lagos rather than the server's clock. This renders on the
- * server, which is UTC in every deployment target, so "Good morning" would
- * greet a customer ordering dinner. KiaKia prices in naira and operates in a
- * single, DST-free timezone, so naming it here is honest and stable — if the
- * platform ever runs in a second market, this needs the customer's own zone,
- * not a second guess.
- */
-function greetingFor(now: Date): string {
-  const hour = Number(
-    new Intl.DateTimeFormat("en-NG", {
-      hour: "2-digit",
-      hourCycle: "h23",
-      timeZone: "Africa/Lagos",
-    }).format(now),
-  );
-
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
+import { periodFor } from "../_lib/greetings";
+import { GreetingRotator } from "./GreetingRotator";
 
 /**
  * Replaces the stock-photo banner this page used to open with. That banner
@@ -59,14 +39,7 @@ export function HomeGreeting({
       />
 
       <div className="relative flex min-h-[310px] max-w-2xl flex-col justify-center px-6 py-9 sm:min-h-[350px] sm:px-10 sm:py-12">
-          <p className="flex items-center gap-2 font-inter text-[11px] font-semibold uppercase tracking-[0.24em] text-kk-orange">
-            <Sparkles className="size-3.5" />
-            {greetingFor(new Date())}
-            {firstName ? `, ${firstName}` : ""}
-          </p>
-          <h1 className="mt-4 max-w-xl font-sora text-[clamp(2rem,6vw,3.8rem)] font-extrabold leading-[0.98] tracking-[-0.045em] text-white">
-            Your next favourite meal is closer than you think.
-          </h1>
+          <GreetingRotator period={periodFor(new Date())} firstName={firstName} />
           <p className="mt-4 max-w-lg font-inter text-[15px] leading-6 text-white/72 sm:text-base">
             Chosen around your taste, your location and the meals you come back for.
           </p>
@@ -75,7 +48,7 @@ export function HomeGreeting({
               Explore your picks <ArrowRight className="size-4" />
             </Link>
             <span className="inline-flex items-center gap-1.5 font-inter text-xs font-medium text-white/65">
-              <ShieldCheck className="size-4 text-kk-mint" /> Trusted local kitchens
+              <ShieldCheck className="size-4 text-kk-mint" /> Verified kitchens
             </span>
           </div>
         </div>

@@ -1,20 +1,20 @@
 // app/(marketing)/_components/HowItWorks.tsx
-import { Search, Utensils, Wallet } from "lucide-react";
+import { Bike, Search, Utensils } from "lucide-react";
 import { Reveal } from "./Reveal";
 
 const STEPS = [
   {
     n: "01",
     title: "Find your craving",
-    body: "Real kitchens from your own area, with real menus, real prices and live opening hours. Nothing you tap turns out to be shut.",
+    body: "Explore restaurants and vendors, browse their menus, check prices, and see who's open. Everything you need to choose your next meal, all in one place.",
     icon: Search,
     tint: "text-kk-red",
   },
   {
     n: "02",
-    title: "Pay and forget about it",
-    body: "Card or transfer, done in seconds. We hold your money safely while the vendor cooks, so there is nothing for you to worry about.",
-    icon: Wallet,
+    title: "Leave it to us",
+    body: "Once you've placed your order, we coordinate everything from preparation to delivery, keeping you updated as your food makes its way to you. Relax, We dey on am",
+    icon: Bike,
     tint: "text-kk-orange-deep",
   },
   {
@@ -37,12 +37,13 @@ export function HowItWorks() {
               How it works
             </p>
             <h2 className="mt-5 font-sora text-[clamp(2rem,4.6vw,3.25rem)] font-extrabold leading-[1.03] tracking-[-0.03em] text-kk-ink">
-              Three taps. One knock.
+              Order. Knock.
               <br className="hidden sm:block" /> Dinner.
             </h2>
             <p className="mt-5 max-w-xl font-inter text-lg leading-8 text-kk-cocoa">
-              From the moment you tap order to the moment you are eating, there is nothing else you
-              have to do. That is the entire point.
+              From the moment you check out to the moment your order arrives, every detail is
+              thoughtfully coordinated. Enjoy a seamless delivery experience, with a clear view of
+              your order's journey from start to finish.
             </p>
           </div>
         </Reveal>
@@ -73,13 +74,6 @@ export function HowItWorks() {
             </Reveal>
           ))}
         </div>
-
-        <Reveal delay={120}>
-          <p className="mt-16 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-dashed border-kk-line bg-white/60 px-5 py-4 font-inter text-sm text-kk-cocoa">
-            <span className="font-semibold text-kk-ink">And if it never turns up?</span>
-            Your money never moved in the first place. Nothing to chase, nobody to argue with.
-          </p>
-        </Reveal>
       </div>
     </section>
   );
