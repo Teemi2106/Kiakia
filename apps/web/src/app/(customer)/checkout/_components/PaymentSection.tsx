@@ -9,6 +9,9 @@ import type { PaymentMethod } from "./types";
 interface PaymentSectionProps {
   paymentMethod: PaymentMethod;
   onPaymentMethodChange: (method: PaymentMethod) => void;
+  /** Put the wallet balance towards the order and pay the rest by card (hold_wallet_for_order, 0117). */
+  useWallet: boolean;
+  onUseWalletChange: (useWallet: boolean) => void;
   /** The customer's own wallet balance in kobo (get_wallet_balance(),
    * 0045_customer_wallet.sql). Zero for anyone who has never been refunded. */
   walletBalanceKobo: number;
@@ -33,6 +36,8 @@ interface PaymentSectionProps {
 export function PaymentSection({
   paymentMethod,
   onPaymentMethodChange,
+  useWallet,
+  onUseWalletChange,
   walletBalanceKobo,
   subtotalKobo,
   variant = "desktop",
@@ -62,6 +67,26 @@ export function PaymentSection({
         title="Credit / Debit Card"
         subtitle="Visa, Mastercard, Verve — via Monnify"
       />
+
+      {hasWallet && paymentMethod === "card" && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-[#E5E2E1] bg-white p-4">
+          <input
+            type="checkbox"
+            checked={useWallet}
+            onChange={(event) => onUseWalletChange(event.target.checked)}
+            className="mt-0.5 size-4"
+          />
+          <span className="min-w-0">
+            <span className="block font-inter text-sm font-semibold text-[#1C1B1B]">
+              Use my wallet balance towards this order
+            </span>
+            <span className="block font-inter text-xs text-[#5B403C]">
+              {formatNaira(koboOf(walletBalanceKobo))} available. Whatever your wallet can cover is taken from it and your
+              card pays only the rest. Wallet money not used is kept for later.
+            </span>
+          </span>
+        </label>
+      )}
 
       {hasWallet && (
         <PaymentOption

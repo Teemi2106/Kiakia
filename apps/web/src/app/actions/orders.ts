@@ -28,6 +28,8 @@ interface OrderForPayment {
   readonly id: string;
   readonly code: string;
   readonly total_kobo: number;
+  /** What the wallet already funds (hold_wallet_for_order, 0117). The card pays the rest. */
+  readonly wallet_applied_kobo: number;
 }
 
 /**
@@ -64,6 +66,14 @@ async function initializePaymentForOrder(session: SessionLike, order: OrderForPa
   const supabase = await createClient();
   const admin = createAdminClient();
 
+  // The card only ever pays what the wallet is not already funding. The
+  // database re-derives the same figure when the payment is captured, so a
+  // wrong number here can only fail or be credited back, never mis-book.
+  const cardKobo = order.total_kobo - order.wallet_applied_kobo;
+  if (!Number.isSafeInteger(cardKobo) || cardKobo <= 0) {
+    throw new Error("This order has nothing left to pay by card.");
+  }
+
   // Two independent reads (the buyer's display name for Monnify, and whether
   // this order was already captured): one wave, not two.
   const [{ data: profile }, { data: existingPayment }] = await Promise.all([
@@ -86,7 +96,7 @@ async function initializePaymentForOrder(session: SessionLike, order: OrderForPa
   }
 
   const transaction = await initializeTransaction({
-    amountKobo: order.total_kobo,
+    amountKobo: cardKobo,
     paymentReference: order.code,
     paymentDescription: `KiaKia order ${order.code}`,
     customerName: profile?.full_name ?? "KiaKia Customer",
@@ -104,7 +114,7 @@ async function initializePaymentForOrder(session: SessionLike, order: OrderForPa
       order_id: order.id,
       provider: "monnify",
       provider_ref: transaction.transactionReference,
-      amount_kobo: order.total_kobo,
+      amount_kobo: cardKobo,
       status: "pending",
       idempotency_key: order.code,
     },
@@ -119,7 +129,7 @@ async function initializePaymentForOrder(session: SessionLike, order: OrderForPa
     .from("payments")
     .update({
       provider_ref: transaction.transactionReference,
-      amount_kobo: order.total_kobo,
+      amount_kobo: cardKobo,
     })
     .eq("idempotency_key", order.code)
     .eq("status", "pending");
@@ -313,13 +323,31 @@ export async function placeOrderAction(
     redirect(`/orders/${order.id}`);
   }
 
+  // Split payment (0117): "use my wallet" puts whatever the wallet holds
+  // towards the order and the card pays the rest. hold_wallet_for_order()
+  // derives the amount itself from the ledger under a lock; nothing the
+  // browser sends decides it. If it cannot hold anything, the customer is sent
+  // to the order page to choose, never silently charged the full card amount
+  // they were expecting to part-pay.
+  let walletHeldKobo = 0;
+  if (formData.get("useWallet") === "1") {
+    const { data: held, error: holdError } = await supabase.rpc("hold_wallet_for_order", { p_order_id: order.id });
+    if (holdError || typeof held !== "number" || held <= 0) {
+      if (holdError) console.error("hold_wallet_for_order failed", holdError);
+      redirect(`/orders/${order.id}`);
+    }
+    walletHeldKobo = held;
+  }
+
   let checkoutUrl: string;
   try {
-    checkoutUrl = await initializePaymentForOrder(session, order);
+    checkoutUrl = await initializePaymentForOrder(session, { ...order, wallet_applied_kobo: walletHeldKobo });
   } catch (error) {
     console.error("Monnify init-transaction failed", error);
     // The order exists (draft, unpaid) — send the customer to its detail
-    // page rather than a dead end; that page offers a retry.
+    // page rather than a dead end; that page offers a retry. Any wallet hold
+    // stays reserved for them there, and is returned automatically after 30
+    // minutes if they walk away.
     redirect(`/orders/${order.id}`);
   }
 
@@ -357,7 +385,7 @@ export async function retryPaymentAction(orderId: string): Promise<void> {
 
   const { data: order } = await supabase
     .from("orders")
-    .select("id, code, total_kobo, customer_id, status, payment_status")
+    .select("id, code, total_kobo, wallet_applied_kobo, customer_id, status, payment_status")
     .eq("id", orderId)
     .maybeSingle();
 
@@ -371,6 +399,44 @@ export async function retryPaymentAction(orderId: string): Promise<void> {
   const checkoutUrl = await initializePaymentForOrder(session, order);
 
   redirect(checkoutUrl);
+}
+
+/**
+ * "Pay the full amount by card instead": returns any wallet money held for this
+ * unpaid order to the wallet, then sends the customer back to the order page,
+ * where "Complete payment" now charges the whole total. The RPC refuses once
+ * the order is paid, so this can never hand back money an order is using.
+ */
+export async function releaseWalletHoldAction(orderId: string): Promise<void> {
+  const session = await verifySession();
+
+  if ((await getActiveRole()) === "vendor") {
+    redirect("/dashboard");
+  }
+
+  const supabase = await createClient();
+
+  const { data: order } = await supabase
+    .from("orders")
+    .select("id, customer_id, status, payment_status")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (!order || order.customer_id !== session.userId) {
+    throw new Error("Order not found.");
+  }
+  if (order.status !== "draft" || order.payment_status !== "pending") {
+    throw new Error("This order has already been paid for.");
+  }
+
+  const { error } = await supabase.rpc("release_wallet_hold", { p_order_id: order.id });
+  if (error) {
+    console.error("release_wallet_hold failed", error);
+    throw new Error("We couldn't return your wallet money. Please try again.");
+  }
+
+  revalidatePath(`/orders/${order.id}`);
+  redirect(`/orders/${order.id}`);
 }
 
 /**
@@ -420,6 +486,12 @@ export async function restoreCartFromOrderAction(orderId: string): Promise<void>
   if (order.status !== "draft" || order.payment_status !== "pending") {
     throw new Error("This order has already been paid for.");
   }
+
+  // Abandoning the order: give any wallet money held for it back now rather
+  // than make the customer wait for the 30 minute sweep. A failure here is not
+  // fatal - the sweep returns it anyway.
+  const { error: releaseError } = await supabase.rpc("release_wallet_hold", { p_order_id: order.id });
+  if (releaseError) console.error("release_wallet_hold failed", releaseError);
 
   const { data: existingCart } = await supabase
     .from("carts")

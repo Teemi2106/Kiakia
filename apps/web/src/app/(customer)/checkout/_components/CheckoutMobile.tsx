@@ -18,6 +18,8 @@ interface CheckoutMobileProps {
   onAddressChange: (address: Address) => void;
   paymentMethod: PaymentMethod;
   onPaymentMethodChange: (method: PaymentMethod) => void;
+  useWallet: boolean;
+  onUseWalletChange: (useWallet: boolean) => void;
   subtotalKobo: number;
   serviceFeeKobo: number | null;
   walletBalanceKobo: number;
@@ -38,6 +40,8 @@ export function CheckoutMobile({
   onAddressChange,
   paymentMethod,
   onPaymentMethodChange,
+  useWallet,
+  onUseWalletChange,
   subtotalKobo,
   serviceFeeKobo,
   walletBalanceKobo,
@@ -73,6 +77,7 @@ export function CheckoutMobile({
           <input type="hidden" name="addressId" value={selectedAddress.id} />
         )}
         <input type="hidden" name="paymentMethod" value={paymentMethod} />
+        <input type="hidden" name="useWallet" value={paymentMethod === "card" && useWallet ? "1" : "0"} />
         {/* Step 1: Delivery Address */}
         <div className="rounded-2xl border border-[#E5E2E1] bg-white p-4 shadow-sm">
           {/* No "Change" shortcut here — AddressSection already renders its
@@ -115,6 +120,8 @@ export function CheckoutMobile({
           <PaymentSection
             paymentMethod={paymentMethod}
             onPaymentMethodChange={onPaymentMethodChange}
+            useWallet={useWallet}
+            onUseWalletChange={onUseWalletChange}
             walletBalanceKobo={walletBalanceKobo}
             subtotalKobo={subtotalKobo}
             variant="mobile"

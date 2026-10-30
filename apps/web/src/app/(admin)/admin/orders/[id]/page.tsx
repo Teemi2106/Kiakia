@@ -116,7 +116,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                 value: (
                   <span className="flex flex-wrap items-center gap-2">
                     <Badge tone={escrow.state === "held" ? "warning" : "neutral"}>{ESCROW_LABELS[escrow.state]}</Badge>
-                    {escrow.refundDestination && <span>{escrow.refundDestination === "gateway" ? "back to their card or bank" : "to their KiaKia wallet"}</span>}
+                    {escrow.refundDestination && <span>{escrow.refundDestination === "gateway" ? "back to their card or bank (any part paid from their wallet goes back to their wallet)" : "to their KiaKia wallet"}</span>}
                   </span>
                 ),
               },

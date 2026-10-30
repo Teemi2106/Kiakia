@@ -18,6 +18,8 @@ interface CheckoutDesktopProps {
   onAddressChange: (address: Address) => void;
   paymentMethod: PaymentMethod;
   onPaymentMethodChange: (method: PaymentMethod) => void;
+  useWallet: boolean;
+  onUseWalletChange: (useWallet: boolean) => void;
   subtotalKobo: number;
   serviceFeeKobo: number | null;
   walletBalanceKobo: number;
@@ -38,6 +40,8 @@ export function CheckoutDesktop({
   onAddressChange,
   paymentMethod,
   onPaymentMethodChange,
+  useWallet,
+  onUseWalletChange,
   subtotalKobo,
   serviceFeeKobo,
   walletBalanceKobo,
@@ -73,6 +77,7 @@ export function CheckoutDesktop({
           <input type="hidden" name="addressId" value={selectedAddress.id} />
         )}
         <input type="hidden" name="paymentMethod" value={paymentMethod} />
+        <input type="hidden" name="useWallet" value={paymentMethod === "card" && useWallet ? "1" : "0"} />
 
         {/* Column 1: Address */}
         <AddressSection
@@ -90,6 +95,8 @@ export function CheckoutDesktop({
         <PaymentSection
           paymentMethod={paymentMethod}
           onPaymentMethodChange={onPaymentMethodChange}
+          useWallet={useWallet}
+          onUseWalletChange={onUseWalletChange}
           walletBalanceKobo={walletBalanceKobo}
           subtotalKobo={subtotalKobo}
         />

@@ -57,3 +57,25 @@ body {
     animation: none;
   }
 }
+
+/* Text swap for the home greeting: the new line fades up into place. */
+.kk-swap {
+  animation: kk-swap 600ms ease-out both;
+}
+
+@keyframes kk-swap {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kk-swap {
+    animation: none;
+  }
+}

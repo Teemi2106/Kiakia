@@ -66,6 +66,10 @@ export interface OrderRow {
   total_kobo: number;
   payment_method: "card" | "bank_transfer" | "ussd" | "wallet" | null;
   payment_status: "pending" | "paid" | "failed" | "refunded";
+  /** 0117: how much of total_kobo the wallet funds (held while unpaid, spent once paid). The card covers the rest. */
+  wallet_applied_kobo: number;
+  /** 0117: when the wallet hold was taken; null when nothing is held. */
+  wallet_held_at: string | null;
   promo_code: string | null;
   delivery_address: Json;
   delivery_location: string;
@@ -797,6 +801,8 @@ export interface Database {
           total_kobo: number;
           payment_method: "card" | "bank_transfer" | "ussd" | "wallet" | null;
           payment_status: "pending" | "paid" | "failed" | "refunded";
+          wallet_applied_kobo: number;
+          wallet_held_at: string | null;
           promo_code: string | null;
           delivery_address: Json;
           delivery_location: string;
@@ -892,7 +898,7 @@ export interface Database {
           id: string;
           owner_type: "platform" | "vendor" | "rider" | "customer";
           owner_id: string | null;
-          kind: "escrow" | "available" | "pending_payout" | "revenue" | "gateway" | "wallet";
+          kind: "escrow" | "available" | "pending_payout" | "revenue" | "gateway" | "wallet" | "wallet_hold";
           currency: "NGN";
           created_at: string;
         };
@@ -1808,6 +1814,26 @@ export interface Database {
           p_order_id: string;
         };
         Returns: OrderRow;
+      };
+      // 0117: split payment. hold_wallet_for_order moves wallet money (up to
+      // the balance, leaving the minimum card charge) into platform:wallet_hold
+      // for the caller's own draft order and returns the kobo held (0 = none).
+      // release_wallet_hold gives it back while the order is still unpaid.
+      hold_wallet_for_order: {
+        Args: { p_order_id: string };
+        Returns: number;
+      };
+      release_wallet_hold: {
+        Args: { p_order_id: string };
+        Returns: number;
+      };
+      release_expired_wallet_holds: {
+        Args: { p_older_than?: string };
+        Returns: number;
+      };
+      order_refund_gateway_kobo: {
+        Args: { p_order_code: string };
+        Returns: number;
       };
       get_wallet_balance: {
         // Deliberately argument-less: there is no parameter that could point

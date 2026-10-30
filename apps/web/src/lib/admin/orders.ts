@@ -341,9 +341,13 @@ export async function listAssignableRiders(orderId: string, limit = 20): Promise
 }
 
 function deriveEscrow(ledger: readonly OrderLedgerEntryView[]): OrderEscrowView {
-  const refundCredit = ledger.find((entry) => entry.transactionKind === "refund" && entry.direction === "credit");
-  if (refundCredit) {
-    return { state: "refunded", refundDestination: refundCredit.account === "platform:gateway" ? "gateway" : "wallet" };
+  const refundCredits = ledger.filter((entry) => entry.transactionKind === "refund" && entry.direction === "credit");
+  if (refundCredits.length > 0) {
+    // A card + wallet order refunded to the card credits BOTH accounts (the card
+    // part to the gateway, the wallet part back to the wallet). Any gateway
+    // credit means Monnify still has to be asked, so that wins.
+    const toGateway = refundCredits.some((entry) => entry.account === "platform:gateway");
+    return { state: "refunded", refundDestination: toGateway ? "gateway" : "wallet" };
   }
   if (ledger.some((entry) => entry.transactionKind === "escrow_release")) return { state: "released", refundDestination: null };
   if (ledger.some((entry) => entry.account === "platform:escrow" && entry.direction === "credit")) {

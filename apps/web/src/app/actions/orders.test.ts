@@ -31,7 +31,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn(() => state.ad
 const initializeTransaction = vi.fn();
 vi.mock("@/lib/monnify", () => ({ initializeTransaction: (...args: unknown[]) => initializeTransaction(...args) }));
 
-const { advanceOrderAction, placeOrderAction, retryPaymentAction } = await import("./orders");
+const { advanceOrderAction, placeOrderAction, releaseWalletHoldAction, retryPaymentAction } = await import("./orders");
 
 function formData(fields: Record<string, string>): FormData {
   const fd = new FormData();
@@ -42,7 +42,7 @@ function formData(fields: Record<string, string>): FormData {
 const VALID_NEW_ADDRESS = { line1: "1 Test Street", lat: "9.05", lng: "7.45", contactPhone: "08012345678" };
 const OPEN_CART = { data: { id: "cart-1" }, error: null };
 const PLACED_ORDER = {
-  data: { id: "order-1", code: "KK-0001", total_kobo: 500000 },
+  data: { id: "order-1", code: "KK-0001", total_kobo: 500000, wallet_applied_kobo: 0 },
   error: null,
 };
 
@@ -251,7 +251,7 @@ describe("retryPaymentAction", () => {
   it("sends a suspended customer to / without reading the order or starting a checkout", async () => {
     requireActiveAccount.mockImplementation(() => Promise.reject(new Error("NEXT_REDIRECT:/")));
     const orders = queryBuilder(
-      ok({ id: "order-1", code: "KK-1", total_kobo: 1000, customer_id: "customer-a", status: "draft", payment_status: "pending" }),
+      ok({ id: "order-1", code: "KK-1", total_kobo: 1000, wallet_applied_kobo: 0, customer_id: "customer-a", status: "draft", payment_status: "pending" }),
     );
     state.client.current = supabaseClientMock({ from: { orders } });
     const paymentsUpsert = vi.fn(() => queryBuilder(ok(null)));
@@ -270,7 +270,7 @@ describe("retryPaymentAction", () => {
     state.client.current = supabaseClientMock({
       from: {
         orders: queryBuilder(
-          ok({ id: "order-1", code: "KK-1", total_kobo: 1000, customer_id: "someone-else", status: "draft", payment_status: "pending" }),
+          ok({ id: "order-1", code: "KK-1", total_kobo: 1000, wallet_applied_kobo: 0, customer_id: "someone-else", status: "draft", payment_status: "pending" }),
         ),
       },
     });
@@ -282,7 +282,7 @@ describe("retryPaymentAction", () => {
     state.client.current = supabaseClientMock({
       from: {
         orders: queryBuilder(
-          ok({ id: "order-1", code: "KK-1", total_kobo: 1000, customer_id: "customer-a", status: "placed", payment_status: "paid" }),
+          ok({ id: "order-1", code: "KK-1", total_kobo: 1000, wallet_applied_kobo: 0, customer_id: "customer-a", status: "placed", payment_status: "paid" }),
         ),
       },
     });
@@ -294,7 +294,7 @@ describe("retryPaymentAction", () => {
     state.client.current = supabaseClientMock({
       from: {
         orders: queryBuilder(
-          ok({ id: "order-1", code: "KK-1", total_kobo: 1000, customer_id: "customer-a", status: "draft", payment_status: "pending" }),
+          ok({ id: "order-1", code: "KK-1", total_kobo: 1000, wallet_applied_kobo: 0, customer_id: "customer-a", status: "draft", payment_status: "pending" }),
         ),
         profiles: queryBuilder(ok({ full_name: "Ada" })),
       },
@@ -331,7 +331,7 @@ describe("retryPaymentAction", () => {
     state.client.current = supabaseClientMock({
       from: {
         orders: queryBuilder(
-          ok({ id: "order-1", code: "KK-1", total_kobo: 1000, customer_id: "customer-a", status: "draft", payment_status: "pending" }),
+          ok({ id: "order-1", code: "KK-1", total_kobo: 1000, wallet_applied_kobo: 0, customer_id: "customer-a", status: "draft", payment_status: "pending" }),
         ),
         profiles: queryBuilder(ok({ full_name: "Ada" })),
       },
@@ -344,6 +344,175 @@ describe("retryPaymentAction", () => {
     await expect(retryPaymentAction("order-1")).rejects.toThrow("already been paid for.");
     expect(initializeTransaction).not.toHaveBeenCalled();
     expect(paymentsUpsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("placeOrderAction: card + wallet split (0117)", () => {
+  function monnifyOk() {
+    initializeTransaction.mockResolvedValue({
+      checkoutUrl: "https://sandbox.monnify.com/checkout/split",
+      transactionReference: "mnfy-split",
+      paymentReference: "KK-0001",
+    });
+    const paymentsUpsert = vi.fn(() => queryBuilder(ok(null)));
+    const paymentsUpdate = vi.fn(() => queryBuilder(ok(null)));
+    state.adminClient.current = supabaseClientMock({
+      from: { payments: { select: vi.fn(() => queryBuilder(ok(null))), upsert: paymentsUpsert, update: paymentsUpdate } as never },
+    });
+    return { paymentsUpsert, paymentsUpdate };
+  }
+
+  function clientWithHold(hold: { data: unknown; error: { message: string } | null }) {
+    state.client.current = supabaseClientMock({
+      from: { carts: queryBuilder(OPEN_CART), profiles: queryBuilder(ok({ full_name: "Ada Lovelace" })) },
+      rpc: { place_order: PLACED_ORDER, hold_wallet_for_order: hold },
+    });
+  }
+
+  beforeEach(() => {
+    requireActiveAccount.mockReset();
+    requireActiveAccount.mockResolvedValue(undefined);
+    initializeTransaction.mockReset();
+    getActiveRole.mockReset();
+    getActiveRole.mockResolvedValue("customer");
+    state.session.current = { userId: "customer-a", email: "customer-a@example.com", phone: null };
+  });
+
+  it("holds the wallet money first, then charges the card ONLY the rest and records that amount on the payment", async () => {
+    clientWithHold(ok(300000));
+    const { paymentsUpsert, paymentsUpdate } = monnifyOk();
+
+    await expect(placeOrderAction({}, formData({ ...VALID_NEW_ADDRESS, useWallet: "1" }))).rejects.toThrow(
+      "NEXT_REDIRECT:https://sandbox.monnify.com/checkout/split",
+    );
+
+    expect(state.client.current.rpc).toHaveBeenCalledWith("hold_wallet_for_order", { p_order_id: "order-1" });
+    expect(initializeTransaction).toHaveBeenCalledWith(expect.objectContaining({ amountKobo: 200000 }));
+    expect(paymentsUpsert).toHaveBeenCalledWith(expect.objectContaining({ amount_kobo: 200000 }), expect.anything());
+    expect(paymentsUpdate).toHaveBeenCalledWith(expect.objectContaining({ amount_kobo: 200000 }));
+  });
+
+  it("does not touch the wallet at all unless the customer asked to use it", async () => {
+    clientWithHold(ok(300000));
+    monnifyOk();
+
+    await expect(placeOrderAction({}, formData({ ...VALID_NEW_ADDRESS, useWallet: "0" }))).rejects.toThrow("NEXT_REDIRECT:https://");
+
+    expect(state.client.current.rpc).not.toHaveBeenCalledWith("hold_wallet_for_order", expect.anything());
+    expect(initializeTransaction).toHaveBeenCalledWith(expect.objectContaining({ amountKobo: 500000 }));
+  });
+
+  it("never charges a card when nothing could be held: sends the customer to the order page to choose", async () => {
+    clientWithHold(ok(0));
+    monnifyOk();
+
+    await expect(placeOrderAction({}, formData({ ...VALID_NEW_ADDRESS, useWallet: "1" }))).rejects.toThrow("NEXT_REDIRECT:/orders/order-1");
+
+    expect(initializeTransaction).not.toHaveBeenCalled();
+  });
+
+  it("never charges a card when holding the wallet failed", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    clientWithHold({ data: null, error: { message: "boom" } });
+    monnifyOk();
+
+    await expect(placeOrderAction({}, formData({ ...VALID_NEW_ADDRESS, useWallet: "1" }))).rejects.toThrow("NEXT_REDIRECT:/orders/order-1");
+
+    expect(initializeTransaction).not.toHaveBeenCalled();
+  });
+
+  it("a malformed hold answer is treated as nothing held, never as a charge", async () => {
+    clientWithHold(ok("lots"));
+    monnifyOk();
+
+    await expect(placeOrderAction({}, formData({ ...VALID_NEW_ADDRESS, useWallet: "1" }))).rejects.toThrow("NEXT_REDIRECT:/orders/order-1");
+
+    expect(initializeTransaction).not.toHaveBeenCalled();
+  });
+});
+
+describe("retryPaymentAction and releaseWalletHoldAction: card + wallet split (0117)", () => {
+  beforeEach(() => {
+    requireActiveAccount.mockReset();
+    requireActiveAccount.mockResolvedValue(undefined);
+    initializeTransaction.mockReset();
+    getActiveRole.mockReset();
+    getActiveRole.mockResolvedValue("customer");
+    state.session.current = { userId: "customer-a", email: "customer-a@example.com", phone: null };
+  });
+
+  const draft = (extra: Record<string, unknown> = {}) =>
+    ok({
+      id: "order-1",
+      code: "KK-1",
+      total_kobo: 1000,
+      wallet_applied_kobo: 400,
+      customer_id: "customer-a",
+      status: "draft",
+      payment_status: "pending",
+      ...extra,
+    });
+
+  it("a retry charges the card only total minus what the wallet already holds", async () => {
+    state.client.current = supabaseClientMock({ from: { orders: queryBuilder(draft()), profiles: queryBuilder(ok({ full_name: "Ada" })) } });
+    initializeTransaction.mockResolvedValue({
+      checkoutUrl: "https://sandbox.monnify.com/checkout/r",
+      transactionReference: "ref",
+      paymentReference: "KK-1",
+    });
+    const paymentsUpdate = vi.fn(() => queryBuilder(ok(null)));
+    state.adminClient.current = supabaseClientMock({
+      from: {
+        payments: { select: vi.fn(() => queryBuilder(ok(null))), upsert: vi.fn(() => queryBuilder(ok(null))), update: paymentsUpdate } as never,
+      },
+    });
+
+    await expect(retryPaymentAction("order-1")).rejects.toThrow("NEXT_REDIRECT:https://sandbox.monnify.com/checkout/r");
+
+    expect(initializeTransaction).toHaveBeenCalledWith(expect.objectContaining({ amountKobo: 600 }));
+    expect(paymentsUpdate).toHaveBeenCalledWith(expect.objectContaining({ amount_kobo: 600 }));
+  });
+
+  it("refuses to start a card checkout for an order the wallet already covers completely", async () => {
+    state.client.current = supabaseClientMock({
+      from: { orders: queryBuilder(draft({ wallet_applied_kobo: 1000 })), profiles: queryBuilder(ok({ full_name: "Ada" })) },
+    });
+
+    await expect(retryPaymentAction("order-1")).rejects.toThrow("nothing left to pay by card");
+    expect(initializeTransaction).not.toHaveBeenCalled();
+  });
+
+  it("releaseWalletHoldAction gives the money back for the customer's own unpaid order and returns to the order page", async () => {
+    state.client.current = supabaseClientMock({ from: { orders: queryBuilder(draft()) }, rpc: { release_wallet_hold: ok(400) } });
+
+    await expect(releaseWalletHoldAction("order-1")).rejects.toThrow("NEXT_REDIRECT:/orders/order-1");
+    expect(state.client.current.rpc).toHaveBeenCalledWith("release_wallet_hold", { p_order_id: "order-1" });
+  });
+
+  it("releaseWalletHoldAction refuses someone else's order and an already-paid order without calling the RPC", async () => {
+    state.client.current = supabaseClientMock({
+      from: { orders: queryBuilder(draft({ customer_id: "someone-else" })) },
+      rpc: { release_wallet_hold: ok(0) },
+    });
+    await expect(releaseWalletHoldAction("order-1")).rejects.toThrow("Order not found.");
+    expect(state.client.current.rpc).not.toHaveBeenCalled();
+
+    state.client.current = supabaseClientMock({
+      from: { orders: queryBuilder(draft({ status: "placed", payment_status: "paid" })) },
+      rpc: { release_wallet_hold: ok(0) },
+    });
+    await expect(releaseWalletHoldAction("order-1")).rejects.toThrow("already been paid for.");
+    expect(state.client.current.rpc).not.toHaveBeenCalled();
+  });
+
+  it("releaseWalletHoldAction does not pretend it worked when the RPC fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    state.client.current = supabaseClientMock({
+      from: { orders: queryBuilder(draft()) },
+      rpc: { release_wallet_hold: { data: null, error: { message: "nope" } } },
+    });
+
+    await expect(releaseWalletHoldAction("order-1")).rejects.toThrow("couldn't return your wallet money");
   });
 });
 

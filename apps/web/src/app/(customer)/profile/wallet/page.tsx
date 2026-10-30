@@ -68,7 +68,7 @@ export default async function WalletPage() {
           </p>
           <p className="mt-4 max-w-md font-inter text-sm text-white/55">
             {balance > 0
-              ? "Choose KiaKia Wallet at checkout to spend this. It covers the whole order or none of it — no part-payments yet."
+              ? "Use it at checkout. It can pay for a whole order, or you can put it towards an order and pay the rest by card."
               : "Nothing here yet. If an order is ever cancelled or rejected, its refund arrives here straight away."}
           </p>
         </div>
@@ -120,7 +120,7 @@ export default async function WalletPage() {
 
                 <span className="min-w-0 flex-1">
                   <span className="block font-inter text-sm font-semibold text-[#1C1B1B]">
-                    {isCredit ? "Refund received" : "Paid for order"}
+                    {walletRowLabel(row.entry_type, isCredit)}
                     {row.order_code ? ` · #${row.order_code}` : ""}
                   </span>
                   <span className="block font-inter text-xs text-[#5B403C]">
@@ -143,4 +143,11 @@ export default async function WalletPage() {
       )}
     </div>
   );
+}
+
+/** What a wallet ledger row is, in the customer's words. */
+function walletRowLabel(entryType: string, isCredit: boolean): string {
+  if (entryType === "wallet_hold") return "Set aside for an order";
+  if (entryType === "wallet_hold_release") return "Returned, order was not paid";
+  return isCredit ? "Refund received" : "Paid for order";
 }

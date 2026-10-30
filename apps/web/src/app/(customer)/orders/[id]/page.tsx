@@ -1,5 +1,5 @@
 // app/(customer)/orders/[id]/page.tsx
-import { restoreCartFromOrderAction, retryPaymentAction } from "@/app/actions/orders";
+import { releaseWalletHoldAction, restoreCartFromOrderAction, retryPaymentAction } from "@/app/actions/orders";
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { isDeliveredByStore } from "@/lib/customer/delivered-by";
@@ -91,7 +91,7 @@ export default async function OrderDetailPage({
   const supabase = await createClient();
 
   const ORDER_COLUMNS =
-    "id, code, status, payment_status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_note, vendor_id";
+    "id, code, status, payment_status, wallet_applied_kobo, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_note, vendor_id";
 
   let { data: orderRow } = await supabase.from("orders").select(ORDER_COLUMNS).eq("id", id).maybeSingle();
 
@@ -174,14 +174,30 @@ export default async function OrderDetailPage({
           <p className="text-sm text-ink">
             Payment wasn&apos;t completed for this order.
           </p>
+          {order.wallet_applied_kobo > 0 && (
+            <p className="mt-2 text-sm text-ink-muted">
+              {formatNaira(koboOf(order.wallet_applied_kobo))} of this order is covered by your wallet and is set aside for
+              it. Your card pays the other {formatNaira(koboOf(order.total_kobo - order.wallet_applied_kobo))}. If you do not
+              pay, the wallet money goes back to your wallet automatically after 30 minutes.
+            </p>
+          )}
           <form
             action={retryPaymentAction.bind(null, order.id)}
             className="mt-3"
           >
             <Button type="submit" className="w-full">
-              Complete payment →
+              {order.wallet_applied_kobo > 0
+                ? `Pay ${formatNaira(koboOf(order.total_kobo - order.wallet_applied_kobo))} by card →`
+                : "Complete payment →"}
             </Button>
           </form>
+          {order.wallet_applied_kobo > 0 && (
+            <form action={releaseWalletHoldAction.bind(null, order.id)} className="mt-2">
+              <Button type="submit" variant="secondary" className="w-full">
+                Pay the full amount by card instead
+              </Button>
+            </form>
+          )}
           <form
             action={restoreCartFromOrderAction.bind(null, order.id)}
             className="mt-2"

@@ -3,7 +3,14 @@
 // The step between "Partner with KiaKia" on the landing page and the vendor
 // sign-up form: it tells a would-be vendor what KiaKia is to them before
 // asking for an account. Static apart from the header's account read.
-import { ArrowRight, Bike, ClipboardCheck, MapPin, Store, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  Bike,
+  ClipboardCheck,
+  MapPin,
+  Store,
+  Wallet,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getMarketingAccount } from "@/lib/auth/marketing-account";
@@ -36,10 +43,22 @@ const BENEFITS = [
 ] as const;
 
 const STEPS = [
-  { title: "Create your account", body: "It takes a minute. Name, email and a password." },
-  { title: "Add your store and menu", body: "Your details, your dishes, your prices and your opening hours." },
-  { title: "We review your store", body: "The KiaKia team checks every store before customers can see it." },
-  { title: "Start taking orders", body: "Accept, prepare, hand over to the rider. We handle the rest." },
+  {
+    title: "Create your account",
+    body: "It takes a minute. Name, email and a password.",
+  },
+  {
+    title: "Add your store and menu",
+    body: "Your details, your dishes, your prices and your opening hours.",
+  },
+  {
+    title: "We review your store",
+    body: "The KiaKia team checks every store before customers can see it.",
+  },
+  {
+    title: "Start taking orders",
+    body: "Accept, prepare, hand over to the rider. We handle the rest.",
+  },
 ] as const;
 
 export default async function PartnerPage() {
@@ -50,7 +69,10 @@ export default async function PartnerPage() {
       <Header account={account} />
 
       <section className="relative overflow-hidden pb-16 pt-6 sm:pb-24 sm:pt-10">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+        >
           <div className="kk-blob -left-40 -top-40 size-[520px] bg-kk-orange/30" />
           <div className="kk-blob -right-32 top-20 size-[460px] bg-kk-red/20" />
         </div>
@@ -62,11 +84,12 @@ export default async function PartnerPage() {
               For kitchens and vendors
             </p>
             <h1 className="mt-5 font-sora text-[clamp(2.25rem,6vw,4.25rem)] font-extrabold leading-[1] tracking-[-0.04em] text-kk-ink">
-              Your food, at every door.
+              Your Food, More Visibility, More Customers.
             </h1>
             <p className="mt-6 max-w-xl font-inter text-lg leading-8 text-kk-cocoa sm:text-xl">
-              KiaKia is how customers find you, order from you and get their food fast fast.
-              You cook. We bring the customers and the riders.
+              KIAKIA connects your restaurant with customers across Osogbo,
+              helping more people discover your food, place orders, and enjoy
+              fast reliable delivery.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
@@ -84,7 +107,6 @@ export default async function PartnerPage() {
               </Link>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -101,7 +123,9 @@ export default async function PartnerPage() {
                     <item.icon className="size-5" />
                   </span>
                   <div>
-                    <h3 className="font-sora text-base font-bold text-white">{item.title}</h3>
+                    <h3 className="font-sora text-base font-bold text-white">
+                      {item.title}
+                    </h3>
                     <p className="mt-1.5 max-w-xs font-inter text-[14px] leading-6 text-white/60">
                       {item.body}
                     </p>
@@ -131,8 +155,12 @@ export default async function PartnerPage() {
                 <span className="flex size-9 items-center justify-center rounded-full bg-kk-red/10 font-sora text-sm font-bold text-kk-red">
                   {i + 1}
                 </span>
-                <h3 className="mt-4 font-sora text-lg font-bold text-kk-ink">{step.title}</h3>
-                <p className="mt-2 font-inter text-[15px] leading-6 text-kk-cocoa">{step.body}</p>
+                <h3 className="mt-4 font-sora text-lg font-bold text-kk-ink">
+                  {step.title}
+                </h3>
+                <p className="mt-2 font-inter text-[15px] leading-6 text-kk-cocoa">
+                  {step.body}
+                </p>
               </li>
             ))}
           </ol>
@@ -142,7 +170,9 @@ export default async function PartnerPage() {
               <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/15">
                 <Store className="size-6" />
               </span>
-              <p className="font-sora text-xl font-bold leading-tight">Ready to put your kitchen on KiaKia?</p>
+              <p className="font-sora text-xl font-bold leading-tight">
+                Ready to put your kitchen on KiaKia?
+              </p>
             </div>
             <Link
               href="/vendor/register"

@@ -38,6 +38,7 @@ export function CheckoutForm({
     defaultAddress,
   );
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [useWallet, setUseWallet] = useState(false);
   const [deliveryNote, setDeliveryNote] = useState("");
   const [formState, formAction, pending] = useActionState(
     placeOrderAction,
@@ -76,6 +77,8 @@ export function CheckoutForm({
           onAddressChange={setSelectedAddress}
           paymentMethod={paymentMethod}
           onPaymentMethodChange={setPaymentMethod}
+          useWallet={useWallet}
+          onUseWalletChange={setUseWallet}
           subtotalKobo={subtotalKobo}
           serviceFeeKobo={serviceFeeKobo}
           walletBalanceKobo={walletBalanceKobo}
@@ -97,6 +100,8 @@ export function CheckoutForm({
           onAddressChange={setSelectedAddress}
           paymentMethod={paymentMethod}
           onPaymentMethodChange={setPaymentMethod}
+          useWallet={useWallet}
+          onUseWalletChange={setUseWallet}
           subtotalKobo={subtotalKobo}
           serviceFeeKobo={serviceFeeKobo}
           walletBalanceKobo={walletBalanceKobo}

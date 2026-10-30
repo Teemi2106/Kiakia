@@ -9,12 +9,25 @@ import type { MarketingAccount } from "@/lib/auth/marketing-account";
  * The noun that cycles as the first line of the headline. SIZER is whichever
  * of them is widest — it is rendered invisibly to hold the inline box open,
  * so nothing after the rotator reflows as the words change. The stagger is
- * one fifth of the 11s cycle in marketing.css, so exactly one word is up at
+ * one tenth of the 24s cycle in marketing.css, so exactly one word is up at
  * any moment.
  */
-const CRAVINGS = ["Jollof", "Suya", "Shawarma", "Swallow", "Amala"] as const;
-const SIZER = "Shawarma";
-const WORD_STAGGER_MS = 11_000 / CRAVINGS.length;
+const CRAVINGS = [
+  "Jollof Rice",
+  "Iyán",
+  "Àmàlà",
+  "Suya",
+  "Shawarma",
+  "Egusi",
+  "Ofada Rice",
+  "Moi moi",
+  "Puff-puff",
+  "Pepper soup",
+] as const;
+const SIZER = CRAVINGS.reduce((widest, word) => (word.length > widest.length ? word : widest));
+// Must match the 24s animation in marketing.css (.kk-rotator-word) and its
+// 10-word keyframes: each word gets a tenth of the cycle.
+const WORD_STAGGER_MS = 24_000 / CRAVINGS.length;
 
 export function Hero({ account }: { account: MarketingAccount | null }) {
   return (
@@ -43,7 +56,7 @@ export function Hero({ account }: { account: MarketingAccount | null }) {
             className="kk-enter mt-6 font-sora font-extrabold leading-[0.9] tracking-[-0.04em] text-kk-ink"
             style={{ "--kk-delay": "120ms" } as React.CSSProperties}
           >
-            <span className="block text-[clamp(3rem,12.5vw,5.5rem)]">
+            <span className="block text-[clamp(2.5rem,11vw,5rem)]">
               <span className="kk-rotator text-kk-red">
                 {/* Holds the width of the widest word; never actually seen. */}
                 <span className="kk-rotator-sizer" aria-hidden="true">

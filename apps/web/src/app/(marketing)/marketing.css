@@ -100,23 +100,23 @@
   top: 0;
   white-space: nowrap;
   opacity: 0;
-  animation: kk-word 11s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: kk-word 24s cubic-bezier(0.16, 1, 0.3, 1) infinite;
   animation-delay: var(--kk-delay, 0ms);
 }
 
 /* One word is fading out exactly while the next fades in, so the slot is
-   never empty. Delays are one fifth of the duration apart. */
+   never empty. Delays are one tenth of the duration apart (ten words). */
 @keyframes kk-word {
   0% {
     opacity: 0;
     transform: translateY(0.3em) rotate(2deg);
   }
-  6%,
-  20% {
+  2%,
+  9% {
     opacity: 1;
     transform: none;
   }
-  26%,
+  11%,
   100% {
     opacity: 0;
     transform: translateY(-0.26em) rotate(-2deg);

@@ -49,6 +49,20 @@ export async function requestMonnifyRefundForOrder(orderCode: string): Promise<G
   if (!payment || !payment.provider_ref) return "not_applicable";
   if (payment.refund_reference) return "already_requested";
 
+  // How much to ask for comes from the LEDGER, not the payment row: for a
+  // card + wallet order only the card part goes back to the card (the wallet
+  // part was returned to the wallet). If the two ever disagree, ask for
+  // nothing and say so - a human reconciles it - rather than over- or
+  // under-refund the customer's card.
+  const { data: ledgerRefundKobo } = await admin.rpc("order_refund_gateway_kobo", { p_order_code: orderCode });
+  if (typeof ledgerRefundKobo !== "number" || ledgerRefundKobo <= 0) return "not_applicable";
+  if (ledgerRefundKobo > payment.amount_kobo) {
+    console.error(
+      `requestMonnifyRefundForOrder: order ${orderCode} ledger refund (${ledgerRefundKobo} kobo) exceeds the card payment (${payment.amount_kobo} kobo); not asking Monnify`,
+    );
+    return "unknown";
+  }
+
   const refundReference = `${orderCode}-refund`;
 
   const { data: claimed, error: claimError } = await admin
@@ -67,7 +81,7 @@ export async function requestMonnifyRefundForOrder(orderCode: string): Promise<G
     const result = await initiateRefund({
       transactionReference: payment.provider_ref,
       refundReference,
-      refundAmountKobo: payment.amount_kobo,
+      refundAmountKobo: ledgerRefundKobo,
       refundReason: "Order cancelled",
       customerNote: "KiaKia refund",
     });
