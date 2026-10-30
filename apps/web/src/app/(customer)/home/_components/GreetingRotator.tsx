@@ -7,34 +7,52 @@ import { GREETINGS, PROMPTS, type DayPeriod } from "../_lib/greetings";
 
 const INTERVAL_MS = 10 * 60_000;
 
+/** A random index in [0, length) that differs from `current` (when there is a
+ * choice), so a swap is never a no-op. */
+function pickOther(length: number, current: number): number {
+  if (length < 2) return 0;
+  const next = Math.floor(Math.random() * (length - 1));
+  return next >= current ? next + 1 : next;
+}
+
 /**
- * The hero's greeting line and headline, cycling through the day's greetings
- * (English, Yoruba, Pidgin) and meal prompts together.
+ * The hero's greeting line and headline: a random greeting (English, Yoruba or
+ * Pidgin) and a random meal prompt for the time of day, re-drawn every ten
+ * minutes while the page stays open.
  *
- * Only the active text is rendered, so the headline is exactly as tall as what
- * it says and sits flush against the line below it. The period comes from the
- * server, so the first paint (index 0, plain English) matches on both sides; it
- * only starts moving after mount, and not at all under prefers-reduced-motion.
+ * The first pick is made on the server and passed in, so the server render and
+ * hydration agree (no flash, no mismatch). Only the active text is rendered, so
+ * the headline sits flush against the line below it. Nothing re-draws under
+ * prefers-reduced-motion.
  */
 export function GreetingRotator({
   period,
   firstName,
+  initialGreeting,
+  initialPrompt,
 }: {
   period: DayPeriod;
   firstName: string | null;
+  initialGreeting: number;
+  initialPrompt: number;
 }) {
-  const [tick, setTick] = useState(0);
+  const [picked, setPicked] = useState({ greeting: initialGreeting, prompt: initialPrompt });
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(() => setTick((t) => t + 1), INTERVAL_MS);
+    const id = window.setInterval(() => {
+      setPicked((current) => ({
+        greeting: pickOther(GREETINGS[period].length, current.greeting),
+        prompt: pickOther(PROMPTS[period].length, current.prompt),
+      }));
+    }, INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, []);
+  }, [period]);
 
   const greetings = GREETINGS[period];
   const prompts = PROMPTS[period];
-  const greeting = greetings[tick % greetings.length];
-  const prompt = prompts[tick % prompts.length];
+  const greeting = greetings[picked.greeting] ?? greetings[0];
+  const prompt = prompts[picked.prompt] ?? prompts[0];
   const name = firstName ? `, ${firstName}` : "";
 
   return (

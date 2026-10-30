@@ -2,7 +2,7 @@
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { periodFor } from "../_lib/greetings";
+import { GREETINGS, periodFor, PROMPTS } from "../_lib/greetings";
 import { GreetingRotator } from "./GreetingRotator";
 
 /**
@@ -19,6 +19,11 @@ export function HomeGreeting({
   firstName: string | null;
   heroImageUrl?: string | null;
 }) {
+  // Picked here, on the server, so the first paint and hydration agree.
+  const period = periodFor(new Date());
+  const initialGreeting = Math.floor(Math.random() * GREETINGS[period].length);
+  const initialPrompt = Math.floor(Math.random() * PROMPTS[period].length);
+
   return (
     <section className="relative min-h-[310px] overflow-hidden rounded-[2rem] bg-kk-ink-deep shadow-[0_28px_70px_-35px_rgba(81,22,12,0.65)] sm:min-h-[350px]">
       {heroImageUrl && (
@@ -39,7 +44,12 @@ export function HomeGreeting({
       />
 
       <div className="relative flex min-h-[310px] max-w-2xl flex-col justify-center px-6 py-9 sm:min-h-[350px] sm:px-10 sm:py-12">
-          <GreetingRotator period={periodFor(new Date())} firstName={firstName} />
+          <GreetingRotator
+            period={period}
+            firstName={firstName}
+            initialGreeting={initialGreeting}
+            initialPrompt={initialPrompt}
+          />
           <p className="mt-4 max-w-lg font-inter text-[15px] leading-6 text-white/72 sm:text-base">
             Chosen around your taste, your location and the meals you come back for.
           </p>
