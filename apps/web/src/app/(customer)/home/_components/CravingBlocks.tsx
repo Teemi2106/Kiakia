@@ -2,7 +2,7 @@ import { Banknote, Flame, MapPin, Sparkles, Timer, Utensils } from "lucide-react
 import Link from "next/link";
 
 const CRAVINGS = [
-  { label: "Something filling", detail: "Big comfort, zero compromise", href: "/home?category=combo_meals", icon: Utensils, tone: "from-[#4d160f] to-[#9b2719]" },
+  { label: "Something filling", detail: "Big comfort, zero compromise", href: "/home?category=swallow_soup_combos", icon: Utensils, tone: "from-[#4d160f] to-[#9b2719]" },
   { label: "Something fast", detail: "Quick prep for busy moments", href: "/home?quick=1&open=1", icon: Timer, tone: "from-[#d64618] to-[#ff8a24]" },
   { label: "Local favourites", detail: "The flavours that feel like home", href: "/home?category=swallow", icon: MapPin, tone: "from-[#173f2a] to-[#397c50]" },
   { label: "Budget-friendly", detail: "Great taste, easy on your wallet", href: "/home?sort=rating", icon: Banknote, tone: "from-[#302318] to-[#765437]" },

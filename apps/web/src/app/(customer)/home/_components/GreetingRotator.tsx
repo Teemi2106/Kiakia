@@ -57,11 +57,10 @@ export function GreetingRotator({
 
   return (
     <>
-      <p className="flex items-center gap-2 font-inter text-[11px] font-semibold uppercase tracking-[0.24em] text-kk-orange">
+      <p className="flex items-center gap-2 font-inter text-sm font-semibold tracking-wide text-kk-orange">
         <Sparkles className="size-3.5 shrink-0" />
         <span key={greeting} className="kk-swap">
-          {greeting}
-          {name}
+          {greeting.replace("{name}", name)}
         </span>
       </p>
       <h1 className="mt-4 max-w-xl font-sora text-[clamp(1.9rem,5.4vw,3.4rem)] font-extrabold leading-[1.02] tracking-[-0.04em] text-white">

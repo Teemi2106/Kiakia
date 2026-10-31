@@ -22,12 +22,13 @@ export function periodFor(now: Date): DayPeriod {
   return "evening";
 }
 
-/** English first, so the un-animated state (server render, reduced motion) is
- * always the plain greeting. Then Yoruba, then Pidgin. */
+/** English first, so the plain greeting is the baseline. Then Yoruba, then
+ * Pidgin. "{name}" marks where ", Name" goes (empty when the
+ * customer has no name on file). */
 export const GREETINGS: Record<DayPeriod, readonly string[]> = {
-  morning: ["Good morning", "Ẹ káàárọ̀", "Morning o, how you dey?"],
-  afternoon: ["Good afternoon", "Ẹ káàsán", "Afternoon o, how body?"],
-  evening: ["Good evening", "Ẹ kú ìrọ̀lẹ́", "Good evening o, how far?"],
+  morning: ["Good morning{name}", "Ẹ káàárọ̀{name}", "Morning o{name}, how you dey?"],
+  afternoon: ["Good afternoon{name}", "Ẹ káàsán{name}", "Afternoon o{name}, how body?"],
+  evening: ["Good evening{name}", "Ẹ kú ìrọ̀lẹ́{name}", "Good evening o{name}, how far?"],
 };
 
 export const PROMPTS: Record<DayPeriod, readonly string[]> = {

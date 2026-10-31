@@ -108,7 +108,7 @@ from tmp_dummy_vendors dv
 on conflict (id) do nothing;
 
 insert into menu_categories (id, vendor_id, category_key, sort_order)
-select dv.category_id, dv.vendor_id, 'combo_meals', 0
+select dv.category_id, dv.vendor_id, 'swallow_soup_combos', 0
 from tmp_dummy_vendors dv
 on conflict (id) do nothing;
 

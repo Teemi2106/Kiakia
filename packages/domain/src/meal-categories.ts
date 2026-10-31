@@ -17,11 +17,17 @@ export const MEAL_CATEGORIES: readonly MealCategoryPreset[] = [
   { key: "swallow", label: "Swallow" },
   { key: "soups", label: "Soups" },
   { key: "rice_dishes", label: "Rice Dishes" },
-  { key: "proteins_grills", label: "Proteins & Grills" },
-  { key: "small_chops_snacks", label: "Small Chops & Snacks" },
-  { key: "pastries_bakery", label: "Pastries & Bakery" },
+  { key: "beans_dishes", label: "Beans Dishes" },
+  { key: "pasta_noodles", label: "Pasta & Noodles" },
+  { key: "swallow_soup_combos", label: "Swallow & Soup Combos" },
+  { key: "proteins_meat", label: "Proteins & Meat" },
+  { key: "snacks_small_chops", label: "Snacks & Small Chops" },
+  { key: "breakfast", label: "Breakfast" },
+  { key: "grills_bbq", label: "Grills & BBQ" },
+  { key: "fast_food", label: "Fast Food" },
+  { key: "sides", label: "Sides" },
   { key: "drinks", label: "Drinks" },
-  { key: "combo_meals", label: "Combo Meals" },
+  { key: "local_specials", label: "Local & Traditional Specials" },
 ];
 
 const MEAL_CATEGORY_BY_KEY = new Map(MEAL_CATEGORIES.map((c) => [c.key, c]));

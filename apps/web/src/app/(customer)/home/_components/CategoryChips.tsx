@@ -2,13 +2,18 @@
 import { cn } from "@kiakia/ui";
 import type { MealCategoryPreset } from "@kiakia/domain";
 import {
+  Bean,
   Cookie,
   CupSoda,
+  Drumstick,
+  Egg,
   Flame,
   LayoutGrid,
   Package,
+  Salad,
   Sandwich,
   Soup,
+  Star,
   Utensils,
   Wheat,
   type LucideIcon,
@@ -22,11 +27,17 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   swallow: Wheat,
   soups: Soup,
   rice_dishes: Utensils,
-  proteins_grills: Flame,
-  small_chops_snacks: Sandwich,
-  pastries_bakery: Cookie,
+  beans_dishes: Bean,
+  pasta_noodles: Utensils,
+  swallow_soup_combos: Package,
+  proteins_meat: Drumstick,
+  snacks_small_chops: Cookie,
+  breakfast: Egg,
+  grills_bbq: Flame,
+  fast_food: Sandwich,
+  sides: Salad,
   drinks: CupSoda,
-  combo_meals: Package,
+  local_specials: Star,
 };
 
 interface CategoryChipsProps {
