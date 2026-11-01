@@ -146,7 +146,7 @@ export function VendorSidebar({ vendor }: { vendor: VendorSummary }) {
           {hoursStatus && (
             <div
               className={`mt-3 flex items-center gap-1.5 font-inter text-sm font-medium ${
-                hoursStatus.isOpenNow ? "text-kk-green-ink" : "text-kk-cocoa"
+                hoursStatus.isOpenNow ? "text-kk-green-ink-ink" : "text-kk-cocoa"
               }`}
             >
               <Clock className="size-4" />

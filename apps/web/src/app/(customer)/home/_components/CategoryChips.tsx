@@ -92,7 +92,7 @@ export function CategoryChips({ categories, activeCategory, preserveParams }: Ca
               <span
                 className={cn(
                   "flex size-7 items-center justify-center rounded-full transition-colors",
-                  isActive ? "bg-kk-card/20 text-white" : "bg-kk-sand text-kk-red",
+                  isActive ? "bg-kk-card/20 text-white" : "bg-kk-sand text-kk-red-ink",
                 )}
               >
                 <Icon className="size-4" />

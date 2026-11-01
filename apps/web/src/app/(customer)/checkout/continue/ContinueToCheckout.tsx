@@ -19,7 +19,7 @@ export function ContinueToCheckout() {
       role="status"
       className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-3 px-4 py-24 text-center"
     >
-      <Loader2 className="size-7 animate-spin text-kk-red" aria-hidden="true" />
+      <Loader2 className="size-7 animate-spin text-kk-red-ink" aria-hidden="true" />
       <p className="font-inter text-sm text-kk-cocoa">Getting your order ready…</p>
     </div>
   );

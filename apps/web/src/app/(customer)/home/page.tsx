@@ -225,7 +225,7 @@ export default async function CustomerHomePage({
             action={
               <Link
                 href="/profile/addresses"
-                className="font-inter text-sm font-semibold text-kk-red hover:underline"
+                className="font-inter text-sm font-semibold text-kk-red-ink hover:underline"
               >
                 Check your address
               </Link>
@@ -379,7 +379,7 @@ export default async function CustomerHomePage({
             action={
               <Link
                 href="/home"
-                className="inline-flex items-center gap-1.5 rounded-full border border-kk-line/70 bg-kk-card px-3.5 py-2 font-inter text-xs font-semibold text-kk-cocoa transition-colors hover:border-kk-red/40 hover:text-kk-red"
+                className="inline-flex items-center gap-1.5 rounded-full border border-kk-line/70 bg-kk-card px-3.5 py-2 font-inter text-xs font-semibold text-kk-cocoa transition-colors hover:border-kk-red/40 hover:text-kk-red-ink"
               >
                 Clear filters
               </Link>
@@ -394,7 +394,7 @@ export default async function CustomerHomePage({
               action={
                 <Link
                   href="/home"
-                  className="font-inter text-sm font-semibold text-kk-red hover:underline"
+                  className="font-inter text-sm font-semibold text-kk-red-ink hover:underline"
                 >
                   Clear filters
                 </Link>
@@ -573,7 +573,7 @@ function HomeShell({
         )}
       >
         <div className="flex items-center gap-3">
-          <Store className="size-4 shrink-0 text-kk-red" />
+          <Store className="size-4 shrink-0 text-kk-red-ink" />
           <h2 className="font-inter text-[11px] font-semibold uppercase tracking-[0.22em] text-kk-cocoa">
             Browse
           </h2>

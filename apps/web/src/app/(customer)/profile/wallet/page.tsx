@@ -108,7 +108,7 @@ export default async function WalletPage() {
               >
                 <span
                   className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
-                    isCredit ? "bg-[#DFF3DC] text-kk-green-ink" : "bg-notice-surface text-kk-orange-ink"
+                    isCredit ? "bg-[#DFF3DC] text-kk-green-ink-ink" : "bg-notice-surface text-kk-orange-ink"
                   }`}
                 >
                   {isCredit ? (
@@ -130,7 +130,7 @@ export default async function WalletPage() {
 
                 <span
                   className={`shrink-0 font-sora text-sm font-bold ${
-                    isCredit ? "text-kk-green-ink" : "text-kk-ink"
+                    isCredit ? "text-kk-green-ink-ink" : "text-kk-ink"
                   }`}
                 >
                   {isCredit ? "+" : "−"}

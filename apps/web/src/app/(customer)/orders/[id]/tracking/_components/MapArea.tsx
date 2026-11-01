@@ -156,7 +156,7 @@ function TrackedMap({
             variant === "mobile" ? "top-20" : "bottom-6"
           }`}
         >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-kk-red/10 text-kk-red">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-kk-red/10 text-kk-red-ink">
             {deliveringToCustomer ? <Bike className="size-4" /> : <Store className="size-4" />}
           </span>
           <span className="min-w-0">

@@ -69,7 +69,7 @@ export function VendorCard({ vendor }: { vendor: VendorCardVendor }) {
           // costs no request. (The old code pointed at an
           // /assets/vendor-placeholder.png that was never added to the repo.)
           <span className="flex size-full items-center justify-center bg-gradient-to-br from-kk-red-soft via-kk-cream to-kk-orange/25">
-            <span aria-hidden="true" className="font-sora text-5xl font-extrabold text-kk-red/30">
+            <span aria-hidden="true" className="font-sora text-5xl font-extrabold text-kk-red-ink/30">
               {vendor.name.trim().charAt(0).toUpperCase() || "?"}
             </span>
           </span>
@@ -99,13 +99,13 @@ export function VendorCard({ vendor }: { vendor: VendorCardVendor }) {
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="font-sora text-[17px] font-bold leading-6 tracking-tight text-kk-ink transition-colors group-hover:text-kk-red">
+        <h3 className="font-sora text-[17px] font-bold leading-6 tracking-tight text-kk-ink transition-colors group-hover:text-kk-red-ink">
           {vendor.name}
         </h3>
 
         <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-3 font-inter text-xs text-kk-cocoa">
           {openNow ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-kk-mint/35 px-2.5 py-1 font-semibold text-kk-green">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-kk-mint/35 px-2.5 py-1 font-semibold text-kk-green-ink">
               <Clock3 className="size-3.5" />~{vendor.avg_prep_mins || 15} min prep
             </span>
           ) : (
@@ -117,7 +117,7 @@ export function VendorCard({ vendor }: { vendor: VendorCardVendor }) {
 
           {vendor.distanceM != null && (
             <span className="inline-flex items-center gap-1">
-              <MapPin className="size-3.5 shrink-0 text-kk-red" />
+              <MapPin className="size-3.5 shrink-0 text-kk-red-ink" />
               {formatDistance(vendor.distanceM)}
             </span>
           )}

@@ -84,7 +84,7 @@ export function ActiveOrderCard({
 
         <Link
           href={`/orders/${order.id}/tracking`}
-          className="group inline-flex shrink-0 items-center gap-2 rounded-2xl bg-kk-card px-5 py-3 font-inter text-sm font-semibold text-kk-ink-deep transition-transform duration-300 hover:-translate-y-0.5"
+          className="group inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-5 py-3 font-inter text-sm font-semibold text-kk-ink-deep transition-transform duration-300 hover:-translate-y-0.5"
         >
           Track it
           <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />

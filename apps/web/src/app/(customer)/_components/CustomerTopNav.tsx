@@ -77,7 +77,7 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
                 className={cn(
                   "rounded-full px-3.5 py-2 font-inter text-sm transition-colors",
                   isActive
-                    ? "bg-kk-red/10 font-bold text-kk-red"
+                    ? "bg-kk-red/10 font-bold text-kk-red-ink"
                     : "font-medium text-kk-cocoa hover:bg-black/5 hover:text-kk-ink",
                 )}
               >
@@ -151,7 +151,7 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
               <Link
                 href="/profile"
                 aria-label="Your profile"
-                className="hidden size-9 items-center justify-center rounded-full border border-kk-line bg-kk-card text-kk-cocoa transition-colors hover:border-kk-red/50 hover:text-kk-red lg:flex"
+                className="hidden size-9 items-center justify-center rounded-full border border-kk-line bg-kk-card text-kk-cocoa transition-colors hover:border-kk-red/50 hover:text-kk-red-ink lg:flex"
               >
                 <User className="size-[18px]" />
               </Link>
@@ -197,14 +197,14 @@ function AddressPill({
   if (compact) {
     return (
       <Link href="/profile/addresses" className="flex items-center gap-1.5">
-        <MapPin className="size-3.5 shrink-0 text-kk-red" />
+        <MapPin className="size-3.5 shrink-0 text-kk-red-ink" />
         <span className="truncate font-inter text-xs text-kk-cocoa">
           {label ? (
             <>
               Deliver to <span className="font-semibold text-kk-ink">{label}</span>
             </>
           ) : (
-            <span className="font-semibold text-kk-red">Set a delivery address</span>
+            <span className="font-semibold text-kk-red-ink">Set a delivery address</span>
           )}
         </span>
         <ChevronRight className="size-3.5 shrink-0 text-kk-cocoa" />
@@ -221,7 +221,7 @@ function AddressPill({
       )}
       title={label ? `Delivering to ${label}` : "Set delivery address"}
     >
-      <MapPin className="size-4 shrink-0 text-kk-red" />
+      <MapPin className="size-4 shrink-0 text-kk-red-ink" />
       <span className="flex flex-col leading-tight">
         <span className="font-inter text-[10px] font-medium uppercase tracking-wide text-kk-cocoa/70">
           Deliver to

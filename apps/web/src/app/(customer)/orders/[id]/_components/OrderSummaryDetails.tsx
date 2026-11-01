@@ -83,7 +83,7 @@ export function OrderSummaryDetails({
           </span>
         </div>
         {order.discount_kobo > 0 && (
-          <div className="flex items-center justify-between text-kk-green-ink">
+          <div className="flex items-center justify-between text-kk-green-ink-ink">
             <span className="font-inter text-sm">Discount</span>
             <span className="font-inter text-sm font-semibold">
               −{formatNaira(koboOf(order.discount_kobo))}

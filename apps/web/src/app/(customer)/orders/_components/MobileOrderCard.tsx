@@ -93,7 +93,7 @@ export function MobileOrderCard({
         <div>
           <p className="font-inter text-xs text-kk-cocoa">Ordered</p>
           <p
-            className={`font-sora text-xl font-bold ${order.status === "in_transit" ? "text-kk-green-mid" : "text-kk-ink"}`}
+            className={`font-sora text-xl font-bold ${order.status === "in_transit" ? "text-kk-green-ink-mid" : "text-kk-ink"}`}
           >
             {timeAgo(order.created_at)}
           </p>

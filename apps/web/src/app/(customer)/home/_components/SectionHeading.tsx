@@ -30,7 +30,7 @@ export function SectionHeading({
             {title}
           </h2>
           {count != null && (
-            <span className="rounded-full bg-kk-red/10 px-2 py-0.5 font-inter text-xs font-bold text-kk-red">
+            <span className="rounded-full bg-kk-red/10 px-2 py-0.5 font-inter text-xs font-bold text-kk-red-ink">
               {count}
             </span>
           )}

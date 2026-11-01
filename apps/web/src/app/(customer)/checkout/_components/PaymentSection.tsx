@@ -93,7 +93,7 @@ export function PaymentSection({
           selected={paymentMethod === "wallet"}
           onSelect={() => onPaymentMethodChange("wallet")}
           disabled={!walletCovers}
-          icon={<Wallet className="size-5 text-kk-green-ink" />}
+          icon={<Wallet className="size-5 text-kk-green-ink-ink" />}
           title="KiaKia Wallet"
           subtitle={
             walletCovers
