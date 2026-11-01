@@ -57,8 +57,8 @@ export function AvailabilityToggle({
       aria-checked={checked}
       disabled={pending}
       onClick={() => void toggle()}
-      className={`inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40 focus-visible:ring-offset-1 ${
-        checked ? "border-[#176A22] bg-[#176A22]" : "border-[#E4BEB8] bg-[#E5E2E1]"
+      className={`inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red-ink/40 focus-visible:ring-offset-1 ${
+        checked ? "border-kk-green bg-kk-green" : "border-kk-line bg-kk-hair"
       } disabled:cursor-not-allowed disabled:opacity-50`}
     >
       <span
@@ -104,7 +104,7 @@ export function DeleteItemButton({
         type="button"
         onClick={() => void handleDelete()}
         disabled={pending}
-        className="rounded-lg p-2 text-[#5B403C] transition-colors hover:bg-[#FFDAD5] hover:text-[#BA1A1A] disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-lg p-2 text-kk-cocoa transition-colors hover:bg-kk-danger-wash hover:text-kk-danger-ink disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="Delete item"
       >
         {pending ? (
@@ -116,7 +116,7 @@ export function DeleteItemButton({
       {error && (
         <span
           role="alert"
-          className="absolute right-0 top-full z-10 mt-1 w-56 rounded-lg bg-[#BA1A1A] px-3 py-2 text-left text-xs font-medium text-white shadow-lg"
+          className="absolute right-0 top-full z-10 mt-1 w-56 rounded-lg bg-kk-danger px-3 py-2 text-left text-xs font-medium text-white shadow-lg"
         >
           {error}
         </span>

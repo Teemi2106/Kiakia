@@ -11,7 +11,7 @@ import type { Payout } from "./types";
 // out of this page's first-load bundle, so the page is interactive before the chart is.
 const RevenueChart = dynamic(() => import("./RevenueChart").then((m) => m.RevenueChart), {
   ssr: false,
-  loading: () => <div className="h-48 w-full animate-pulse rounded-xl bg-[#F0EDED]" aria-hidden="true" />,
+  loading: () => <div className="h-48 w-full animate-pulse rounded-xl bg-kk-fill" aria-hidden="true" />,
 });
 
 

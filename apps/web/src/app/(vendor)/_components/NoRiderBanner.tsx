@@ -21,12 +21,12 @@ function StatusLines({ lines }: { lines: readonly string[] }) {
   const [headline, ...rest] = lines;
   if (!headline) return null;
   return (
-    <div role="status" className="flex gap-3 rounded-2xl border border-[#E4BEB8] bg-white p-4">
-      <Clock className="mt-0.5 size-5 shrink-0 text-[#934B00]" aria-hidden="true" />
+    <div role="status" className="flex gap-3 rounded-2xl border border-kk-line bg-kk-card p-4">
+      <Clock className="mt-0.5 size-5 shrink-0 text-kk-orange-ink" aria-hidden="true" />
       <div className="flex flex-col gap-0.5">
-        <p className="text-sm font-semibold text-[#1C1B1B]">{headline}</p>
+        <p className="text-sm font-semibold text-kk-ink">{headline}</p>
         {rest.map((line) => (
-          <p key={line} className="text-sm text-[#5B403C]">
+          <p key={line} className="text-sm text-kk-cocoa">
             {line}
           </p>
         ))}
@@ -79,7 +79,7 @@ export function NoRiderBanner({ orderId, status, dispatch }: { orderId: string; 
       <div className="flex flex-col gap-3">
         <StatusLines lines={lines} />
         {message && (
-          <p role="status" className="rounded-2xl border border-[#176A22]/30 bg-[#DFF3DC] px-4 py-3 text-sm font-medium text-[#1C1B1B]">
+          <p role="status" className="rounded-2xl border border-kk-green/30 bg-kk-green-wash px-4 py-3 text-sm font-medium text-kk-ink">
             {message}
           </p>
         )}
@@ -123,19 +123,19 @@ export function NoRiderBanner({ orderId, status, dispatch }: { orderId: string; 
   }
 
   return (
-    <div role="alert" className="rounded-2xl border-2 border-[#934B00] bg-[#FFDCC5]/40 p-4 sm:p-5">
+    <div role="alert" className="rounded-2xl border-2 border-kk-orange-ink bg-notice-surface/40 p-4 sm:p-5">
       <div className="flex gap-3">
-        <TriangleAlert className="mt-0.5 size-5 shrink-0 text-[#934B00]" aria-hidden="true" />
+        <TriangleAlert className="mt-0.5 size-5 shrink-0 text-kk-orange-ink" aria-hidden="true" />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div>
-            <p className="font-sora text-base font-bold text-[#1C1B1B]">{NO_RIDER_HEADLINE}</p>
-            <p className="mt-1 text-sm text-[#5B403C]">{bannerQuestion({ ...dispatch, expandAvailableInSeconds: remaining })}</p>
+            <p className="font-sora text-base font-bold text-kk-ink">{NO_RIDER_HEADLINE}</p>
+            <p className="mt-1 text-sm text-kk-cocoa">{bannerQuestion({ ...dispatch, expandAvailableInSeconds: remaining })}</p>
           </div>
 
           {confirming ? (
-            <div role="alertdialog" aria-label="Deliver this order yourself?" className="flex flex-col gap-3 rounded-xl border border-[#E4BEB8] bg-white p-4">
-              <p className="text-sm font-semibold text-[#1C1B1B]">Deliver this order yourself?</p>
-              <p className="text-sm text-[#5B403C]">{SELF_DELIVERY_CONFIRM_TEXT}</p>
+            <div role="alertdialog" aria-label="Deliver this order yourself?" className="flex flex-col gap-3 rounded-xl border border-kk-line bg-kk-card p-4">
+              <p className="text-sm font-semibold text-kk-ink">Deliver this order yourself?</p>
+              <p className="text-sm text-kk-cocoa">{SELF_DELIVERY_CONFIRM_TEXT}</p>
               <div className="flex flex-wrap gap-2">
                 <Button type="button" disabled={pending} onClick={startSelfDelivery}>
                   Yes, I&apos;ll deliver it
@@ -159,15 +159,15 @@ export function NoRiderBanner({ orderId, status, dispatch }: { orderId: string; 
           )}
 
           {!showExpand && (
-            <p className="text-xs text-[#5B403C]">We are already looking as far as we can for this order. You can keep waiting, or deliver it yourself.</p>
+            <p className="text-xs text-kk-cocoa">We are already looking as far as we can for this order. You can keep waiting, or deliver it yourself.</p>
           )}
           {message && (
-            <p role="status" className="text-sm font-medium text-[#1C1B1B]">
+            <p role="status" className="text-sm font-medium text-kk-ink">
               {message}
             </p>
           )}
           {error && (
-            <p role="alert" className="text-sm font-medium text-[#BA1A1A]">
+            <p role="alert" className="text-sm font-medium text-kk-danger-ink">
               {error}
             </p>
           )}

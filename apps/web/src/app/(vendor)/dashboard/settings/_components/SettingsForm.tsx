@@ -45,13 +45,13 @@ export function SettingsForm({ vendor }: { vendor: VendorSettings }) {
       <input type="hidden" name="currentBannerUrl" value={vendor.bannerUrl ?? ""} />
 
       <div>
-        <label htmlFor="banner" className="text-sm font-medium text-[#1C1B1B]">
+        <label htmlFor="banner" className="text-sm font-medium text-kk-ink">
           Store photo
         </label>
-        <p className="text-xs text-[#5B403C]">Shown to customers on your storefront and the home page listing.</p>
+        <p className="text-xs text-kk-cocoa">Shown to customers on your storefront and the home page listing.</p>
         {bannerPreview && (
           // eslint-disable-next-line @next/next/no-img-element -- transient local/uploaded preview, not an optimizable remote asset
-          <img src={bannerPreview} alt="" className="mt-2 h-40 w-full rounded-xl border border-[#E4BEB8] object-cover" />
+          <img src={bannerPreview} alt="" className="mt-2 h-40 w-full rounded-xl border border-kk-line object-cover" />
         )}
         <input
           id="banner"
@@ -59,64 +59,64 @@ export function SettingsForm({ vendor }: { vendor: VendorSettings }) {
           type="file"
           accept="image/png,image/jpeg,image/webp,image/avif"
           onChange={handleBannerChange}
-          className="mt-2 block w-full text-sm text-[#1C1B1B] file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-[#FFDAD5] file:px-3 file:py-2 file:text-sm file:font-medium file:text-[#B61913] hover:file:bg-[#FFC7C0]"
+          className="mt-2 block w-full text-sm text-kk-ink file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-kk-danger-wash file:px-3 file:py-2 file:text-sm file:font-medium file:text-kk-red-ink hover:file:bg-[#FFC7C0]"
         />
       </div>
 
-      <div className="space-y-4 border-t border-[#E4BEB8] pt-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#5B403C]">Store details</p>
+      <div className="space-y-4 border-t border-kk-line pt-6">
+        <p className="text-xs font-semibold uppercase tracking-wide text-kk-cocoa">Store details</p>
 
         <div>
-          <label htmlFor="name" className="text-sm font-medium text-[#1C1B1B]">
+          <label htmlFor="name" className="text-sm font-medium text-kk-ink">
             Store Name
           </label>
           <Input id="name" name="name" required defaultValue={vendor.name} className="mt-1 w-full" />
         </div>
 
         <div>
-          <label htmlFor="description" className="text-sm font-medium text-[#1C1B1B]">
+          <label htmlFor="description" className="text-sm font-medium text-kk-ink">
             About your store
           </label>
           <Textarea id="description" name="description" rows={3} defaultValue={vendor.description ?? ""} className="mt-1 w-full" />
         </div>
 
         <div>
-          <label htmlFor="addressLine" className="text-sm font-medium text-[#1C1B1B]">
+          <label htmlFor="addressLine" className="text-sm font-medium text-kk-ink">
             Store Address
           </label>
           <Input id="addressLine" name="addressLine" defaultValue={vendor.addressLine ?? ""} className="mt-1 w-full" />
         </div>
 
         <div>
-          <label htmlFor="landmark" className="text-sm font-medium text-[#1C1B1B]">
+          <label htmlFor="landmark" className="text-sm font-medium text-kk-ink">
             Landmark
           </label>
           <Input id="landmark" name="landmark" defaultValue={vendor.landmark ?? ""} className="mt-1 w-full" />
         </div>
 
         <div>
-          <label htmlFor="state" className="text-sm font-medium text-[#1C1B1B]">
+          <label htmlFor="state" className="text-sm font-medium text-kk-ink">
             State
           </label>
-          <p className="text-xs text-[#5B403C]">
+          <p className="text-xs text-kk-cocoa">
             Customers outside this state will never see your store on the home page listing.
           </p>
           <StateSelect id="state" name="state" value={storeState} onChange={setStoreState} className="mt-1" />
         </div>
       </div>
 
-      <div className="space-y-4 border-t border-[#E4BEB8] pt-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#5B403C]">Ordering settings</p>
+      <div className="space-y-4 border-t border-kk-line pt-6">
+        <p className="text-xs font-semibold uppercase tracking-wide text-kk-cocoa">Ordering settings</p>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div>
-            <label htmlFor="avgPrepMins" className="text-xs font-medium text-[#5B403C]">
+            <label htmlFor="avgPrepMins" className="text-xs font-medium text-kk-cocoa">
               Prep time (min)
             </label>
             <Input id="avgPrepMins" name="avgPrepMins" type="number" min={1} defaultValue={vendor.avgPrepMins} className="mt-1 w-full" />
           </div>
           <div>
-            <label htmlFor="minOrderNaira" className="text-xs font-medium text-[#5B403C]">
+            <label htmlFor="minOrderNaira" className="text-xs font-medium text-kk-cocoa">
               Min. order (₦)
             </label>
             <Input
@@ -129,7 +129,7 @@ export function SettingsForm({ vendor }: { vendor: VendorSettings }) {
             />
           </div>
           <div>
-            <label htmlFor="deliveryRadiusM" className="text-xs font-medium text-[#5B403C]">
+            <label htmlFor="deliveryRadiusM" className="text-xs font-medium text-kk-cocoa">
               Delivery radius (m)
             </label>
             <Input
@@ -143,10 +143,10 @@ export function SettingsForm({ vendor }: { vendor: VendorSettings }) {
           </div>
         </div>
 
-        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-[#E4BEB8] bg-[#F6F3F2] p-4">
+        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-kk-line bg-kk-sand p-4">
           <span>
-            <span className="block text-sm font-medium text-[#1C1B1B]">Accepting orders</span>
-            <span className="block text-xs text-[#5B403C]">Customers can place new orders while this is on, once KiaKia has approved your store.</span>
+            <span className="block text-sm font-medium text-kk-ink">Accepting orders</span>
+            <span className="block text-xs text-kk-cocoa">Customers can place new orders while this is on, once KiaKia has approved your store.</span>
           </span>
           <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
             <input
@@ -155,14 +155,14 @@ export function SettingsForm({ vendor }: { vendor: VendorSettings }) {
               defaultChecked={vendor.isAcceptingOrders}
               className="peer sr-only"
             />
-            <span className="absolute inset-0 rounded-full bg-[#F0EDED] transition-colors peer-checked:bg-[#176A22]" />
+            <span className="absolute inset-0 rounded-full bg-kk-fill transition-colors peer-checked:bg-kk-green" />
             <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
           </span>
         </label>
       </div>
 
-      {state.error && <p className="text-sm text-[#BA1A1A]">{state.error}</p>}
-      {state.success && <p className="text-sm text-[#176A22]">Saved.</p>}
+      {state.error && <p className="text-sm text-kk-danger-ink">{state.error}</p>}
+      {state.success && <p className="text-sm text-kk-green-ink">Saved.</p>}
 
       <Button type="submit" loading={pending} className="w-full">
         Save Changes

@@ -18,29 +18,29 @@ export function HistoryCard({ order }: HistoryCardProps) {
 
   return (
     <div
-      className={`rounded-2xl border border-[#E4BEB8] bg-white p-5 shadow-sm transition-all hover:shadow-md ${
+      className={`rounded-2xl border border-kk-line bg-kk-card p-5 shadow-sm transition-all hover:shadow-md ${
         isCancelled || isRejected ? "opacity-80" : ""
       }`}
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-center">
         {/* Image */}
-        <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-[#F0EDED]">
-          <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1]">
-            <Utensils className="size-8 text-[#5B403C]/40" />
+        <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-kk-fill">
+          <div className="flex h-full w-full items-center justify-center bg-kk-hair">
+            <Utensils className="size-8 text-kk-cocoa/40" />
           </div>
         </div>
 
         {/* Content */}
         <div className="grow">
           <div className="mb-1 flex items-start justify-between">
-            <h3 className="font-inter text-lg font-bold text-[#1C1B1B]">
+            <h3 className="font-inter text-lg font-bold text-kk-ink">
               {order.customer_name || "Customer"}
             </h3>
-            <span className="font-inter text-sm font-bold text-[#B61913]">
+            <span className="font-inter text-sm font-bold text-kk-red-ink">
               {formatNaira(koboOf(order.total_kobo))}
             </span>
           </div>
-          <p className="mb-2 text-sm text-[#5B403C]">
+          <p className="mb-2 text-sm text-kk-cocoa">
             Order {order.code} • {order.items || "Order items"} •{" "}
             {new Date(order.created_at).toLocaleDateString("en-NG", {
               month: "short",
@@ -61,14 +61,14 @@ export function HistoryCard({ order }: HistoryCardProps) {
           {!isCancelled && !isRejected && (
             <button
               type="button"
-              className="flex-1 rounded-xl border-2 border-[#934B00] px-4 py-2 text-sm font-medium text-[#934B00] transition-colors hover:bg-[rgba(147,75,0,0.05)] active:scale-95"
+              className="flex-1 rounded-xl border-2 border-kk-orange-ink px-4 py-2 text-sm font-medium text-kk-orange-ink transition-colors hover:bg-[rgba(147,75,0,0.05)] active:scale-95"
             >
               Reorder
             </button>
           )}
           <button
             type="button"
-            className="flex-1 rounded-xl px-4 py-2 text-sm font-medium text-[#5B403C] transition-colors hover:bg-[#F0EDED] active:scale-95"
+            className="flex-1 rounded-xl px-4 py-2 text-sm font-medium text-kk-cocoa transition-colors hover:bg-kk-fill active:scale-95"
           >
             Details
           </button>

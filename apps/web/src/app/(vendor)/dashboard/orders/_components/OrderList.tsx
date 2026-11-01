@@ -53,15 +53,15 @@ export function OrderList({ orders, selectedOrder, onSelectOrder }: OrderListPro
   return (
     <div className="flex flex-col h-full">
       {/* Search Bar */}
-      <div className="p-4 bg-white border-b border-[#E4BEB8]">
+      <div className="p-4 bg-kk-card border-b border-kk-line">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#5B403C]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-kk-cocoa" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search order ID or customer..."
-            className="w-full rounded-xl bg-[#F0EDED] pl-10 pr-4 py-2 text-sm text-[#1C1B1B] placeholder:text-[#5B403C] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20"
+            className="w-full rounded-xl bg-kk-fill pl-10 pr-4 py-2 text-sm text-kk-ink placeholder:text-kk-cocoa focus:outline-none focus:ring-2 focus:ring-kk-red-ink/20"
           />
         </div>
         <div className="flex gap-2 mt-4 overflow-x-auto">
@@ -72,8 +72,8 @@ export function OrderList({ orders, selectedOrder, onSelectOrder }: OrderListPro
               onClick={() => setStage(label)}
               className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
                 stage === label
-                  ? "bg-[#B61913] text-white"
-                  : "bg-[#F0EDED] text-[#5B403C] hover:bg-[#E5E2E1]"
+                  ? "bg-kk-red text-white"
+                  : "bg-kk-fill text-kk-cocoa hover:bg-kk-hair"
               }`}
             >
               {label === "All" ? `All (${orders.length})` : label}
@@ -81,7 +81,7 @@ export function OrderList({ orders, selectedOrder, onSelectOrder }: OrderListPro
           ))}
           <Link
             href="/dashboard/history"
-            className="rounded-full bg-[#F0EDED] px-4 py-1.5 text-sm font-medium text-[#5B403C] whitespace-nowrap transition-colors hover:bg-[#E5E2E1]"
+            className="rounded-full bg-kk-fill px-4 py-1.5 text-sm font-medium text-kk-cocoa whitespace-nowrap transition-colors hover:bg-kk-hair"
           >
             Past Orders
           </Link>
@@ -91,7 +91,7 @@ export function OrderList({ orders, selectedOrder, onSelectOrder }: OrderListPro
       {/* Orders List */}
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {filteredOrders.length === 0 ? (
-          <p className="p-6 text-center text-sm text-[#5B403C]">No orders match.</p>
+          <p className="p-6 text-center text-sm text-kk-cocoa">No orders match.</p>
         ) : (
           filteredOrders.map((order) => (
             <OrderCard

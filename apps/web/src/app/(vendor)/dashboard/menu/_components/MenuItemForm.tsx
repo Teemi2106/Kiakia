@@ -23,7 +23,7 @@ interface ExistingItem {
 }
 
 const inputClass =
-  "mt-1.5 w-full rounded-xl border border-[#E4BEB8] bg-white px-3.5 py-2.5 text-sm text-[#1C1B1B] outline-none placeholder:text-[#5B403C]/50 focus:border-[#B61913] focus:ring-2 focus:ring-[#B61913]/20";
+  "mt-1.5 w-full rounded-xl border border-kk-line bg-kk-card px-3.5 py-2.5 text-sm text-kk-ink outline-none placeholder:text-kk-cocoa/50 focus:border-kk-red focus:ring-2 focus:ring-kk-red-ink/20";
 
 const initialState: FormState = {};
 
@@ -74,21 +74,21 @@ export function MenuItemForm({
 
       {/* Photo */}
       <div>
-        <label className="text-sm font-semibold text-[#1C1B1B]">Photo</label>
-        <p className="text-xs text-[#5B403C]">Optional, but items with photos sell better.</p>
+        <label className="text-sm font-semibold text-kk-ink">Photo</label>
+        <p className="text-xs text-kk-cocoa">Optional, but items with photos sell better.</p>
         <div className="mt-2 flex items-center gap-4">
           <label
             htmlFor="image"
-            className="relative flex size-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#E4BEB8] bg-[#F6F3F2] transition-colors hover:border-[#B61913]/50"
+            className="relative flex size-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-kk-line bg-kk-sand transition-colors hover:border-kk-red/50"
           >
             {preview ? (
               // eslint-disable-next-line @next/next/no-img-element -- transient local/uploaded preview, not an optimizable remote asset
               <img src={preview} alt="" className="h-full w-full object-cover" />
             ) : (
-              <ImagePlus className="size-6 text-[#5B403C]/40" />
+              <ImagePlus className="size-6 text-kk-cocoa/40" />
             )}
           </label>
-          <div className="text-xs text-[#5B403C]">
+          <div className="text-xs text-kk-cocoa">
             PNG, JPG, WEBP or AVIF.
             <br />
             Click the square to {preview ? "replace" : "upload"} a photo.
@@ -107,7 +107,7 @@ export function MenuItemForm({
 
       {/* Name */}
       <div>
-        <label htmlFor="name" className="text-sm font-semibold text-[#1C1B1B]">
+        <label htmlFor="name" className="text-sm font-semibold text-kk-ink">
           Item Name
         </label>
         <input
@@ -122,7 +122,7 @@ export function MenuItemForm({
 
       {/* Description */}
       <div>
-        <label htmlFor="description" className="text-sm font-semibold text-[#1C1B1B]">
+        <label htmlFor="description" className="text-sm font-semibold text-kk-ink">
           Description
         </label>
         <textarea
@@ -138,11 +138,11 @@ export function MenuItemForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* Price */}
         <div>
-          <label htmlFor="priceNaira" className="text-sm font-semibold text-[#1C1B1B]">
+          <label htmlFor="priceNaira" className="text-sm font-semibold text-kk-ink">
             Price (₦)
           </label>
           <div className="relative mt-1.5">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#5B403C]">
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-kk-cocoa">
               ₦
             </span>
             <input
@@ -155,7 +155,7 @@ export function MenuItemForm({
               value={priceNaira}
               onChange={(event) => setPriceNaira(event.target.value)}
               placeholder="0.00"
-              className="w-full rounded-xl border border-[#E4BEB8] bg-white py-2.5 pl-7 pr-3.5 text-sm text-[#1C1B1B] outline-none placeholder:text-[#5B403C]/50 focus:border-[#B61913] focus:ring-2 focus:ring-[#B61913]/20"
+              className="w-full rounded-xl border border-kk-line bg-kk-card py-2.5 pl-7 pr-3.5 text-sm text-kk-ink outline-none placeholder:text-kk-cocoa/50 focus:border-kk-red focus:ring-2 focus:ring-kk-red-ink/20"
             />
           </div>
           {/* KiaKia's commission (vendors.commission_bps) comes straight off
@@ -164,8 +164,8 @@ export function MenuItemForm({
               delivery (0044) — shown live so pricing isn't a guess about
               what lands in their balance. */}
           {payout && (
-            <p className="mt-1.5 text-xs text-[#5B403C]">
-              You&apos;ll receive <span className="font-semibold text-[#176A22]">{formatNaira(payout.netKobo)}</span>{" "}
+            <p className="mt-1.5 text-xs text-kk-cocoa">
+              You&apos;ll receive <span className="font-semibold text-kk-green-ink">{formatNaira(payout.netKobo)}</span>{" "}
               after KiaKia&apos;s {(commissionBps / 100).toFixed(1)}% commission ({formatNaira(payout.commissionKobo)})
             </p>
           )}
@@ -173,7 +173,7 @@ export function MenuItemForm({
 
         {/* Category */}
         <div>
-          <label htmlFor="categoryKey" className="text-sm font-semibold text-[#1C1B1B]">
+          <label htmlFor="categoryKey" className="text-sm font-semibold text-kk-ink">
             Category
           </label>
           <select
@@ -193,26 +193,26 @@ export function MenuItemForm({
       </div>
 
       {/* Availability */}
-      <label className="flex items-center gap-3 rounded-xl border border-[#E4BEB8] bg-[#F6F3F2] px-4 py-3">
+      <label className="flex items-center gap-3 rounded-xl border border-kk-line bg-kk-sand px-4 py-3">
         <input
           type="checkbox"
           name="isAvailable"
           defaultChecked={existingItem?.isAvailable ?? true}
-          className="size-4 rounded border-[#E4BEB8] text-[#B61913] focus:ring-[#B61913]/40"
+          className="size-4 rounded border-kk-line text-kk-red-ink focus:ring-kk-red-ink/40"
         />
-        <span className="text-sm font-medium text-[#1C1B1B]">Available for order</span>
+        <span className="text-sm font-medium text-kk-ink">Available for order</span>
       </label>
 
       {/* Options */}
       <div>
-        <h2 className="text-sm font-semibold text-[#1C1B1B]">Options (e.g. sizes, extras)</h2>
+        <h2 className="text-sm font-semibold text-kk-ink">Options (e.g. sizes, extras)</h2>
         <div className="mt-2">
           <OptionGroupsBuilder groups={groups} onChange={setGroups} />
         </div>
       </div>
 
       {state.error && (
-        <p className="rounded-xl bg-[#FFDAD5] px-4 py-3 text-sm font-medium text-[#BA1A1A]">
+        <p className="rounded-xl bg-kk-danger-wash px-4 py-3 text-sm font-medium text-kk-danger-ink">
           {state.error}
         </p>
       )}
@@ -220,7 +220,7 @@ export function MenuItemForm({
       <button
         type="submit"
         disabled={pending}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#B61913] py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#9e1611] disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-kk-red py-3.5 text-sm font-bold text-white transition-colors hover:bg-kk-red-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending && <Loader2 className="size-4 animate-spin" />}
         {existingItem ? "Save changes" : "Add item"}

@@ -19,7 +19,7 @@ interface MenuTableProps {
 const CATEGORY_COLORS = [
   "bg-[#FFDCC5] text-[#703800]",
   "bg-[#FFDAD5] text-[#930004]",
-  "bg-[#DFF3DC] text-[#176A22]",
+  "bg-kk-green-wash text-kk-green-ink",
   "bg-[#E4D9FF] text-[#5B21B6]",
   "bg-[#D6EFFF] text-[#0B5A8A]",
 ];
@@ -36,9 +36,9 @@ export function MenuTable({
   };
 
   const getCategoryColor = (categoryId: string | null) => {
-    if (!categoryId) return "bg-[#F0EDED] text-[#5B403C]";
+    if (!categoryId) return "bg-kk-fill text-kk-cocoa";
     const index = categories.findIndex((c) => c.id === categoryId);
-    if (index === -1) return "bg-[#F0EDED] text-[#5B403C]";
+    if (index === -1) return "bg-kk-fill text-kk-cocoa";
     return CATEGORY_COLORS[index % CATEGORY_COLORS.length];
   };
 
@@ -46,32 +46,32 @@ export function MenuTable({
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="bg-[#F6F3F2]">
-            <th className="px-6 py-4 font-inter text-sm font-medium text-[#5B403C]">
+          <tr className="bg-kk-sand">
+            <th className="px-6 py-4 font-inter text-sm font-medium text-kk-cocoa">
               Photo
             </th>
-            <th className="px-6 py-4 font-inter text-sm font-medium text-[#5B403C]">
+            <th className="px-6 py-4 font-inter text-sm font-medium text-kk-cocoa">
               Item Name
             </th>
-            <th className="px-6 py-4 font-inter text-sm font-medium text-[#5B403C]">
+            <th className="px-6 py-4 font-inter text-sm font-medium text-kk-cocoa">
               Category
             </th>
-            <th className="px-6 py-4 font-inter text-sm font-medium text-[#5B403C]">
+            <th className="px-6 py-4 font-inter text-sm font-medium text-kk-cocoa">
               Price (₦)
             </th>
-            <th className="px-6 py-4 font-inter text-sm font-medium text-[#5B403C]">
+            <th className="px-6 py-4 font-inter text-sm font-medium text-kk-cocoa">
               In Stock
             </th>
-            <th className="px-6 py-4 font-inter text-sm font-medium text-[#5B403C] text-right">
+            <th className="px-6 py-4 font-inter text-sm font-medium text-kk-cocoa text-right">
               Actions
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#E4BEB8]">
+        <tbody className="divide-y divide-kk-line">
           {items.map((item) => (
             <tr
               key={item.id}
-              className="hover:bg-[#F6F3F2] transition-colors group"
+              className="hover:bg-kk-sand transition-colors group"
             >
               {/* Image */}
               <td className="px-6 py-4">
@@ -85,8 +85,8 @@ export function MenuTable({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-[#F0EDED]">
-                      <Utensils className="size-6 text-[#5B403C]/40" />
+                    <div className="flex h-full w-full items-center justify-center bg-kk-fill">
+                      <Utensils className="size-6 text-kk-cocoa/40" />
                     </div>
                   )}
                 </div>
@@ -94,7 +94,7 @@ export function MenuTable({
 
               {/* Name */}
               <td className="px-6 py-4">
-                <span className="font-inter font-semibold text-[#1C1B1B]">
+                <span className="font-inter font-semibold text-kk-ink">
                   {item.name}
                 </span>
               </td>
@@ -112,7 +112,7 @@ export function MenuTable({
 
               {/* Price */}
               <td className="px-6 py-4">
-                <span className="font-inter font-bold text-[#1C1B1B]">
+                <span className="font-inter font-bold text-kk-ink">
                   {formatNaira(koboOf(item.price_kobo))}
                 </span>
               </td>
@@ -134,7 +134,7 @@ export function MenuTable({
                 <div className="flex items-center justify-end gap-2">
                   <Link
                     href={`/dashboard/menu/items/${item.id}/edit`}
-                    className="rounded-lg p-2 text-[#5B403C] transition-colors hover:bg-[#F0EDED] hover:text-[#B61913]"
+                    className="rounded-lg p-2 text-kk-cocoa transition-colors hover:bg-kk-fill hover:text-kk-red-ink"
                     aria-label="Edit item"
                   >
                     <Pencil className="size-4" />

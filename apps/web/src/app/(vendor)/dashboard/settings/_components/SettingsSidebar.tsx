@@ -14,21 +14,21 @@ const TABS = [
     label: "General",
     description: "Store profile & preferences",
     icon: Store,
-    accent: "bg-[#F0EDED] text-[#5B403C]",
+    accent: "bg-kk-fill text-kk-cocoa",
   },
   {
     id: "hours",
     label: "Operating Hours",
     description: "Daily open & close times",
     icon: Clock,
-    accent: "bg-[#FFDCC5] text-[#934B00]",
+    accent: "bg-notice-surface text-kk-orange-ink",
   },
   {
     id: "delivery",
     label: "Delivery Zone",
     description: "Radius & coverage map",
     icon: Truck,
-    accent: "bg-[#FFDAD5] text-[#B61913]",
+    accent: "bg-kk-danger-wash text-kk-red-ink",
   },
   {
     id: "staff",
@@ -44,8 +44,8 @@ export function SettingsSidebar({
   onTabChange,
 }: SettingsSidebarProps) {
   return (
-    <nav className="rounded-2xl border border-[#E4BEB8] bg-white p-3 shadow-sm lg:p-4">
-      <h2 className="hidden px-2 pb-3 font-sora text-lg font-semibold text-[#1C1B1B] lg:block">
+    <nav className="rounded-2xl border border-kk-line bg-kk-card p-3 shadow-sm lg:p-4">
+      <h2 className="hidden px-2 pb-3 font-sora text-lg font-semibold text-kk-ink lg:block">
         Settings
       </h2>
       <div className="flex flex-row gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
@@ -61,8 +61,8 @@ export function SettingsSidebar({
               aria-current={isActive ? "page" : undefined}
               className={`flex w-full min-w-[220px] shrink-0 items-center gap-3 rounded-xl border px-3 py-3 text-left font-inter transition-colors lg:min-w-0 ${
                 isActive
-                  ? "border-[#B61913]/20 bg-[#FDEDEC]"
-                  : "border-transparent hover:bg-[#F6F3F2]"
+                  ? "border-kk-red/20 bg-kk-red-tint"
+                  : "border-transparent hover:bg-kk-sand"
               }`}
             >
               <span
@@ -73,12 +73,12 @@ export function SettingsSidebar({
               <span className="min-w-0">
                 <span
                   className={`block truncate text-sm font-semibold ${
-                    isActive ? "text-[#B61913]" : "text-[#1C1B1B]"
+                    isActive ? "text-kk-red-ink" : "text-kk-ink"
                   }`}
                 >
                   {tab.label}
                 </span>
-                <span className="hidden truncate text-xs text-[#5B403C] lg:block">
+                <span className="hidden truncate text-xs text-kk-cocoa lg:block">
                   {tab.description}
                 </span>
               </span>

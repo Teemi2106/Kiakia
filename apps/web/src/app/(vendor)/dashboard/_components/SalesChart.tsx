@@ -24,11 +24,11 @@ export function SalesChart({ data }: SalesChartProps) {
   if (!hasSales) {
     return (
       <div className="flex h-48 w-full flex-col items-center justify-center gap-2 text-center">
-        <span className="flex size-10 items-center justify-center rounded-full bg-white text-[#5B403C]">
+        <span className="flex size-10 items-center justify-center rounded-full bg-kk-card text-kk-cocoa">
           <ChartBar className="size-5" />
         </span>
-        <p className="text-sm font-medium text-[#1C1B1B]">No sales yet this week</p>
-        <p className="max-w-[220px] text-xs text-[#5B403C]">
+        <p className="text-sm font-medium text-kk-ink">No sales yet this week</p>
+        <p className="max-w-[220px] text-xs text-kk-cocoa">
           Completed orders from the last 7 days will show up here.
         </p>
       </div>
@@ -44,7 +44,7 @@ export function SalesChart({ data }: SalesChartProps) {
             dataKey="day"
             axisLine={false}
             tickLine={false}
-            tick={{ fontSize: 10, fill: "#5B403C" }}
+            tick={{ fontSize: 10, fill: "var(--color-kk-cocoa)" }}
           />
           <YAxis hide={true} />
           <Tooltip

@@ -50,11 +50,11 @@ export function VendorTopNav({ vendorId }: { vendorId: string | null }) {
     // Previously this was `md:left-64` against a `sm:flex` w-56 sidebar,
     // which overlapped the sidebar between the sm/md breakpoints and left a
     // 32px gap above md — keep both in sync if either changes.
-    <nav className="fixed left-0 top-0 z-40 w-full border-b border-[#E4BEB8] bg-white shadow-[0px_1px_2px_rgba(0,0,0,0.05)] sm:left-64 sm:w-[calc(100%-256px)]">
+    <nav className="fixed left-0 top-0 z-40 w-full border-b border-kk-line bg-kk-card shadow-[0px_1px_2px_rgba(0,0,0,0.05)] sm:left-64 sm:w-[calc(100%-256px)]">
       <div className="flex h-14 items-center justify-between px-4 sm:h-[63px] sm:px-6">
         {/* Left Section - Title */}
         <div className="flex items-center gap-2">
-          <h1 className="font-sora text-xl font-bold text-[#1C1B1B] sm:text-2xl">
+          <h1 className="font-sora text-xl font-bold text-kk-ink sm:text-2xl">
             {pageTitle}
           </h1>
         </div>
@@ -65,7 +65,7 @@ export function VendorTopNav({ vendorId }: { vendorId: string | null }) {
           <form action={switchToCustomerAction}>
             <button
               type="submit"
-              className="flex items-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-medium text-[#5B403C] transition-colors hover:bg-[#FCF9F8] hover:text-[#1C1B1B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40 sm:px-3"
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-medium text-kk-cocoa transition-colors hover:bg-kk-cream hover:text-kk-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red-ink/40 sm:px-3"
               aria-label="Switch to customer view"
               title="Switch to customer view"
             >
@@ -83,8 +83,8 @@ export function VendorTopNav({ vendorId }: { vendorId: string | null }) {
             <NotificationsButton
               audience="vendor"
               vendorId={vendorId}
-              buttonClassName="relative rounded-full p-2 transition-colors hover:bg-[#FCF9F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40"
-              iconClassName="size-5 text-[#5B403C]"
+              buttonClassName="relative rounded-full p-2 transition-colors hover:bg-kk-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red-ink/40"
+              iconClassName="size-5 text-kk-cocoa"
               emptyMessage="Nothing here yet — new orders and delivery updates will show up as they happen."
             />
           )}
@@ -92,9 +92,9 @@ export function VendorTopNav({ vendorId }: { vendorId: string | null }) {
           {/* Profile Avatar - vendor mode has no /profile route (customer-only); store settings is the equivalent here */}
           <Link
             href="/dashboard/settings"
-            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#E5E2E1] transition-colors hover:border-[#B61913] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40 sm:h-10 sm:w-10"
+            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-kk-hair transition-colors hover:border-kk-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red-ink/40 sm:h-10 sm:w-10"
           >
-            <User className="size-4 text-[#5B403C] sm:size-5" />
+            <User className="size-4 text-kk-cocoa sm:size-5" />
           </Link>
         </div>
       </div>

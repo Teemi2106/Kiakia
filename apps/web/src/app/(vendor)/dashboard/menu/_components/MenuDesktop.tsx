@@ -66,7 +66,7 @@ export function MenuDesktop({
     <div className="p-6">
       {/* Stats & Actions */}
       <div className="mb-6 grid grid-cols-12 gap-6">
-        <div className="col-span-8 flex flex-col gap-4 rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm md:flex-row md:items-center">
+        <div className="col-span-8 flex flex-col gap-4 rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm md:flex-row md:items-center">
           <MenuFilters
             categories={categoryNames}
             activeFilter={activeFilter}
@@ -78,7 +78,7 @@ export function MenuDesktop({
         <div
           className={cn(
             "col-span-4 relative overflow-hidden rounded-2xl p-6 text-white",
-            isAcceptingOrders ? "bg-[#176A22]" : "bg-[#5B403C]",
+            isAcceptingOrders ? "bg-kk-green" : "bg-kk-cocoa",
           )}
         >
           <div className="relative z-10">
@@ -105,9 +105,9 @@ export function MenuDesktop({
       </div>
 
       {/* Menu Table */}
-      <div className="overflow-hidden rounded-2xl border border-[#E4BEB8] bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-[#E4BEB8] bg-[#F6F3F2] p-6">
-          <h3 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+      <div className="overflow-hidden rounded-2xl border border-kk-line bg-kk-card shadow-sm">
+        <div className="flex items-center justify-between border-b border-kk-line bg-kk-sand p-6">
+          <h3 className="font-sora text-2xl font-semibold text-kk-ink">
             Menu Items
           </h3>
           <div className="flex items-center gap-3">
@@ -115,7 +115,7 @@ export function MenuDesktop({
               href="/dashboard/menu/items/new"
               className={cn(
                 buttonVariants({ variant: "primary" }),
-                "flex items-center gap-2 rounded-xl bg-[#B61913] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-[#9e1611]",
+                "flex items-center gap-2 rounded-xl bg-kk-red px-6 py-3 text-sm font-bold text-white transition-all hover:bg-kk-red-hover",
               )}
             >
               <span className="text-lg">+</span>
@@ -126,9 +126,9 @@ export function MenuDesktop({
 
         {filteredItems.length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-12 text-center">
-            <Utensils className="size-8 text-[#5B403C]/30" />
-            <p className="font-medium text-[#1C1B1B]">No menu items found</p>
-            <p className="text-sm text-[#5B403C]">
+            <Utensils className="size-8 text-kk-cocoa/30" />
+            <p className="font-medium text-kk-ink">No menu items found</p>
+            <p className="text-sm text-kk-cocoa">
               Try a different search or filter.
             </p>
           </div>
@@ -141,8 +141,8 @@ export function MenuDesktop({
           />
         )}
 
-        <div className="flex items-center justify-between border-t border-[#E4BEB8] bg-[#F6F3F2] p-4">
-          <p className="text-sm text-[#5B403C]">
+        <div className="flex items-center justify-between border-t border-kk-line bg-kk-sand p-4">
+          <p className="text-sm text-kk-cocoa">
             Showing {filteredItems.length} of {items.length} items
           </p>
         </div>

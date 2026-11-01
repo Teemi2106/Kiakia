@@ -78,14 +78,14 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
       />
       <Link
         href="/dashboard/orders"
-        className="inline-flex items-center gap-1 text-sm font-medium text-[#5B403C] transition-colors hover:text-[#B61913]"
+        className="inline-flex items-center gap-1 text-sm font-medium text-kk-cocoa transition-colors hover:text-kk-red-ink"
       >
         <ChevronLeft className="size-4" />
         Back to orders
       </Link>
 
       <div className="mt-3 flex items-center justify-between gap-4">
-        <h1 className="font-sora text-2xl font-bold text-[#1C1B1B] lg:text-3xl">{order.code}</h1>
+        <h1 className="font-sora text-2xl font-bold text-kk-ink lg:text-3xl">{order.code}</h1>
         <StatusBadge status={order.status} />
       </div>
 
@@ -99,13 +99,13 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
         />
       </div>
 
-      <div className="mt-6 rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
-        <h2 className="font-inter text-sm font-bold uppercase tracking-wider text-[#1C1B1B]">
+      <div className="mt-6 rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm">
+        <h2 className="font-inter text-sm font-bold uppercase tracking-wider text-kk-ink">
           Manage Order
         </h2>
         <div className="mt-4">
           {delivery?.deliveryBy === "vendor" && SELF_DELIVERY_STEP_STATUSES.has(order.status) ? (
-            <p className="text-center text-xs text-[#5B403C]">You are delivering this order yourself. Use the steps above.</p>
+            <p className="text-center text-xs text-kk-cocoa">You are delivering this order yourself. Use the steps above.</p>
           ) : (
             <VendorOrderActions orderId={order.id} status={order.status} />
           )}
@@ -117,16 +117,16 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
           own profile has no phone on file), so the Call link is separately
           conditional. */}
       {trackingRow?.rider_name && (
-        <div className="mt-6 rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
-          <h2 className="flex items-center gap-2 font-inter text-sm font-bold uppercase tracking-wider text-[#1C1B1B]">
-            <Bike className="size-4 text-[#5B403C]" />
+        <div className="mt-6 rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm">
+          <h2 className="flex items-center gap-2 font-inter text-sm font-bold uppercase tracking-wider text-kk-ink">
+            <Bike className="size-4 text-kk-cocoa" />
             Rider
           </h2>
           <div className="mt-3 flex items-center justify-between gap-4">
             <div>
-              <p className="font-inter text-sm font-semibold text-[#1C1B1B]">{trackingRow.rider_name}</p>
+              <p className="font-inter text-sm font-semibold text-kk-ink">{trackingRow.rider_name}</p>
               {(trackingRow.rider_vehicle_type || trackingRow.rider_plate_number) && (
-                <p className="font-inter text-xs text-[#5B403C]">
+                <p className="font-inter text-xs text-kk-cocoa">
                   {[trackingRow.rider_vehicle_type, trackingRow.rider_plate_number].filter(Boolean).join(" · ")}
                 </p>
               )}
@@ -134,7 +134,7 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
             {trackingRow.rider_phone && (
               <a
                 href={`tel:${trackingRow.rider_phone}`}
-                className="flex shrink-0 items-center gap-2 rounded-xl border-2 border-[#934B00] px-4 py-2 font-inter text-sm font-semibold text-[#934B00] hover:bg-[#F6F3F2]"
+                className="flex shrink-0 items-center gap-2 rounded-xl border-2 border-kk-orange-ink px-4 py-2 font-inter text-sm font-semibold text-kk-orange-ink hover:bg-kk-sand"
               >
                 <Phone className="size-3.5" />
                 Call
@@ -144,53 +144,53 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
         </div>
       )}
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-[#E4BEB8] bg-white shadow-sm">
-        <div className="border-b border-[#E4BEB8] bg-[#F6F3F2] px-6 py-4">
-          <h2 className="font-inter text-sm font-bold uppercase tracking-wider text-[#1C1B1B]">
+      <div className="mt-6 overflow-hidden rounded-2xl border border-kk-line bg-kk-card shadow-sm">
+        <div className="border-b border-kk-line bg-kk-sand px-6 py-4">
+          <h2 className="font-inter text-sm font-bold uppercase tracking-wider text-kk-ink">
             Items
           </h2>
         </div>
         {(items ?? []).length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-10 text-center">
-            <Utensils className="size-8 text-[#5B403C]/30" />
-            <p className="text-sm text-[#5B403C]">No items on this order.</p>
+            <Utensils className="size-8 text-kk-cocoa/30" />
+            <p className="text-sm text-kk-cocoa">No items on this order.</p>
           </div>
         ) : (
-          <ul className="divide-y divide-[#E4BEB8]">
+          <ul className="divide-y divide-kk-line">
             {(items ?? []).map((item) => (
               <li key={item.id} className="flex justify-between px-6 py-4">
-                <span className="font-inter font-medium text-[#1C1B1B]">
+                <span className="font-inter font-medium text-kk-ink">
                   {item.qty}&times; {item.name_snapshot}
                 </span>
-                <span className="font-inter font-bold text-[#1C1B1B]">
+                <span className="font-inter font-bold text-kk-ink">
                   {formatNaira(koboOf(item.line_total_kobo))}
                 </span>
               </li>
             ))}
           </ul>
         )}
-        <div className="space-y-2 bg-[#F6F3F2] p-6">
+        <div className="space-y-2 bg-kk-sand p-6">
           <div className="flex justify-between text-sm">
-            <span className="text-[#5B403C]">Subtotal</span>
-            <span className="font-medium text-[#1C1B1B]">
+            <span className="text-kk-cocoa">Subtotal</span>
+            <span className="font-medium text-kk-ink">
               {formatNaira(koboOf(order.subtotal_kobo))}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-[#5B403C]">Delivery Fee</span>
-            <span className="font-medium text-[#1C1B1B]">
+            <span className="text-kk-cocoa">Delivery Fee</span>
+            <span className="font-medium text-kk-ink">
               {formatNaira(koboOf(order.delivery_fee_kobo))}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-[#5B403C]">Service Fee</span>
-            <span className="font-medium text-[#1C1B1B]">
+            <span className="text-kk-cocoa">Service Fee</span>
+            <span className="font-medium text-kk-ink">
               {formatNaira(koboOf(order.service_fee_kobo))}
             </span>
           </div>
-          <div className="flex justify-between border-t border-[#E4BEB8] pt-3">
-            <span className="font-bold text-[#1C1B1B]">Total</span>
-            <span className="font-sora text-xl font-bold text-[#B61913]">
+          <div className="flex justify-between border-t border-kk-line pt-3">
+            <span className="font-bold text-kk-ink">Total</span>
+            <span className="font-sora text-xl font-bold text-kk-red-ink">
               {formatNaira(koboOf(order.total_kobo))}
             </span>
           </div>
@@ -198,22 +198,22 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
       </div>
 
       {address?.line1 && (
-        <div className="mt-6 rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
-          <h2 className="flex items-center gap-2 font-inter text-sm font-bold uppercase tracking-wider text-[#1C1B1B]">
-            <MapPin className="size-4 text-[#5B403C]" />
+        <div className="mt-6 rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm">
+          <h2 className="flex items-center gap-2 font-inter text-sm font-bold uppercase tracking-wider text-kk-ink">
+            <MapPin className="size-4 text-kk-cocoa" />
             Delivery Address
           </h2>
-          <p className="mt-3 text-sm text-[#1C1B1B]">
+          <p className="mt-3 text-sm text-kk-ink">
             {address.line1}
             {address.landmark ? `, near ${address.landmark}` : ""}
           </p>
-          <p className="text-sm text-[#5B403C]">
+          <p className="text-sm text-kk-cocoa">
             {address.city}, {address.state}
           </p>
           {order.delivery_note && (
-            <div className="mt-4 flex gap-3 rounded-xl border border-[#FFDCC5] bg-[rgba(255,220,197,0.3)] p-4">
-              <Info className="size-4 shrink-0 text-[#934B00]" />
-              <p className="text-sm italic text-[#5B403C]">&ldquo;{order.delivery_note}&rdquo;</p>
+            <div className="mt-4 flex gap-3 rounded-xl border border-notice-surface bg-[rgba(255,220,197,0.3)] p-4">
+              <Info className="size-4 shrink-0 text-kk-orange-ink" />
+              <p className="text-sm italic text-kk-cocoa">&ldquo;{order.delivery_note}&rdquo;</p>
             </div>
           )}
         </div>

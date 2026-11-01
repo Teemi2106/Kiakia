@@ -53,9 +53,9 @@ export function PrepEstimateControl({ orderId, expectedReadyAt }: { orderId: str
         </div>
       )}
       {open && (
-        <div className="flex flex-col gap-3 rounded-xl border border-[#E4BEB8] bg-white p-4">
-          <p className="text-sm font-semibold text-[#1C1B1B]">Need more time?</p>
-          <p className="text-sm text-[#5B403C]">Tell us so the rider arrives when the food is ready, not before.</p>
+        <div className="flex flex-col gap-3 rounded-xl border border-kk-line bg-kk-card p-4">
+          <p className="text-sm font-semibold text-kk-ink">Need more time?</p>
+          <p className="text-sm text-kk-cocoa">Tell us so the rider arrives when the food is ready, not before.</p>
           {expectedReadyAt && (
             <div className="flex flex-wrap gap-2">
               {PREP_EXTENSION_MINUTES.map((extra) => (
@@ -77,7 +77,7 @@ export function PrepEstimateControl({ orderId, expectedReadyAt }: { orderId: str
           )}
           <form onSubmit={submitTyped} className="flex flex-wrap items-end gap-2">
             <div className="flex flex-col gap-1">
-              <label htmlFor={`ready-in-${orderId}`} className="text-sm font-medium text-[#1C1B1B]">
+              <label htmlFor={`ready-in-${orderId}`} className="text-sm font-medium text-kk-ink">
                 Or: ready in how many minutes from now?
               </label>
               <Input
@@ -104,12 +104,12 @@ export function PrepEstimateControl({ orderId, expectedReadyAt }: { orderId: str
         </div>
       )}
       {message && (
-        <p role="status" className="rounded-2xl border border-[#176A22]/30 bg-[#DFF3DC] px-4 py-3 text-sm font-medium text-[#1C1B1B]">
+        <p role="status" className="rounded-2xl border border-kk-green/30 bg-kk-green-wash px-4 py-3 text-sm font-medium text-kk-ink">
           {message}
         </p>
       )}
       {error && (
-        <p role="alert" className="text-sm font-medium text-[#BA1A1A]">
+        <p role="alert" className="text-sm font-medium text-kk-danger-ink">
           {error}
         </p>
       )}

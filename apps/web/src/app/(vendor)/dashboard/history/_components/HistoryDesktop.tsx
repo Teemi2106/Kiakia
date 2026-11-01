@@ -91,16 +91,16 @@ export function HistoryDesktop({
       />
 
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-[#E4BEB8] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-kk-line bg-kk-card shadow-sm">
         {filteredOrders.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-[#F6F3F2] text-[#B61913]">
+            <div className="flex size-12 items-center justify-center rounded-full bg-kk-sand text-kk-red-ink">
               <PackageSearch className="size-6" />
             </div>
-            <p className="font-sora text-base font-bold text-[#1C1B1B]">
+            <p className="font-sora text-base font-bold text-kk-ink">
               No orders match your filters
             </p>
-            <p className="max-w-sm text-sm text-[#5B403C]">
+            <p className="max-w-sm text-sm text-kk-cocoa">
               Try a different search term or status, or clear your filters to
               see the full history.
             </p>
@@ -108,7 +108,7 @@ export function HistoryDesktop({
               <button
                 type="button"
                 onClick={clearFilters}
-                className="mt-2 rounded-xl border-2 border-[#934B00] px-5 py-2.5 text-sm font-medium text-[#934B00] transition-colors hover:bg-[rgba(147,75,0,0.05)]"
+                className="mt-2 rounded-xl border-2 border-kk-orange-ink px-5 py-2.5 text-sm font-medium text-kk-orange-ink transition-colors hover:bg-[rgba(147,75,0,0.05)]"
               >
                 Clear filters
               </button>
@@ -129,12 +129,12 @@ export function HistoryDesktop({
       </div>
 
       {/* Support Section */}
-      <div className="mt-12 grid grid-cols-1 gap-8 rounded-3xl border-2 border-dashed border-[#E4BEB8] bg-[rgba(246,243,242,0.3)] p-8 md:grid-cols-2 md:items-center">
+      <div className="mt-12 grid grid-cols-1 gap-8 rounded-3xl border-2 border-dashed border-kk-line bg-[rgba(246,243,242,0.3)] p-8 md:grid-cols-2 md:items-center">
         <div>
-          <h4 className="font-sora text-2xl font-bold text-[#1C1B1B] mb-2">
+          <h4 className="font-sora text-2xl font-bold text-kk-ink mb-2">
             Order Resolution Center
           </h4>
-          <p className="text-sm text-[#5B403C]">
+          <p className="text-sm text-kk-cocoa">
             Have questions about a specific order or need to handle a refund?
             Our support team is available 24/7 for high-velocity assistance.
           </p>
@@ -142,13 +142,13 @@ export function HistoryDesktop({
         <div className="flex justify-end gap-4">
           <button
             type="button"
-            className="rounded-xl border-2 border-[#934B00] px-6 py-3 text-sm font-medium text-[#934B00] transition-colors hover:bg-[rgba(147,75,0,0.05)]"
+            className="rounded-xl border-2 border-kk-orange-ink px-6 py-3 text-sm font-medium text-kk-orange-ink transition-colors hover:bg-[rgba(147,75,0,0.05)]"
           >
             Read Guidelines
           </button>
           <button
             type="button"
-            className="rounded-xl bg-[#B61913] px-6 py-3 text-sm font-medium text-white shadow-lg transition-all hover:bg-[#9e1611] active:scale-95"
+            className="rounded-xl bg-kk-red px-6 py-3 text-sm font-medium text-white shadow-lg transition-all hover:bg-kk-red-hover active:scale-95"
           >
             Open Ticket
           </button>

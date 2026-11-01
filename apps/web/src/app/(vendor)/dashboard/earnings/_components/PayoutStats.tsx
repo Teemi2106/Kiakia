@@ -21,42 +21,42 @@ export function PayoutStats({ payouts }: PayoutStatsProps) {
   return (
     <div className="space-y-4 lg:col-span-4">
       {/* Total Paid Out */}
-      <div className="rounded-3xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-all hover:shadow-md">
-        <p className="mb-1 text-sm font-medium text-[#5B403C]">
+      <div className="rounded-3xl border border-kk-line bg-kk-card p-6 shadow-sm transition-all hover:shadow-md">
+        <p className="mb-1 text-sm font-medium text-kk-cocoa">
           Total Paid Out
         </p>
-        <h4 className="font-sora text-2xl font-bold text-[#1C1B1B]">
+        <h4 className="font-sora text-2xl font-bold text-kk-ink">
           {formatNaira(koboOf(totalPaidOutKobo))}
         </h4>
-        <div className="mt-2 flex items-center gap-1 text-sm font-medium text-[#5B403C]">
+        <div className="mt-2 flex items-center gap-1 text-sm font-medium text-kk-cocoa">
           <ArrowUpCircle className="size-4" />
           Across the entries shown below
         </div>
       </div>
 
       {/* Total Refunded */}
-      <div className="rounded-3xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-all hover:shadow-md">
-        <p className="mb-1 text-sm font-medium text-[#5B403C]">
+      <div className="rounded-3xl border border-kk-line bg-kk-card p-6 shadow-sm transition-all hover:shadow-md">
+        <p className="mb-1 text-sm font-medium text-kk-cocoa">
           Total Refunded
         </p>
-        <h4 className="font-sora text-2xl font-bold text-[#1C1B1B]">
+        <h4 className="font-sora text-2xl font-bold text-kk-ink">
           {formatNaira(koboOf(totalRefundedKobo))}
         </h4>
-        <div className="mt-2 flex items-center gap-1 text-sm font-medium text-[#5B403C]">
+        <div className="mt-2 flex items-center gap-1 text-sm font-medium text-kk-cocoa">
           <ArrowDownCircle className="size-4" />
           Across the entries shown below
         </div>
       </div>
 
       {/* Entries shown */}
-      <div className="rounded-3xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-all hover:shadow-md">
-        <p className="mb-1 text-sm font-medium text-[#5B403C]">
+      <div className="rounded-3xl border border-kk-line bg-kk-card p-6 shadow-sm transition-all hover:shadow-md">
+        <p className="mb-1 text-sm font-medium text-kk-cocoa">
           Ledger Entries
         </p>
-        <h4 className="font-sora text-2xl font-bold text-[#1C1B1B]">
+        <h4 className="font-sora text-2xl font-bold text-kk-ink">
           {payouts.length}
         </h4>
-        <div className="mt-2 flex items-center gap-1 text-sm font-medium text-[#5B403C]">
+        <div className="mt-2 flex items-center gap-1 text-sm font-medium text-kk-cocoa">
           <ListChecks className="size-4" />
           Most recent, up to 50
         </div>

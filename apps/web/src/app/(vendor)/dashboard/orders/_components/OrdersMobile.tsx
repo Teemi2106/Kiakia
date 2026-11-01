@@ -21,14 +21,14 @@ const STAGE_STATUSES: Record<string, readonly string[]> = {
 };
 
 const ACCENT_COLOR: Record<string, string> = {
-  placed: "bg-[#B61913]",
+  placed: "bg-kk-red",
   accepted: "bg-[#934B00]",
   preparing: "bg-[#934B00]",
-  ready_for_pickup: "bg-[#176A22]",
-  rider_assigned: "bg-[#176A22]",
-  picked_up: "bg-[#176A22]",
-  in_transit: "bg-[#176A22]",
-  arrived: "bg-[#176A22]",
+  ready_for_pickup: "bg-kk-green",
+  rider_assigned: "bg-kk-green",
+  picked_up: "bg-kk-green",
+  in_transit: "bg-kk-green",
+  arrived: "bg-kk-green",
 };
 
 export function OrdersMobile({ orders, onStatusChange }: OrdersMobileProps) {
@@ -68,8 +68,8 @@ export function OrdersMobile({ orders, onStatusChange }: OrdersMobileProps) {
             onClick={() => setStage(label)}
             className={`rounded-full px-6 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
               stage === label
-                ? "bg-[#B61913] text-white"
-                : "bg-[#F0EDED] text-[#5B403C] hover:bg-[#E5E2E1]"
+                ? "bg-kk-red text-white"
+                : "bg-kk-fill text-kk-cocoa hover:bg-kk-hair"
             }`}
           >
             {label === "All" ? `All (${orders.length})` : label}
@@ -77,7 +77,7 @@ export function OrdersMobile({ orders, onStatusChange }: OrdersMobileProps) {
         ))}
         <Link
           href="/dashboard/history"
-          className="rounded-full bg-[#F0EDED] px-6 py-2 text-sm font-medium text-[#5B403C] whitespace-nowrap transition-colors hover:bg-[#E5E2E1]"
+          className="rounded-full bg-kk-fill px-6 py-2 text-sm font-medium text-kk-cocoa whitespace-nowrap transition-colors hover:bg-kk-hair"
         >
           Past Orders
         </Link>
@@ -86,7 +86,7 @@ export function OrdersMobile({ orders, onStatusChange }: OrdersMobileProps) {
       {/* Orders Grid */}
       <div className="flex-1 overflow-y-auto p-4">
         {filteredOrders.length === 0 ? (
-          <p className="py-12 text-center text-sm text-[#5B403C]">No orders in this stage.</p>
+          <p className="py-12 text-center text-sm text-kk-cocoa">No orders in this stage.</p>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {filteredOrders.map((order) => (
@@ -101,17 +101,17 @@ export function OrdersMobile({ orders, onStatusChange }: OrdersMobileProps) {
                     handleSelectOrder(order);
                   }
                 }}
-                className="bg-white p-6 rounded-2xl border border-[#E4BEB8] shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B61913]"
+                className="bg-kk-card p-6 rounded-2xl border border-kk-line shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kk-red-ink"
               >
                 <div
-                  className={`absolute top-0 left-0 w-1.5 h-full ${ACCENT_COLOR[order.status] ?? "bg-[#5B403C]"}`}
+                  className={`absolute top-0 left-0 w-1.5 h-full ${ACCENT_COLOR[order.status] ?? "bg-kk-cocoa"}`}
                 />
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="text-sm text-[#5B403C] mb-1">
+                    <p className="text-sm text-kk-cocoa mb-1">
                       {new Date(order.created_at).toLocaleTimeString()}
                     </p>
-                    <h3 className="font-sora text-xl font-bold text-[#1C1B1B]">
+                    <h3 className="font-sora text-xl font-bold text-kk-ink">
                       {order.code}
                     </h3>
                   </div>
@@ -119,26 +119,26 @@ export function OrdersMobile({ orders, onStatusChange }: OrdersMobileProps) {
                 </div>
                 <div className="space-y-2 mb-6">
                   {order.items?.slice(0, 2).map((item) => (
-                    <p key={item.id} className="text-sm text-[#1C1B1B]">
+                    <p key={item.id} className="text-sm text-kk-ink">
                       {item.quantity}x {item.name}
                     </p>
                   ))}
                   {(order.items?.length || 0) > 2 && (
-                    <p className="text-sm text-[#5B403C]">
+                    <p className="text-sm text-kk-cocoa">
                       +{(order.items?.length || 0) - 2} more items
                     </p>
                   )}
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-[#F0EDED] flex items-center justify-center">
-                      <User className="size-4 text-[#5B403C]/60" />
+                    <div className="h-8 w-8 rounded-full bg-kk-fill flex items-center justify-center">
+                      <User className="size-4 text-kk-cocoa/60" />
                     </div>
-                    <span className="text-sm text-[#5B403C]">
+                    <span className="text-sm text-kk-cocoa">
                       {order.customer_name || "Customer"}
                     </span>
                   </div>
-                  <p className="font-sora text-xl font-bold text-[#B61913]">
+                  <p className="font-sora text-xl font-bold text-kk-red-ink">
                     {formatNaira(koboOf(order.total_kobo))}
                   </p>
                 </div>

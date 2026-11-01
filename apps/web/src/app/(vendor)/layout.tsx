@@ -1,4 +1,5 @@
 import { requireVendorContext, getVendorForCurrentUser } from "@/lib/auth/dal";
+import { getTheme } from "@/lib/theme";
 import { VendorBottomNav } from "./_components/VendorBottomNav";
 import { VendorSidebar } from "./_components/VendorSidebar";
 import { VendorTopNav } from "./_components/VendorTopNav";
@@ -18,10 +19,10 @@ export default async function VendorLayout({
   // The vendor lookup is an independent read (the caller's own membership, via
   // RLS), so it runs beside the gate instead of after it. If the gate redirects,
   // the lookup's result is simply never used.
-  const [, vendor] = await Promise.all([requireVendorContext("/home"), getVendorForCurrentUser()]);
+  const [, vendor, theme] = await Promise.all([requireVendorContext("/home"), getVendorForCurrentUser(), getTheme()]);
 
   return (
-    <div className="flex flex-1 overflow-x-hidden max-w-full">
+    <div data-theme={theme} className="flex flex-1 overflow-x-hidden max-w-full bg-surface text-kk-ink dark:bg-kk-cream">
       {vendor && (
         <VendorSidebar
           vendorName={vendor.name}

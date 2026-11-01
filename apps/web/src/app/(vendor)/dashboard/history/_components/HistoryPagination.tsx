@@ -32,8 +32,8 @@ export function HistoryPagination({
   );
 
   return (
-    <div className="flex flex-col items-center justify-between gap-3 border-t border-[#E4BEB8] bg-[rgba(246,243,242,0.5)] px-6 py-4 sm:flex-row">
-      <p className="text-sm text-[#5B403C]">
+    <div className="flex flex-col items-center justify-between gap-3 border-t border-kk-line bg-[rgba(246,243,242,0.5)] px-6 py-4 sm:flex-row">
+      <p className="text-sm text-kk-cocoa">
         Showing {rangeStart} to {rangeEnd} of {total} orders
       </p>
       {totalPages > 1 && (
@@ -43,7 +43,7 @@ export function HistoryPagination({
             disabled={page === 1}
             onClick={() => onPageChange?.(page - 1)}
             aria-label="Previous page"
-            className="flex size-10 items-center justify-center rounded-lg border border-[#E4BEB8] bg-white transition-colors hover:bg-[#F0EDED] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+            className="flex size-10 items-center justify-center rounded-lg border border-kk-line bg-kk-card transition-colors hover:bg-kk-fill disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-kk-card"
           >
             <ChevronLeft className="size-4" />
           </button>
@@ -55,8 +55,8 @@ export function HistoryPagination({
               aria-current={num === page ? "page" : undefined}
               className={`flex size-10 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                 num === page
-                  ? "bg-[#B61913] text-white"
-                  : "border border-[#E4BEB8] bg-white text-[#1C1B1B] hover:bg-[#F0EDED]"
+                  ? "bg-kk-red text-white"
+                  : "border border-kk-line bg-kk-card text-kk-ink hover:bg-kk-fill"
               }`}
             >
               {num}
@@ -67,7 +67,7 @@ export function HistoryPagination({
             disabled={page === totalPages}
             onClick={() => onPageChange?.(page + 1)}
             aria-label="Next page"
-            className="flex size-10 items-center justify-center rounded-lg border border-[#E4BEB8] bg-white transition-colors hover:bg-[#F0EDED] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+            className="flex size-10 items-center justify-center rounded-lg border border-kk-line bg-kk-card transition-colors hover:bg-kk-fill disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-kk-card"
           >
             <ChevronRight className="size-4" />
           </button>

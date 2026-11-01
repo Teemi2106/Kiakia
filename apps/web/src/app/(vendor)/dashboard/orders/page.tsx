@@ -74,11 +74,11 @@ export default async function VendorOrdersPage() {
           filter={`vendor_id=eq.${vendor.id}`}
           topic={`vendor-orders-${vendor.id}`}
         />
-        <h1 className="font-sora text-2xl font-bold text-[#1C1B1B]">Active Orders</h1>
-        <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E4BEB8] bg-white p-12 text-center">
-          <ClipboardList className="size-8 text-[#5B403C]/30" />
-          <p className="font-medium text-[#1C1B1B]">No active orders</p>
-          <p className="max-w-sm text-sm text-[#5B403C]">
+        <h1 className="font-sora text-2xl font-bold text-kk-ink">Active Orders</h1>
+        <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-kk-line bg-kk-card p-12 text-center">
+          <ClipboardList className="size-8 text-kk-cocoa/30" />
+          <p className="font-medium text-kk-ink">No active orders</p>
+          <p className="max-w-sm text-sm text-kk-cocoa">
             New orders will show up here as customers place them.
           </p>
         </div>

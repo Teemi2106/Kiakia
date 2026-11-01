@@ -23,47 +23,47 @@ export function StatsCards({
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Pending Settlements */}
-        <div className="flex flex-col justify-between rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+        <div className="flex flex-col justify-between rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm transition-shadow hover:shadow-md">
           <div className="mb-4 flex items-center justify-between">
-            <span className="rounded-xl bg-[rgba(147,75,0,0.1)] p-3 text-[#934B00]">
+            <span className="rounded-xl bg-[rgba(147,75,0,0.1)] p-3 text-kk-orange-ink">
               <Lock className="size-6" />
             </span>
-            <span className="font-inter text-xs font-medium leading-4 text-[#5B403C]">
+            <span className="font-inter text-xs font-medium leading-4 text-kk-cocoa">
               Pending
             </span>
           </div>
           <div>
-            <p className="font-inter text-sm font-medium leading-5 text-[#5B403C]">
+            <p className="font-inter text-sm font-medium leading-5 text-kk-cocoa">
               Pending Settlements
             </p>
-            <h3 className="font-sora text-[32px] font-bold leading-10 text-[#934B00]">
+            <h3 className="font-sora text-[32px] font-bold leading-10 text-kk-orange-ink">
               {formatNaira(koboOf(escrowKobo))}
             </h3>
           </div>
         </div>
 
         {/* Released Balance */}
-        <div className="flex flex-col justify-between rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+        <div className="flex flex-col justify-between rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm transition-shadow hover:shadow-md">
           <div className="mb-4 flex items-center justify-between">
-            <span className="rounded-xl bg-[rgba(23,106,34,0.1)] p-3 text-[#176A22]">
+            <span className="rounded-xl bg-[rgba(23,106,34,0.1)] p-3 text-kk-green-ink">
               <Wallet className="size-6" />
             </span>
-            <span className="rounded bg-[rgba(23,106,34,0.1)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#176A22]">
+            <span className="rounded bg-[rgba(23,106,34,0.1)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-kk-green-ink">
               Available
             </span>
           </div>
           <div>
-            <p className="font-inter text-sm font-medium leading-5 text-[#5B403C]">
+            <p className="font-inter text-sm font-medium leading-5 text-kk-cocoa">
               Released Balance
             </p>
-            <h3 className="font-sora text-[32px] font-bold leading-10 text-[#176A22]">
+            <h3 className="font-sora text-[32px] font-bold leading-10 text-kk-green-ink">
               {formatNaira(koboOf(availableKobo))}
             </h3>
           </div>
         </div>
 
         {/* Today's Orders */}
-        <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#B61913] p-6 text-white shadow-lg">
+        <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl bg-kk-red p-6 text-white shadow-lg">
           <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
           <div className="relative z-10 mb-4 flex items-center justify-between">
             <span className="rounded-xl bg-white/20 p-3 text-white">
@@ -90,21 +90,21 @@ export function StatsCards({
   return (
     <div className="grid grid-cols-1 gap-4">
       {/* Pending Settlements */}
-      <div className="rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-all hover:shadow-lg">
-        <p className="mb-2 font-inter text-sm font-medium leading-5 text-[#5B403C]">
+      <div className="rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm transition-all hover:shadow-lg">
+        <p className="mb-2 font-inter text-sm font-medium leading-5 text-kk-cocoa">
           Pending Settlements
         </p>
-        <p className="font-sora text-[32px] font-bold text-[#934B00]">
+        <p className="font-sora text-[32px] font-bold text-kk-orange-ink">
           {formatNaira(koboOf(escrowKobo))}
         </p>
-        <div className="mt-4 flex items-center gap-2 text-[#5B403C]">
+        <div className="mt-4 flex items-center gap-2 text-kk-cocoa">
           <Lock className="size-3.5" />
           <span className="text-xs">Released after delivery confirmation</span>
         </div>
       </div>
 
       {/* Released Balance */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#B61913] p-6 text-white shadow-md transition-all hover:shadow-lg group">
+      <div className="relative overflow-hidden rounded-2xl bg-kk-red p-6 text-white shadow-md transition-all hover:shadow-lg group">
         <div className="relative z-10">
           <p className="mb-2 font-inter text-sm font-medium leading-5 text-white/90">
             Released Balance
@@ -125,18 +125,18 @@ export function StatsCards({
       </div>
 
       {/* Today's Orders */}
-      <div className="rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm transition-all hover:shadow-lg">
+      <div className="rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm transition-all hover:shadow-lg">
         <div className="flex items-start justify-between">
           <div>
-            <p className="mb-2 font-inter text-sm font-medium leading-5 text-[#5B403C]">
+            <p className="mb-2 font-inter text-sm font-medium leading-5 text-kk-cocoa">
               Today&apos;s Orders
             </p>
-            <p className="font-sora text-[32px] font-bold text-[#1C1B1B]">
+            <p className="font-sora text-[32px] font-bold text-kk-ink">
               {activeCount}
             </p>
           </div>
           <div className="rounded-lg bg-[rgba(53,132,57,0.1)] p-2">
-            <TrendingUp className="size-5 text-[#176A22]" />
+            <TrendingUp className="size-5 text-kk-green-ink" />
           </div>
         </div>
       </div>

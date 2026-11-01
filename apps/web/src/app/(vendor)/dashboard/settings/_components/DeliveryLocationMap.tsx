@@ -141,7 +141,7 @@ export default function DeliveryLocationMap({
           draggable
           onDragEnd={handleMarkerDragEnd}
         >
-          <div className="flex h-10 w-10 -translate-y-1 cursor-grab items-center justify-center rounded-full border-2 border-white bg-[#B61913] shadow-lg active:cursor-grabbing">
+          <div className="flex h-10 w-10 -translate-y-1 cursor-grab items-center justify-center rounded-full border-2 border-white bg-kk-red shadow-lg active:cursor-grabbing">
             <MapPin className="size-5 text-white" />
           </div>
         </Marker>

@@ -23,13 +23,13 @@ export function SettingsMobile({ vendor }: SettingsMobileProps) {
       id: "hours",
       label: "Operating Hours",
       icon: Clock,
-      color: "bg-[#FFDCC5] text-[#934B00]",
+      color: "bg-notice-surface text-kk-orange-ink",
     },
     {
       id: "delivery",
       label: "Delivery Zone",
       icon: MapPin,
-      color: "bg-[#FFDAD5] text-[#B61913]",
+      color: "bg-kk-danger-wash text-kk-red-ink",
     },
     {
       id: "staff",
@@ -41,7 +41,7 @@ export function SettingsMobile({ vendor }: SettingsMobileProps) {
       id: "general",
       label: "Account",
       icon: Settings,
-      color: "bg-[#F0EDED] text-[#5B403C]",
+      color: "bg-kk-fill text-kk-cocoa",
     },
   ];
 
@@ -63,15 +63,15 @@ export function SettingsMobile({ vendor }: SettingsMobileProps) {
   // If a sub-screen is open, show it
   if (activeSubScreen) {
     return (
-      <div className="flex h-full flex-col bg-[#FCF9F8]">
-        <header className="flex items-center gap-4 border-b border-[#E4BEB8] px-4 py-4">
+      <div className="flex h-full flex-col bg-kk-cream">
+        <header className="flex items-center gap-4 border-b border-kk-line px-4 py-4">
           <button
             onClick={() => setActiveSubScreen(null)}
-            className="rounded-full p-2 transition-colors hover:bg-[#F0EDED]"
+            className="rounded-full p-2 transition-colors hover:bg-kk-fill"
           >
-            <ChevronRight className="size-5 text-[#B61913]" />
+            <ChevronRight className="size-5 text-kk-red-ink" />
           </button>
-          <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+          <h2 className="font-sora text-2xl font-semibold text-kk-ink">
             {menuItems.find((item) => item.id === activeSubScreen)?.label}
           </h2>
         </header>
@@ -93,7 +93,7 @@ export function SettingsMobile({ vendor }: SettingsMobileProps) {
               <button
                 key={item.id}
                 onClick={() => setActiveSubScreen(item.id as SubScreen)}
-                className="group flex items-center justify-between rounded-2xl border border-[#E4BEB8] bg-white p-6 text-left transition-all hover:shadow-lg"
+                className="group flex items-center justify-between rounded-2xl border border-kk-line bg-kk-card p-6 text-left transition-all hover:shadow-lg"
               >
                 <div className="flex items-center gap-6">
                   <div
@@ -102,10 +102,10 @@ export function SettingsMobile({ vendor }: SettingsMobileProps) {
                     <Icon className="size-6" />
                   </div>
                   <div>
-                    <h3 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+                    <h3 className="font-sora text-2xl font-semibold text-kk-ink">
                       {item.label}
                     </h3>
-                    <p className="text-sm text-[#5B403C]">
+                    <p className="text-sm text-kk-cocoa">
                       {item.id === "hours" &&
                         "Set your daily opening and closing times."}
                       {item.id === "delivery" &&
@@ -117,7 +117,7 @@ export function SettingsMobile({ vendor }: SettingsMobileProps) {
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="size-6 text-[#5B403C] transition-transform group-hover:translate-x-1" />
+                <ChevronRight className="size-6 text-kk-cocoa transition-transform group-hover:translate-x-1" />
               </button>
             );
           })}

@@ -13,9 +13,9 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "credit":
-        return "bg-[rgba(23,106,34,0.1)] text-[#176A22]";
+        return "bg-[rgba(23,106,34,0.1)] text-kk-green-ink";
       default:
-        return "bg-[rgba(147,75,0,0.1)] text-[#934B00]";
+        return "bg-[rgba(147,75,0,0.1)] text-kk-orange-ink";
     }
   };
 
@@ -44,14 +44,14 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
   };
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-[#E4BEB8] bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-[#E4BEB8] px-6 py-5">
-        <h4 className="font-sora text-xl font-bold text-[#1C1B1B]">
+    <div className="overflow-hidden rounded-3xl border border-kk-line bg-kk-card shadow-sm">
+      <div className="flex items-center justify-between border-b border-kk-line px-6 py-5">
+        <h4 className="font-sora text-xl font-bold text-kk-ink">
           Payout History
         </h4>
         <button
           type="button"
-          className="flex items-center gap-1 text-sm font-medium text-[#B61913] transition-colors hover:underline"
+          className="flex items-center gap-1 text-sm font-medium text-kk-red-ink transition-colors hover:underline"
         >
           <Download className="size-4" />
           Download CSV
@@ -60,13 +60,13 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
 
       {payouts.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-[#F6F3F2] text-[#B61913]">
+          <div className="flex size-12 items-center justify-center rounded-full bg-kk-sand text-kk-red-ink">
             <Receipt className="size-6" />
           </div>
-          <p className="font-sora text-base font-bold text-[#1C1B1B]">
+          <p className="font-sora text-base font-bold text-kk-ink">
             No payouts yet
           </p>
-          <p className="max-w-sm text-sm text-[#5B403C]">
+          <p className="max-w-sm text-sm text-kk-cocoa">
             Ledger entries will appear here once an order is delivered and
             settled into your account.
           </p>
@@ -74,21 +74,21 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-[#F6F3F2]">
+            <thead className="bg-kk-sand">
               <tr>
-                <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
+                <th className="px-6 py-4 text-sm font-medium text-kk-cocoa">
                   Reference
                 </th>
-                <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
+                <th className="px-6 py-4 text-sm font-medium text-kk-cocoa">
                   Date
                 </th>
-                <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
+                <th className="px-6 py-4 text-sm font-medium text-kk-cocoa">
                   Type
                 </th>
-                <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
+                <th className="px-6 py-4 text-sm font-medium text-kk-cocoa">
                   Amount
                 </th>
-                <th className="px-6 py-4 text-sm font-medium text-[#5B403C]">
+                <th className="px-6 py-4 text-sm font-medium text-kk-cocoa">
                   Status
                 </th>
               </tr>
@@ -97,22 +97,22 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
               {payouts.map((payout) => (
                 <tr
                   key={payout.id}
-                  className="transition-colors hover:bg-[#F6F3F2]"
+                  className="transition-colors hover:bg-kk-sand"
                 >
-                  <td className="px-6 py-4 text-sm font-bold text-[#1C1B1B]">
+                  <td className="px-6 py-4 text-sm font-bold text-kk-ink">
                     #{payout.id.slice(0, 8).toUpperCase()}
                   </td>
-                  <td className="px-6 py-4 text-sm text-[#5B403C]">
+                  <td className="px-6 py-4 text-sm text-kk-cocoa">
                     {new Date(payout.created_at).toLocaleDateString("en-NG", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
                     })}
                   </td>
-                  <td className="px-6 py-4 text-sm text-[#5B403C]">
+                  <td className="px-6 py-4 text-sm text-kk-cocoa">
                     {getEntryTypeLabel(payout.entry_type)}
                   </td>
-                  <td className="px-6 py-4 text-sm font-bold text-[#B61913]">
+                  <td className="px-6 py-4 text-sm font-bold text-kk-red-ink">
                     {formatNaira(koboOf(payout.amount_kobo))}
                   </td>
                   <td className="px-6 py-4">
@@ -130,10 +130,10 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
       )}
 
       {payouts.length > 0 && (
-        <div className="border-t border-[#E4BEB8] bg-[#F6F3F2] px-6 py-4 text-center">
+        <div className="border-t border-kk-line bg-kk-sand px-6 py-4 text-center">
           <button
             type="button"
-            className="text-sm font-medium text-[#5B403C] transition-colors hover:text-[#B61913]"
+            className="text-sm font-medium text-kk-cocoa transition-colors hover:text-kk-red-ink"
           >
             View All Transactions
           </button>

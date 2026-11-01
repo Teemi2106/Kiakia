@@ -47,13 +47,13 @@ export function RevenueChart({ payouts }: RevenueChartProps) {
   }, [payouts]);
 
   return (
-    <div className="rounded-3xl border border-[#E4BEB8] bg-white p-6 shadow-sm md:p-8">
+    <div className="rounded-3xl border border-kk-line bg-kk-card p-6 shadow-sm md:p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h4 className="font-sora text-xl font-bold text-[#1C1B1B]">
+          <h4 className="font-sora text-xl font-bold text-kk-ink">
             Ledger Activity — Last 7 Days
           </h4>
-          <p className="text-sm text-[#5B403C]">
+          <p className="text-sm text-kk-cocoa">
             Net credits to your account, from real ledger entries
           </p>
         </div>
@@ -67,7 +67,7 @@ export function RevenueChart({ payouts }: RevenueChartProps) {
               dataKey="day"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: "#5B403C" }}
+              tick={{ fontSize: 12, fill: "var(--color-kk-cocoa)" }}
             />
             <YAxis hide={true} />
             <Tooltip

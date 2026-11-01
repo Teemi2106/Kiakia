@@ -92,8 +92,8 @@ export function MenuMobile({
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="font-sora text-2xl font-bold text-[#1C1B1B]">Menu</h1>
-          <p className="text-sm text-[#5B403C]">
+          <h1 className="font-sora text-2xl font-bold text-kk-ink">Menu</h1>
+          <p className="text-sm text-kk-cocoa">
             {items.length} item{items.length === 1 ? "" : "s"}
           </p>
         </div>
@@ -101,14 +101,14 @@ export function MenuMobile({
           className={cn(
             "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold",
             isAcceptingOrders
-              ? "bg-[#176A22]/10 text-[#176A22]"
-              : "bg-[#5B403C]/10 text-[#5B403C]",
+              ? "bg-kk-green/10 text-kk-green-ink"
+              : "bg-kk-cocoa/10 text-kk-cocoa",
           )}
         >
           <span
             className={cn(
               "h-2 w-2 rounded-full",
-              isAcceptingOrders ? "bg-[#176A22] animate-pulse" : "bg-[#5B403C]",
+              isAcceptingOrders ? "bg-kk-green animate-pulse" : "bg-kk-cocoa",
             )}
           />
           {isAcceptingOrders ? "Accepting Orders" : "Closed"}
@@ -128,10 +128,10 @@ export function MenuMobile({
         {Object.entries(groupedItems).map(([categoryId, categoryItems]) => (
           <section key={categoryId}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+              <h2 className="font-sora text-2xl font-semibold text-kk-ink">
                 {getCategoryName(categoryId)}
               </h2>
-              <span className="rounded-full bg-[rgba(182,25,19,0.1)] px-3 py-1 text-xs font-medium text-[#B61913]">
+              <span className="rounded-full bg-[rgba(182,25,19,0.1)] px-3 py-1 text-xs font-medium text-kk-red-ink">
                 {categoryItems.length} Item{categoryItems.length > 1 ? "s" : ""}
               </span>
             </div>
@@ -149,10 +149,10 @@ export function MenuMobile({
         ))}
 
         {filteredItems.length === 0 && (
-          <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E4BEB8] py-12 text-center">
-            <Utensils className="size-8 text-[#5B403C]/30" />
-            <p className="font-medium text-[#1C1B1B]">No menu items found</p>
-            <p className="text-sm text-[#5B403C]">
+          <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-kk-line py-12 text-center">
+            <Utensils className="size-8 text-kk-cocoa/30" />
+            <p className="font-medium text-kk-ink">No menu items found</p>
+            <p className="text-sm text-kk-cocoa">
               Try a different search or filter.
             </p>
           </div>
@@ -166,7 +166,7 @@ export function MenuMobile({
       {/* FAB - Add New Item */}
       <Link
         href="/dashboard/menu/items/new"
-        className="fixed bottom-24 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#B61913] text-white shadow-xl transition-transform hover:scale-105 active:scale-90"
+        className="fixed bottom-24 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-kk-red text-white shadow-xl transition-transform hover:scale-105 active:scale-90"
       >
         <Plus className="size-8" />
       </Link>

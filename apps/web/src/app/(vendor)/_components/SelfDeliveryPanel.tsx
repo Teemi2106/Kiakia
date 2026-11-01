@@ -54,9 +54,9 @@ export function SelfDeliveryPanel({ orderId, status, deliveryFeeKobo }: { orderI
 
   if (delivered) {
     return (
-      <div role="status" className="rounded-2xl border border-[#176A22]/30 bg-[#DFF3DC] p-5">
-        <p className="font-sora text-base font-bold text-[#176A22]">Delivered.</p>
-        <p className="mt-1 text-sm text-[#1C1B1B]">
+      <div role="status" className="rounded-2xl border border-kk-green/30 bg-kk-green-wash p-5">
+        <p className="font-sora text-base font-bold text-kk-green-ink">Delivered.</p>
+        <p className="mt-1 text-sm text-kk-ink">
           The delivery fee ({formatNaira(koboOf(deliveryFeeKobo))}) is yours, on top of your share of the food.
         </p>
       </div>
@@ -64,12 +64,12 @@ export function SelfDeliveryPanel({ orderId, status, deliveryFeeKobo }: { orderI
   }
 
   return (
-    <div className="rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
-      <h2 className="flex items-center gap-2 font-inter text-sm font-bold uppercase tracking-wider text-[#1C1B1B]">
-        <Bike className="size-4 text-[#5B403C]" aria-hidden="true" />
+    <div className="rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm">
+      <h2 className="flex items-center gap-2 font-inter text-sm font-bold uppercase tracking-wider text-kk-ink">
+        <Bike className="size-4 text-kk-cocoa" aria-hidden="true" />
         You are delivering this order
       </h2>
-      <p className="mt-2 text-sm text-[#5B403C]">
+      <p className="mt-2 text-sm text-kk-cocoa">
         No rider is involved. You keep the delivery fee ({formatNaira(koboOf(deliveryFeeKobo))}) once the customer gives you their code.
       </p>
 
@@ -80,7 +80,7 @@ export function SelfDeliveryPanel({ orderId, status, deliveryFeeKobo }: { orderI
           </Button>
         ) : shown === "arrived" ? (
           <form onSubmit={(event) => void verify(event)} className="flex flex-col gap-3">
-            <label htmlFor="self-delivery-code" className="text-sm font-medium text-[#1C1B1B]">
+            <label htmlFor="self-delivery-code" className="text-sm font-medium text-kk-ink">
               Enter the customer&apos;s code to complete
             </label>
             <Input
@@ -99,10 +99,10 @@ export function SelfDeliveryPanel({ orderId, status, deliveryFeeKobo }: { orderI
             </Button>
           </form>
         ) : (
-          <p className="text-sm text-[#5B403C]">Mark the order ready when the food is done. The delivery steps appear here once it is ready.</p>
+          <p className="text-sm text-kk-cocoa">Mark the order ready when the food is done. The delivery steps appear here once it is ready.</p>
         )}
         {error && (
-          <p role="alert" className="rounded-xl bg-[#FFDAD5] px-3 py-2 text-sm text-[#BA1A1A]">
+          <p role="alert" className="rounded-xl bg-kk-danger-wash px-3 py-2 text-sm text-kk-danger-ink">
             {error}
           </p>
         )}

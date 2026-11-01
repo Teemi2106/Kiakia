@@ -42,26 +42,26 @@ export default async function VendorMenuPage() {
     return (
       <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
         <div className="flex items-center justify-between">
-          <h1 className="font-sora text-2xl font-bold text-[#1C1B1B]">
+          <h1 className="font-sora text-2xl font-bold text-kk-ink">
             Menu Management
           </h1>
           <Link
             href="/dashboard/menu/items/new"
-            className="flex items-center gap-2 rounded-xl bg-[#B61913] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#9e1611]"
+            className="flex items-center gap-2 rounded-xl bg-kk-red px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-kk-red-hover"
           >
             <Plus className="size-4" />
             New Item
           </Link>
         </div>
-        <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E4BEB8] bg-white p-12 text-center">
-          <Utensils className="size-8 text-[#5B403C]/30" />
-          <p className="font-medium text-[#1C1B1B]">No menu items yet</p>
-          <p className="max-w-sm text-sm text-[#5B403C]">
+        <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-kk-line bg-kk-card p-12 text-center">
+          <Utensils className="size-8 text-kk-cocoa/30" />
+          <p className="font-medium text-kk-ink">No menu items yet</p>
+          <p className="max-w-sm text-sm text-kk-cocoa">
             Add your first item to start accepting orders.
           </p>
           <Link
             href="/dashboard/menu/items/new"
-            className="mt-2 flex items-center gap-2 rounded-xl bg-[#B61913] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#9e1611]"
+            className="mt-2 flex items-center gap-2 rounded-xl bg-kk-red px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-kk-red-hover"
           >
             <Plus className="size-4" />
             Add item

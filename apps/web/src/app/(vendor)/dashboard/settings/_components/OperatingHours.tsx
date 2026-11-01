@@ -44,16 +44,16 @@ export function OperatingHours({ vendor }: { vendor: VendorSettings }) {
   }
 
   return (
-    <form action={formAction} className="rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
+    <form action={formAction} className="rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm">
       <input type="hidden" name="vendorId" value={vendor.id} />
       <input type="hidden" name="operatingHours" value={JSON.stringify(hours)} />
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+          <h2 className="font-sora text-2xl font-semibold text-kk-ink">
             Operating Hours
           </h2>
-          <p className="text-sm text-[#5B403C]">
+          <p className="text-sm text-kk-cocoa">
             Set when your kitchen is open for orders.
           </p>
         </div>
@@ -67,14 +67,14 @@ export function OperatingHours({ vendor }: { vendor: VendorSettings }) {
           <div
             key={entry.day}
             className={`flex flex-wrap items-center justify-between gap-4 rounded-xl p-4 transition-colors ${
-              entry.isOpen ? "bg-[#F6F3F2]" : "bg-[#F6F3F2]/50"
+              entry.isOpen ? "bg-kk-sand" : "bg-kk-sand/50"
             }`}
           >
             <div className="flex min-w-[140px] items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#B61913]/10 text-[#B61913]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-kk-red/10 text-kk-red-ink">
                 <Clock className="size-5" />
               </div>
-              <span className="font-inter text-sm font-medium text-[#1C1B1B]">
+              <span className="font-inter text-sm font-medium text-kk-ink">
                 {DAY_LABELS[entry.day]}
               </span>
             </div>
@@ -83,7 +83,7 @@ export function OperatingHours({ vendor }: { vendor: VendorSettings }) {
               <div className="flex flex-col">
                 <label
                   htmlFor={`opensAt-${entry.day}`}
-                  className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#5B403C]"
+                  className="mb-1 text-[10px] font-bold uppercase tracking-wider text-kk-cocoa"
                 >
                   Opens
                 </label>
@@ -93,14 +93,14 @@ export function OperatingHours({ vendor }: { vendor: VendorSettings }) {
                   value={entry.opensAt}
                   onChange={(e) => updateDay(entry.day, { opensAt: e.target.value })}
                   disabled={!entry.isOpen}
-                  className="rounded-lg border border-[#E4BEB8] bg-white p-2 font-inter text-sm focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20 disabled:opacity-50"
+                  className="rounded-lg border border-kk-line bg-kk-card p-2 font-inter text-sm focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red-ink/20 disabled:opacity-50"
                 />
               </div>
-              <span className="text-[#5B403C]">to</span>
+              <span className="text-kk-cocoa">to</span>
               <div className="flex flex-col">
                 <label
                   htmlFor={`closesAt-${entry.day}`}
-                  className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#5B403C]"
+                  className="mb-1 text-[10px] font-bold uppercase tracking-wider text-kk-cocoa"
                 >
                   Closes
                 </label>
@@ -110,7 +110,7 @@ export function OperatingHours({ vendor }: { vendor: VendorSettings }) {
                   value={entry.closesAt}
                   onChange={(e) => updateDay(entry.day, { closesAt: e.target.value })}
                   disabled={!entry.isOpen}
-                  className="rounded-lg border border-[#E4BEB8] bg-white p-2 font-inter text-sm focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20 disabled:opacity-50"
+                  className="rounded-lg border border-kk-line bg-kk-card p-2 font-inter text-sm focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red-ink/20 disabled:opacity-50"
                 />
               </div>
             </div>
@@ -119,8 +119,8 @@ export function OperatingHours({ vendor }: { vendor: VendorSettings }) {
               <span
                 className={`rounded-full px-3 py-1 text-xs font-bold ${
                   entry.isOpen
-                    ? "bg-[#176A22]/10 text-[#176A22]"
-                    : "bg-[#BA1A1A]/10 text-[#BA1A1A]"
+                    ? "bg-kk-green/10 text-kk-green-ink"
+                    : "bg-kk-danger/10 text-kk-danger-ink"
                 }`}
               >
                 {entry.isOpen ? "OPEN" : "CLOSED"}
@@ -132,7 +132,7 @@ export function OperatingHours({ vendor }: { vendor: VendorSettings }) {
                   onChange={() => updateDay(entry.day, { isOpen: !entry.isOpen })}
                   className="peer sr-only"
                 />
-                <span className="absolute inset-0 rounded-full bg-[#F0EDED] transition-colors peer-checked:bg-[#176A22]" />
+                <span className="absolute inset-0 rounded-full bg-kk-fill transition-colors peer-checked:bg-kk-green" />
                 <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
               </span>
             </label>
@@ -140,8 +140,8 @@ export function OperatingHours({ vendor }: { vendor: VendorSettings }) {
         ))}
       </div>
 
-      {state.error && <p className="mt-4 text-sm text-[#BA1A1A]">{state.error}</p>}
-      {state.success && <p className="mt-4 text-sm text-[#176A22]">Saved.</p>}
+      {state.error && <p className="mt-4 text-sm text-kk-danger-ink">{state.error}</p>}
+      {state.success && <p className="mt-4 text-sm text-kk-green-ink">Saved.</p>}
     </form>
   );
 }

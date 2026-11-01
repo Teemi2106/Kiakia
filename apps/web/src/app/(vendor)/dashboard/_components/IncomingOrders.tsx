@@ -21,13 +21,13 @@ export function IncomingOrders({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "preparing":
-        return "bg-[#FE8E27]/10 text-[#FE8E27]";
+        return "bg-kk-orange/10 text-kk-orange";
       case "ready_for_pickup":
-        return "bg-[#176A22]/10 text-[#176A22]";
+        return "bg-kk-green/10 text-kk-green-ink";
       case "placed":
-        return "bg-[#B61913]/10 text-[#B61913]";
+        return "bg-kk-red/10 text-kk-red-ink";
       default:
-        return "bg-[#E5E2E1] text-[#5B403C]";
+        return "bg-kk-hair text-kk-cocoa";
     }
   };
 
@@ -51,10 +51,10 @@ export function IncomingOrders({
           <Link
             key={order.id}
             href={`/dashboard/orders/${order.id}`}
-            className="group flex items-center gap-4 rounded-2xl border border-[#E4BEB8] bg-white p-4 transition-colors hover:border-[#B61913] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40"
+            className="group flex items-center gap-4 rounded-2xl border border-kk-line bg-kk-card p-4 transition-colors hover:border-kk-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red-ink/40"
           >
             {/* Image */}
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F0EDED]">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-kk-fill">
               {order.image ? (
                 <Image
                   src={order.image}
@@ -63,8 +63,8 @@ export function IncomingOrders({
                   className="object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1]">
-                  <Utensils className="size-8 text-[#5B403C]/40" />
+                <div className="flex h-full w-full items-center justify-center bg-kk-hair">
+                  <Utensils className="size-8 text-kk-cocoa/40" />
                 </div>
               )}
             </div>
@@ -72,10 +72,10 @@ export function IncomingOrders({
             {/* Details */}
             <div className="flex-1">
               <div className="flex items-start justify-between">
-                <h4 className="font-inter font-bold text-[#1C1B1B] transition-colors group-hover:text-[#B61913]">
+                <h4 className="font-inter font-bold text-kk-ink transition-colors group-hover:text-kk-red-ink">
                   {order.items || "Order items"}
                 </h4>
-                <span className="font-inter text-xs font-medium leading-4 text-[#5B403C]">
+                <span className="font-inter text-xs font-medium leading-4 text-kk-cocoa">
                   {order.code}
                 </span>
               </div>
@@ -85,7 +85,7 @@ export function IncomingOrders({
                 >
                   {getStatusLabel(order.status)}
                 </span>
-                <span className="flex items-center gap-1 text-sm text-[#5B403C]">
+                <span className="flex items-center gap-1 text-sm text-kk-cocoa">
                   <Clock className="size-3.5" />
                   {order.eta || "In progress"}
                 </span>
@@ -94,10 +94,10 @@ export function IncomingOrders({
 
             {/* Right Side */}
             <div className="flex items-center gap-3">
-              <p className="font-bold text-[#1C1B1B]">
+              <p className="font-bold text-kk-ink">
                 {formatNaira(koboOf(order.total_kobo))}
               </p>
-              <ChevronRight className="size-4 text-[#5B403C] transition-transform group-hover:translate-x-0.5 group-hover:text-[#B61913]" />
+              <ChevronRight className="size-4 text-kk-cocoa transition-transform group-hover:translate-x-0.5 group-hover:text-kk-red-ink" />
             </div>
           </Link>
         ))}
@@ -113,9 +113,9 @@ export function IncomingOrders({
           <Link
             key={order.id}
             href={`/dashboard/orders/${order.id}`}
-            className="w-[280px] shrink-0 overflow-hidden rounded-2xl border border-[#E4BEB8] bg-white shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B61913]/40"
+            className="w-[280px] shrink-0 overflow-hidden rounded-2xl border border-kk-line bg-kk-card shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red-ink/40"
           >
-            <div className="relative h-32 w-full overflow-hidden bg-[#F0EDED]">
+            <div className="relative h-32 w-full overflow-hidden bg-kk-fill">
               {order.image ? (
                 <Image
                   src={order.image}
@@ -124,25 +124,25 @@ export function IncomingOrders({
                   className="object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1]">
-                  <Utensils className="size-12 text-[#5B403C]/30" />
+                <div className="flex h-full w-full items-center justify-center bg-kk-hair">
+                  <Utensils className="size-12 text-kk-cocoa/30" />
                 </div>
               )}
-              <div className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-[#B61913] shadow-sm">
+              <div className="absolute left-3 top-3 rounded-full bg-kk-card px-3 py-1 text-xs font-bold text-kk-red-ink shadow-sm">
                 {getStatusLabel(order.status)}
               </div>
             </div>
             <div className="p-4">
               <div className="mb-2 flex items-start justify-between">
-                <h3 className="font-inter text-sm font-bold text-[#1C1B1B]">
+                <h3 className="font-inter text-sm font-bold text-kk-ink">
                   {order.items || "Order items"}
                 </h3>
-                <span className="font-bold text-[#B61913]">
+                <span className="font-bold text-kk-red-ink">
                   {formatNaira(koboOf(order.total_kobo))}
                 </span>
               </div>
-              <p className="mb-4 text-xs text-[#5B403C]">{order.code}</p>
-              <div className="flex items-center justify-between rounded-xl bg-[#FCF9F8] px-3 py-2 text-xs font-bold text-[#B61913]">
+              <p className="mb-4 text-xs text-kk-cocoa">{order.code}</p>
+              <div className="flex items-center justify-between rounded-xl bg-kk-cream px-3 py-2 text-xs font-bold text-kk-red-ink">
                 Manage order
                 <ChevronRight className="size-3.5" />
               </div>

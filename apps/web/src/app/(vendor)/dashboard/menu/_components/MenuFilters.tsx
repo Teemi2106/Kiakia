@@ -20,12 +20,12 @@ export function MenuFilters({
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4">
       {/* Search */}
       <div className="relative flex-1 w-full">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#5B403C]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-kk-cocoa" />
         <input
           type="text"
           placeholder="Search menu items..."
           onChange={(e) => onSearch(e.target.value)}
-          className="w-full rounded-xl bg-[#F0EDED] pl-10 pr-4 py-3 text-sm text-[#1C1B1B] placeholder:text-[#5B403C] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20"
+          className="w-full rounded-xl bg-kk-fill pl-10 pr-4 py-3 text-sm text-kk-ink placeholder:text-kk-cocoa focus:outline-none focus:ring-2 focus:ring-kk-red-ink/20"
         />
       </div>
 
@@ -35,8 +35,8 @@ export function MenuFilters({
           onClick={() => onFilterChange("all")}
           className={`rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
             activeFilter === "all"
-              ? "bg-[#B61913] text-white"
-              : "bg-[#F0EDED] text-[#5B403C] hover:bg-[#E5E2E1]"
+              ? "bg-kk-red text-white"
+              : "bg-kk-fill text-kk-cocoa hover:bg-kk-hair"
           }`}
         >
           All
@@ -47,8 +47,8 @@ export function MenuFilters({
             onClick={() => onFilterChange(category)}
             className={`rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
               activeFilter === category
-                ? "bg-[#B61913] text-white"
-                : "bg-[#F0EDED] text-[#5B403C] hover:bg-[#E5E2E1]"
+                ? "bg-kk-red text-white"
+                : "bg-kk-fill text-kk-cocoa hover:bg-kk-hair"
             }`}
           >
             {category}

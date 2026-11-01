@@ -51,24 +51,24 @@ export function OptionGroupsBuilder({
   return (
     <div className="flex flex-col gap-3">
       {groups.map((group, groupIndex) => (
-        <div key={groupIndex} className="rounded-xl border border-[#E4BEB8] bg-[#F6F3F2] p-4">
+        <div key={groupIndex} className="rounded-xl border border-kk-line bg-kk-sand p-4">
           <div className="flex items-center gap-2">
             <input
               placeholder="Group name (e.g. Size, Extras)"
               value={group.name}
               onChange={(e) => updateGroup(groupIndex, { name: e.target.value })}
-              className="flex-1 rounded-lg border border-[#E4BEB8] bg-white px-3 py-2 text-sm text-[#1C1B1B] outline-none placeholder:text-[#5B403C]/50 focus:border-[#B61913] focus:ring-2 focus:ring-[#B61913]/20"
+              className="flex-1 rounded-lg border border-kk-line bg-kk-card px-3 py-2 text-sm text-kk-ink outline-none placeholder:text-kk-cocoa/50 focus:border-kk-red focus:ring-2 focus:ring-kk-red-ink/20"
             />
             <button
               type="button"
               onClick={() => removeGroup(groupIndex)}
-              className="rounded-lg p-2 text-[#5B403C] transition-colors hover:bg-[#FFDAD5] hover:text-[#BA1A1A]"
+              className="rounded-lg p-2 text-kk-cocoa transition-colors hover:bg-kk-danger-wash hover:text-kk-danger-ink"
               aria-label="Remove group"
             >
               <Trash2 className="size-4" />
             </button>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-4 text-xs font-medium text-[#5B403C]">
+          <div className="mt-3 flex flex-wrap items-center gap-4 text-xs font-medium text-kk-cocoa">
             <label className="flex items-center gap-1.5">
               Min
               <input
@@ -80,7 +80,7 @@ export function OptionGroupsBuilder({
                     minSelect: Math.max(Number(e.target.value), group.isRequired ? 1 : 0),
                   })
                 }
-                className="w-14 rounded-lg border border-[#E4BEB8] bg-white px-2 py-1 text-[#1C1B1B] outline-none focus:border-[#B61913]"
+                className="w-14 rounded-lg border border-kk-line bg-kk-card px-2 py-1 text-kk-ink outline-none focus:border-kk-red"
               />
             </label>
             <label className="flex items-center gap-1.5">
@@ -90,7 +90,7 @@ export function OptionGroupsBuilder({
                 min={1}
                 value={group.maxSelect}
                 onChange={(e) => updateGroup(groupIndex, { maxSelect: Number(e.target.value) })}
-                className="w-14 rounded-lg border border-[#E4BEB8] bg-white px-2 py-1 text-[#1C1B1B] outline-none focus:border-[#B61913]"
+                className="w-14 rounded-lg border border-kk-line bg-kk-card px-2 py-1 text-kk-ink outline-none focus:border-kk-red"
               />
             </label>
             <label className="flex items-center gap-1.5">
@@ -109,7 +109,7 @@ export function OptionGroupsBuilder({
                     minSelect: isRequired ? Math.max(group.minSelect, 1) : group.minSelect,
                   });
                 }}
-                className="size-4 rounded border-[#E4BEB8] text-[#B61913] focus:ring-[#B61913]/40"
+                className="size-4 rounded border-kk-line text-kk-red-ink focus:ring-kk-red-ink/40"
               />
               Required
             </label>
@@ -122,19 +122,19 @@ export function OptionGroupsBuilder({
                   placeholder="Option name"
                   value={option.name}
                   onChange={(e) => updateOption(groupIndex, optionIndex, { name: e.target.value })}
-                  className="flex-1 rounded-lg border border-[#E4BEB8] bg-white px-3 py-1.5 text-sm text-[#1C1B1B] outline-none placeholder:text-[#5B403C]/50 focus:border-[#B61913] focus:ring-2 focus:ring-[#B61913]/20"
+                  className="flex-1 rounded-lg border border-kk-line bg-kk-card px-3 py-1.5 text-sm text-kk-ink outline-none placeholder:text-kk-cocoa/50 focus:border-kk-red focus:ring-2 focus:ring-kk-red-ink/20"
                 />
                 <input
                   type="number"
                   placeholder="+₦"
                   value={option.priceDeltaNaira}
                   onChange={(e) => updateOption(groupIndex, optionIndex, { priceDeltaNaira: Number(e.target.value) })}
-                  className="w-20 rounded-lg border border-[#E4BEB8] bg-white px-2 py-1.5 text-sm text-[#1C1B1B] outline-none focus:border-[#B61913]"
+                  className="w-20 rounded-lg border border-kk-line bg-kk-card px-2 py-1.5 text-sm text-kk-ink outline-none focus:border-kk-red"
                 />
                 <button
                   type="button"
                   onClick={() => removeOption(groupIndex, optionIndex)}
-                  className="rounded-lg p-1.5 text-[#5B403C] transition-colors hover:bg-[#FFDAD5] hover:text-[#BA1A1A]"
+                  className="rounded-lg p-1.5 text-kk-cocoa transition-colors hover:bg-kk-danger-wash hover:text-kk-danger-ink"
                   aria-label="Remove option"
                 >
                   <Trash2 className="size-4" />
@@ -144,7 +144,7 @@ export function OptionGroupsBuilder({
             <button
               type="button"
               onClick={() => addOption(groupIndex)}
-              className="flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-sm font-medium text-[#B61913] transition-colors hover:bg-[#B61913]/10"
+              className="flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-sm font-medium text-kk-red-ink transition-colors hover:bg-kk-red/10"
             >
               <Plus className="size-3.5" />
               Add option
@@ -155,7 +155,7 @@ export function OptionGroupsBuilder({
       <button
         type="button"
         onClick={addGroup}
-        className="flex items-center justify-center gap-2 self-start rounded-xl border border-dashed border-[#E4BEB8] px-4 py-2 text-sm font-medium text-[#5B403C] transition-colors hover:border-[#B61913] hover:text-[#B61913]"
+        className="flex items-center justify-center gap-2 self-start rounded-xl border border-dashed border-kk-line px-4 py-2 text-sm font-medium text-kk-cocoa transition-colors hover:border-kk-red hover:text-kk-red-ink"
       >
         <Plus className="size-4" />
         Add option group

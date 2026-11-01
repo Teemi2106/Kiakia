@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { loadMarketingPreferences } from "@/lib/messaging/preferences";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ThemeToggle } from "@/app/_components/ThemeToggle";
+import { getTheme } from "@/lib/theme";
 import { SettingsDesktop } from "./_components/SettingsDesktop";
 import { SettingsMobile } from "./_components/SettingsMobile";
 import type { DayHours, StaffMember, VendorSettings, VendorStaffRole } from "./_components/types";
@@ -24,6 +26,7 @@ export default async function VendorSettingsPage() {
   const session = await verifySession();
   const [vendor, marketing] = await Promise.all([getVendorForCurrentUser(), loadMarketingPreferences(session.userId)]);
   if (!vendor) notFound();
+  const theme = await getTheme();
 
   // No FK PostgREST can embed on directly (vendor_staff.user_id references
   // auth.users, not profiles) — two queries, joined in JS.
@@ -77,6 +80,13 @@ export default async function VendorSettingsPage() {
       <div className="lg:hidden">
         <SettingsMobile vendor={vendorSettings} />
       </div>
+      <section className="mx-auto w-full max-w-sm px-4 pb-10 lg:px-8">
+        <h2 className="font-sora text-base font-semibold text-kk-ink">Appearance</h2>
+        <p className="mt-1 font-inter text-sm text-kk-cocoa">Light, dark, or follow your device.</p>
+        <div className="mt-3">
+          <ThemeToggle theme={theme} />
+        </div>
+      </section>
     </>
   );
 }

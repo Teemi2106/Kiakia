@@ -26,7 +26,7 @@ export function AddCategoryForm({ vendorId, categories }: { vendorId: string; ca
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-xl border border-dashed border-[#E4BEB8] px-4 py-2 text-sm font-medium text-[#5B403C] transition-colors hover:border-[#B61913] hover:text-[#B61913]"
+        className="flex items-center gap-2 rounded-xl border border-dashed border-kk-line px-4 py-2 text-sm font-medium text-kk-cocoa transition-colors hover:border-kk-red hover:text-kk-red-ink"
       >
         <Plus className="size-4" />
         Add category
@@ -42,7 +42,7 @@ export function AddCategoryForm({ vendorId, categories }: { vendorId: string; ca
         required
         autoFocus
         defaultValue=""
-        className="w-56 rounded-xl border border-[#E4BEB8] bg-white px-3 py-2 text-sm text-[#1C1B1B] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20"
+        className="w-56 rounded-xl border border-kk-line bg-kk-card px-3 py-2 text-sm text-kk-ink focus:outline-none focus:ring-2 focus:ring-kk-red-ink/20"
       >
         <option value="" disabled>
           Choose a category
@@ -56,7 +56,7 @@ export function AddCategoryForm({ vendorId, categories }: { vendorId: string; ca
       <button
         type="submit"
         disabled={pending}
-        className="flex items-center gap-2 rounded-xl bg-[#B61913] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#9e1611] disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex items-center gap-2 rounded-xl bg-kk-red px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-kk-red-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending && <Loader2 className="size-4 animate-spin" />}
         Add
@@ -64,11 +64,11 @@ export function AddCategoryForm({ vendorId, categories }: { vendorId: string; ca
       <button
         type="button"
         onClick={() => setOpen(false)}
-        className="text-sm font-medium text-[#5B403C] hover:text-[#1C1B1B]"
+        className="text-sm font-medium text-kk-cocoa hover:text-kk-ink"
       >
         Cancel
       </button>
-      {state.error && <p className="w-full text-sm text-[#BA1A1A]">{state.error}</p>}
+      {state.error && <p className="w-full text-sm text-kk-danger-ink">{state.error}</p>}
     </form>
   );
 }
@@ -91,7 +91,7 @@ export function DeleteCategoryButton({ vendorId, categoryId }: { vendorId: strin
       type="button"
       onClick={() => void handleDelete()}
       disabled={pending}
-      className="text-[#5B403C]/60 transition-colors hover:text-[#BA1A1A] disabled:cursor-not-allowed disabled:opacity-50"
+      className="text-kk-cocoa/60 transition-colors hover:text-kk-danger-ink disabled:cursor-not-allowed disabled:opacity-50"
       aria-label="Delete category"
     >
       {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
@@ -108,16 +108,16 @@ export function CategoryManager({
   categories: Category[];
 }) {
   return (
-    <div className="rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
-      <h3 className="font-sora text-lg font-semibold text-[#1C1B1B]">Categories</h3>
-      <p className="mt-1 text-sm text-[#5B403C]">
+    <div className="rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm">
+      <h3 className="font-sora text-lg font-semibold text-kk-ink">Categories</h3>
+      <p className="mt-1 text-sm text-kk-cocoa">
         Group your menu items so customers can browse by category.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {categories.map((category) => (
           <span
             key={category.id}
-            className="flex items-center gap-2 rounded-full bg-[#F6F3F2] py-1.5 pl-3 pr-2 text-sm font-medium text-[#1C1B1B]"
+            className="flex items-center gap-2 rounded-full bg-kk-sand py-1.5 pl-3 pr-2 text-sm font-medium text-kk-ink"
           >
             {category.name}
             <DeleteCategoryButton vendorId={vendorId} categoryId={category.id} />

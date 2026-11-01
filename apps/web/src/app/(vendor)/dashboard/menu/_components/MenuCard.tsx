@@ -20,9 +20,9 @@ export function MenuCard({
   onToggleAvailability,
 }: MenuCardProps) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#E4BEB8] bg-white shadow-sm transition-all hover:shadow-lg">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-kk-line bg-kk-card shadow-sm transition-all hover:shadow-lg">
       {/* Image */}
-      <div className="relative h-48 w-full overflow-hidden bg-[#F0EDED]">
+      <div className="relative h-48 w-full overflow-hidden bg-kk-fill">
         {item.image_url ? (
           <Image
             src={item.image_url}
@@ -31,13 +31,13 @@ export function MenuCard({
             className="object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[#F0EDED]">
-            <Utensils className="size-12 text-[#5B403C]/30" />
+          <div className="flex h-full w-full items-center justify-center bg-kk-fill">
+            <Utensils className="size-12 text-kk-cocoa/30" />
           </div>
         )}
         <Link
           href={`/dashboard/menu/items/${item.id}/edit`}
-          className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-white/90 text-[#5B403C] shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-[#B61913]"
+          className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-kk-card/90 text-kk-cocoa shadow-sm backdrop-blur transition-colors hover:bg-kk-card hover:text-kk-red-ink"
           aria-label="Edit item"
         >
           <Pencil className="size-4" />
@@ -48,12 +48,12 @@ export function MenuCard({
       <div className="flex flex-1 flex-col justify-between p-4">
         <div>
           <div className="mb-1 flex items-start justify-between gap-2">
-            <h3 className="font-inter font-bold text-[#1C1B1B]">{item.name}</h3>
-            <span className="shrink-0 font-bold text-[#B61913]">
+            <h3 className="font-inter font-bold text-kk-ink">{item.name}</h3>
+            <span className="shrink-0 font-bold text-kk-red-ink">
               {formatNaira(koboOf(item.price_kobo))}
             </span>
           </div>
-          <p className="text-sm text-[#5B403C] line-clamp-2">
+          <p className="text-sm text-kk-cocoa line-clamp-2">
             {item.description || "Delicious menu item"}
           </p>
         </div>
@@ -61,7 +61,7 @@ export function MenuCard({
         <div className="mt-4 flex items-center justify-between border-t border-[rgba(228,190,184,0.3)] pt-4">
           <span
             className={`text-xs font-medium ${
-              item.is_available ? "text-[#176A22]" : "text-[#BA1A1A]"
+              item.is_available ? "text-kk-green-ink" : "text-kk-danger-ink"
             }`}
           >
             {item.is_available ? "In Stock" : "Out of Stock"}

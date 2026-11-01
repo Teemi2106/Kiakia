@@ -15,65 +15,65 @@ export function HistoryFilters({
   onPeriodFilter,
 }: HistoryFiltersProps) {
   return (
-    <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm md:flex-row md:items-end">
+    <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm md:flex-row md:items-end">
       {/* Search */}
       <div className="flex-1">
-        <label className="mb-2 block text-sm font-medium text-[#5B403C]">
+        <label className="mb-2 block text-sm font-medium text-kk-cocoa">
           Search Orders
         </label>
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#5B403C]" />
+          <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-kk-cocoa" />
           <input
             type="text"
             placeholder="Search by Order ID or Customer..."
             onChange={(e) => onSearch(e.target.value)}
-            className="w-full rounded-xl border-2 border-[#E4BEB8] bg-white py-3 pl-12 pr-4 font-inter text-sm text-[#1C1B1B] transition-colors focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20"
+            className="w-full rounded-xl border-2 border-kk-line bg-kk-card py-3 pl-12 pr-4 font-inter text-sm text-kk-ink transition-colors focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red-ink/20"
           />
         </div>
       </div>
 
       {/* Status Filter */}
       <div className="md:min-w-40">
-        <label className="mb-2 block text-sm font-medium text-[#5B403C]">
+        <label className="mb-2 block text-sm font-medium text-kk-cocoa">
           Status
         </label>
         <div className="relative">
           <select
             onChange={(e) => onStatusFilter(e.target.value)}
-            className="w-full appearance-none rounded-xl border-2 border-[#E4BEB8] bg-white px-4 py-3 pr-10 font-inter text-sm text-[#1C1B1B] transition-colors focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20"
+            className="w-full appearance-none rounded-xl border-2 border-kk-line bg-kk-card px-4 py-3 pr-10 font-inter text-sm text-kk-ink transition-colors focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red-ink/20"
           >
             <option value="all">All Orders</option>
             <option value="delivered">Fulfilled</option>
             <option value="cancelled">Cancelled</option>
             <option value="rejected">Rejected</option>
           </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#5B403C]" />
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-kk-cocoa" />
         </div>
       </div>
 
       {/* Time Period */}
       <div className="md:min-w-40">
-        <label className="mb-2 block text-sm font-medium text-[#5B403C]">
+        <label className="mb-2 block text-sm font-medium text-kk-cocoa">
           Time Period
         </label>
         <div className="relative">
           <select
             onChange={(e) => onPeriodFilter(e.target.value)}
-            className="w-full appearance-none rounded-xl border-2 border-[#E4BEB8] bg-white px-4 py-3 pr-10 font-inter text-sm text-[#1C1B1B] transition-colors focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20"
+            className="w-full appearance-none rounded-xl border-2 border-kk-line bg-kk-card px-4 py-3 pr-10 font-inter text-sm text-kk-ink transition-colors focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red-ink/20"
           >
             <option value="30">Last 30 Days</option>
             <option value="90">Last 3 Months</option>
             <option value="365">Year to Date</option>
             <option value="all">All Time</option>
           </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#5B403C]" />
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-kk-cocoa" />
         </div>
       </div>
 
       {/* Export Button */}
       <button
         type="button"
-        className="flex h-13 items-center justify-center gap-2 rounded-xl bg-[#B61913] px-6 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#9e1611] active:scale-95"
+        className="flex h-13 items-center justify-center gap-2 rounded-xl bg-kk-red px-6 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-kk-red-hover active:scale-95"
       >
         <Download className="size-5" />
         Export CSV

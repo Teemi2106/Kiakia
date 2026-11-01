@@ -12,7 +12,7 @@ import type { Vendor, Order, SalesDataPoint } from "./types";
 // out of this page's first-load bundle, so the page is interactive before the chart is.
 const SalesChart = dynamic(() => import("./SalesChart").then((m) => m.SalesChart), {
   ssr: false,
-  loading: () => <div className="h-48 w-full animate-pulse rounded-xl bg-[#F0EDED]" aria-hidden="true" />,
+  loading: () => <div className="h-48 w-full animate-pulse rounded-xl bg-kk-fill" aria-hidden="true" />,
 });
 
 
@@ -47,26 +47,26 @@ export function DashboardDesktop({
         {/* Incoming Orders Queue */}
         <section className="lg:col-span-8 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+            <h3 className="font-sora text-2xl font-semibold text-kk-ink">
               Incoming Orders
             </h3>
             <div className="flex items-center gap-2 rounded-full bg-[rgba(218,53,41,0.1)] px-3 py-1.5">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-[#B61913]" />
-              <span className="font-inter text-xs font-medium leading-4 text-[#B61913]">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-kk-red" />
+              <span className="font-inter text-xs font-medium leading-4 text-kk-red-ink">
                 Live Updates
               </span>
             </div>
           </div>
 
           {orders.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#E4BEB8] bg-white p-10 text-center">
-              <span className="flex size-12 items-center justify-center rounded-full bg-[#FCF9F8] text-[#5B403C]">
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-kk-line bg-kk-card p-10 text-center">
+              <span className="flex size-12 items-center justify-center rounded-full bg-kk-cream text-kk-cocoa">
                 <Inbox className="size-6" />
               </span>
-              <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+              <p className="font-inter text-sm font-semibold text-kk-ink">
                 No incoming orders right now
               </p>
-              <p className="max-w-sm text-sm text-[#5B403C]">
+              <p className="max-w-sm text-sm text-kk-cocoa">
                 New orders will show up here the moment a customer checks out.
               </p>
             </div>
@@ -77,8 +77,8 @@ export function DashboardDesktop({
 
         {/* Quick Sales Snapshot */}
         <aside className="lg:col-span-4 space-y-6">
-          <div className="h-full rounded-2xl border border-[#E4BEB8] bg-[#F6F3F2] p-6">
-            <h3 className="mb-6 font-inter text-sm font-semibold uppercase tracking-wider text-[#5B403C]">
+          <div className="h-full rounded-2xl border border-kk-line bg-kk-sand p-6">
+            <h3 className="mb-6 font-inter text-sm font-semibold uppercase tracking-wider text-kk-cocoa">
               Sales — Last 7 Days
             </h3>
 
@@ -86,7 +86,7 @@ export function DashboardDesktop({
 
             <Link
               href="/dashboard/earnings"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#934B00] py-3 font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#934B00]/40"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#934B00] py-3 font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-orange-ink/40"
             >
               <ChartBar className="size-4" /> View Detailed Reports
             </Link>

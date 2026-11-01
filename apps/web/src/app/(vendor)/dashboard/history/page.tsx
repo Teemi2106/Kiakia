@@ -46,22 +46,22 @@ export default async function VendorHistoryPage() {
   if (orders.length === 0) {
     return (
       <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-[#E4BEB8] bg-white px-6 py-16 text-center shadow-sm">
-          <div className="flex size-14 items-center justify-center rounded-full bg-[#F6F3F2] text-[#B61913]">
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-kk-line bg-kk-card px-6 py-16 text-center shadow-sm">
+          <div className="flex size-14 items-center justify-center rounded-full bg-kk-sand text-kk-red-ink">
             <PackageSearch className="size-7" />
           </div>
           <div>
-            <h2 className="font-sora text-lg font-bold text-[#1C1B1B]">
+            <h2 className="font-sora text-lg font-bold text-kk-ink">
               No past orders yet
             </h2>
-            <p className="mt-1 max-w-sm text-sm text-[#5B403C]">
+            <p className="mt-1 max-w-sm text-sm text-kk-cocoa">
               Completed, cancelled, and rejected orders will show up here once
               you&apos;ve fulfilled your first delivery.
             </p>
           </div>
           <Link
             href="/dashboard/orders"
-            className="mt-2 rounded-xl bg-[#B61913] px-6 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#9e1611] active:scale-95"
+            className="mt-2 rounded-xl bg-kk-red px-6 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-kk-red-hover active:scale-95"
           >
             View active orders
           </Link>

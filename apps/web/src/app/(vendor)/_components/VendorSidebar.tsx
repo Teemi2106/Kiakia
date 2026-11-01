@@ -48,17 +48,17 @@ export function VendorSidebar({ vendorName, bannerUrl, status }: VendorSidebarPr
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-[#E4BEB8] bg-white sm:flex">
-      <div className="border-b border-[#E4BEB8] p-4">
+    <aside className="hidden w-64 shrink-0 flex-col border-r border-kk-line bg-kk-card sm:flex">
+      <div className="border-b border-kk-line p-4">
         <Link href="/dashboard" className="mb-4 flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-[#B61913] font-sora text-sm font-bold text-white">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-kk-red font-sora text-sm font-bold text-white">
             K
           </span>
-          <span className="font-sora text-lg font-bold text-[#1C1B1B]">KiaKia</span>
+          <span className="font-sora text-lg font-bold text-kk-ink">KiaKia</span>
         </Link>
 
         {/* Store identity — surfaces the vendor's own banner image (§ redesign brief) */}
-        <div className="relative h-20 w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#B61913] to-[#7A0F0A]">
+        <div className="relative h-20 w-full overflow-hidden rounded-xl bg-gradient-to-br from-kk-red to-[#7A0F0A]">
           {bannerUrl ? (
             <Image src={bannerUrl} alt="" fill className="object-cover" />
           ) : (
@@ -87,8 +87,8 @@ export function VendorSidebar({ vendorName, bannerUrl, status }: VendorSidebarPr
               aria-current={active ? "page" : undefined}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                 active
-                  ? "bg-[#B61913] text-white shadow-sm shadow-[#B61913]/30"
-                  : "text-[#5B403C] hover:bg-[#FCF9F8] hover:text-[#1C1B1B]"
+                  ? "bg-kk-red text-white shadow-sm shadow-[#B61913]/30"
+                  : "text-kk-cocoa hover:bg-kk-cream hover:text-kk-ink"
               }`}
             >
               <Icon className="size-4" />
@@ -98,10 +98,10 @@ export function VendorSidebar({ vendorName, bannerUrl, status }: VendorSidebarPr
         })}
       </nav>
 
-      <form action={signOutAction} className="border-t border-[#E4BEB8] p-3">
+      <form action={signOutAction} className="border-t border-kk-line p-3">
         <button
           type="submit"
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#5B403C] transition-colors hover:bg-[#B61913]/10 hover:text-[#B61913]"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-kk-cocoa transition-colors hover:bg-kk-red/10 hover:text-kk-red-ink"
         >
           <LogOut className="size-4" />
           Logout

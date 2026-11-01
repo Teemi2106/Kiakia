@@ -25,7 +25,7 @@ export function OrdersDesktop({ orders, onStatusChange }: OrdersDesktopProps) {
   return (
     <div className="flex flex-1 overflow-hidden h-[calc(100vh-80px)]">
       {/* Left Panel: Order List */}
-      <section className="w-[380px] lg:w-[420px] flex flex-col border-r border-[#E4BEB8] bg-[#FCF9F8]">
+      <section className="w-[380px] lg:w-[420px] flex flex-col border-r border-kk-line bg-kk-cream">
         <OrderList
           orders={orders}
           selectedOrder={selectedOrder}
@@ -34,12 +34,12 @@ export function OrdersDesktop({ orders, onStatusChange }: OrdersDesktopProps) {
       </section>
 
       {/* Right Panel: Order Detail */}
-      <section className="flex-1 flex flex-col bg-[#F6F3F2] overflow-y-auto">
+      <section className="flex-1 flex flex-col bg-kk-sand overflow-y-auto">
         {selectedOrder ? (
           <OrderDetail order={selectedOrder} onStatusChange={onStatusChange} />
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-[#5B403C]">Select an order to view details</p>
+            <p className="text-kk-cocoa">Select an order to view details</p>
           </div>
         )}
       </section>

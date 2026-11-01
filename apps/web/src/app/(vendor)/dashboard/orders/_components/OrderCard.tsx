@@ -33,31 +33,31 @@ export function OrderCard({ order, isActive, onClick }: OrderCardProps) {
           onClick(order);
         }
       }}
-      className={`cursor-pointer rounded-xl p-4 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B61913] ${
+      className={`cursor-pointer rounded-xl p-4 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kk-red-ink ${
         isActive
-          ? "bg-[rgba(218,53,41,0.05)] border-2 border-[#B61913]"
-          : "bg-white border border-[#E4BEB8] hover:border-[#B61913]/40 hover:shadow-sm"
+          ? "bg-[rgba(218,53,41,0.05)] border-2 border-kk-red"
+          : "bg-kk-card border border-kk-line hover:border-kk-red/40 hover:shadow-sm"
       }`}
     >
       <div className="flex justify-between items-start mb-2">
         <div>
-          <span className="text-sm font-bold text-[#5B403C]">{order.code}</span>
-          <h3 className="flex items-center gap-1.5 font-sora text-lg font-bold text-[#1C1B1B]">
-            <User className="size-4 text-[#5B403C]/50" />
+          <span className="text-sm font-bold text-kk-cocoa">{order.code}</span>
+          <h3 className="flex items-center gap-1.5 font-sora text-lg font-bold text-kk-ink">
+            <User className="size-4 text-kk-cocoa/50" />
             {order.customer_name || "Customer"}
           </h3>
         </div>
         <StatusBadge status={order.status} />
       </div>
       {order.dispatch?.state === "no_rider_nearby" && order.delivery_by !== "vendor" && (
-        <p className="mb-2 rounded-lg bg-[#FFDCC5] px-3 py-2 text-xs font-semibold text-[#934B00]">
+        <p className="mb-2 rounded-lg bg-notice-surface px-3 py-2 text-xs font-semibold text-kk-orange-ink">
           No rider is near you right now. Open this order to choose what to do.
         </p>
       )}
       {order.delivery_by === "vendor" && order.status !== "delivered" && (
-        <p className="mb-2 rounded-lg bg-[#F0EDED] px-3 py-2 text-xs font-semibold text-[#5B403C]">You are delivering this order.</p>
+        <p className="mb-2 rounded-lg bg-kk-fill px-3 py-2 text-xs font-semibold text-kk-cocoa">You are delivering this order.</p>
       )}
-      <div className="flex justify-between items-center text-[#5B403C]">
+      <div className="flex justify-between items-center text-kk-cocoa">
         <span className="text-sm">
           {order.items?.length || 0} Items •{" "}
           {formatNaira(koboOf(order.total_kobo))}
