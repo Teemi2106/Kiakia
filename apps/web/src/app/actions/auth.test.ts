@@ -42,10 +42,13 @@ const {
   loginAction,
   registerAction,
   requestPasswordResetAction,
+  resendSignupCodeAction,
   signOutAction,
   updatePasswordAction,
   vendorLoginAction,
   vendorRegisterAction,
+  vendorVerifyEmailAction,
+  verifyEmailAction,
 } = await import("./auth");
 
 const VALID_REGISTER_FORM = {
@@ -116,9 +119,9 @@ describe("registerAction", () => {
     await expect(registerAction({}, formData(VALID_REGISTER_FORM))).rejects.toThrow("NEXT_REDIRECT:/home");
   });
 
-  it("returns a success message (not a redirect) when email confirmation is required", async () => {
+  it("moves to the code-entry step (not a redirect) when email confirmation is required", async () => {
     const result = await registerAction({}, formData(VALID_REGISTER_FORM));
-    expect(result.success).toBeTruthy();
+    expect(result.verifyEmail).toBe("ada@example.com");
     expect(result.error).toBeUndefined();
   });
 
@@ -139,7 +142,7 @@ describe("registerAction", () => {
 
     const result = await registerAction({}, formData({ ...VALID_REGISTER_FORM, phone: "" }));
 
-    expect(result.success).toBeTruthy();
+    expect(result.verifyEmail).toBe("ada@example.com");
     expect(phoneInUse).not.toHaveBeenCalled();
     expect(signUp.mock.calls[0]?.[0]).toMatchObject({ options: { data: { full_name: "Ada Lovelace" } } });
     expect(JSON.stringify(signUp.mock.calls[0]?.[0])).not.toContain('"phone"');
@@ -255,12 +258,79 @@ describe("vendorRegisterAction", () => {
     );
   });
 
-  it("returns a success message pointing at vendor sign-in when email confirmation is required", async () => {
+  it("moves to the code-entry step when email confirmation is required", async () => {
     mockClient.current = supabaseClientMock({
       auth: { signUp: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })) },
     });
     const result = await vendorRegisterAction({}, formData(VALID_REGISTER_FORM));
-    expect(result.success).toContain("vendor");
+    expect(result.verifyEmail).toBe("ada@example.com");
+  });
+});
+
+describe("verifyEmailAction", () => {
+  const verifyOtp = vi.fn((..._args: unknown[]) => Promise.resolve<{ error: unknown }>({ error: null }));
+
+  beforeEach(() => {
+    verifyOtp.mockClear();
+    setActiveRole.mockClear();
+    mockClient.current = supabaseClientMock({ auth: { verifyOtp } });
+  });
+
+  it("rejects a malformed code without calling Supabase, staying on the code step", async () => {
+    const result = await verifyEmailAction({}, formData({ email: "ada@example.com", code: "12ab" }));
+    expect(result.error).toBeTruthy();
+    expect(result.verifyEmail).toBe("ada@example.com");
+    expect(verifyOtp).not.toHaveBeenCalled();
+  });
+
+  it("maps a wrong or expired code to a friendly message that does not leak Supabase's", async () => {
+    verifyOtp.mockResolvedValueOnce({ error: { message: "Token has expired or is invalid" } });
+    const result = await verifyEmailAction({}, formData({ email: "ada@example.com", code: "123456" }));
+    expect(result.error).toMatch(/incorrect or has expired/i);
+    expect(result.error).not.toContain("Token");
+    expect(result.verifyEmail).toBe("ada@example.com");
+  });
+
+  it("verifies as a signup OTP, then signs the customer in and goes home", async () => {
+    await expect(verifyEmailAction({}, formData({ email: "ada@example.com", code: "123456" }))).rejects.toThrow(
+      "NEXT_REDIRECT:/home",
+    );
+    expect(verifyOtp).toHaveBeenCalledWith({ email: "ada@example.com", token: "123456", type: "signup" });
+    expect(setActiveRole).toHaveBeenCalledWith("customer");
+  });
+
+  it("returns to the page the visitor came from, ignoring off-site targets", async () => {
+    await expect(
+      verifyEmailAction({}, formData({ email: "ada@example.com", code: "123456", next: "/checkout/continue" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/checkout/continue");
+    await expect(
+      verifyEmailAction({}, formData({ email: "ada@example.com", code: "123456", next: "//evil.com" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/home");
+  });
+
+  it("sends a verified vendor applicant to /onboarding", async () => {
+    await expect(
+      vendorVerifyEmailAction({}, formData({ email: "ada@example.com", code: "123456", next: "/home" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/onboarding");
+  });
+});
+
+describe("resendSignupCodeAction", () => {
+  it("asks Supabase for a new signup code", async () => {
+    const resend = vi.fn((..._args: unknown[]) => Promise.resolve({ error: null }));
+    mockClient.current = supabaseClientMock({ auth: { resend } });
+    const result = await resendSignupCodeAction({}, formData({ email: "ada@example.com" }));
+    expect(resend).toHaveBeenCalledWith({ type: "signup", email: "ada@example.com" });
+    expect(result.success).toBeTruthy();
+  });
+
+  it("reports a failure without leaking the provider message", async () => {
+    mockClient.current = supabaseClientMock({
+      auth: { resend: vi.fn(() => Promise.resolve({ error: { message: "rate limit smtp_host" } })) },
+    });
+    const result = await resendSignupCodeAction({}, formData({ email: "ada@example.com" }));
+    expect(result.error).toBeTruthy();
+    expect(result.error).not.toContain("smtp");
   });
 });
 

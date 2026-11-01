@@ -3,7 +3,14 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { customerRegisterSchema, emailSchema, loginSchema, passwordSchema, registerSchema } from "@/lib/validation/auth";
+import {
+  customerRegisterSchema,
+  emailSchema,
+  loginSchema,
+  otpCodeSchema,
+  passwordSchema,
+  registerSchema,
+} from "@/lib/validation/auth";
 import { serverEnv } from "@/lib/env.server";
 import { getRoles, hasRole, isPureRider, VENDOR_ROLES } from "@/lib/auth/dal";
 import { clearActiveRole, setActiveRole } from "@/lib/auth/active-role";
@@ -21,6 +28,11 @@ import { safeNextPath } from "@/lib/auth/safe-next";
 export interface FormState {
   readonly error?: string;
   readonly success?: string;
+  /**
+   * Set when signUp() succeeded but the email still needs confirming: the
+   * form swaps to the code-entry step for this address.
+   */
+  readonly verifyEmail?: string;
 }
 
 const PHONE_TAKEN_MESSAGE = "That phone number is already linked to an account. Sign in, or use a different number.";
@@ -88,7 +100,7 @@ export async function registerAction(_prevState: FormState, formData: FormData):
     redirect(next ?? "/home");
   }
 
-  return { success: "Check your email to confirm your account, then sign in." };
+  return { verifyEmail: parsed.data.email };
 }
 
 /**
@@ -138,7 +150,67 @@ export async function vendorRegisterAction(_prevState: FormState, formData: Form
     redirect("/onboarding");
   }
 
-  return { success: "Check your email to confirm your account, then sign in to apply as a vendor." };
+  return { verifyEmail: parsed.data.email };
+}
+
+/**
+ * Second half of signup: the 6-digit code from the confirmation email.
+ * Supabase generates, hashes, expires and rate-limits the code; verifyOtp()
+ * both confirms the email and returns a session, so no separate sign-in is
+ * needed afterwards.
+ */
+async function verifySignupCode(formData: FormData): Promise<FormState | null> {
+  const email = emailSchema.safeParse(formData.get("email"));
+  const code = otpCodeSchema.safeParse(formData.get("code"));
+
+  if (!email.success) {
+    return { error: "Something went wrong. Please start again." };
+  }
+  if (!code.success) {
+    return { verifyEmail: email.data, error: code.error.issues[0]?.message ?? "Enter the code from your email." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({ email: email.data, token: code.data, type: "signup" });
+
+  if (error) {
+    return { verifyEmail: email.data, error: "That code is incorrect or has expired. Check it, or request a new one." };
+  }
+
+  return null;
+}
+
+export async function verifyEmailAction(_prevState: FormState, formData: FormData): Promise<FormState> {
+  const failure = await verifySignupCode(formData);
+  if (failure) return failure;
+
+  await setActiveRole("customer");
+  redirect(safeNextPath(formData.get("next")) ?? "/home");
+}
+
+export async function vendorVerifyEmailAction(_prevState: FormState, formData: FormData): Promise<FormState> {
+  const failure = await verifySignupCode(formData);
+  if (failure) return failure;
+
+  await setActiveRole("customer");
+  redirect("/onboarding");
+}
+
+export async function resendSignupCodeAction(_prevState: FormState, formData: FormData): Promise<FormState> {
+  const email = emailSchema.safeParse(formData.get("email"));
+  if (!email.success) {
+    return { error: "Something went wrong. Please start again." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({ type: "signup", email: email.data });
+
+  if (error) {
+    console.error("[auth] resend failed", { status: error.status, code: error.code, message: error.message });
+    return { error: "We couldn't send a new code just yet. Wait a moment and try again." };
+  }
+
+  return { success: "A new code is on its way." };
 }
 
 export async function loginAction(_prevState: FormState, formData: FormData): Promise<FormState> {

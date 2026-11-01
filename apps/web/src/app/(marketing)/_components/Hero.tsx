@@ -145,13 +145,6 @@ export function Hero({ account }: { account: MarketingAccount | null }) {
                   Order something now
                   <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
-                <Link
-                  href="/partner"
-                  className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl border border-kk-line bg-white/70 px-7 font-inter text-base font-semibold text-kk-ink backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-kk-ink/25 hover:bg-white"
-                >
-                  <Store className="size-5 text-kk-orange-deep" />
-                  Partner with KiaKia
-                </Link>
               </>
             )}
           </div>

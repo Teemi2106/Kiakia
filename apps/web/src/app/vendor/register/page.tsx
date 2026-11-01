@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { vendorRegisterAction } from "@/app/actions/auth";
+import { vendorRegisterAction, vendorVerifyEmailAction } from "@/app/actions/auth";
 import { AuthShell, AuthSwap } from "@/app/(auth)/_components/AuthShell";
 import { VendorPitchCard } from "@/app/(auth)/_components/AuthStage";
 import { RegisterForm } from "@/app/(auth)/_components/RegisterForm";
@@ -51,7 +51,7 @@ export default function VendorRegisterPage() {
         </p>
       }
     >
-      <RegisterForm action={vendorRegisterAction} signInHref="/vendor/login" />
+      <RegisterForm action={vendorRegisterAction} verifyAction={vendorVerifyEmailAction} signInHref="/vendor/login" />
     </AuthShell>
   );
 }

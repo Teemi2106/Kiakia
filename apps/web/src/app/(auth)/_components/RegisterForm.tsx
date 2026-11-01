@@ -1,18 +1,20 @@
 "use client";
 
-import { registerAction, type FormState } from "@/app/actions/auth";
+import { registerAction, verifyEmailAction, type FormState } from "@/app/actions/auth";
 import { Lock, Mail, Phone, User } from "lucide-react";
-import Link from "next/link";
 import { useActionState } from "react";
 import { AuthField, AuthPasswordField } from "./AuthField";
-import { AuthError, AuthSubmit, AuthSuccess } from "./AuthFeedback";
+import { AuthError, AuthSubmit } from "./AuthFeedback";
 import { OAuthButtons } from "./OAuthButtons";
+import { VerifyCodeForm } from "./VerifyCodeForm";
 
 const initialState: FormState = {};
 
 interface RegisterFormProps {
   /** Defaults to the customer registerAction; pass vendorRegisterAction for /vendor/register. */
   action?: typeof registerAction;
+  /** Defaults to verifyEmailAction; pass vendorVerifyEmailAction for /vendor/register. */
+  verifyAction?: typeof verifyEmailAction;
   /** Where the post-signup "sign in" button points. */
   signInHref?: string;
   /** Customers add a phone at checkout, so signup can skip it; vendors still need it up front. */
@@ -21,26 +23,19 @@ interface RegisterFormProps {
   next?: string | null;
 }
 
-export function RegisterForm({ action = registerAction, signInHref = "/login", phoneOptional = false, next = null }: RegisterFormProps) {
+export function RegisterForm({
+  action = registerAction,
+  verifyAction = verifyEmailAction,
+  signInHref = "/login", phoneOptional = false,
+  next = null,
+}: RegisterFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
-  // "Check your email to confirm" — the account exists, so the form has
-  // nothing left to collect. Replace it rather than leaving five filled
-  // fields sitting under a success message.
-  if (state.success) {
-    return (
-      <AuthSuccess
-        message={state.success}
-        action={
-          <Link
-            href={signInHref}
-            className="inline-flex h-12 items-center justify-center rounded-2xl border border-kk-line px-6 font-inter text-sm font-semibold text-kk-ink transition-colors hover:bg-kk-sand"
-          >
-            Go to sign in
-          </Link>
-        }
-      />
-    );
+  // The account exists and a code is in the user's inbox, so the form has
+  // nothing left to collect. Replace it with the code-entry step rather than
+  // leaving five filled fields on screen.
+  if (state.verifyEmail) {
+    return <VerifyCodeForm email={state.verifyEmail} action={verifyAction} next={next} signInHref={signInHref} />;
   }
 
   return (

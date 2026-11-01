@@ -46,6 +46,14 @@ enable_signup = true
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+# Emailed code length (6-10) and lifetime; keep otpCodeSchema in
+# apps/web/src/lib/validation/auth.ts in step with the length.
+otp_length = 6
+otp_expiry = 900
+
+[auth.email.template.confirmation]
+subject = "Your KiaKia verification code"
+content_path = "./supabase/templates/confirmation.html"
 
 [edge_runtime]
 enabled = false

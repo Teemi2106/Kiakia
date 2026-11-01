@@ -41,6 +41,14 @@ const optionalPhoneSchema = z
 
 export const emailSchema = z.string().trim().email("Enter a valid email address");
 
+// Supabase's email OTP is 6 digits by default and configurable up to 10
+// (auth.email.otp_length); accept the whole range so changing it in the
+// dashboard doesn't silently break verification.
+export const otpCodeSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{6,10}$/, "Enter the code from your email");
+
 export const passwordSchema = z
   .string()
   .min(8, "Be at least 8 characters long")
