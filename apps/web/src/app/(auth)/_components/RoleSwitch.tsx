@@ -22,7 +22,7 @@ export function RoleSwitch({ active }: { active: "customer" | "vendor" }) {
       {/* Sliding thumb. Sits behind the labels, so it never intercepts a tap. */}
       <span
         aria-hidden="true"
-        className="kk-switch-thumb pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-white shadow-[0_2px_10px_-2px_rgba(28,27,27,0.18)]"
+        className="kk-switch-thumb pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-kk-card shadow-[0_2px_10px_-2px_rgba(28,27,27,0.18)]"
       />
       <RoleTab href="/login" icon={ShoppingBag} label="Order" active={active === "customer"} />
       <RoleTab href="/vendor/login" icon={Store} label="Sell" active={active === "vendor"} />
@@ -48,7 +48,7 @@ function RoleTab({
       className={cn(
         "relative z-10 flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 sm:px-3.5",
         "font-inter text-[12px] font-semibold transition-colors duration-200 sm:text-[13px]",
-        active ? "text-(--auth-accent)" : "text-kk-cocoa/70 hover:text-kk-ink",
+        active ? "text-(--auth-accent-ink)" : "text-kk-cocoa/70 hover:text-kk-ink",
       )}
     >
       <Icon className="size-3.5 shrink-0" />

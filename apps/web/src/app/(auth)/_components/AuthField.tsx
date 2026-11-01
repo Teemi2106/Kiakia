@@ -32,7 +32,7 @@ export function AuthField({ label, icon: Icon, hint, action, className, ...props
       <div className="group relative">
         <Icon
           aria-hidden="true"
-          className="pointer-events-none absolute left-4 top-1/2 z-10 size-[18px] -translate-y-1/2 text-kk-cocoa/45 transition-colors group-focus-within:text-(--auth-accent)"
+          className="pointer-events-none absolute left-4 top-1/2 z-10 size-[18px] -translate-y-1/2 text-kk-cocoa/45 transition-colors group-focus-within:text-(--auth-accent-ink)"
         />
         <input
           {...props}
@@ -46,7 +46,7 @@ export function AuthField({ label, icon: Icon, hint, action, className, ...props
             "pb-2 pl-11 pr-4 pt-6 font-inter text-[15px] text-kk-ink outline-none",
             "transition-[border-color,box-shadow,background-color] duration-200",
             "hover:border-kk-line",
-            "focus:border-(--auth-accent) focus:bg-white",
+            "focus:border-(--auth-accent) focus:bg-kk-card",
             "focus:shadow-[0_0_0_4px_rgb(var(--auth-accent-glow)/0.12)]",
             "disabled:cursor-not-allowed disabled:opacity-50",
             className,
@@ -121,8 +121,8 @@ const RULES = [
 const TONES = [
   { bar: "bg-kk-line", text: "text-kk-cocoa/60", word: "Too short" },
   { bar: "bg-danger", text: "text-danger", word: "Weak" },
-  { bar: "bg-kk-orange", text: "text-kk-orange-deep", word: "Almost" },
-  { bar: "bg-kk-green", text: "text-kk-green", word: "Strong" },
+  { bar: "bg-kk-orange", text: "text-kk-orange-ink", word: "Almost" },
+  { bar: "bg-kk-green", text: "text-kk-green-ink", word: "Strong" },
 ] as const;
 
 function PasswordStrength({ value, hint }: { value: string; hint?: string }) {
@@ -157,7 +157,7 @@ function PasswordStrength({ value, hint }: { value: string; hint?: string }) {
               key={rule.label}
               className={cn(
                 "flex items-center gap-1 font-inter text-[11px]",
-                ok ? "text-kk-green" : "text-kk-cocoa/55",
+                ok ? "text-kk-green-ink" : "text-kk-cocoa/55",
               )}
             >
               <Check className={cn("size-3 shrink-0", ok ? "opacity-100" : "opacity-25")} />

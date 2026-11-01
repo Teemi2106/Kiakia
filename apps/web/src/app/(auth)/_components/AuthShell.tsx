@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { ThemeToggle } from "@/app/_components/ThemeToggle";
+import { getTheme } from "@/lib/theme";
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { AuthStage } from "./AuthStage";
@@ -35,7 +37,7 @@ interface AuthShellProps {
   legal?: React.ReactNode;
 }
 
-export function AuthShell({
+export async function AuthShell({
   variant = "customer",
   backHref,
   backLabel,
@@ -47,8 +49,10 @@ export function AuthShell({
   footer,
   legal,
 }: AuthShellProps) {
+  const theme = await getTheme();
+
   return (
-    <div data-auth={variant} className="flex min-h-screen bg-kk-cream">
+    <div data-auth={variant} data-theme={theme} className="flex min-h-screen bg-kk-cream text-kk-ink">
       <AuthStage {...stage} />
 
       {/* ------------------------------------------------------ form column */}
@@ -84,7 +88,7 @@ export function AuthShell({
               /* logo-mark.png ships with a white matte, which reads as a
                  white card against the cream header. Multiply blends the
                  matte away without needing a new asset. */
-              className="h-7 w-auto max-w-[104px] object-contain object-left mix-blend-multiply"
+              className="h-7 w-auto max-w-[104px] object-contain object-left mix-blend-multiply dark:mix-blend-normal"
             />
           </Link>
 
@@ -124,10 +128,10 @@ export function AuthShell({
                 mention of payment protection at all — the single reason someone
                 hands this app their money. */}
             <p
-              className="kk-enter mt-7 flex items-start justify-center gap-2 rounded-2xl border border-kk-line/40 bg-white/60 px-4 py-3 text-center font-inter text-[12.5px] leading-5 text-kk-cocoa/80 lg:hidden"
+              className="kk-enter mt-7 flex items-start justify-center gap-2 rounded-2xl border border-kk-line/40 bg-kk-card/60 px-4 py-3 text-center font-inter text-[12.5px] leading-5 text-kk-cocoa/80 lg:hidden"
               style={{ "--kk-delay": "280ms" } as React.CSSProperties}
             >
-              <ShieldCheck className="mt-px size-4 shrink-0 text-kk-green" />
+              <ShieldCheck className="mt-px size-4 shrink-0 text-kk-green-ink" />
               {stage.footnote}
             </p>
 
@@ -139,6 +143,10 @@ export function AuthShell({
                 {legal}
               </div>
             ) : null}
+
+            <div className="mx-auto mt-8 w-28">
+              <ThemeToggle theme={theme} />
+            </div>
           </div>
         </div>
       </main>
@@ -153,7 +161,7 @@ export function AuthSwap({ prompt, href, cta }: { prompt: string; href: string; 
       {prompt}{" "}
       <Link
         href={href}
-        className="font-semibold text-(--auth-accent) underline-offset-4 hover:underline"
+        className="font-semibold text-(--auth-accent-ink) underline-offset-4 hover:underline"
       >
         {cta}
       </Link>

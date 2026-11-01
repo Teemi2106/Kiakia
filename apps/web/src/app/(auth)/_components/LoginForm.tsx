@@ -21,7 +21,7 @@ export function LoginForm({ action = loginAction, next = null }: LoginFormProps)
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
-    <div className="rounded-3xl border border-kk-line/50 bg-white/80 p-6 shadow-[0_24px_60px_-40px_rgba(28,27,27,0.45)] backdrop-blur-sm sm:p-7">
+    <div className="rounded-3xl border border-kk-line/50 bg-kk-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(28,27,27,0.45)] backdrop-blur-sm sm:p-7">
       <form action={formAction} className="flex flex-col gap-4">
         {next ? <input type="hidden" name="next" value={next} /> : null}
         <AuthError message={state.error} />
@@ -47,7 +47,7 @@ export function LoginForm({ action = loginAction, next = null }: LoginFormProps)
         <div className="-mt-1 flex justify-end">
           <Link
             href="/forgot-password"
-            className="font-inter text-[13px] font-semibold text-kk-cocoa/80 underline-offset-4 transition-colors hover:text-(--auth-accent) hover:underline"
+            className="font-inter text-[13px] font-semibold text-kk-cocoa/80 underline-offset-4 transition-colors hover:text-(--auth-accent-ink) hover:underline"
           >
             Forgot password?
           </Link>

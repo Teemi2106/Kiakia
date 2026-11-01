@@ -36,10 +36,10 @@ export function AuthSuccess({
   return (
     <div
       role="status"
-      className="rounded-3xl border border-kk-line/60 bg-white p-7 text-center shadow-[0_20px_50px_-30px_rgba(28,27,27,0.4)]"
+      className="rounded-3xl border border-kk-line/60 bg-kk-card p-7 text-center shadow-[0_20px_50px_-30px_rgba(28,27,27,0.4)]"
     >
       <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-positive-surface">
-        <MailCheck className="size-6 text-kk-green" />
+        <MailCheck className="size-6 text-kk-green-ink" />
       </span>
       <h2 className="mt-5 font-sora text-xl font-bold tracking-[-0.02em] text-kk-ink">
         Check your inbox

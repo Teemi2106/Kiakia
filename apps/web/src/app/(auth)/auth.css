@@ -28,12 +28,16 @@
   --auth-accent: var(--color-kk-red);
   --auth-accent-deep: var(--color-kk-red-deep);
   --auth-accent-glow: 182 25 19;
+  /* Text/link variant: the fill above is fine on a button but too dark to
+     read as text on the dark theme. */
+  --auth-accent-ink: var(--color-kk-red-ink);
 }
 
 [data-auth="vendor"] {
   --auth-accent: var(--color-kk-orange-deep);
   --auth-accent-deep: #6d3800;
   --auth-accent-glow: 254 142 39;
+  --auth-accent-ink: var(--color-kk-orange-ink);
 }
 
 /* -------------------------------------------------------------- entrance */
@@ -95,7 +99,7 @@
 /* Only the *focused* field's label takes the accent. Colouring every filled
    label made a completed form read as five fields in an error state. */
 .kk-field-input:focus ~ .kk-field-label {
-  color: var(--auth-accent);
+  color: var(--auth-accent-ink);
 }
 
 .kk-field-label {

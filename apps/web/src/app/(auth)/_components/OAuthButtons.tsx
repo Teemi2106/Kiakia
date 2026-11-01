@@ -39,7 +39,7 @@ function OAuthButton({ label, icon }: { label: string; icon: React.ReactNode }) 
       type="button"
       disabled
       title="Coming soon"
-      className="flex h-12 items-center justify-center gap-2.5 rounded-2xl border border-kk-line/70 bg-white font-inter text-sm font-semibold text-kk-ink opacity-55"
+      className="flex h-12 items-center justify-center gap-2.5 rounded-2xl border border-kk-line/70 bg-kk-card font-inter text-sm font-semibold text-kk-ink opacity-55"
     >
       {icon}
       {label}

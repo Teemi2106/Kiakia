@@ -44,7 +44,7 @@ export function RegisterForm({ action = registerAction, signInHref = "/login", p
   }
 
   return (
-    <div className="rounded-3xl border border-kk-line/50 bg-white/80 p-6 shadow-[0_24px_60px_-40px_rgba(28,27,27,0.45)] backdrop-blur-sm sm:p-7">
+    <div className="rounded-3xl border border-kk-line/50 bg-kk-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(28,27,27,0.45)] backdrop-blur-sm sm:p-7">
       <form action={formAction} className="flex flex-col gap-4">
         {next ? <input type="hidden" name="next" value={next} /> : null}
         <AuthError message={state.error} />
