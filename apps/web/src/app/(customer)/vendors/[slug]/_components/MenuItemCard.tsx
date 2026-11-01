@@ -34,7 +34,7 @@ export function MenuItemCard({
   return (
     <div
       className={cn(
-        "group flex gap-4 rounded-2xl border border-[#E4BEB8] bg-white shadow-sm transition-shadow",
+        "group flex gap-4 rounded-2xl border border-kk-line bg-kk-card shadow-sm transition-shadow",
         isDesktop ? "p-4" : "p-3",
         isSoldOut ? "opacity-70" : "hover:shadow-md",
       )}
@@ -42,7 +42,7 @@ export function MenuItemCard({
       {/* Image */}
       <div
         className={cn(
-          "relative shrink-0 overflow-hidden rounded-xl bg-[#F0EDED]",
+          "relative shrink-0 overflow-hidden rounded-xl bg-kk-fill",
           "h-[112px] w-[112px]",
         )}
       >
@@ -58,13 +58,13 @@ export function MenuItemCard({
             )}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[#F0EDED]">
-            <UtensilsCrossed className="size-8 text-[#5B403C]/30" />
+          <div className="flex h-full w-full items-center justify-center bg-kk-fill">
+            <UtensilsCrossed className="size-8 text-kk-cocoa/30" />
           </div>
         )}
         {isSoldOut && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#1C1B1B]">
+            <span className="rounded-full bg-kk-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-kk-ink">
               Sold out
             </span>
           </div>
@@ -74,18 +74,18 @@ export function MenuItemCard({
       {/* Details */}
       <div className="flex flex-1 flex-col justify-between">
         <div>
-          <h3 className="font-inter text-sm font-semibold text-[#1C1B1B] sm:text-lg">
+          <h3 className="font-inter text-sm font-semibold text-kk-ink sm:text-lg">
             {item.name}
           </h3>
           {item.description && (
-            <p className="mt-1 line-clamp-2 text-sm text-[#5B403C]">
+            <p className="mt-1 line-clamp-2 text-sm text-kk-cocoa">
               {item.description}
             </p>
           )}
         </div>
 
         <div className="mt-3 flex items-center justify-between">
-          <span className="font-inter text-sm font-bold text-[#B61913] sm:text-base">
+          <span className="font-inter text-sm font-bold text-kk-red-ink sm:text-base">
             {formatNaira(koboOf(item.priceKobo))}
           </span>
 
@@ -94,17 +94,17 @@ export function MenuItemCard({
               <button
                 onClick={() => onDecrement?.(item)}
                 aria-label={`Remove one ${item.name}`}
-                className="flex size-8 items-center justify-center rounded-full border border-[#E4BEB8] text-[#1C1B1B] transition-colors hover:bg-[#F0EDED] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex size-8 items-center justify-center rounded-full border border-kk-line text-kk-ink transition-colors hover:bg-kk-fill disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Minus className="size-4" />
               </button>
-              <span className="w-4 text-center text-sm font-bold text-[#1C1B1B]" aria-live="polite">
+              <span className="w-4 text-center text-sm font-bold text-kk-ink" aria-live="polite">
                 {qtyInCart}
               </span>
               <button
                 onClick={() => onAdd(item)}
                 aria-label={`Add one more ${item.name}`}
-                className="flex size-8 items-center justify-center rounded-full bg-[#B61913] text-white transition-colors hover:bg-[#9e1611] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex size-8 items-center justify-center rounded-full bg-kk-red text-white transition-colors hover:bg-kk-red-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus className="size-4" />
               </button>
@@ -116,12 +116,12 @@ export function MenuItemCard({
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-full transition-colors",
                 isSoldOut
-                  ? "cursor-not-allowed bg-[#E5E2E1] opacity-60"
+                  ? "cursor-not-allowed bg-kk-hair opacity-60"
                   : "bg-[rgba(218,53,41,0.1)] hover:bg-[rgba(218,53,41,0.2)]",
               )}
               aria-label={isSoldOut ? `${item.name} is sold out` : `Add ${item.name}`}
             >
-              <Plus className="size-4 text-[#B61913]" />
+              <Plus className="size-4 text-kk-red-ink" />
             </button>
           )}
         </div>

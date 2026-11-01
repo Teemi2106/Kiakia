@@ -77,6 +77,29 @@
   --color-kk-cream: #fcf9f8;
   --color-kk-sand: #f6f3f2;
   --color-kk-line: #e4beb8;
+
+  /* Neutral/semantic additions for the customer screens. Light values are the
+   * literal hexes those screens used to hardcode (so light mode is unchanged);
+   * the `*-ink` ones are the text/ring variant of a colour whose fill form
+   * stays put in dark mode (white-on-red buttons keep their red). */
+  --color-kk-card: #ffffff;
+  --color-kk-hair: #e5e2e1;
+  --color-kk-hair-soft: #eae7e7;
+  --color-kk-fill: #f0eded;
+  --color-kk-fill-mid: #e5e2e2;
+  --color-kk-fill-deep: #dcd9d9;
+  --color-kk-taupe: #906f6b;
+  --color-kk-red-ink: #b61913;
+  --color-kk-red-hover: #9e1611;
+  --color-kk-orange-ink: #934b00;
+  --color-kk-orange-darkest: #653200;
+  --color-kk-green-ink: #176a22;
+  --color-kk-green-mid: #358439;
+  --color-kk-danger: #ba1a1a;
+  --color-kk-danger-ink: #ba1a1a;
+  --color-kk-red-wash: #fff6f5;
+  --color-kk-red-wash-hover: #ffecea;
+  --color-kk-toggle-off: #d8c2be;
 }
 
 /**
@@ -114,6 +137,26 @@
   --color-danger-surface: oklch(30% 0.08 25);
   --color-notice-surface: oklch(32% 0.07 60);
   --color-notice-ink: oklch(85% 0.11 65);
+  --color-kk-ink: #f3efee;
+  --color-kk-cocoa: #cdb9b5;
+  --color-kk-cream: #151211;
+  --color-kk-sand: #1d1918;
+  --color-kk-line: #4a3532;
+  --color-kk-card: #211c1b;
+  --color-kk-hair: #3a3433;
+  --color-kk-hair-soft: #342e2d;
+  --color-kk-fill: #2a2423;
+  --color-kk-fill-mid: #3a3433;
+  --color-kk-fill-deep: #4a4342;
+  --color-kk-taupe: #a38985;
+  --color-kk-red-ink: #ff8f85;
+  --color-kk-orange-ink: #ffb777;
+  --color-kk-orange-darkest: #ffc99a;
+  --color-kk-green-ink: #7fdc88;
+  --color-kk-danger-ink: #ff9a92;
+  --color-kk-red-wash: #3a1f1d;
+  --color-kk-red-wash-hover: #46211f;
+  --color-kk-toggle-off: #5a4744;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -138,5 +181,25 @@
     --color-danger-surface: oklch(30% 0.08 25);
     --color-notice-surface: oklch(32% 0.07 60);
     --color-notice-ink: oklch(85% 0.11 65);
+    --color-kk-ink: #f3efee;
+    --color-kk-cocoa: #cdb9b5;
+    --color-kk-cream: #151211;
+    --color-kk-sand: #1d1918;
+    --color-kk-line: #4a3532;
+    --color-kk-card: #211c1b;
+    --color-kk-hair: #3a3433;
+    --color-kk-hair-soft: #342e2d;
+    --color-kk-fill: #2a2423;
+    --color-kk-fill-mid: #3a3433;
+    --color-kk-fill-deep: #4a4342;
+    --color-kk-taupe: #a38985;
+    --color-kk-red-ink: #ff8f85;
+    --color-kk-orange-ink: #ffb777;
+    --color-kk-orange-darkest: #ffc99a;
+    --color-kk-green-ink: #7fdc88;
+    --color-kk-danger-ink: #ff9a92;
+    --color-kk-red-wash: #3a1f1d;
+    --color-kk-red-wash-hover: #46211f;
+    --color-kk-toggle-off: #5a4744;
   }
 }

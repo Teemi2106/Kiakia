@@ -63,13 +63,13 @@ export function PaymentSection({
       <PaymentOption
         selected={paymentMethod === "card"}
         onSelect={() => onPaymentMethodChange("card")}
-        icon={<CreditCard className="size-5 text-[#5B403C]" />}
+        icon={<CreditCard className="size-5 text-kk-cocoa" />}
         title="Credit / Debit Card"
         subtitle="Visa, Mastercard, Verve — via Monnify"
       />
 
       {hasWallet && paymentMethod === "card" && (
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-[#E5E2E1] bg-white p-4">
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-kk-hair bg-kk-card p-4">
           <input
             type="checkbox"
             checked={useWallet}
@@ -77,10 +77,10 @@ export function PaymentSection({
             className="mt-0.5 size-4"
           />
           <span className="min-w-0">
-            <span className="block font-inter text-sm font-semibold text-[#1C1B1B]">
+            <span className="block font-inter text-sm font-semibold text-kk-ink">
               Use my wallet balance towards this order
             </span>
-            <span className="block font-inter text-xs text-[#5B403C]">
+            <span className="block font-inter text-xs text-kk-cocoa">
               {formatNaira(koboOf(walletBalanceKobo))} available. Whatever your wallet can cover is taken from it and your
               card pays only the rest. Wallet money not used is kept for later.
             </span>
@@ -93,7 +93,7 @@ export function PaymentSection({
           selected={paymentMethod === "wallet"}
           onSelect={() => onPaymentMethodChange("wallet")}
           disabled={!walletCovers}
-          icon={<Wallet className="size-5 text-[#176A22]" />}
+          icon={<Wallet className="size-5 text-kk-green-ink" />}
           title="KiaKia Wallet"
           subtitle={
             walletCovers
@@ -106,7 +106,7 @@ export function PaymentSection({
       <PaymentOption
         selected={false}
         disabled
-        icon={<Banknote className="size-5 text-[#5B403C]" />}
+        icon={<Banknote className="size-5 text-kk-cocoa" />}
         title="Cash on Delivery"
         subtitle="Coming soon"
       />
@@ -116,8 +116,8 @@ export function PaymentSection({
   if (isMobile) return options;
 
   return (
-    <div className="rounded-2xl border border-[#E4BEB8] bg-white p-4 shadow-sm">
-      <h2 className="mb-4 font-sora text-2xl font-semibold text-[#1C1B1B]">Payment Method</h2>
+    <div className="rounded-2xl border border-kk-line bg-kk-card p-4 shadow-sm">
+      <h2 className="mb-4 font-sora text-2xl font-semibold text-kk-ink">Payment Method</h2>
       {options}
     </div>
   );
@@ -147,28 +147,28 @@ function PaymentOption({
       className={cn(
         "flex w-full items-center justify-between gap-4 rounded-xl border-2 p-4 text-left transition-colors",
         selected
-          ? "border-[rgba(182,25,19,0.4)] bg-[#F6F3F2]"
-          : "border-[#E5E2E1] bg-white hover:border-[rgba(182,25,19,0.25)]",
-        disabled && "cursor-not-allowed opacity-55 hover:border-[#E5E2E1]",
+          ? "border-[rgba(182,25,19,0.4)] bg-kk-sand"
+          : "border-kk-hair bg-kk-card hover:border-[rgba(182,25,19,0.25)]",
+        disabled && "cursor-not-allowed opacity-55 hover:border-kk-hair",
       )}
     >
       <span className="flex min-w-0 items-center gap-4">
-        <span className="flex h-8 w-12 shrink-0 items-center justify-center rounded bg-[#E5E2E1]">
+        <span className="flex h-8 w-12 shrink-0 items-center justify-center rounded bg-kk-hair">
           {icon}
         </span>
         <span className="min-w-0">
-          <span className="block font-inter text-sm font-semibold text-[#1C1B1B]">{title}</span>
-          <span className="block font-inter text-xs text-[#5B403C]">{subtitle}</span>
+          <span className="block font-inter text-sm font-semibold text-kk-ink">{title}</span>
+          <span className="block font-inter text-xs text-kk-cocoa">{subtitle}</span>
         </span>
       </span>
 
       <span
         className={cn(
           "flex size-5 shrink-0 items-center justify-center rounded-full border-2",
-          selected ? "border-[#B61913]" : "border-[#D5D0CF]",
+          selected ? "border-kk-red" : "border-[#D5D0CF]",
         )}
       >
-        {selected && <Check className="size-3 text-[#B61913]" />}
+        {selected && <Check className="size-3 text-kk-red-ink" />}
       </span>
     </button>
   );

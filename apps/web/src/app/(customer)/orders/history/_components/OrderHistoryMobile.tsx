@@ -100,15 +100,15 @@ export function OrderHistoryMobile({
   };
 
   return (
-    <div className="flex min-h-screen flex-col pt-30 bg-[#FCF9F8]">
+    <div className="flex min-h-screen flex-col pt-30 bg-kk-cream">
       {/* Page Header - No top nav since it's in the layout */}
       <div className="flex items-center justify-between px-4 pt-6 pb-4">
         <div>
-          <h1 className="font-sora text-2xl font-bold text-[#1C1B1B]">
+          <h1 className="font-sora text-2xl font-bold text-kk-ink">
             Order History
           </h1>
           {activeFilter !== "all" && (
-            <p className="font-inter text-xs text-[#B61913]">
+            <p className="font-inter text-xs text-kk-red-ink">
               Filtered by: {getFilterLabel(activeFilter)}
             </p>
           )}
@@ -117,12 +117,12 @@ export function OrderHistoryMobile({
           <button
             type="button"
             onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-            className="flex items-center gap-1 rounded-lg bg-[#F0EDED] px-3 py-2 font-inter text-sm font-semibold text-[#5B403C]"
+            className="flex items-center gap-1 rounded-lg bg-kk-fill px-3 py-2 font-inter text-sm font-semibold text-kk-cocoa"
           >
             <Filter className="size-4" />
             Filter
             {activeFilter !== "all" && (
-              <span className="ml-1 rounded-full bg-[#B61913] px-1.5 py-0.5 text-[10px] text-white">
+              <span className="ml-1 rounded-full bg-kk-red px-1.5 py-0.5 text-[10px] text-white">
                 1
               </span>
             )}
@@ -130,21 +130,21 @@ export function OrderHistoryMobile({
 
           {/* Filter Dropdown */}
           {showFilterDropdown && (
-            <div className="absolute right-0 top-full mt-2 z-20 min-w-[180px] overflow-hidden rounded-xl border border-[#E4BEB8] bg-white shadow-lg">
+            <div className="absolute right-0 top-full mt-2 z-20 min-w-[180px] overflow-hidden rounded-xl border border-kk-line bg-kk-card shadow-lg">
               {filters.map((filter) => (
                 <button
                   key={filter.value}
                   type="button"
                   onClick={() => handleFilterSelect(filter.value)}
-                  className={`flex w-full items-center justify-between px-4 py-3 text-left font-inter text-sm transition-colors hover:bg-[#FCF9F8] ${
+                  className={`flex w-full items-center justify-between px-4 py-3 text-left font-inter text-sm transition-colors hover:bg-kk-cream ${
                     activeFilter === filter.value
-                      ? "bg-[#F6F3F2] font-semibold text-[#B61913]"
-                      : "text-[#1C1B1B]"
+                      ? "bg-kk-sand font-semibold text-kk-red-ink"
+                      : "text-kk-ink"
                   }`}
                 >
                   {filter.label}
                   {activeFilter === filter.value && (
-                    <span className="h-2 w-2 rounded-full bg-[#B61913]" />
+                    <span className="h-2 w-2 rounded-full bg-kk-red" />
                   )}
                 </button>
               ))}
@@ -152,7 +152,7 @@ export function OrderHistoryMobile({
                 <button
                   type="button"
                   onClick={clearFilter}
-                  className="flex w-full items-center gap-2 border-t border-[#E4BEB8] px-4 py-3 text-left font-inter text-sm text-[#5B403C] hover:bg-[#FCF9F8]"
+                  className="flex w-full items-center gap-2 border-t border-kk-line px-4 py-3 text-left font-inter text-sm text-kk-cocoa hover:bg-kk-cream"
                 >
                   <X className="size-3" />
                   Clear filter
@@ -166,8 +166,8 @@ export function OrderHistoryMobile({
       {/* Orders List */}
       <div className="flex-1 space-y-4 px-4 pb-8">
         {filteredOrders.length === 0 ? (
-          <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-[#E4BEB8] bg-white">
-            <p className="font-inter text-sm text-[#5B403C]">
+          <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-kk-line bg-kk-card">
+            <p className="font-inter text-sm text-kk-cocoa">
               No{" "}
               {activeFilter !== "all"
                 ? getFilterLabel(activeFilter).toLowerCase()
@@ -185,12 +185,12 @@ export function OrderHistoryMobile({
             return (
               <div
                 key={order.id}
-                className={`overflow-hidden rounded-xl border border-[#E4BEB8] bg-white shadow-sm ${isCancelled ? "opacity-80" : ""}`}
+                className={`overflow-hidden rounded-xl border border-kk-line bg-kk-card shadow-sm ${isCancelled ? "opacity-80" : ""}`}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-[#E5E2E1] p-4">
+                <div className="flex items-center justify-between border-b border-kk-hair p-4">
                   <div className="flex items-center gap-3">
-                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#F0EDED]">
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-kk-fill">
                       {logoUrl ? (
                         <Image
                           src={logoUrl}
@@ -200,16 +200,16 @@ export function OrderHistoryMobile({
                           className="object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-[#5B403C]/40">
+                        <div className="flex h-full w-full items-center justify-center bg-kk-hair text-kk-cocoa/40">
                           <ForkKnifeCrossedIcon className="size-5" />
                         </div>
                       )}
                     </div>
                     <div>
-                      <h3 className="font-inter text-sm font-bold text-[#1C1B1B]">
+                      <h3 className="font-inter text-sm font-bold text-kk-ink">
                         {getVendorName(order.vendor_id)}
                       </h3>
-                      <p className="font-inter text-xs text-[#5B403C]">
+                      <p className="font-inter text-xs text-kk-cocoa">
                         {order.code} •{" "}
                         {new Date(order.created_at).toLocaleDateString(
                           "en-NG",
@@ -225,22 +225,22 @@ export function OrderHistoryMobile({
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between bg-[#FCF9F8] p-4">
+                <div className="flex items-center justify-between bg-kk-cream p-4">
                   <div>
-                    <p className="font-inter text-sm text-[#1C1B1B]">
+                    <p className="font-inter text-sm text-kk-ink">
                       Total:{" "}
                       <span className="font-bold">
                         {formatNaira(koboOf(order.total_kobo))}
                       </span>
                     </p>
-                    <p className="font-inter text-xs text-[#5B403C]">
+                    <p className="font-inter text-xs text-kk-cocoa">
                       {order.item_count} {order.item_count === 1 ? "item" : "items"}
                     </p>
                   </div>
                   <div className="flex gap-2">
                     <Link
                       href={`/orders/${order.id}`}
-                      className="rounded-lg border border-[#906F6B] px-4 py-2 font-inter text-sm font-semibold text-[#1C1B1B]"
+                      className="rounded-lg border border-kk-taupe px-4 py-2 font-inter text-sm font-semibold text-kk-ink"
                     >
                       Details
                     </Link>
@@ -248,8 +248,8 @@ export function OrderHistoryMobile({
                       type="button"
                       className={`flex items-center gap-1 rounded-lg px-4 py-2 font-inter text-sm font-semibold text-white shadow-sm ${
                         isCancelled
-                          ? "bg-[#FE8E27] text-[#653200]"
-                          : "bg-[#B61913]"
+                          ? "bg-kk-orange text-kk-orange-darkest"
+                          : "bg-kk-red"
                       }`}
                     >
                       <RefreshCcwIcon className="size-4" />
@@ -269,7 +269,7 @@ export function OrderHistoryMobile({
             <button
               type="button"
               onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-              className="rounded-full border-2 border-[#E4BEB8] px-6 py-2 font-inter text-sm font-semibold text-[#5B403C] hover:bg-[#F0EDED]"
+              className="rounded-full border-2 border-kk-line px-6 py-2 font-inter text-sm font-semibold text-kk-cocoa hover:bg-kk-fill"
             >
               Load more
             </button>

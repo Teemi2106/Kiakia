@@ -20,7 +20,7 @@ export function DeliveredDesktop({
 }: DeliveredDesktopProps) {
   return (
     <div className="mx-auto flex min-h-screen items-center justify-center px-4 py-13">
-      <div className="w-full max-w-[480px] overflow-hidden rounded-2xl bg-white shadow-lg">
+      <div className="w-full max-w-[480px] overflow-hidden rounded-2xl bg-kk-card shadow-lg">
         {/* Header with Map */}
         <DeliveryHeader driver={driver} />
 
@@ -28,22 +28,22 @@ export function DeliveredDesktop({
         <div className="max-h-[522px] overflow-y-auto p-4 pb-6">
           {/* Headline */}
           <div className="mb-6 text-center">
-            <h1 className="font-sora text-[32px] font-bold leading-10 tracking-[-0.32px] text-[#1C1B1B]">
+            <h1 className="font-sora text-[32px] font-bold leading-10 tracking-[-0.32px] text-kk-ink">
               Order Delivered!
             </h1>
-            <p className="mt-2 font-inter text-base text-[#5B403C]">
+            <p className="mt-2 font-inter text-base text-kk-cocoa">
               Your order has been successfully delivered.
             </p>
           </div>
 
           {/* Warning/Reminder Card */}
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-[#FFDCC5] bg-[rgba(255,220,197,0.3)] p-4">
-            <Info className="size-5 text-[#934B00]" />
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-notice-surface bg-[rgba(255,220,197,0.3)] p-4">
+            <Info className="size-5 text-kk-orange-ink" />
             <div>
-              <h4 className="font-inter text-sm font-semibold text-[#1C1B1B]">
+              <h4 className="font-inter text-sm font-semibold text-kk-ink">
                 Don&apos;t forget!
               </h4>
-              <p className="font-inter text-xs font-medium text-[#5B403C]">
+              <p className="font-inter text-xs font-medium text-kk-cocoa">
                 Rate your delivery experience and help us improve.
               </p>
             </div>

@@ -219,7 +219,7 @@ export default async function CustomerHomePage({
       >
         {!hasAnyVendors ? (
           <EmptyState
-            className="border-kk-line/70 bg-white/70 py-14"
+            className="border-kk-line/70 bg-kk-card/70 py-14"
             title="No kitchens open to you yet"
             description="Vendors are still coming on board in your area. Add or update your delivery address if you've moved — the list is scoped to where you're delivering."
             action={
@@ -379,7 +379,7 @@ export default async function CustomerHomePage({
             action={
               <Link
                 href="/home"
-                className="inline-flex items-center gap-1.5 rounded-full border border-kk-line/70 bg-white px-3.5 py-2 font-inter text-xs font-semibold text-kk-cocoa transition-colors hover:border-kk-red/40 hover:text-kk-red"
+                className="inline-flex items-center gap-1.5 rounded-full border border-kk-line/70 bg-kk-card px-3.5 py-2 font-inter text-xs font-semibold text-kk-cocoa transition-colors hover:border-kk-red/40 hover:text-kk-red"
               >
                 Clear filters
               </Link>
@@ -388,7 +388,7 @@ export default async function CustomerHomePage({
 
           {vendors.length === 0 ? (
             <EmptyState
-              className="border-kk-line/70 bg-white/70 py-14"
+              className="border-kk-line/70 bg-kk-card/70 py-14"
               title="Nothing matched that"
               description={`No vendors match your filters${q ? ` for “${q}”` : ""}. Try a different search, or drop a filter or two.`}
               action={
@@ -568,7 +568,7 @@ function HomeShell({
           filter chips read as a single toolbar rather than two loose rows. */}
       <div
         className={cn(
-          "space-y-4 rounded-3xl border border-kk-line/40 bg-white/65 p-4 shadow-[0_20px_50px_-45px_rgba(66,29,20,0.5)] sm:p-5",
+          "space-y-4 rounded-3xl border border-kk-line/40 bg-kk-card/65 p-4 shadow-[0_20px_50px_-45px_rgba(66,29,20,0.5)] sm:p-5",
           (showHero || activeOrder) && "mt-10",
         )}
       >

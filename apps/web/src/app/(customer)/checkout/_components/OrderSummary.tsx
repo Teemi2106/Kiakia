@@ -59,7 +59,7 @@ export function OrderSummary({
     <div className="flex h-full flex-col">
       <div className="flex-1 space-y-6">
         {/* Heading */}
-        <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+        <h2 className="font-sora text-2xl font-semibold text-kk-ink">
           Order Summary
         </h2>
 
@@ -70,8 +70,8 @@ export function OrderSummary({
               key={item.id}
               className="flex items-start gap-4 border-b border-[rgba(228,190,184,0.5)] pb-4"
             >
-              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#E5E2E1]">
-                <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-2xl text-[#5B403C]/20">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-kk-hair">
+                <div className="flex h-full w-full items-center justify-center bg-kk-hair text-2xl text-kk-cocoa/20">
                   {vendor?.ProfileImage ? (
                     <Image src={vendor.ProfileImage || ""} alt={vendor.name} />
                   ) : (
@@ -82,14 +82,14 @@ export function OrderSummary({
                 </div>
               </div>
               <div className="flex-1">
-                <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+                <p className="font-inter text-sm font-semibold text-kk-ink">
                   {item.name_snapshot}
                 </p>
-                <p className="font-inter text-xs text-[#5B403C]">
+                <p className="font-inter text-xs text-kk-cocoa">
                   Qty: {item.qty}
                 </p>
               </div>
-              <span className="font-inter text-sm font-semibold text-[#1C1B1B]">
+              <span className="font-inter text-sm font-semibold text-kk-ink">
                 {formatNaira(koboOf(item.line_total_kobo))}
               </span>
             </div>
@@ -102,7 +102,7 @@ export function OrderSummary({
             deliveryNote, nothing else on this page needs its live value,
             so a plain defaultValue read via FormData is enough. */}
         <div>
-          <label htmlFor="contactPhone" className="font-inter text-sm font-semibold text-[#1C1B1B]">
+          <label htmlFor="contactPhone" className="font-inter text-sm font-semibold text-kk-ink">
             Contact phone
           </label>
           <input
@@ -112,16 +112,16 @@ export function OrderSummary({
             required
             defaultValue={customerPhone ?? ""}
             placeholder="0801 234 5678"
-            className="mt-2 w-full rounded-xl border border-[#E5E2E1] bg-[#F6F3F2] px-4 py-3 font-inter text-sm text-[#1C1B1B] placeholder:text-[#5B403C] focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20"
+            className="mt-2 w-full rounded-xl border border-kk-hair bg-kk-sand px-4 py-3 font-inter text-sm text-kk-ink placeholder:text-kk-cocoa focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20"
           />
-          <p className="mt-1.5 font-inter text-xs text-[#5B403C]">
+          <p className="mt-1.5 font-inter text-xs text-kk-cocoa">
             Your rider will use this number if they need to reach you.
           </p>
         </div>
 
         {/* Delivery Note */}
         <div>
-          <label className="font-inter text-sm font-semibold text-[#1C1B1B]">
+          <label className="font-inter text-sm font-semibold text-kk-ink">
             Delivery note (optional)
           </label>
           <textarea
@@ -129,26 +129,26 @@ export function OrderSummary({
             value={deliveryNote}
             onChange={(e) => onDeliveryNoteChange(e.target.value)}
             rows={2}
-            className="mt-2 w-full rounded-xl border border-[#E5E2E1] bg-[#F6F3F2] px-4 py-3 font-inter text-sm text-[#1C1B1B] placeholder:text-[#5B403C] focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20"
+            className="mt-2 w-full rounded-xl border border-kk-hair bg-kk-sand px-4 py-3 font-inter text-sm text-kk-ink placeholder:text-kk-cocoa focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20"
             placeholder="E.g. Gate code, landmark, call on arrival…"
           />
         </div>
 
         {/* Totals */}
-        <div className="space-y-3 border-t border-[#E5E2E1] pt-4">
+        <div className="space-y-3 border-t border-kk-hair pt-4">
           <div className="flex justify-between">
-            <span className="font-inter text-base text-[#5B403C]">
+            <span className="font-inter text-base text-kk-cocoa">
               Subtotal
             </span>
-            <span className="font-inter text-base text-[#1C1B1B]">
+            <span className="font-inter text-base text-kk-ink">
               {formatNaira(koboOf(subtotalKobo))}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="font-inter text-base text-[#5B403C]">
+            <span className="font-inter text-base text-kk-cocoa">
               Delivery fee
             </span>
-            <span className="font-inter text-base text-[#1C1B1B]">
+            <span className="font-inter text-base text-kk-ink">
               {deliveryFeeEstimate.loading ? (
                 "Calculating…"
               ) : deliveryFeeEstimate.outsideServiceArea ? (
@@ -159,18 +159,18 @@ export function OrderSummary({
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="font-inter text-base text-[#5B403C]">
+            <span className="font-inter text-base text-kk-cocoa">
               Service fee
             </span>
-            <span className="font-inter text-base text-[#1C1B1B]">
+            <span className="font-inter text-base text-kk-ink">
               {serviceFeeKobo === null ? "Added at payment" : formatNaira(koboOf(serviceFeeKobo))}
             </span>
           </div>
-          <div className="flex justify-between border-t border-[#E5E2E1] pt-4">
-            <span className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+          <div className="flex justify-between border-t border-kk-hair pt-4">
+            <span className="font-sora text-2xl font-semibold text-kk-ink">
               Total
             </span>
-            <span className="font-sora text-2xl font-semibold text-[#B61913]">
+            <span className="font-sora text-2xl font-semibold text-kk-red-ink">
               {formatNaira(koboOf(totalKobo))}
             </span>
           </div>
@@ -185,13 +185,13 @@ export function OrderSummary({
       <Button
         type="submit"
         loading={pending}
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#B61913] py-4 font-inter text-sm font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#9e1611] disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-kk-red py-4 font-inter text-sm font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-kk-red-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         Pay with Card →
       </Button>
 
       {isMobile && (
-        <p className="mt-3 text-center font-inter text-xs text-[#5B403C]">
+        <p className="mt-3 text-center font-inter text-xs text-kk-cocoa">
           By placing your order, you agree to our Terms of Service
         </p>
       )}

@@ -11,20 +11,20 @@ import { Tag } from "lucide-react";
 export function PromoCode() {
   return (
     <div className="relative">
-      <Tag className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#5B403C]/50" />
+      <Tag className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-kk-cocoa/50" />
       <input
         type="text"
         disabled
         aria-disabled="true"
         placeholder="Promo codes coming soon"
-        className="h-[49px] w-full cursor-not-allowed rounded-xl border border-[#E5E2E1] bg-[#F6F3F2] pl-12 pr-24 font-inter text-base text-[#5B403C]/50 placeholder:text-[#5B403C]/50"
+        className="h-[49px] w-full cursor-not-allowed rounded-xl border border-kk-hair bg-kk-sand pl-12 pr-24 font-inter text-base text-kk-cocoa/50 placeholder:text-kk-cocoa/50"
       />
       <button
         type="button"
         disabled
         aria-disabled="true"
         title="Coming soon"
-        className="absolute right-2 top-1/2 -translate-y-1/2 cursor-not-allowed rounded-lg bg-[#EAE7E7] px-4 py-1.5 font-inter text-sm font-semibold text-[#5B403C]/50"
+        className="absolute right-2 top-1/2 -translate-y-1/2 cursor-not-allowed rounded-lg bg-kk-hair-soft px-4 py-1.5 font-inter text-sm font-semibold text-kk-cocoa/50"
       >
         Apply
       </button>

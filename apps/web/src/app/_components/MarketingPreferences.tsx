@@ -40,26 +40,26 @@ export function MarketingPreferences({ initial }: { initial: Prefs }) {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-[#E5E2E1] bg-white p-6 shadow-sm" aria-labelledby="promotions-heading">
-      <h2 id="promotions-heading" className="font-sora text-lg font-semibold text-[#1C1B1B]">
+    <section className="mt-6 rounded-2xl border border-kk-hair bg-kk-card p-6 shadow-sm" aria-labelledby="promotions-heading">
+      <h2 id="promotions-heading" className="font-sora text-lg font-semibold text-kk-ink">
         Promotions
       </h2>
-      <p className="mt-1 font-inter text-sm text-[#5B403C]">
+      <p className="mt-1 font-inter text-sm text-kk-cocoa">
         Offers and news from KiaKia. These are off until you turn them on, and you can change your mind at any time.
       </p>
 
-      <ul className="mt-4 flex flex-col divide-y divide-[#E5E2E1]">
+      <ul className="mt-4 flex flex-col divide-y divide-kk-hair">
         <Row label="Promotional emails" checked={prefs.marketingEmail} onToggle={() => toggle("marketingEmail")} />
         <Row label="Promotional text messages" checked={prefs.marketingSms} onToggle={() => toggle("marketingSms")} />
       </ul>
 
       {error && (
-        <p role="alert" className="mt-3 font-inter text-xs font-medium text-[#BA1A1A]">
+        <p role="alert" className="mt-3 font-inter text-xs font-medium text-kk-danger-ink">
           {error}
         </p>
       )}
 
-      <p className="mt-4 font-inter text-xs text-[#5B403C]">
+      <p className="mt-4 font-inter text-xs text-kk-cocoa">
         Service messages, such as order updates, receipts and security notices, are not optional. You will always get these, because the app cannot work without them.
       </p>
     </section>
@@ -69,7 +69,7 @@ export function MarketingPreferences({ initial }: { initial: Prefs }) {
 function Row({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
   return (
     <li className="flex items-center justify-between gap-4 py-3">
-      <span className="font-inter text-sm font-medium text-[#1C1B1B]">{label}</span>
+      <span className="font-inter text-sm font-medium text-kk-ink">{label}</span>
       <button
         type="button"
         role="switch"
@@ -77,8 +77,8 @@ function Row({ label, checked, onToggle }: { label: string; checked: boolean; on
         aria-label={label}
         onClick={onToggle}
         className={cn(
-          "relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B61913]",
-          checked ? "bg-[#B61913]" : "bg-[#D8C2BE]",
+          "relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kk-red-ink",
+          checked ? "bg-kk-red" : "bg-kk-toggle-off",
         )}
       >
         <span className={cn("absolute left-0.5 top-0.5 size-5 rounded-full bg-white shadow transition-transform", checked && "translate-x-5")} />

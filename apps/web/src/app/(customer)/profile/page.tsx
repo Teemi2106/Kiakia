@@ -51,7 +51,7 @@ export default async function ProfilePage() {
 
         {/* Right Column */}
         <div className="flex-1">
-          <div className="rounded-2xl border border-[#E5E2E1] bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-kk-hair bg-kk-card p-6 shadow-sm">
             <SupportSection />
             <FAQSection />
           </div>

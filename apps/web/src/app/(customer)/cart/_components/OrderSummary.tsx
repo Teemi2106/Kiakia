@@ -7,16 +7,16 @@ interface OrderSummaryProps {
 
 export function OrderSummary({ total }: OrderSummaryProps) {
   return (
-    <div className="rounded-xl border border-[#E5E2E1] bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-kk-hair bg-kk-card p-4 shadow-sm">
       <div className="space-y-3">
         <div className="flex justify-between">
-          <span className="font-inter text-base text-[#5B403C]">Subtotal</span>
-          <span className="font-inter text-base font-semibold text-[#1C1B1B]">
+          <span className="font-inter text-base text-kk-cocoa">Subtotal</span>
+          <span className="font-inter text-base font-semibold text-kk-ink">
             {formatNaira(koboOf(total))}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="font-inter text-base text-[#5B403C]">
+          <span className="font-inter text-base text-kk-cocoa">
             Delivery fee
           </span>
           {/* No delivery address is known yet at the cart stage, so there is
@@ -25,16 +25,16 @@ export function OrderSummary({ total }: OrderSummaryProps) {
               actually lives (useDeliveryFeeEstimate). Saying "₦0.00" here
               would read as a promise of free delivery this cart cannot
               back up. */}
-          <span className="font-inter text-base font-semibold text-[#5B403C]">
+          <span className="font-inter text-base font-semibold text-kk-cocoa">
             Calculated at checkout
           </span>
         </div>
-        <div className="h-px bg-[#E5E2E1]" />
+        <div className="h-px bg-kk-hair" />
         <div className="flex justify-between pt-2">
-          <span className="font-sora text-2xl font-bold text-[#1C1B1B]">
+          <span className="font-sora text-2xl font-bold text-kk-ink">
             Total
           </span>
-          <span className="font-sora text-2xl font-bold text-[#B61913]">
+          <span className="font-sora text-2xl font-bold text-kk-red-ink">
             {formatNaira(koboOf(total))}
           </span>
         </div>

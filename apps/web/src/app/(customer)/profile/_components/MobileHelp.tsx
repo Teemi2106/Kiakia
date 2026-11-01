@@ -20,7 +20,7 @@ export function MobileHelp() {
   return (
     <div>
       <div className="mb-2">
-        <h3 className="font-inter text-sm font-semibold uppercase tracking-[0.7px] text-[#5B403C]">
+        <h3 className="font-inter text-sm font-semibold uppercase tracking-[0.7px] text-kk-cocoa">
           HELP & SUPPORT
         </h3>
       </div>
@@ -30,22 +30,22 @@ export function MobileHelp() {
           <Link
             key={item.href}
             href={item.href}
-            className="flex items-center justify-between rounded-xl border border-[#E5E2E1] bg-white p-4 transition-colors hover:bg-[#FCF9F8]"
+            className="flex items-center justify-between rounded-xl border border-kk-hair bg-kk-card p-4 transition-colors hover:bg-kk-cream"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F6F3F2]">
-                <item.icon className="size-5 text-[#934B00]" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-kk-sand">
+                <item.icon className="size-5 text-kk-orange-ink" />
               </div>
               <div>
-                <span className="font-sora text-lg font-semibold text-[#1C1B1B]">
+                <span className="font-sora text-lg font-semibold text-kk-ink">
                   {item.label}
                 </span>
-                <p className="font-inter text-sm text-[#5B403C]">
+                <p className="font-inter text-sm text-kk-cocoa">
                   {item.description}
                 </p>
               </div>
             </div>
-            <ChevronRight className="size-4 text-[#5B403C]" />
+            <ChevronRight className="size-4 text-kk-cocoa" />
           </Link>
         ))}
       </div>

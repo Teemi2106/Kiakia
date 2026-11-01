@@ -54,14 +54,14 @@ export function CheckoutMobile({
   pending,
 }: CheckoutMobileProps) {
   return (
-    <div className="flex min-h-screen flex-col pt-13 bg-[#FCF9F8]">
+    <div className="flex min-h-screen flex-col pt-13 bg-kk-cream">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#FCF9F8] px-4 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+      <header className="sticky top-0 z-10 bg-kk-cream px-4 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
         <div className="flex items-center gap-4">
           <Link href="/cart" className="rounded-lg p-2 hover:bg-black/5">
-            <ChevronLeft className="size-4 text-[#1C1B1B]" />
+            <ChevronLeft className="size-4 text-kk-ink" />
           </Link>
-          <h1 className="font-sora text-2xl font-bold text-[#1C1B1B]">
+          <h1 className="font-sora text-2xl font-bold text-kk-ink">
             Checkout
           </h1>
         </div>
@@ -79,16 +79,16 @@ export function CheckoutMobile({
         <input type="hidden" name="paymentMethod" value={paymentMethod} />
         <input type="hidden" name="useWallet" value={paymentMethod === "card" && useWallet ? "1" : "0"} />
         {/* Step 1: Delivery Address */}
-        <div className="rounded-2xl border border-[#E5E2E1] bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-kk-hair bg-kk-card p-4 shadow-sm">
           {/* No "Change" shortcut here — AddressSection already renders its
               own edit affordance once an address is selected, and adding a
               second control that does nothing (as this one previously did)
               would be misleading. */}
           <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(182,25,19,0.1)] text-sm font-semibold text-[#B61913]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-kk-red/10 text-sm font-semibold text-kk-red-ink">
               1
             </div>
-            <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+            <h2 className="font-sora text-2xl font-semibold text-kk-ink">
               Delivery Address
             </h2>
           </div>
@@ -106,14 +106,14 @@ export function CheckoutMobile({
         </div>
 
         {/* Step 2: Payment Method */}
-        <div className="rounded-2xl border border-[#E5E2E1] bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-kk-hair bg-kk-card p-4 shadow-sm">
           {/* No "Change" shortcut — Card is the only supported method right
               now, so there's nothing to switch to yet (see PaymentSection). */}
           <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(182,25,19,0.1)] text-sm font-semibold text-[#B61913]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-kk-red/10 text-sm font-semibold text-kk-red-ink">
               2
             </div>
-            <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+            <h2 className="font-sora text-2xl font-semibold text-kk-ink">
               Payment Method
             </h2>
           </div>
@@ -129,12 +129,12 @@ export function CheckoutMobile({
         </div>
 
         {/* Step 3: Order Review */}
-        <div className="rounded-2xl border border-[#E5E2E1] bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-kk-hair bg-kk-card p-4 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(182,25,19,0.1)] text-sm font-semibold text-[#B61913]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-kk-red/10 text-sm font-semibold text-kk-red-ink">
               3
             </div>
-            <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+            <h2 className="font-sora text-2xl font-semibold text-kk-ink">
               Order Review
             </h2>
           </div>

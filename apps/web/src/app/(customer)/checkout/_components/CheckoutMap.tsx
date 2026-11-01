@@ -108,7 +108,7 @@ export default function CheckoutMap({ vendor, destination, routeGeometry }: Chec
 
   if (points.length === 0) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-[#F6F3F2] text-center font-inter text-sm text-[#5B403C]">
+      <div className="flex h-full w-full items-center justify-center bg-kk-sand text-center font-inter text-sm text-kk-cocoa">
         Set a delivery address to see the map
       </div>
     );
@@ -138,15 +138,15 @@ export default function CheckoutMap({ vendor, destination, routeGeometry }: Chec
 
       {vendor && (
         <Marker longitude={vendor.lng} latitude={vendor.lat} anchor="bottom">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#E4BEB8] bg-[#FCF9F8] shadow-lg">
-            <Store className="size-4 text-[#5B403C]" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-kk-line bg-kk-cream shadow-lg">
+            <Store className="size-4 text-kk-cocoa" />
           </div>
         </Marker>
       )}
 
       {destination && (
         <Marker longitude={destination.lng} latitude={destination.lat} anchor="bottom">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#B61913] bg-[#B61913] shadow-lg">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-kk-red bg-kk-red shadow-lg">
             <Home className="size-4 text-white" />
           </div>
         </Marker>

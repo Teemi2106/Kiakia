@@ -120,15 +120,15 @@ export function AddressSection({
   if (!address && !isAddingNew) {
     return (
       <div className={isMobile ? "space-y-4" : "space-y-6"}>
-        <div className="rounded-xl border border-dashed border-[#E4BEB8] bg-[#FCF9F8] p-6 text-center">
-          <MapPin className="mx-auto size-8 text-[#5B403C]/40" />
-          <p className="mt-2 font-inter text-sm text-[#5B403C]">
+        <div className="rounded-xl border border-dashed border-kk-line bg-kk-cream p-6 text-center">
+          <MapPin className="mx-auto size-8 text-kk-cocoa/40" />
+          <p className="mt-2 font-inter text-sm text-kk-cocoa">
             No address selected
           </p>
           <button
             type="button"
             onClick={() => setIsAddingNew(true)}
-            className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#B61913] px-4 py-2 text-sm font-semibold text-white hover:bg-[#9e1611]"
+            className="mt-3 inline-flex items-center gap-2 rounded-xl bg-kk-red px-4 py-2 text-sm font-semibold text-white hover:bg-kk-red-hover"
           >
             <Plus className="size-4" />
             Add new address
@@ -136,7 +136,7 @@ export function AddressSection({
         </div>
         {addresses.length > 0 && (
           <div className="space-y-2">
-            <p className="font-inter text-xs font-medium text-[#5B403C]">
+            <p className="font-inter text-xs font-medium text-kk-cocoa">
               Or select a saved address
             </p>
             {addresses.map((addr) => (
@@ -144,15 +144,15 @@ export function AddressSection({
                 type="button"
                 key={addr.id}
                 onClick={() => onAddressChange(addr)}
-                className="w-full rounded-xl border border-[#E5E2E1] p-3 text-left transition-colors hover:border-[#B61913]"
+                className="w-full rounded-xl border border-kk-hair p-3 text-left transition-colors hover:border-kk-red"
               >
-                <p className="font-inter text-sm font-medium text-[#1C1B1B]">
+                <p className="font-inter text-sm font-medium text-kk-ink">
                   {addr.label || "Address"}
                   {addr.is_default && (
-                    <span className="ml-2 text-xs text-[#B61913]">Default</span>
+                    <span className="ml-2 text-xs text-kk-red-ink">Default</span>
                   )}
                 </p>
-                <p className="font-inter text-xs text-[#5B403C]">
+                <p className="font-inter text-xs text-kk-cocoa">
                   {addr.line1}, {addr.city}
                 </p>
               </button>
@@ -168,7 +168,7 @@ export function AddressSection({
     return (
       <div className={isMobile ? "space-y-4" : "space-y-6"}>
         <div className="flex items-center justify-between">
-          <h3 className="font-inter text-sm font-semibold text-[#1C1B1B]">
+          <h3 className="font-inter text-sm font-semibold text-kk-ink">
             Add New Address
           </h3>
           <button
@@ -176,13 +176,13 @@ export function AddressSection({
             onClick={() => setIsAddingNew(false)}
             className="rounded-full p-1 hover:bg-black/5"
           >
-            <X className="size-4 text-[#5B403C]" />
+            <X className="size-4 text-kk-cocoa" />
           </button>
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="font-inter text-xs font-medium text-[#5B403C]">
+            <label className="font-inter text-xs font-medium text-kk-cocoa">
               Label
             </label>
             <select
@@ -190,7 +190,7 @@ export function AddressSection({
               onChange={(e) =>
                 setNewAddress({ ...newAddress, label: e.target.value })
               }
-              className="mt-1 w-full rounded-xl border border-[#E5E2E1] bg-[#F6F3F2] px-4 py-2.5 font-inter text-sm text-[#1C1B1B] focus:border-[#B61913] focus:outline-none focus:ring-2 focus:ring-[#B61913]/20"
+              className="mt-1 w-full rounded-xl border border-kk-hair bg-kk-sand px-4 py-2.5 font-inter text-sm text-kk-ink focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20"
             >
               <option value="Home">Home</option>
               <option value="Office">Office</option>
@@ -199,7 +199,7 @@ export function AddressSection({
           </div>
 
           <div>
-            <label className="font-inter text-xs font-medium text-[#5B403C]">
+            <label className="font-inter text-xs font-medium text-kk-cocoa">
               Address
             </label>
             <Input
@@ -213,7 +213,7 @@ export function AddressSection({
           </div>
 
           <div>
-            <label className="font-inter text-xs font-medium text-[#5B403C]">
+            <label className="font-inter text-xs font-medium text-kk-cocoa">
               Landmark (optional)
             </label>
             <Input
@@ -228,7 +228,7 @@ export function AddressSection({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-inter text-xs font-medium text-[#5B403C]">
+              <label className="font-inter text-xs font-medium text-kk-cocoa">
                 City
               </label>
               <Input
@@ -240,7 +240,7 @@ export function AddressSection({
               />
             </div>
             <div>
-              <label className="font-inter text-xs font-medium text-[#5B403C]">
+              <label className="font-inter text-xs font-medium text-kk-cocoa">
                 State
               </label>
               <StateSelect
@@ -256,7 +256,7 @@ export function AddressSection({
             type="button"
             onClick={useMyLocation}
             disabled={locating}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E2E1] bg-[#F6F3F2] px-4 py-3 text-sm font-medium text-[#5B403C] hover:border-[#B61913] disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-kk-hair bg-kk-sand px-4 py-3 text-sm font-medium text-kk-cocoa hover:border-kk-red disabled:opacity-50"
           >
             <LocateFixed className="size-4" />
             {locating
@@ -280,7 +280,7 @@ export function AddressSection({
               type="button"
               onClick={() => void handleSaveAddress()}
               disabled={!newAddress.line1 || !coords || saving}
-              className="flex-1 rounded-xl bg-[#B61913] px-4 py-2.5 font-inter text-sm font-semibold text-white hover:bg-[#9e1611] disabled:opacity-50"
+              className="flex-1 rounded-xl bg-kk-red px-4 py-2.5 font-inter text-sm font-semibold text-white hover:bg-kk-red-hover disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save Address"}
             </button>
@@ -288,7 +288,7 @@ export function AddressSection({
               type="button"
               onClick={() => setIsAddingNew(false)}
               disabled={saving}
-              className="flex-1 rounded-xl border border-[#E5E2E1] px-4 py-2.5 font-inter text-sm font-medium text-[#5B403C] hover:bg-[#F6F3F2] disabled:opacity-50"
+              className="flex-1 rounded-xl border border-kk-hair px-4 py-2.5 font-inter text-sm font-medium text-kk-cocoa hover:bg-kk-sand disabled:opacity-50"
             >
               Cancel
             </button>
@@ -302,23 +302,23 @@ export function AddressSection({
   return (
     <div className={isMobile ? "space-y-4" : "space-y-6"}>
       {/* Address Display */}
-      <div className="flex items-start gap-4 rounded-xl border border-[#E5E2E1] bg-[#F6F3F2] p-4">
-        <div className="rounded-lg bg-[#E5E2E1] p-2">
-          <MapPin className="size-5 text-[#B61913]" />
+      <div className="flex items-start gap-4 rounded-xl border border-kk-hair bg-kk-sand p-4">
+        <div className="rounded-lg bg-kk-hair p-2">
+          <MapPin className="size-5 text-kk-red-ink" />
         </div>
         <div className="flex-1">
-          <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+          <p className="font-inter text-sm font-semibold text-kk-ink">
             {address?.label || "Address"}
           </p>
-          <p className="font-inter text-sm text-[#5B403C]">
+          <p className="font-inter text-sm text-kk-cocoa">
             {address?.line1}
             {address?.landmark ? `, near ${address.landmark}` : ""}
           </p>
-          <p className="font-inter text-sm text-[#5B403C]">
+          <p className="font-inter text-sm text-kk-cocoa">
             {address?.city}, {address?.state}
           </p>
           {address?.is_default && (
-            <span className="mt-1 inline-block text-xs font-medium text-[#B61913]">
+            <span className="mt-1 inline-block text-xs font-medium text-kk-red-ink">
               Default
             </span>
           )}
@@ -328,7 +328,7 @@ export function AddressSection({
           onClick={() => setIsAddingNew(true)}
           className="rounded-full p-2 hover:bg-black/5"
         >
-          <Edit2 className="size-4 text-[#5B403C]" />
+          <Edit2 className="size-4 text-kk-cocoa" />
         </button>
       </div>
 
@@ -347,7 +347,7 @@ export function AddressSection({
       {/* Change Address (if multiple) */}
       {addresses.length > 1 && (
         <div className="space-y-2">
-          <p className="font-inter text-xs font-medium text-[#5B403C]">
+          <p className="font-inter text-xs font-medium text-kk-cocoa">
             Saved addresses
           </p>
           {addresses.map((addr) => (
@@ -357,17 +357,17 @@ export function AddressSection({
               onClick={() => onAddressChange(addr)}
               className={`w-full rounded-xl border p-3 text-left transition-colors ${
                 addr.id === address?.id
-                  ? "border-[#B61913] bg-[rgba(182,25,19,0.05)]"
-                  : "border-[#E5E2E1] hover:border-[#B61913]"
+                  ? "border-kk-red bg-[rgba(182,25,19,0.05)]"
+                  : "border-kk-hair hover:border-kk-red"
               }`}
             >
-              <p className="font-inter text-sm font-medium text-[#1C1B1B]">
+              <p className="font-inter text-sm font-medium text-kk-ink">
                 {addr.label || "Address"}
                 {addr.is_default && (
-                  <span className="ml-2 text-xs text-[#B61913]">Default</span>
+                  <span className="ml-2 text-xs text-kk-red-ink">Default</span>
                 )}
               </p>
-              <p className="font-inter text-xs text-[#5B403C]">
+              <p className="font-inter text-xs text-kk-cocoa">
                 {addr.line1}, {addr.city}
               </p>
             </button>
@@ -379,7 +379,7 @@ export function AddressSection({
       <button
         type="button"
         onClick={() => setIsAddingNew(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#E4BEB8] py-3 text-sm font-medium text-[#5B403C] hover:border-[#B61913] hover:text-[#B61913]"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-kk-line py-3 text-sm font-medium text-kk-cocoa hover:border-kk-red hover:text-kk-red-ink"
       >
         <Plus className="size-4" />
         Add new address
@@ -390,7 +390,7 @@ export function AddressSection({
         type="button"
         onClick={useMyLocation}
         disabled={locating}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E2E1] px-4 py-3 text-sm font-medium text-[#5B403C] hover:border-[#B61913] disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-kk-hair px-4 py-3 text-sm font-medium text-kk-cocoa hover:border-kk-red disabled:opacity-50"
       >
         <LocateFixed className="size-4" />
         {locating

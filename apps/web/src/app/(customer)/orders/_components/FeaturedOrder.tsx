@@ -27,12 +27,12 @@ export function FeaturedOrder({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#E5E2E1] bg-white">
+    <div className="overflow-hidden rounded-2xl border border-kk-hair bg-kk-card">
       <div className="flex h-[296px]">
         {/* Image Side */}
         <div className="relative w-[324px] shrink-0">
-          <div className="h-full w-full bg-[#F0EDED]">
-            <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-6xl text-[#5B403C]/20">
+          <div className="h-full w-full bg-kk-fill">
+            <div className="flex h-full w-full items-center justify-center bg-kk-hair text-6xl text-kk-cocoa/20">
               {vendorProfileImageUrl ? (
                 <Image
                   src={vendorProfileImageUrl}
@@ -51,7 +51,7 @@ export function FeaturedOrder({
           <div className="absolute left-4 top-4">
             <OrderStatusBadge
               status={order.status as OrderStatus}
-              className="bg-white/90 backdrop-blur-sm px-3"
+              className="bg-kk-card/90 backdrop-blur-sm px-3"
             />
           </div>
         </div>
@@ -60,25 +60,25 @@ export function FeaturedOrder({
         <div className="flex flex-1 flex-col justify-between p-6">
           <div>
             <div className="flex items-start justify-between">
-              <h2 className="font-sora text-[32px] font-bold leading-10 tracking-[-0.32px] text-[#1C1B1B]">
+              <h2 className="font-sora text-[32px] font-bold leading-10 tracking-[-0.32px] text-kk-ink">
                 {vendorName}
               </h2>
-              <span className="font-sora text-2xl font-semibold text-[#B61913]">
+              <span className="font-sora text-2xl font-semibold text-kk-red-ink">
                 {formatNaira(koboOf(order.total_kobo))}
               </span>
             </div>
-            <p className="mt-1 font-inter text-base text-[#5B403C]">
+            <p className="mt-1 font-inter text-base text-kk-cocoa">
               {getItemsSummary(order.items)}
             </p>
             <div className="mt-4 flex items-center gap-2">
-              <Clock className="size-4 text-[#934B00]" />
-              <span className="font-inter text-sm font-semibold text-[#1C1B1B]">
+              <Clock className="size-4 text-kk-orange-ink" />
+              <span className="font-inter text-sm font-semibold text-kk-ink">
                 Ordered {timeAgo(order.created_at)}
               </span>
             </div>
             <div className="mt-3 flex items-start gap-2">
-              <MapPin className="mt-0.5 size-4 shrink-0 text-[#B61913]" />
-              <span className="font-inter text-sm text-[#5B403C]">
+              <MapPin className="mt-0.5 size-4 shrink-0 text-kk-red-ink" />
+              <span className="font-inter text-sm text-kk-cocoa">
                 {order.delivery_address ?? "No delivery address on file"}
               </span>
             </div>
@@ -87,13 +87,13 @@ export function FeaturedOrder({
           <div className="mt-6 flex items-center gap-3">
             <Link
               href={`/orders/${order.id}/tracking`}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B61913] px-4 py-3 font-inter text-sm font-bold text-white shadow-sm hover:bg-[#9e1611]"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-kk-red px-4 py-3 font-inter text-sm font-bold text-white shadow-sm hover:bg-kk-red-hover"
             >
               <MapPin className="size-4" />
               Track Order
             </Link>
-            <button className="rounded-xl border border-[#E4BEB8] bg-[#F0EDED] p-3 hover:bg-[#e5e2e2]">
-              <Phone className="size-4 text-[#1C1B1B]" />
+            <button className="rounded-xl border border-kk-line bg-kk-fill p-3 hover:bg-kk-fill-mid">
+              <Phone className="size-4 text-kk-ink" />
             </button>
           </div>
         </div>

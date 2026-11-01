@@ -45,10 +45,10 @@ export default async function WalletPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
-      <h1 className="font-sora text-[28px] font-bold text-[#1C1B1B] sm:text-[40px] sm:leading-[48px] sm:tracking-[-0.8px]">
+      <h1 className="font-sora text-[28px] font-bold text-kk-ink sm:text-[40px] sm:leading-[48px] sm:tracking-[-0.8px]">
         Wallet
       </h1>
-      <p className="mt-2 font-inter text-sm text-[#5B403C] sm:text-base">
+      <p className="mt-2 font-inter text-sm text-kk-cocoa sm:text-base">
         Money from cancelled orders lands here instantly, and pays for your next one.
       </p>
 
@@ -56,7 +56,7 @@ export default async function WalletPage() {
       <div className="relative mt-6 overflow-hidden rounded-3xl bg-[#120D0C] p-6 text-white shadow-[0_30px_60px_-32px_rgba(18,13,12,0.9)] sm:p-8">
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-[#B61913]/25 blur-3xl"
+          className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-kk-red/25 blur-3xl"
         />
         <div className="relative">
           <span className="flex items-center gap-2 font-inter text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">
@@ -76,12 +76,12 @@ export default async function WalletPage() {
 
       {/* Where the money can go — stated plainly, because "wallet credit" is
           exactly the kind of thing customers are right to be suspicious of. */}
-      <div className="mt-4 flex gap-3 rounded-2xl border border-[#E4BEB8] bg-[#FCF9F8] p-4">
-        <Info className="mt-0.5 size-4 shrink-0 text-[#B61913]" />
-        <p className="font-inter text-[13px] leading-5 text-[#5B403C]">
+      <div className="mt-4 flex gap-3 rounded-2xl border border-kk-line bg-kk-cream p-4">
+        <Info className="mt-0.5 size-4 shrink-0 text-kk-red-ink" />
+        <p className="font-inter text-[13px] leading-5 text-kk-cocoa">
           Refunds come here by default because it&apos;s instant — a card refund takes days to
           settle. If you&apos;d rather have a refund back on the card you paid with,{" "}
-          <Link href="/support" className="font-semibold text-[#B61913] underline underline-offset-2">
+          <Link href="/support" className="font-semibold text-kk-red-ink underline underline-offset-2">
             contact support
           </Link>{" "}
           and we&apos;ll send it there instead.
@@ -89,16 +89,16 @@ export default async function WalletPage() {
       </div>
 
       {/* History */}
-      <h2 className="mt-10 font-sora text-xl font-semibold text-[#1C1B1B]">Activity</h2>
+      <h2 className="mt-10 font-sora text-xl font-semibold text-kk-ink">Activity</h2>
 
       {rows.length === 0 ? (
         <EmptyState
-          className="mt-4 border-[#E4BEB8] bg-white"
+          className="mt-4 border-kk-line bg-kk-card"
           title="No wallet activity yet"
           description="Refunds and wallet payments will show up here."
         />
       ) : (
-        <ul className="mt-4 divide-y divide-[#F0EDED] overflow-hidden rounded-2xl border border-[#E4BEB8] bg-white">
+        <ul className="mt-4 divide-y divide-kk-fill overflow-hidden rounded-2xl border border-kk-line bg-kk-card">
           {rows.map((row) => {
             const isCredit = row.direction === "credit";
             return (
@@ -108,7 +108,7 @@ export default async function WalletPage() {
               >
                 <span
                   className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
-                    isCredit ? "bg-[#DFF3DC] text-[#176A22]" : "bg-[#FFDCC5] text-[#934B00]"
+                    isCredit ? "bg-[#DFF3DC] text-kk-green-ink" : "bg-notice-surface text-kk-orange-ink"
                   }`}
                 >
                   {isCredit ? (
@@ -119,18 +119,18 @@ export default async function WalletPage() {
                 </span>
 
                 <span className="min-w-0 flex-1">
-                  <span className="block font-inter text-sm font-semibold text-[#1C1B1B]">
+                  <span className="block font-inter text-sm font-semibold text-kk-ink">
                     {walletRowLabel(row.entry_type, isCredit)}
                     {row.order_code ? ` · #${row.order_code}` : ""}
                   </span>
-                  <span className="block font-inter text-xs text-[#5B403C]">
+                  <span className="block font-inter text-xs text-kk-cocoa">
                     {formatWhen(row.created_at)}
                   </span>
                 </span>
 
                 <span
                   className={`shrink-0 font-sora text-sm font-bold ${
-                    isCredit ? "text-[#176A22]" : "text-[#1C1B1B]"
+                    isCredit ? "text-kk-green-ink" : "text-kk-ink"
                   }`}
                 >
                   {isCredit ? "+" : "−"}

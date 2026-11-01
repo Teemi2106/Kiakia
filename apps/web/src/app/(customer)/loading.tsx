@@ -16,7 +16,7 @@ export default function CustomerLoading() {
       <Shimmer className="mt-3 h-4 w-full max-w-md" />
       <div className="mt-8 space-y-4">
         {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="flex gap-4 rounded-3xl border border-kk-line/60 bg-white p-4">
+          <div key={i} className="flex gap-4 rounded-3xl border border-kk-line/60 bg-kk-card p-4">
             <Shimmer className="size-16 shrink-0 rounded-2xl" />
             <div className="flex-1 space-y-2.5 py-1">
               <Shimmer className="h-5 w-1/3 rounded-lg" />

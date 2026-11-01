@@ -75,8 +75,8 @@ export function FilterChips({ searchParams }: { searchParams: HomeSearchParams }
             className={cn(
               "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 font-inter text-xs font-semibold transition-all duration-200",
               isActive
-                ? "border-kk-ink bg-kk-ink text-white"
-                : "border-kk-line/70 bg-white/70 text-kk-cocoa hover:border-kk-ink/25 hover:text-kk-ink",
+                ? "border-kk-ink bg-kk-ink text-kk-cream"
+                : "border-kk-line/70 bg-kk-card/70 text-kk-cocoa hover:border-kk-ink/25 hover:text-kk-ink",
             )}
             aria-pressed={isActive}
           >

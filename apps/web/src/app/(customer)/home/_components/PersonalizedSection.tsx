@@ -14,7 +14,7 @@ export function PersonalizedSection({
   if (items.length === 0) return null;
 
   return (
-    <section id="made-for-you" className="scroll-mt-40 rounded-[2rem] border border-kk-line/45 bg-white p-5 shadow-[0_25px_65px_-50px_rgba(66,29,20,0.5)] sm:p-7 lg:scroll-mt-24">
+    <section id="made-for-you" className="scroll-mt-40 rounded-[2rem] border border-kk-line/45 bg-kk-card p-5 shadow-[0_25px_65px_-50px_rgba(66,29,20,0.5)] sm:p-7 lg:scroll-mt-24">
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
           {personalised ? (

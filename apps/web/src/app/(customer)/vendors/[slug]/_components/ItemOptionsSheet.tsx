@@ -89,10 +89,10 @@ export function ItemOptionsSheet({
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white sm:rounded-2xl"
+        className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-kk-card sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative h-48 w-full shrink-0 overflow-hidden bg-[#F0EDED]">
+        <div className="relative h-48 w-full shrink-0 overflow-hidden bg-kk-fill">
           {item.imageUrl ? (
             <Image
               src={item.imageUrl}
@@ -103,14 +103,14 @@ export function ItemOptionsSheet({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <UtensilsCrossed className="size-10 text-[#5B403C]/30" />
+              <UtensilsCrossed className="size-10 text-kk-cocoa/30" />
             </div>
           )}
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-3 top-3 rounded-full bg-white/90 p-1.5 text-[#1C1B1B] shadow-sm transition-colors hover:bg-white"
+            className="absolute right-3 top-3 rounded-full bg-kk-card/90 p-1.5 text-kk-ink shadow-sm transition-colors hover:bg-kk-card"
           >
             <X className="size-5" />
           </button>
@@ -118,15 +118,15 @@ export function ItemOptionsSheet({
 
         <div className="p-5">
           <div>
-            <h2 className="font-sora text-lg font-semibold text-[#1C1B1B]">
+            <h2 className="font-sora text-lg font-semibold text-kk-ink">
               {item.name}
             </h2>
             {item.description && (
-              <p className="mt-1 text-sm text-[#5B403C]">
+              <p className="mt-1 text-sm text-kk-cocoa">
                 {item.description}
               </p>
             )}
-            <p className="mt-2 font-inter text-sm font-bold text-[#B61913]">
+            <p className="mt-2 font-inter text-sm font-bold text-kk-red-ink">
               {formatNaira(koboOf(item.priceKobo))}
             </p>
           </div>
@@ -134,15 +134,15 @@ export function ItemOptionsSheet({
           {item.optionGroups.map((group) => (
             <fieldset key={group.id} className="mt-5">
               <div className="flex items-center gap-2">
-                <legend className="font-inter text-sm font-semibold text-[#1C1B1B]">
+                <legend className="font-inter text-sm font-semibold text-kk-ink">
                   {group.name}
                 </legend>
                 {group.isRequired ? (
-                  <span className="rounded-full bg-[#B61913]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#B61913]">
+                  <span className="rounded-full bg-kk-red/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-kk-red-ink">
                     Required
                   </span>
                 ) : group.maxSelect > 1 ? (
-                  <span className="rounded-full bg-[#F0EDED] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#5B403C]">
+                  <span className="rounded-full bg-kk-fill px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-kk-cocoa">
                     Select up to {group.maxSelect}
                   </span>
                 ) : null}
@@ -152,26 +152,26 @@ export function ItemOptionsSheet({
                   <label
                     key={option.id}
                     className={cn(
-                      "flex items-center justify-between rounded-xl border border-[#E4BEB8] px-3 py-2 text-sm transition-colors",
+                      "flex items-center justify-between rounded-xl border border-kk-line px-3 py-2 text-sm transition-colors",
                       selected.has(option.id)
-                        ? "border-[#B61913] bg-[rgba(218,53,41,0.05)]"
-                        : "hover:border-[#5B403C]/40",
+                        ? "border-kk-red bg-[rgba(218,53,41,0.05)]"
+                        : "hover:border-kk-cocoa/40",
                       !option.isAvailable && "cursor-not-allowed opacity-50",
                     )}
                   >
-                    <span className="flex items-center gap-2 text-[#1C1B1B]">
+                    <span className="flex items-center gap-2 text-kk-ink">
                       <input
                         type={group.maxSelect === 1 ? "radio" : "checkbox"}
                         name={group.id}
                         checked={selected.has(option.id)}
                         disabled={!option.isAvailable}
                         onChange={() => toggleOption(group, option.id)}
-                        className="accent-[#B61913]"
+                        className="accent-kk-red-ink"
                       />
                       {option.name}
                     </span>
                     {option.priceDeltaKobo > 0 && (
-                      <span className="text-[#5B403C]">
+                      <span className="text-kk-cocoa">
                         +{formatNaira(koboOf(option.priceDeltaKobo))}
                       </span>
                     )}
@@ -181,8 +181,8 @@ export function ItemOptionsSheet({
             </fieldset>
           ))}
 
-          <div className="mt-6 flex items-center justify-between border-t border-[#E5E2E1] pt-4">
-            <span className="font-inter text-sm font-semibold text-[#1C1B1B]">
+          <div className="mt-6 flex items-center justify-between border-t border-kk-hair pt-4">
+            <span className="font-inter text-sm font-semibold text-kk-ink">
               Quantity
             </span>
             <div className="flex items-center gap-3">
@@ -191,18 +191,18 @@ export function ItemOptionsSheet({
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
                 disabled={qty <= 1}
                 aria-label="Decrease quantity"
-                className="flex size-8 items-center justify-center rounded-full border border-[#E4BEB8] text-[#1C1B1B] transition-colors hover:bg-[#F0EDED] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex size-8 items-center justify-center rounded-full border border-kk-line text-kk-ink transition-colors hover:bg-kk-fill disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Minus className="size-4" />
               </button>
-              <span className="w-4 text-center text-sm font-semibold text-[#1C1B1B]">
+              <span className="w-4 text-center text-sm font-semibold text-kk-ink">
                 {qty}
               </span>
               <button
                 type="button"
                 onClick={() => setQty((q) => q + 1)}
                 aria-label="Increase quantity"
-                className="flex size-8 items-center justify-center rounded-full border border-[#E4BEB8] text-[#1C1B1B] transition-colors hover:bg-[#F0EDED]"
+                className="flex size-8 items-center justify-center rounded-full border border-kk-line text-kk-ink transition-colors hover:bg-kk-fill"
               >
                 <Plus className="size-4" />
               </button>
@@ -210,7 +210,7 @@ export function ItemOptionsSheet({
           </div>
 
           <Button
-            className="mt-5 w-full bg-[#B61913] hover:bg-[#9e1611]"
+            className="mt-5 w-full bg-kk-red hover:bg-kk-red-hover"
             disabled={Boolean(missingRequiredGroup)}
             loading={submitting}
             onClick={handleConfirm}

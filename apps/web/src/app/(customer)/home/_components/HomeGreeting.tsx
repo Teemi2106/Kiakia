@@ -54,7 +54,7 @@ export function HomeGreeting({
             Chosen around your taste, your location and the meals you come back for.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <Link href="#vendor-results" className="inline-flex h-11 items-center gap-2 rounded-full bg-kk-orange px-5 font-inter text-sm font-bold text-kk-ink-deep transition hover:-translate-y-0.5 hover:bg-white">
+            <Link href="#vendor-results" className="inline-flex h-11 items-center gap-2 rounded-full bg-kk-orange px-5 font-inter text-sm font-bold text-kk-ink-deep transition hover:-translate-y-0.5 hover:bg-kk-card">
               Explore your picks <ArrowRight className="size-4" />
             </Link>
             <span className="inline-flex items-center gap-1.5 font-inter text-xs font-medium text-white/65">

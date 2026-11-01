@@ -21,7 +21,7 @@ export function StoreNotice() {
   return (
     <div
       className={`fixed bottom-24 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-full px-4 py-2 text-xs font-medium text-white shadow-lg ${
-        notice.tone === "success" ? "bg-[#1C1B1B]" : "bg-[#BA1A1A]"
+        notice.tone === "success" ? "bg-[#1C1B1B]" : "bg-kk-danger"
       }`}
       role="status"
     >

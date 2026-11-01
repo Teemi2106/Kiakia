@@ -122,7 +122,7 @@ function VendorNotifications(props: NotificationsButtonProps & { audience: "vend
 
 function NotificationsMenu({
   buttonClassName = "relative rounded-full p-2 transition-colors hover:bg-black/5",
-  iconClassName = "size-5 text-[#5B403C] sm:size-4",
+  iconClassName = "size-5 text-kk-cocoa sm:size-4",
   emptyMessage = "Nothing here yet — updates about your orders will show up as they happen.",
   scope,
   unreadCount,
@@ -249,19 +249,19 @@ function NotificationsMenu({
       >
         <Bell className={iconClassName} />
         {unreadCount > 0 && (
-          <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-[#B61913]" />
+          <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-kk-red" />
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 max-h-[70vh] w-80 overflow-y-auto rounded-2xl border border-[#E4BEB8] bg-white shadow-lg">
-          <div className="flex items-center justify-between border-b border-[#E4BEB8] px-4 py-3">
-            <span className="font-sora text-sm font-semibold text-[#1C1B1B]">Notifications</span>
+        <div className="absolute right-0 top-full z-50 mt-2 max-h-[70vh] w-80 overflow-y-auto rounded-2xl border border-kk-line bg-kk-card shadow-lg">
+          <div className="flex items-center justify-between border-b border-kk-line px-4 py-3">
+            <span className="font-sora text-sm font-semibold text-kk-ink">Notifications</span>
             {unreadCount > 0 && (
               <button
                 type="button"
                 onClick={() => void handleMarkAllRead()}
-                className="flex items-center gap-1 font-inter text-xs font-medium text-[#B61913] hover:underline"
+                className="flex items-center gap-1 font-inter text-xs font-medium text-kk-red-ink hover:underline"
               >
                 <CheckCheck className="size-3.5" />
                 Mark all read
@@ -273,7 +273,7 @@ function NotificationsMenu({
             <button
               type="button"
               onClick={() => void webPush.subscribe()}
-              className="flex w-full items-center gap-2 border-b border-[#E4BEB8] bg-[#FFF6F5] px-4 py-2.5 text-left font-inter text-xs font-medium text-[#B61913] hover:bg-[#FFECEA]"
+              className="flex w-full items-center gap-2 border-b border-kk-line bg-kk-red-wash px-4 py-2.5 text-left font-inter text-xs font-medium text-kk-red-ink hover:bg-kk-red-wash-hover"
             >
               <BellRing className="size-3.5 shrink-0" />
               Enable push notifications for order updates
@@ -284,31 +284,31 @@ function NotificationsMenu({
             <button
               type="button"
               onClick={() => void webPush.unsubscribe()}
-              className="flex w-full items-center gap-2 border-b border-[#E4BEB8] px-4 py-2.5 text-left font-inter text-xs font-medium text-[#5B403C] hover:bg-[#F6F3F2]"
+              className="flex w-full items-center gap-2 border-b border-kk-line px-4 py-2.5 text-left font-inter text-xs font-medium text-kk-cocoa hover:bg-kk-sand"
             >
-              <BellRing className="size-3.5 shrink-0 text-[#176A22]" />
+              <BellRing className="size-3.5 shrink-0 text-kk-green-ink" />
               Push notifications on
               <span className="ml-auto text-[11px] font-normal underline">Turn off</span>
             </button>
           )}
 
           {items.length === 0 ? (
-            <p className="px-4 py-8 text-center font-inter text-sm text-[#5B403C]">{emptyMessage}</p>
+            <p className="px-4 py-8 text-center font-inter text-sm text-kk-cocoa">{emptyMessage}</p>
           ) : (
             <ul>
               {items.map((n) => (
-                <li key={n.id} className={`border-b border-[#F0EDED] px-4 py-3 last:border-b-0 ${n.is_read ? "" : "bg-[#FFF6F5]"}`}>
+                <li key={n.id} className={`border-b border-kk-fill px-4 py-3 last:border-b-0 ${n.is_read ? "" : "bg-kk-red-wash"}`}>
                   <div className="flex items-start gap-2">
-                    {!n.is_read && <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#B61913]" />}
+                    {!n.is_read && <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-kk-red" />}
                     <div className={n.is_read ? "ml-3.5" : ""}>
-                      <p className="font-inter text-sm font-semibold text-[#1C1B1B]">{n.title}</p>
-                      <p className="mt-0.5 font-inter text-xs text-[#5B403C]">{n.body}</p>
-                      <p className="mt-1 font-inter text-[11px] text-[#5B403C]/70">{timeAgo(n.created_at)}</p>
+                      <p className="font-inter text-sm font-semibold text-kk-ink">{n.title}</p>
+                      <p className="mt-0.5 font-inter text-xs text-kk-cocoa">{n.body}</p>
+                      <p className="mt-1 font-inter text-[11px] text-kk-cocoa/70">{timeAgo(n.created_at)}</p>
                       {n.order_id && (
                         <Link
                           href={column === "vendor_id" ? `/dashboard/orders/${n.order_id}` : `/orders/${n.order_id}/tracking`}
                           onClick={() => setIsOpen(false)}
-                          className="mt-1 inline-block font-inter text-xs font-semibold text-[#B61913] hover:underline"
+                          className="mt-1 inline-block font-inter text-xs font-semibold text-kk-red-ink hover:underline"
                         >
                           Open order
                         </Link>

@@ -38,11 +38,11 @@ export function MobileOrderCard({
   };
 
   return (
-    <div className="rounded-xl border border-[#E4BEB8] bg-white p-4">
+    <div className="rounded-xl border border-kk-line bg-kk-card p-4">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-[#EAE7E7] bg-[#F0EDED]">
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-kk-hair-soft bg-kk-fill">
             {vendorProfileImageUrl ? (
               <Image
                 src={vendorProfileImageUrl}
@@ -52,16 +52,16 @@ export function MobileOrderCard({
                 className="object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-[#5B403C]/40">
+              <div className="flex h-full w-full items-center justify-center bg-kk-hair text-kk-cocoa/40">
                 <ForkKnifeCrossedIcon className="size-5" />
               </div>
             )}
           </div>
           <div>
-            <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+            <p className="font-inter text-sm font-semibold text-kk-ink">
               {vendorName}
             </p>
-            <p className="font-inter text-xs text-[#5B403C]">{order.code}</p>
+            <p className="font-inter text-xs text-kk-cocoa">{order.code}</p>
           </div>
         </div>
         <OrderStatusBadge
@@ -72,28 +72,28 @@ export function MobileOrderCard({
       </div>
 
       {/* Body */}
-      <div className="my-3 border-y border-[#EAE7E7] py-3">
+      <div className="my-3 border-y border-kk-hair-soft py-3">
         <div className="flex justify-between">
-          <p className="font-inter text-sm text-[#5B403C]">
+          <p className="font-inter text-sm text-kk-cocoa">
             {getItemsSummary(order.items)}
           </p>
-          <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+          <p className="font-inter text-sm font-semibold text-kk-ink">
             {formatNaira(koboOf(order.total_kobo))}
           </p>
         </div>
       </div>
 
       {/* Time since order was placed — honest, not a fabricated ETA */}
-      <div className="flex items-center gap-3 rounded-lg bg-[#F6F3F2] p-3">
+      <div className="flex items-center gap-3 rounded-lg bg-kk-sand p-3">
         <div
-          className={`rounded-full p-2 text-white ${order.status === "in_transit" ? "bg-[#358439]" : "bg-[#FE8E27]"}`}
+          className={`rounded-full p-2 text-white ${order.status === "in_transit" ? "bg-kk-green-mid" : "bg-kk-orange"}`}
         >
           {getStatusIcon(order.status) ?? <Clock className="size-3.5" />}
         </div>
         <div>
-          <p className="font-inter text-xs text-[#5B403C]">Ordered</p>
+          <p className="font-inter text-xs text-kk-cocoa">Ordered</p>
           <p
-            className={`font-sora text-xl font-bold ${order.status === "in_transit" ? "text-[#358439]" : "text-[#1C1B1B]"}`}
+            className={`font-sora text-xl font-bold ${order.status === "in_transit" ? "text-kk-green-mid" : "text-kk-ink"}`}
           >
             {timeAgo(order.created_at)}
           </p>
@@ -104,13 +104,13 @@ export function MobileOrderCard({
       <div className="mt-4 flex gap-3">
         <Link
           href={`/orders/${order.id}`}
-          className="flex flex-1 items-center justify-center rounded-xl bg-[#F0EDED] py-2.5 font-inter text-sm font-semibold text-[#1C1B1B]"
+          className="flex flex-1 items-center justify-center rounded-xl bg-kk-fill py-2.5 font-inter text-sm font-semibold text-kk-ink"
         >
           View Details
         </Link>
         <button
           type="button"
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B61913] py-2.5 font-inter text-sm font-semibold text-white shadow-sm"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-kk-red py-2.5 font-inter text-sm font-semibold text-white shadow-sm"
         >
           <MapPin className="size-3" />
           Track Order

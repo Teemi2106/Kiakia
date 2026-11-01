@@ -48,15 +48,15 @@ export function ProfileInfo({
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-[#E5E2E1] bg-white p-6 shadow-sm">
+    <div className="mt-6 rounded-2xl border border-kk-hair bg-kk-card p-6 shadow-sm">
       <div className="flex items-center gap-4">
-        <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#FFDCC5] font-sora text-lg font-bold text-[#934B00]">
+        <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-notice-surface font-sora text-lg font-bold text-kk-orange-ink">
           {name.trim().charAt(0).toUpperCase() || "?"}
         </div>
         <div>
-          <p className="font-sora text-lg font-semibold text-[#1C1B1B]">{name || "Add your name"}</p>
+          <p className="font-sora text-lg font-semibold text-kk-ink">{name || "Add your name"}</p>
           {memberSince && (
-            <p className="font-inter text-xs text-[#5B403C]">
+            <p className="font-inter text-xs text-kk-cocoa">
               Member since {new Date(memberSince).toLocaleDateString("en-NG", { month: "long", year: "numeric" })}
             </p>
           )}
@@ -65,34 +65,34 @@ export function ProfileInfo({
 
       <div className="mt-6 flex flex-col gap-4">
         <div>
-          <label htmlFor="fullName" className="font-inter text-xs font-semibold uppercase tracking-wide text-[#5B403C]">
+          <label htmlFor="fullName" className="font-inter text-xs font-semibold uppercase tracking-wide text-kk-cocoa">
             Full name
           </label>
           <Input
             id="fullName"
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
-            className="mt-1.5 w-full rounded-xl border-[#E5E2E1] font-inter text-sm text-[#1C1B1B] focus:border-[#B61913]"
+            className="mt-1.5 w-full rounded-xl border-kk-hair font-inter text-sm text-kk-ink focus:border-kk-red"
           />
         </div>
         <div>
-          <label className="font-inter text-xs font-semibold uppercase tracking-wide text-[#5B403C]">Email</label>
-          <p className="mt-1.5 rounded-xl border border-[#E5E2E1] bg-[#FCF9F8] px-3 py-2.5 font-inter text-sm text-[#5B403C]">
+          <label className="font-inter text-xs font-semibold uppercase tracking-wide text-kk-cocoa">Email</label>
+          <p className="mt-1.5 rounded-xl border border-kk-hair bg-kk-cream px-3 py-2.5 font-inter text-sm text-kk-cocoa">
             {email}
           </p>
         </div>
         {phone && (
           <div>
-            <label className="font-inter text-xs font-semibold uppercase tracking-wide text-[#5B403C]">Phone</label>
-            <p className="mt-1.5 rounded-xl border border-[#E5E2E1] bg-[#FCF9F8] px-3 py-2.5 font-inter text-sm text-[#5B403C]">
+            <label className="font-inter text-xs font-semibold uppercase tracking-wide text-kk-cocoa">Phone</label>
+            <p className="mt-1.5 rounded-xl border border-kk-hair bg-kk-cream px-3 py-2.5 font-inter text-sm text-kk-cocoa">
               {phone}
             </p>
           </div>
         )}
-        {error && <p className="font-inter text-xs font-medium text-[#BA1A1A]">{error}</p>}
+        {error && <p className="font-inter text-xs font-medium text-kk-danger-ink">{error}</p>}
         <Button
           onClick={save}
-          className="self-start rounded-xl bg-[#B61913] px-5 font-inter text-sm font-semibold text-white hover:bg-[#9A1410]"
+          className="self-start rounded-xl bg-kk-red px-5 font-inter text-sm font-semibold text-white hover:bg-[#9A1410]"
         >
           {saved ? (
             <>

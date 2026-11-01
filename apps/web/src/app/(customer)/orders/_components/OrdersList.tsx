@@ -51,8 +51,8 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
                 />
               ))
             ) : (
-              <div className="flex h-[296px] items-center justify-center rounded-2xl border border-dashed border-[#E5E2E1] bg-[#FCF9F8]">
-                <p className="font-inter text-sm text-[#5B403C]">
+              <div className="flex h-[296px] items-center justify-center rounded-2xl border border-dashed border-kk-hair bg-kk-cream">
+                <p className="font-inter text-sm text-kk-cocoa">
                   No orders in transit
                 </p>
               </div>
@@ -73,8 +73,8 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
                 />
               ))
             ) : (
-              <div className="flex h-[296px] items-center justify-center rounded-2xl border border-dashed border-[#E5E2E1] bg-[#FCF9F8]">
-                <p className="font-inter text-sm text-[#5B403C]">
+              <div className="flex h-[296px] items-center justify-center rounded-2xl border border-dashed border-kk-hair bg-kk-cream">
+                <p className="font-inter text-sm text-kk-cocoa">
                   No orders preparing
                 </p>
               </div>
@@ -87,11 +87,11 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
       <div className="space-y-4 pb-8 lg:hidden">
         {/* Mobile Header */}
         <div className="flex items-center justify-between">
-          <h2 className="font-sora text-2xl font-bold text-[#1C1B1B]">
+          <h2 className="font-sora text-2xl font-bold text-kk-ink">
             Active Orders
           </h2>
-          <button className="rounded-full bg-[#F0EDED] p-3 hover:bg-[#e5e2e2]">
-            <Clock className="size-4 text-[#5B403C]" />
+          <button className="rounded-full bg-kk-fill p-3 hover:bg-kk-fill-mid">
+            <Clock className="size-4 text-kk-cocoa" />
           </button>
         </div>
 

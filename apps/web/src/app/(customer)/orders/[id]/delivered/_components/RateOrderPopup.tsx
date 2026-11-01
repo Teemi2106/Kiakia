@@ -25,7 +25,7 @@ function StarPicker({
 }) {
   return (
     <div>
-      <p className="font-inter text-sm font-medium text-[#1C1B1B]">{label}</p>
+      <p className="font-inter text-sm font-medium text-kk-ink">{label}</p>
       <div className="mt-1.5 flex gap-1.5">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
@@ -39,7 +39,7 @@ function StarPicker({
             <Star
               className="size-7"
               fill={value >= star ? "#B61913" : "transparent"}
-              stroke={value >= star ? "#B61913" : "#DCD9D9"}
+              stroke={value >= star ? "#B61913" : "var(--color-kk-fill-deep)"}
               strokeWidth={1.5}
             />
           </button>
@@ -102,11 +102,11 @@ export function RateOrderPopup({ orderId, vendorName, riderId, riderName }: Rate
       aria-modal="true"
       aria-label="Rate your order"
     >
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl bg-kk-card p-6 shadow-xl">
         {submitted ? (
           <div className="py-6 text-center">
-            <p className="font-sora text-xl font-semibold text-[#1C1B1B]">Thanks for the feedback!</p>
-            <p className="mt-2 font-inter text-sm text-[#5B403C]">It helps other customers, and helps us too.</p>
+            <p className="font-sora text-xl font-semibold text-kk-ink">Thanks for the feedback!</p>
+            <p className="mt-2 font-inter text-sm text-kk-cocoa">It helps other customers, and helps us too.</p>
             <Button className="mt-6 w-full" onClick={() => setDismissed(true)}>
               Done
             </Button>
@@ -115,14 +115,14 @@ export function RateOrderPopup({ orderId, vendorName, riderId, riderName }: Rate
           <>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="font-sora text-xl font-semibold text-[#1C1B1B]">How was your order?</h2>
-                <p className="mt-1 font-inter text-sm text-[#5B403C]">Your feedback goes straight to {vendorName}.</p>
+                <h2 className="font-sora text-xl font-semibold text-kk-ink">How was your order?</h2>
+                <p className="mt-1 font-inter text-sm text-kk-cocoa">Your feedback goes straight to {vendorName}.</p>
               </div>
               <button
                 type="button"
                 aria-label="Maybe later"
                 onClick={() => setDismissed(true)}
-                className="shrink-0 rounded-full p-1.5 text-[#5B403C] hover:bg-black/5"
+                className="shrink-0 rounded-full p-1.5 text-kk-cocoa hover:bg-black/5"
               >
                 <X className="size-5" />
               </button>
@@ -154,7 +154,7 @@ export function RateOrderPopup({ orderId, vendorName, riderId, riderName }: Rate
               )}
             </div>
 
-            {error && <p className="mt-3 text-sm text-[#BA1A1A]">{error}</p>}
+            {error && <p className="mt-3 text-sm text-kk-danger-ink">{error}</p>}
 
             <div className="mt-6 flex gap-3">
               <Button variant="ghost" className="flex-1" onClick={() => setDismissed(true)} disabled={submitting}>

@@ -17,7 +17,7 @@ export function DeliveryCodeSection({
   return (
     <div className="relative flex flex-col items-center py-4">
       {/* Label */}
-      <p className="mb-4 font-inter text-sm font-semibold uppercase tracking-[0.7px] text-[#5B403C]">
+      <p className="mb-4 font-inter text-sm font-semibold uppercase tracking-[0.7px] text-kk-cocoa">
         Delivery Code
       </p>
 
@@ -30,9 +30,9 @@ export function DeliveryCodeSection({
           {digits.map((digit, index) => (
             <div
               key={index}
-              className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-[#1C1B1B] bg-white shadow-sm"
+              className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-kk-ink bg-kk-card shadow-sm"
             >
-              <span className="font-sora text-4xl font-extrabold text-[#1C1B1B]">
+              <span className="font-sora text-4xl font-extrabold text-kk-ink">
                 {digit}
               </span>
             </div>
@@ -41,14 +41,14 @@ export function DeliveryCodeSection({
 
         {/* Obfuscated State */}
         <div
-          className={`absolute inset-0 flex items-center justify-center gap-4 bg-white transition-opacity ${
+          className={`absolute inset-0 flex items-center justify-center gap-4 bg-kk-card transition-opacity ${
             isRevealed ? "opacity-0" : "opacity-100"
           }`}
         >
           {digits.map((_, index) => (
             <div
               key={index}
-              className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-[#E5E2E1] bg-[#F6F3F2]"
+              className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-kk-hair bg-kk-sand"
             >
               <span className="h-3 w-3 rounded-full bg-[#5B403C]" />
             </div>
@@ -59,7 +59,7 @@ export function DeliveryCodeSection({
       {/* Reveal Button */}
       <button
         onClick={() => setIsRevealed(!isRevealed)}
-        className="mt-6 flex items-center gap-2 rounded-xl bg-[#B61913] px-6 py-3 font-inter text-sm font-semibold text-white shadow-md hover:bg-[#9e1611]"
+        className="mt-6 flex items-center gap-2 rounded-xl bg-kk-red px-6 py-3 font-inter text-sm font-semibold text-white shadow-md hover:bg-kk-red-hover"
       >
         {isRevealed ? (
           <>
@@ -75,7 +75,7 @@ export function DeliveryCodeSection({
       </button>
 
       {/* Helper Text */}
-      <p className="mt-3 font-inter text-xs font-medium text-[#5B403C]">
+      <p className="mt-3 font-inter text-xs font-medium text-kk-cocoa">
         {isRevealed
           ? "Share this code only when your order is delivered"
           : "Tap to reveal your delivery code"}

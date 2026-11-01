@@ -30,29 +30,29 @@ const SETTINGS_LINKS = [
 
 export function SettingsNav() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#E5E2E1] bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-kk-hair bg-kk-card shadow-sm">
       {SETTINGS_LINKS.map((link, index) => (
         <Link
           key={link.href}
           href={link.href}
-          className={`flex items-center justify-between px-4 py-4 transition-colors hover:bg-[#FCF9F8] ${
-            index < SETTINGS_LINKS.length - 1 ? "border-b border-[#E5E2E1]" : ""
+          className={`flex items-center justify-between px-4 py-4 transition-colors hover:bg-kk-cream ${
+            index < SETTINGS_LINKS.length - 1 ? "border-b border-kk-hair" : ""
           }`}
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-5 w-5 items-center justify-center text-[#5B403C]">
+            <div className="flex h-5 w-5 items-center justify-center text-kk-cocoa">
               <link.icon className="size-5" />
             </div>
             <div>
-              <span className="font-inter text-sm font-semibold text-[#1C1B1B]">
+              <span className="font-inter text-sm font-semibold text-kk-ink">
                 {link.label}
               </span>
-              <p className="font-inter text-xs text-[#5B403C]">
+              <p className="font-inter text-xs text-kk-cocoa">
                 {link.description}
               </p>
             </div>
           </div>
-          <ChevronRight className="size-4 text-[#5B403C]" />
+          <ChevronRight className="size-4 text-kk-cocoa" />
         </Link>
       ))}
     </div>

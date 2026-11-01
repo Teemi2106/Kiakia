@@ -23,10 +23,10 @@ export function MenuSection({
   return (
     <section id={`category-${category.id}`} className="scroll-mt-[120px]">
       <div className="mb-4 flex items-baseline gap-2">
-        <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B] sm:text-2xl">
+        <h2 className="font-sora text-2xl font-semibold text-kk-ink sm:text-2xl">
           {category.name}
         </h2>
-        <span className="font-inter text-sm text-[#5B403C]">
+        <span className="font-inter text-sm text-kk-cocoa">
           {category.items.length}{" "}
           {category.items.length === 1 ? "item" : "items"}
         </span>

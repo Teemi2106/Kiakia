@@ -271,12 +271,12 @@ function MapPin({
     // whatever sits at the end of this column is what lands on the
     // coordinate.
     <span className="flex flex-col items-center gap-1">
-      <span className="whitespace-nowrap rounded-full bg-white/95 px-2 py-0.5 font-inter text-[10px] font-bold uppercase tracking-[0.1em] text-kk-ink shadow-sm">
+      <span className="whitespace-nowrap rounded-full bg-kk-card/95 px-2 py-0.5 font-inter text-[10px] font-bold uppercase tracking-[0.1em] text-kk-ink shadow-sm">
         {label}
       </span>
       <span
         className={`flex size-9 items-center justify-center rounded-full border-2 shadow-[0_8px_18px_-6px_rgba(0,0,0,0.5)] ${
-          tone === "destination" ? "border-white bg-kk-ink" : "border-kk-line bg-white"
+          tone === "destination" ? "border-white bg-kk-ink" : "border-kk-line bg-kk-card"
         }`}
       >
         {children}

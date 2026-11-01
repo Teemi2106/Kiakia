@@ -60,8 +60,8 @@ export function DeliveryCodeSection({
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 rounded-xl border border-[#E5E2E1] bg-[#F6F3F2] p-6">
-      <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+    <div className="flex flex-col items-center gap-4 rounded-xl border border-kk-hair bg-kk-sand p-6">
+      <h2 className="font-sora text-2xl font-semibold text-kk-ink">
         Delivery Code
       </h2>
 
@@ -70,9 +70,9 @@ export function DeliveryCodeSection({
           {digits.map((digit, index) => (
             <div
               key={index}
-              className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-[#906F6B] bg-white"
+              className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-kk-taupe bg-kk-card"
             >
-              <span className="font-sora text-4xl font-extrabold text-[#1C1B1B]">
+              <span className="font-sora text-4xl font-extrabold text-kk-ink">
                 {digit}
               </span>
             </div>
@@ -87,9 +87,9 @@ export function DeliveryCodeSection({
           {digits.map((_, index) => (
             <div
               key={index}
-              className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-[#E4BEB8] bg-[#FCF9F8]"
+              className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-kk-line bg-kk-cream"
             >
-              <span className="h-3 w-3 rounded-full bg-[#906F6B]" />
+              <span className="h-3 w-3 rounded-full bg-kk-taupe" />
             </div>
           ))}
         </div>
@@ -98,7 +98,7 @@ export function DeliveryCodeSection({
       <button
         type="button"
         onClick={() => setIsRevealed((prev) => !prev)}
-        className="flex items-center gap-2 rounded-xl bg-[#B61913] px-5 py-2.5 font-inter text-sm font-semibold text-white hover:bg-[#9e1611]"
+        className="flex items-center gap-2 rounded-xl bg-kk-red px-5 py-2.5 font-inter text-sm font-semibold text-white hover:bg-kk-red-hover"
       >
         {isRevealed ? (
           <>
@@ -113,9 +113,9 @@ export function DeliveryCodeSection({
         )}
       </button>
 
-      <div className="flex items-center gap-2 rounded-lg bg-[rgba(182,25,19,0.1)] px-4 py-2">
-        <ShieldAlert className="size-5 text-[#B61913]" />
-        <span className="font-inter text-sm font-semibold text-[#B61913]">
+      <div className="flex items-center gap-2 rounded-lg bg-kk-red/10 px-4 py-2">
+        <ShieldAlert className="size-5 text-kk-red-ink" />
+        <span className="font-inter text-sm font-semibold text-kk-red-ink">
           Don&apos;t share this code until your order is delivered
         </span>
       </div>
@@ -123,7 +123,7 @@ export function DeliveryCodeSection({
       <button
         type="button"
         onClick={() => void handleShare()}
-        className="flex items-center gap-2 font-inter text-sm text-[#5B403C] hover:text-[#1C1B1B] hover:underline"
+        className="flex items-center gap-2 font-inter text-sm text-kk-cocoa hover:text-kk-ink hover:underline"
       >
         <Share2Icon className="size-4" />
         {justCopied ? "Copied to clipboard" : "Share code"}

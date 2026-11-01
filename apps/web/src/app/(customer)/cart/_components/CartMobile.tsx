@@ -35,9 +35,9 @@ export function CartMobile({
       <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
 
       {/* Full-screen cart panel */}
-      <div className="fixed inset-0 z-50 flex flex-col bg-[#FCF9F8] animate-slide-up">
+      <div className="fixed inset-0 z-50 flex flex-col bg-kk-cream animate-slide-up">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-[#FCF9F8] px-4 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+        <header className="sticky top-0 z-10 bg-kk-cream px-4 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <button
@@ -45,15 +45,15 @@ export function CartMobile({
                 className="rounded-full p-2 hover:bg-black/5"
                 aria-label="Close cart"
               >
-                <ChevronLeft className="size-4 text-[#1C1B1B]" />
+                <ChevronLeft className="size-4 text-kk-ink" />
               </button>
-              <h1 className="font-sora text-[28px] font-bold leading-[34px] text-[#1C1B1B]">
+              <h1 className="font-sora text-[28px] font-bold leading-[34px] text-kk-ink">
                 Cart
               </h1>
             </div>
             <button
               onClick={onClearAll}
-              className="font-inter text-sm font-semibold text-[#B61913] hover:underline"
+              className="font-inter text-sm font-semibold text-kk-red-ink hover:underline"
             >
               Clear
             </button>
@@ -65,7 +65,7 @@ export function CartMobile({
           <div className="space-y-6">
             <DeliveryInfo />
 
-            <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+            <h2 className="font-sora text-2xl font-semibold text-kk-ink">
               Your Order
             </h2>
 
@@ -93,9 +93,9 @@ export function CartMobile({
         </div>
 
         {/* Sticky Bottom CTA */}
-        <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-[#E5E2E1] bg-[#FCF9F8] px-4 py-4 shadow-[0_-4px_12px_rgba(26,26,26,0.05)]">
+        <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-kk-hair bg-kk-cream px-4 py-4 shadow-[0_-4px_12px_rgba(26,26,26,0.05)]">
           <Link href="/checkout" onClick={onClose}>
-            <button className="flex h-16 w-full items-center justify-center gap-2 rounded-xl bg-[#B61913] font-sora text-2xl font-bold text-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)] hover:bg-[#9e1611]">
+            <button className="flex h-16 w-full items-center justify-center gap-2 rounded-xl bg-kk-red font-sora text-2xl font-bold text-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)] hover:bg-kk-red-hover">
               Checkout
               <span className="text-white">→</span>
             </button>

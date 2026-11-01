@@ -86,13 +86,13 @@ export function CategoryChips({ categories, activeCategory, preserveParams }: Ca
                 "flex h-11 shrink-0 items-center gap-2 rounded-full border pl-2.5 pr-4 font-inter text-sm font-semibold transition-all duration-200",
                 isActive
                   ? "border-transparent bg-kk-red text-white shadow-[0_10px_22px_-12px_rgba(182,25,19,0.95)]"
-                  : "border-kk-line/70 bg-white text-kk-cocoa hover:-translate-y-0.5 hover:border-kk-red/40 hover:text-kk-ink",
+                  : "border-kk-line/70 bg-kk-card text-kk-cocoa hover:-translate-y-0.5 hover:border-kk-red/40 hover:text-kk-ink",
               )}
             >
               <span
                 className={cn(
                   "flex size-7 items-center justify-center rounded-full transition-colors",
-                  isActive ? "bg-white/20 text-white" : "bg-kk-sand text-kk-red",
+                  isActive ? "bg-kk-card/20 text-white" : "bg-kk-sand text-kk-red",
                 )}
               >
                 <Icon className="size-4" />

@@ -98,10 +98,10 @@ export default async function ActiveOrdersPage() {
       />
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-sora text-[28px] font-bold text-[#1C1B1B] pt-6 sm:text-[48px] sm:leading-[56px] sm:tracking-[-0.96px]">
+        <h1 className="font-sora text-[28px] font-bold text-kk-ink pt-6 sm:text-[48px] sm:leading-[56px] sm:tracking-[-0.96px]">
           Active Orders
         </h1>
-        <p className="mt-2 font-inter text-base text-[#5B403C] sm:text-[18px] sm:leading-7">
+        <p className="mt-2 font-inter text-base text-kk-cocoa sm:text-[18px] sm:leading-7">
           Track your incoming meals in real-time.
         </p>
       </div>

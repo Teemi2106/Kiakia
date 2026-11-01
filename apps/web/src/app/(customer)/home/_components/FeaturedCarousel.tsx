@@ -75,7 +75,7 @@ function CarouselButton({ direction, onClick }: { direction: 1 | -1; onClick: ()
       type="button"
       onClick={onClick}
       aria-label={isNext ? "Scroll featured right" : "Scroll featured left"}
-      className={`absolute top-1/2 hidden size-11 -translate-y-1/2 items-center justify-center rounded-full border border-kk-line/70 bg-white/95 shadow-[0_10px_24px_-10px_rgba(28,27,27,0.45)] backdrop-blur transition-all duration-300 hover:border-kk-red/40 hover:text-kk-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red/45 sm:flex sm:opacity-0 sm:group-hover/carousel:opacity-100 sm:focus-visible:opacity-100 ${
+      className={`absolute top-1/2 hidden size-11 -translate-y-1/2 items-center justify-center rounded-full border border-kk-line/70 bg-kk-card/95 shadow-[0_10px_24px_-10px_rgba(28,27,27,0.45)] backdrop-blur transition-all duration-300 hover:border-kk-red/40 hover:text-kk-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red/45 sm:flex sm:opacity-0 sm:group-hover/carousel:opacity-100 sm:focus-visible:opacity-100 ${
         isNext ? "-right-3" : "-left-3"
       }`}
     >

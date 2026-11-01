@@ -18,7 +18,7 @@ export function CategoryNav({ categories, activeId, onSelect }: CategoryNavProps
   const tabs = [{ id: "all", name: "All" }, ...categories];
 
   return (
-    <div className="sticky top-[56px] z-30 border-b border-[#E5E2E1] bg-[rgba(252,249,248,0.95)] backdrop-blur-sm sm:top-[63px]">
+    <div className="sticky top-[56px] z-30 border-b border-kk-hair bg-[rgba(252,249,248,0.95)] backdrop-blur-sm sm:top-[63px]">
       <div className="flex gap-6 overflow-x-auto px-1 [-webkit-overflow-scrolling:touch]">
         {tabs.map((tab) => (
           <button
@@ -29,8 +29,8 @@ export function CategoryNav({ categories, activeId, onSelect }: CategoryNavProps
             className={cn(
               "shrink-0 whitespace-nowrap border-b-2 px-1 py-3 font-inter text-sm font-semibold transition-colors",
               activeId === tab.id
-                ? "border-[#B61913] text-[#B61913]"
-                : "border-transparent text-[#5B403C] hover:text-[#1C1B1B]",
+                ? "border-kk-red text-kk-red-ink"
+                : "border-transparent text-kk-cocoa hover:text-kk-ink",
             )}
           >
             {tab.name}

@@ -56,7 +56,7 @@ export default function CustomerHomeLoading() {
             {Array.from({ length: 4 }, (_, i) => (
               <div
                 key={i}
-                className="overflow-hidden rounded-3xl border border-kk-line/60 bg-white"
+                className="overflow-hidden rounded-3xl border border-kk-line/60 bg-kk-card"
               >
                 <Shimmer className="aspect-16/10 w-full rounded-none" />
                 <div className="space-y-2.5 p-4">

@@ -54,7 +54,7 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
             alt="KiaKia"
             width={1104}
             height={270}
-            className="h-7 w-auto max-w-none mix-blend-multiply lg:h-8"
+            className="h-7 w-auto max-w-none mix-blend-multiply dark:mix-blend-normal lg:h-8"
             preload
           />
         </Link>
@@ -151,7 +151,7 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
               <Link
                 href="/profile"
                 aria-label="Your profile"
-                className="hidden size-9 items-center justify-center rounded-full border border-kk-line bg-white text-kk-cocoa transition-colors hover:border-kk-red/50 hover:text-kk-red lg:flex"
+                className="hidden size-9 items-center justify-center rounded-full border border-kk-line bg-kk-card text-kk-cocoa transition-colors hover:border-kk-red/50 hover:text-kk-red lg:flex"
               >
                 <User className="size-[18px]" />
               </Link>
@@ -179,7 +179,7 @@ function SearchField({ placeholder }: { placeholder: string }) {
         type="search"
         name="q"
         placeholder={placeholder}
-        className="h-11 w-full rounded-2xl border border-kk-line/70 bg-white pl-11 pr-3 font-inter text-sm text-kk-ink placeholder:text-kk-cocoa/60 transition-colors focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20 lg:h-10"
+        className="h-11 w-full rounded-2xl border border-kk-line/70 bg-kk-card pl-11 pr-3 font-inter text-sm text-kk-ink placeholder:text-kk-cocoa/60 transition-colors focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20 lg:h-10"
       />
     </div>
   );
@@ -216,7 +216,7 @@ function AddressPill({
     <Link
       href="/profile/addresses"
       className={cn(
-        "shrink-0 items-center gap-2 rounded-full border border-kk-line/70 bg-white/70 py-1.5 pl-3 pr-2.5 transition-colors hover:border-kk-red/40 hover:bg-white",
+        "shrink-0 items-center gap-2 rounded-full border border-kk-line/70 bg-kk-card/70 py-1.5 pl-3 pr-2.5 transition-colors hover:border-kk-red/40 hover:bg-kk-card",
         className,
       )}
       title={label ? `Delivering to ${label}` : "Set delivery address"}

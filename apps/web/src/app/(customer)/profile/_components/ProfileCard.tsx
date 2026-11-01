@@ -67,8 +67,8 @@ export function ProfileCard({
       return <Image src={avatarUrl} alt={fullName} fill className="object-cover" />;
     }
     return (
-      <div className="flex h-full w-full items-center justify-center bg-[#F0EDED]">
-        <User className={`${iconSizeClass} text-[#5B403C]`} />
+      <div className="flex h-full w-full items-center justify-center bg-kk-fill">
+        <User className={`${iconSizeClass} text-kk-cocoa`} />
       </div>
     );
   }
@@ -105,27 +105,27 @@ export function ProfileCard({
 
         {/* Info */}
         <div className="flex flex-col items-center">
-          <h2 className="font-sora text-[28px] font-bold leading-[34px] text-[#1C1B1B]">
+          <h2 className="font-sora text-[28px] font-bold leading-[34px] text-kk-ink">
             {fullName || "Add your name"}
           </h2>
-          <p className="font-inter text-base text-[#5B403C]">{email}</p>
+          <p className="font-inter text-base text-kk-cocoa">{email}</p>
           {phone && (
-            <p className="font-inter text-base text-[#5B403C]">{phone}</p>
+            <p className="font-inter text-base text-kk-cocoa">{phone}</p>
           )}
-          <div className="mt-3 flex items-center gap-2 rounded-full bg-[#F0EDED] px-3 py-1">
-            <Star className="size-4 text-[#934B00]" />
-            <span className="font-inter text-sm font-semibold text-[#1C1B1B]">
+          <div className="mt-3 flex items-center gap-2 rounded-full bg-kk-fill px-3 py-1">
+            <Star className="size-4 text-kk-orange-ink" />
+            <span className="font-inter text-sm font-semibold text-kk-ink">
               {role}
             </span>
           </div>
-          {error && <p className="mt-2 font-inter text-xs font-medium text-[#BA1A1A]">{error}</p>}
+          {error && <p className="mt-2 font-inter text-xs font-medium text-kk-danger-ink">{error}</p>}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-[#E5E2E1] bg-white p-6 shadow-sm">
+    <div className="flex items-center gap-4 rounded-2xl border border-kk-hair bg-kk-card p-6 shadow-sm">
       {/* Avatar */}
       <div className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
         {renderAvatar("size-8")}
@@ -143,12 +143,12 @@ export function ProfileCard({
 
       {/* Info */}
       <div className="flex flex-1 flex-col">
-        <h3 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+        <h3 className="font-sora text-2xl font-semibold text-kk-ink">
           {fullName || "Add your name"}
         </h3>
-        <p className="font-inter text-xs font-medium text-[#5B403C]">{email}</p>
+        <p className="font-inter text-xs font-medium text-kk-cocoa">{email}</p>
         {memberSince && (
-          <p className="font-inter text-xs text-[#5B403C]">
+          <p className="font-inter text-xs text-kk-cocoa">
             Member since{" "}
             {new Date(memberSince).toLocaleDateString("en-NG", {
               month: "long",
@@ -156,13 +156,13 @@ export function ProfileCard({
             })}
           </p>
         )}
-        <div className="mt-2 flex items-center gap-2 rounded-full bg-[#F0EDED] px-3 py-1 w-fit">
+        <div className="mt-2 flex items-center gap-2 rounded-full bg-kk-fill px-3 py-1 w-fit">
           <span className="h-2.5 w-2.5 rounded-full bg-[#934B00]" />
-          <span className="font-inter text-sm font-semibold text-[#1C1B1B]">
+          <span className="font-inter text-sm font-semibold text-kk-ink">
             {role}
           </span>
         </div>
-        {error && <p className="mt-2 font-inter text-xs font-medium text-[#BA1A1A]">{error}</p>}
+        {error && <p className="mt-2 font-inter text-xs font-medium text-kk-danger-ink">{error}</p>}
       </div>
     </div>
   );

@@ -25,14 +25,14 @@ export function OrderDetailDesktop({
       {/* Back Button */}
       <Link
         href="/orders"
-        className="mb-6 inline-flex items-center gap-2 font-inter text-sm font-semibold text-[#5B403C] hover:text-[#1C1B1B]"
+        className="mb-6 inline-flex items-center gap-2 font-inter text-sm font-semibold text-kk-cocoa hover:text-kk-ink"
       >
         <ChevronLeft className="size-4" />
         Back to Orders
       </Link>
 
       {/* Main Card */}
-      <div className="overflow-hidden rounded-2xl border border-[#E5E2E1] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-kk-hair bg-kk-card shadow-sm">
         {/* Status Header */}
         <OrderDetailHeader
           status={order.status}

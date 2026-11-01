@@ -146,22 +146,22 @@ export function VendorMenu({
 
             <div className="py-6">
               {!hasAnyItems ? (
-                <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E4BEB8] bg-white p-10 text-center">
-                  <p className="font-inter text-sm font-medium text-[#1C1B1B]">
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-kk-line bg-kk-card p-10 text-center">
+                  <p className="font-inter text-sm font-medium text-kk-ink">
                     This vendor hasn&apos;t added a menu yet.
                   </p>
-                  <p className="max-w-sm font-inter text-sm text-[#5B403C]">
+                  <p className="max-w-sm font-inter text-sm text-kk-cocoa">
                     Check back soon — new items usually show up here shortly
                     after a store opens.
                   </p>
                 </div>
               ) : visibleCategories.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#E4BEB8] bg-white p-10 text-center">
-                  <SearchX className="size-6 text-[#5B403C]/50" />
-                  <p className="font-inter text-sm font-medium text-[#1C1B1B]">
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-kk-line bg-kk-card p-10 text-center">
+                  <SearchX className="size-6 text-kk-cocoa/50" />
+                  <p className="font-inter text-sm font-medium text-kk-ink">
                     No items match &quot;{searchQuery}&quot;.
                   </p>
-                  <p className="max-w-sm font-inter text-sm text-[#5B403C]">
+                  <p className="max-w-sm font-inter text-sm text-kk-cocoa">
                     Try a different search term or browse another category.
                   </p>
                 </div>

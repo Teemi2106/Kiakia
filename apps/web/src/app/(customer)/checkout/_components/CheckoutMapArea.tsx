@@ -23,9 +23,9 @@ interface CheckoutMapAreaProps {
 
 function MapMessage({ icon, message }: { icon?: ReactNode; message: string }) {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[#F6F3F2] px-6 text-center">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-kk-sand px-6 text-center">
       {icon}
-      <span className="font-inter text-sm font-medium text-[#5B403C]">{message}</span>
+      <span className="font-inter text-sm font-medium text-kk-cocoa">{message}</span>
     </div>
   );
 }
@@ -55,30 +55,30 @@ export function CheckoutMapArea({ vendor, destination }: CheckoutMapAreaProps) {
 
   return (
     <div className="space-y-2">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-[#E4BEB8]">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-kk-line">
         {clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN ? (
           <CheckoutMap vendor={vendor} destination={destination} routeGeometry={route?.geometry ?? null} />
         ) : (
           <MapMessage
-            icon={<MapPinOff className="size-6 text-[#5B403C]" />}
+            icon={<MapPinOff className="size-6 text-kk-cocoa" />}
             message="Map unavailable"
           />
         )}
       </div>
       {route ? (
-        <p className="font-inter text-xs text-[#5B403C]">
-          <span className="font-semibold text-[#1C1B1B]">{formatDistance(route.distanceM)}</span>{" "}
+        <p className="font-inter text-xs text-kk-cocoa">
+          <span className="font-semibold text-kk-ink">{formatDistance(route.distanceM)}</span>{" "}
           · {formatDuration(route.durationS)} drive from the restaurant to this address
         </p>
       ) : (
         routeLoading &&
         straightLineM !== null && (
-          <p className="font-inter text-xs text-[#5B403C]">Finding the route…</p>
+          <p className="font-inter text-xs text-kk-cocoa">Finding the route…</p>
         )
       )}
       {!route && !routeLoading && straightLineM !== null && (
-        <p className="font-inter text-xs text-[#5B403C]">
-          <span className="font-semibold text-[#1C1B1B]">{formatDistance(straightLineM)}</span>{" "}
+        <p className="font-inter text-xs text-kk-cocoa">
+          <span className="font-semibold text-kk-ink">{formatDistance(straightLineM)}</span>{" "}
           (straight-line) from the restaurant to this address
         </p>
       )}

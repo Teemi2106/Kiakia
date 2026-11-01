@@ -11,6 +11,7 @@ import { getCustomerBootstrap } from "@/lib/customer/bootstrap";
 import { CustomerStoreProvider } from "@/lib/customer/CustomerStoreProvider";
 import { GUEST_USER_ID } from "@/lib/customer/guest-cart";
 import type { CustomerSnapshot } from "@/lib/customer/types";
+import { getTheme } from "@/lib/theme";
 
 /** What a signed-out visitor starts from; their cart is restored from the browser on the client. */
 const GUEST_SNAPSHOT: CustomerSnapshot = {
@@ -70,6 +71,8 @@ export default async function CustomerLayout({
     }
   }
 
+  const theme = await getTheme();
+
   return (
     <CustomerStoreProvider snapshot={snapshot}>
       {/* CustomerTopNav is `fixed` and CustomerBottomNav is `fixed`, so
@@ -86,14 +89,15 @@ export default async function CustomerLayout({
           72px row + 1px border at `lg` and up. --kk-tabbar-h matches
           BottomNav's floating 72px slab plus its edge clearance, which
           disappears at the same `lg` breakpoint. */}
-      <div className="flex min-h-screen flex-col bg-kk-cream [--kk-nav-h:141px] [--kk-tabbar-h:7.5rem] lg:[--kk-nav-h:73px] lg:[--kk-tabbar-h:0px]">
+      <div data-theme={theme} className="flex min-h-screen flex-col bg-kk-cream text-kk-ink [--kk-nav-h:141px] [--kk-tabbar-h:7.5rem] lg:[--kk-nav-h:73px] lg:[--kk-tabbar-h:0px]">
         <CustomerTopNav canSwitchToVendor={canSwitchToVendor} isFleetManager={isFleetManager} />
         <main className="flex-1 pt-(--kk-nav-h) pb-(--kk-tabbar-h)">{children}</main>
         <CustomerBottomNav />
+        {/* Fixed overlays stay inside the themed wrapper so they pick up its tokens. */}
+        <CartFab />
+        <CartDrawer />
+        <StoreNotice />
       </div>
-      <CartFab />
-      <CartDrawer />
-      <StoreNotice />
     </CustomerStoreProvider>
   );
 }

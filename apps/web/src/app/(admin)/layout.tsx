@@ -28,7 +28,7 @@ export default async function AdminLayout({
             alt="KiaKia"
             width={1104}
             height={270}
-            className="h-7 w-auto max-w-none mix-blend-multiply dark:rounded dark:bg-white dark:px-1.5 dark:py-1 dark:mix-blend-normal"
+            className="h-7 w-auto max-w-none mix-blend-multiply dark:mix-blend-normal"
             preload
           />
           <span className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Admin</span>

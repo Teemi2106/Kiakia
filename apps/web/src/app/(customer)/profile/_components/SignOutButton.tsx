@@ -11,7 +11,7 @@ export function SignOutButton() {
       <Button
         type="submit"
         variant="secondary"
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E4BEB8] bg-white py-4 font-inter text-sm font-semibold text-[#BA1A1A] hover:bg-[#FCF9F8]"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-kk-line bg-kk-card py-4 font-inter text-sm font-semibold text-kk-danger-ink hover:bg-kk-cream"
       >
         <LogOut className="size-4" />
         Log Out

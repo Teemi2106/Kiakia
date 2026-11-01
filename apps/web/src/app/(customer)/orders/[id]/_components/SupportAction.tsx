@@ -6,12 +6,12 @@ import Link from "next/link";
 export function SupportAction() {
   return (
     <div className="flex flex-col items-center gap-2">
-      <p className="font-inter text-base text-[#5B403C]">
+      <p className="font-inter text-base text-kk-cocoa">
         Need help with your order?
       </p>
       <Link
         href="/support"
-        className="font-inter text-sm font-semibold text-[#B61913] underline hover:text-[#9e1611]"
+        className="font-inter text-sm font-semibold text-kk-red-ink underline hover:text-kk-red-ink"
       >
         Contact support
       </Link>

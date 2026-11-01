@@ -31,7 +31,7 @@ export function FAQSection() {
 
   return (
     <div className="mt-8">
-      <h3 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+      <h3 className="font-sora text-2xl font-semibold text-kk-ink">
         Frequently Asked Questions
       </h3>
 
@@ -42,20 +42,20 @@ export function FAQSection() {
             <button
               key={index}
               onClick={() => toggleFAQ(index)}
-              className="w-full rounded-xl border border-[#E5E2E1] bg-[#FCF9F8] p-4 text-left transition-colors hover:bg-[#F6F3F2]"
+              className="w-full rounded-xl border border-kk-hair bg-kk-cream p-4 text-left transition-colors hover:bg-kk-sand"
             >
               <div className="flex items-center justify-between">
-                <span className="font-inter text-sm font-semibold text-[#1C1B1B]">
+                <span className="font-inter text-sm font-semibold text-kk-ink">
                   {faq.question}
                 </span>
                 {isOpen ? (
-                  <ChevronUp className="size-4 text-[#1C1B1B]" />
+                  <ChevronUp className="size-4 text-kk-ink" />
                 ) : (
-                  <ChevronDown className="size-4 text-[#1C1B1B]" />
+                  <ChevronDown className="size-4 text-kk-ink" />
                 )}
               </div>
               {isOpen && (
-                <p className="mt-3 font-inter text-sm text-[#5B403C]">
+                <p className="mt-3 font-inter text-sm text-kk-cocoa">
                   {faq.answer}
                 </p>
               )}

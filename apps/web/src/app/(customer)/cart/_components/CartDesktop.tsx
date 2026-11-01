@@ -35,14 +35,14 @@ export function CartDesktop({
       <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-[420px] flex-col bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
+      <div className="fixed right-0 top-0 z-50 flex h-full w-[420px] flex-col bg-kk-card shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#EAE7E7] px-6 py-5">
+        <div className="flex items-center justify-between border-b border-kk-hair-soft px-6 py-5">
           <div>
-            <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+            <h2 className="font-sora text-2xl font-semibold text-kk-ink">
               Your Cart
             </h2>
-            <div className="flex items-center gap-1 text-sm text-[#5B403C]">
+            <div className="flex items-center gap-1 text-sm text-kk-cocoa">
               <span>•</span>
               <span>
                 {itemCount} {itemCount === 1 ? "item" : "items"}
@@ -54,7 +54,7 @@ export function CartDesktop({
             className="rounded-full p-2 hover:bg-black/5"
             aria-label="Close cart"
           >
-            <X className="size-4 text-[#5B403C]" />
+            <X className="size-4 text-kk-cocoa" />
           </button>
         </div>
 
@@ -76,7 +76,7 @@ export function CartDesktop({
                   variant="desktop"
                 />
                 {index < items.length - 1 && (
-                  <div className="my-6 h-px bg-[#EAE7E7]" />
+                  <div className="my-6 h-px bg-kk-hair-soft" />
                 )}
               </div>
             ))}
@@ -84,11 +84,11 @@ export function CartDesktop({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[#EAE7E7] bg-white px-6 py-6 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.1)]">
+        <div className="border-t border-kk-hair-soft bg-kk-card px-6 py-6 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.1)]">
           <PromoCode />
           <OrderSummary total={totalKobo} />
           <Link href="/checkout" onClick={onClose}>
-            <Button className="mt-4 w-full gap-2 rounded-xl bg-[#B61913] py-4 font-inter text-base font-normal text-white shadow-[0_4px_6px_-1px_rgba(182,25,19,0.2),0_2px_4px_-2px_rgba(182,25,19,0.2)] hover:bg-[#9e1611]">
+            <Button className="mt-4 w-full gap-2 rounded-xl bg-kk-red py-4 font-inter text-base font-normal text-white shadow-[0_4px_6px_-1px_rgba(182,25,19,0.2),0_2px_4px_-2px_rgba(182,25,19,0.2)] hover:bg-kk-red-hover">
               Proceed to Checkout →
             </Button>
           </Link>

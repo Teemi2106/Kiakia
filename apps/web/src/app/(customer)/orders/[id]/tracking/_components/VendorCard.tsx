@@ -13,32 +13,32 @@ interface VendorCardProps {
 
 export function VendorCard({ vendor }: VendorCardProps) {
   return (
-    <div className="rounded-xl border border-[#E4BEB8] bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-kk-line bg-kk-card p-4 shadow-sm">
       <div className="flex items-center gap-4">
-        <div className="h-12 w-12 overflow-hidden rounded-lg border border-[#E4BEB8] bg-[#DCD9D9]">
+        <div className="h-12 w-12 overflow-hidden rounded-lg border border-kk-line bg-kk-fill-deep">
           {vendor.logoUrl ? (
             <div
               className="h-full w-full bg-cover bg-center"
               style={{ backgroundImage: `url(${vendor.logoUrl})` }}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[#DCD9D9] text-xl">
+            <div className="flex h-full w-full items-center justify-center bg-kk-fill-deep text-xl">
               <ForkKnifeCrossed />
             </div>
           )}
         </div>
 
         <div className="flex-1">
-          <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+          <p className="font-inter text-sm font-semibold text-kk-ink">
             {vendor.name}
           </p>
-          <p className="font-inter text-xs font-medium text-[#5B403C]">
+          <p className="font-inter text-xs font-medium text-kk-cocoa">
             Order contains {vendor.itemCount} items
           </p>
         </div>
 
         <button className="rounded-full p-2 hover:bg-black/5">
-          <MessageCircleQuestion className="size-4 text-[#934B00]" />
+          <MessageCircleQuestion className="size-4 text-kk-orange-ink" />
         </button>
       </div>
     </div>

@@ -112,10 +112,10 @@ export function OrderHistoryDesktop({
       {/* Header */}
       <div className="mb-8 flex items-end justify-between">
         <div>
-          <h1 className="font-sora text-[32px] font-bold leading-10 tracking-[-0.32px] text-[#1C1B1B]">
+          <h1 className="font-sora text-[32px] font-bold leading-10 tracking-[-0.32px] text-kk-ink">
             Order History
           </h1>
-          <p className="mt-2 font-inter text-base text-[#5B403C]">
+          <p className="mt-2 font-inter text-base text-kk-cocoa">
             View all your past orders
           </p>
         </div>
@@ -129,8 +129,8 @@ export function OrderHistoryDesktop({
               onClick={() => selectFilter(filter.value)}
               className={`rounded-lg border px-4 py-2 font-inter text-sm font-semibold transition-colors ${
                 activeFilter === filter.value
-                  ? "border-[#B61913] bg-[#B61913] text-white"
-                  : "border-[#E4BEB8] bg-[#FCF9F8] text-[#1C1B1B] hover:bg-[#F0EDED]"
+                  ? "border-kk-red bg-kk-red text-white"
+                  : "border-kk-line bg-kk-cream text-kk-ink hover:bg-kk-fill"
               }`}
             >
               {filter.label}{" "}
@@ -144,8 +144,8 @@ export function OrderHistoryDesktop({
 
       {/* Orders List */}
       {filteredOrders.length === 0 ? (
-        <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-[#E4BEB8] bg-[#FCF9F8]">
-          <p className="font-inter text-base text-[#5B403C]">
+        <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-kk-line bg-kk-cream">
+          <p className="font-inter text-base text-kk-cocoa">
             No {activeFilter !== "all" ? activeFilter : ""} orders found
           </p>
         </div>
@@ -157,12 +157,12 @@ export function OrderHistoryDesktop({
             return (
               <div
                 key={order.id}
-                className="flex items-center justify-between rounded-2xl border border-[#E4BEB8] bg-[#FCF9F8] p-4 shadow-sm"
+                className="flex items-center justify-between rounded-2xl border border-kk-line bg-kk-cream p-4 shadow-sm"
               >
                 {/* Left Section */}
                 <div className="flex items-center gap-4">
                   {/* Image */}
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[#F0EDED]">
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-kk-fill">
                     {logoUrl ? (
                       <Image
                         src={logoUrl}
@@ -172,7 +172,7 @@ export function OrderHistoryDesktop({
                         className="object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-[#E5E2E1] text-[#5B403C]/40">
+                      <div className="flex h-full w-full items-center justify-center bg-kk-hair text-kk-cocoa/40">
                         <ForkKnifeCrossedIcon className="size-6" />
                       </div>
                     )}
@@ -181,12 +181,12 @@ export function OrderHistoryDesktop({
                   {/* Details */}
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+                      <h3 className="font-sora text-2xl font-semibold text-kk-ink">
                         {getVendorName(order.vendor_id)}
                       </h3>
                       <OrderStatusBadge status={order.status as OrderStatus} />
                     </div>
-                    <p className="font-inter text-sm text-[#5B403C]">
+                    <p className="font-inter text-sm text-kk-cocoa">
                       {order.code} •{" "}
                       {new Date(order.created_at).toLocaleDateString("en-NG", {
                         month: "short",
@@ -195,12 +195,12 @@ export function OrderHistoryDesktop({
                       })}
                     </p>
                     <div className="mt-1 flex items-center gap-4">
-                      <span className="flex items-center gap-1 text-xs text-[#5B403C]">
-                        <BoxIcon className="size-3 text-[#5B403C]" />{" "}
+                      <span className="flex items-center gap-1 text-xs text-kk-cocoa">
+                        <BoxIcon className="size-3 text-kk-cocoa" />{" "}
                         {order.item_count} {order.item_count === 1 ? "item" : "items"}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-[#5B403C]">
-                        <CurrencyIcon className="size-3 text-[#5B403C]" />{" "}
+                      <span className="flex items-center gap-1 text-xs text-kk-cocoa">
+                        <CurrencyIcon className="size-3 text-kk-cocoa" />{" "}
                         {formatNaira(koboOf(order.total_kobo))}
                       </span>
                     </div>
@@ -211,13 +211,13 @@ export function OrderHistoryDesktop({
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/orders/${order.id}`}
-                    className="rounded-xl border-2 border-[#934B00] px-6 py-2 font-inter text-sm font-semibold text-[#934B00] hover:bg-[#F6F3F2]"
+                    className="rounded-xl border-2 border-kk-orange-ink px-6 py-2 font-inter text-sm font-semibold text-kk-orange-ink hover:bg-kk-sand"
                   >
                     Details
                   </Link>
                   <button
                     type="button"
-                    className="rounded-xl bg-[#B61913] px-6 py-2 font-inter text-sm font-semibold text-white shadow-sm hover:bg-[#9e1611]"
+                    className="rounded-xl bg-kk-red px-6 py-2 font-inter text-sm font-semibold text-white shadow-sm hover:bg-kk-red-hover"
                   >
                     Reorder
                   </button>
@@ -238,10 +238,10 @@ export function OrderHistoryDesktop({
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="flex h-10 w-10 items-center justify-center rounded-full disabled:opacity-40 hover:enabled:bg-[#F0EDED]"
+              className="flex h-10 w-10 items-center justify-center rounded-full disabled:opacity-40 hover:enabled:bg-kk-fill"
               aria-label="Previous page"
             >
-              <ChevronLeft className="size-4 text-[#5B403C]" />
+              <ChevronLeft className="size-4 text-kk-cocoa" />
             </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
               <button
@@ -250,8 +250,8 @@ export function OrderHistoryDesktop({
                 onClick={() => setPage(pageNumber)}
                 className={`flex h-10 w-10 items-center justify-center rounded-full font-inter text-sm font-semibold ${
                   pageNumber === currentPage
-                    ? "bg-[#B61913] text-white"
-                    : "text-[#5B403C] hover:bg-[#F0EDED]"
+                    ? "bg-kk-red text-white"
+                    : "text-kk-cocoa hover:bg-kk-fill"
                 }`}
               >
                 {pageNumber}
@@ -261,10 +261,10 @@ export function OrderHistoryDesktop({
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="flex h-10 w-10 items-center justify-center rounded-full disabled:opacity-40 hover:enabled:bg-[#F0EDED]"
+              className="flex h-10 w-10 items-center justify-center rounded-full disabled:opacity-40 hover:enabled:bg-kk-fill"
               aria-label="Next page"
             >
-              <ChevronRight className="size-4 text-[#5B403C]" />
+              <ChevronRight className="size-4 text-kk-cocoa" />
             </button>
           </nav>
         </div>

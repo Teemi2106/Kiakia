@@ -19,37 +19,37 @@ export function CartDrawer() {
     return (
       <>
         <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
-        <div className="fixed right-0 top-0 z-50 flex h-full w-[420px] flex-col bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] md:block hidden">
-          <div className="flex items-center justify-between border-b border-[#EAE7E7] px-6 py-5">
-            <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+        <div className="fixed right-0 top-0 z-50 flex h-full w-[420px] flex-col bg-kk-card shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] md:block hidden">
+          <div className="flex items-center justify-between border-b border-kk-hair-soft px-6 py-5">
+            <h2 className="font-sora text-2xl font-semibold text-kk-ink">
               Your Cart
             </h2>
             <button
               onClick={onClose}
               className="rounded-full p-2 hover:bg-black/5"
             >
-              <X className="size-4 text-[#5B403C]" />
+              <X className="size-4 text-kk-cocoa" />
             </button>
           </div>
           <div className="flex flex-1 items-center justify-center p-6">
-            <p className="text-center text-[#5B403C]">Your cart is empty</p>
+            <p className="text-center text-kk-cocoa">Your cart is empty</p>
           </div>
         </div>
         {/* Mobile empty state */}
-        <div className="fixed inset-0 z-50 flex flex-col bg-[#FCF9F8] md:hidden">
-          <div className="flex items-center justify-between border-b border-[#EAE7E7] px-4 py-4">
-            <h2 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+        <div className="fixed inset-0 z-50 flex flex-col bg-kk-cream md:hidden">
+          <div className="flex items-center justify-between border-b border-kk-hair-soft px-4 py-4">
+            <h2 className="font-sora text-2xl font-semibold text-kk-ink">
               Your Cart
             </h2>
             <button
               onClick={onClose}
               className="rounded-full p-2 hover:bg-black/5"
             >
-              <X className="size-4 text-[#5B403C]" />
+              <X className="size-4 text-kk-cocoa" />
             </button>
           </div>
           <div className="flex flex-1 items-center justify-center p-6">
-            <p className="text-center text-[#5B403C]">Your cart is empty</p>
+            <p className="text-center text-kk-cocoa">Your cart is empty</p>
           </div>
         </div>
       </>

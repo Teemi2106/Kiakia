@@ -11,15 +11,15 @@ import { Clock } from "lucide-react";
  */
 export function DeliveryInfo() {
   return (
-    <div className="flex items-start gap-4 rounded-xl bg-[#F6F3F2] p-4">
-      <div className="rounded-full bg-[rgba(182,25,19,0.1)] p-2">
-        <Clock className="size-5 text-[#B61913]" />
+    <div className="flex items-start gap-4 rounded-xl bg-kk-sand p-4">
+      <div className="rounded-full bg-kk-red/10 p-2">
+        <Clock className="size-5 text-kk-red-ink" />
       </div>
       <div>
-        <h3 className="font-inter text-sm font-semibold text-[#1C1B1B]">
+        <h3 className="font-inter text-sm font-semibold text-kk-ink">
           Delivery Time
         </h3>
-        <p className="font-inter text-base text-[#5B403C]">
+        <p className="font-inter text-base text-kk-cocoa">
           You&apos;ll see an estimated delivery time after choosing your
           address at checkout.
         </p>

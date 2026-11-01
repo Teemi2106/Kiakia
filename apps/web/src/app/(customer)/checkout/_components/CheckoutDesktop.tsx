@@ -58,13 +58,13 @@ export function CheckoutDesktop({
       {/* Back Link */}
       <Link
         href="/cart"
-        className="mb-6 inline-flex items-center gap-2 font-inter text-sm font-semibold text-[#5B403C] hover:text-[#1C1B1B]"
+        className="mb-6 inline-flex items-center gap-2 font-inter text-sm font-semibold text-kk-cocoa hover:text-kk-ink"
       >
         <ChevronLeft className="size-4" />
         Back to Cart
       </Link>
 
-      <h1 className="mb-8 font-sora text-[32px] font-bold leading-10 tracking-[-0.32px] text-[#1C1B1B]">
+      <h1 className="mb-8 font-sora text-[32px] font-bold leading-10 tracking-[-0.32px] text-kk-ink">
         Checkout
       </h1>
 

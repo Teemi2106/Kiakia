@@ -15,26 +15,26 @@ interface DriverCardProps {
 
 export function DriverCard({ driver }: DriverCardProps) {
   return (
-    <div className="rounded-xl border border-[#E4BEB8] bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-kk-line bg-kk-card p-4 shadow-sm">
       <div className="flex items-center gap-4">
-        <div className="h-14 w-14 overflow-hidden rounded-full border border-[#E4BEB8] bg-[#DCD9D9]">
+        <div className="h-14 w-14 overflow-hidden rounded-full border border-kk-line bg-kk-fill-deep">
           {driver.avatarUrl ? (
             <div
               className="h-full w-full bg-cover bg-center"
               style={{ backgroundImage: `url(${driver.avatarUrl})` }}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[#DCD9D9] text-2xl">
+            <div className="flex h-full w-full items-center justify-center bg-kk-fill-deep text-2xl">
               <Contact />
             </div>
           )}
         </div>
 
         <div className="flex-1">
-          <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+          <p className="font-inter text-sm font-semibold text-kk-ink">
             {driver.name}
           </p>
-          <div className="flex items-center gap-3 text-xs text-[#5B403C]">
+          <div className="flex items-center gap-3 text-xs text-kk-cocoa">
             {driver.car && <span>{driver.car}</span>}
             {driver.plateNumber && <span>Plate: {driver.plateNumber}</span>}
           </div>
@@ -52,7 +52,7 @@ export function DriverCard({ driver }: DriverCardProps) {
       {driver.phone && (
         <a
           href={`tel:${driver.phone}`}
-          className="mt-4 flex items-center justify-center gap-2 rounded-xl border-2 border-[#934B00] py-2 font-inter text-sm font-semibold text-[#934B00] hover:bg-[#F6F3F2]"
+          className="mt-4 flex items-center justify-center gap-2 rounded-xl border-2 border-kk-orange-ink py-2 font-inter text-sm font-semibold text-kk-orange-ink hover:bg-kk-sand"
         >
           <Phone className="size-3.5" />
           Call {driver.name.split(" ")[0]}

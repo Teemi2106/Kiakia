@@ -49,7 +49,7 @@ export function FeaturedItemCard({
       />
 
       {vendor.rating_count > 0 && (
-        <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 font-inter text-xs font-bold text-kk-ink shadow-sm backdrop-blur-sm">
+        <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-kk-card/95 px-2.5 py-1 font-inter text-xs font-bold text-kk-ink shadow-sm backdrop-blur-sm">
           <Star className="size-3 fill-kk-orange text-kk-orange" />
           {vendor.rating_avg.toFixed(1)}
         </span>
@@ -66,7 +66,7 @@ export function FeaturedItemCard({
           {dishName}
         </h3>
         <p className="mt-1.5 truncate font-inter text-xs text-white/70">{vendor.name}</p>
-        <span className="mt-3 inline-flex translate-y-1 items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 font-inter text-[11px] font-semibold text-white opacity-0 ring-1 ring-inset ring-white/25 backdrop-blur-md transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+        <span className="mt-3 inline-flex translate-y-1 items-center gap-1.5 rounded-full bg-kk-card/15 px-3 py-1.5 font-inter text-[11px] font-semibold text-white opacity-0 ring-1 ring-inset ring-white/25 backdrop-blur-md transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
           View menu
         </span>
       </div>

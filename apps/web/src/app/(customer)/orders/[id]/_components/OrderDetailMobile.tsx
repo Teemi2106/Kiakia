@@ -25,16 +25,16 @@ export function OrderDetailMobile({
   return (
     <div className="flex min-h-screen flex-col bg-kk-cream pb-8 pt-4">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#FCF9F8] px-4 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+      <header className="sticky top-0 z-10 bg-kk-cream px-4 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.back()}
             className="rounded-lg p-2 hover:bg-black/5"
             aria-label="Go back"
           >
-            <ChevronLeft className="size-4 text-[#1C1B1B]" />
+            <ChevronLeft className="size-4 text-kk-ink" />
           </button>
-          <h1 className="font-sora text-2xl font-semibold text-[#1C1B1B]">
+          <h1 className="font-sora text-2xl font-semibold text-kk-ink">
             Order Confirmed
           </h1>
         </div>
@@ -43,7 +43,7 @@ export function OrderDetailMobile({
       {/* Main Content */}
       <div className="flex-1 space-y-6 px-4 pb-8 pt-6">
         {/* Status Section */}
-        <div className="rounded-2xl border border-[#E4BEB8] bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm">
           <OrderDetailHeader
             status={order.status}
             vendorName={vendor?.name || "Vendor"}
@@ -55,13 +55,13 @@ export function OrderDetailMobile({
         <DeliveryCodeSection deliveryCode={order.delivery_code} />
 
         {/* Order Summary */}
-        <div className="rounded-2xl border border-[#E4BEB8] bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-kk-line bg-kk-card p-4 shadow-sm">
           <OrderSummaryDetails items={items} order={order} />
         </div>
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <button className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#934B00] bg-[#FCF9F8] px-6 py-4 font-inter text-sm font-semibold text-[#934B00] hover:bg-[#f0edec]">
+          <button className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-kk-orange-ink bg-kk-cream px-6 py-4 font-inter text-sm font-semibold text-kk-orange-ink hover:bg-[#f0edec]">
             <Share2Icon className="size-5" />
             Share code with Contact
           </button>

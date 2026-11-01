@@ -34,7 +34,7 @@ export function CartItem({
 
   return (
     <div
-      className={`flex gap-4 ${isDesktop ? "" : "rounded-xl border border-[#E5E2E1] bg-white p-4 shadow-sm"}`}
+      className={`flex gap-4 ${isDesktop ? "" : "rounded-xl border border-kk-hair bg-kk-card p-4 shadow-sm"}`}
     >
       {/* Image — a UtensilsCrossed icon when there is none, same convention
           as MenuItemCard.tsx/ItemOptionsSheet.tsx use on the vendor page,
@@ -44,9 +44,9 @@ export function CartItem({
           a plain grey box regardless of whether the dish actually had a
           photo). */}
       <div
-        className={`relative shrink-0 overflow-hidden bg-[#E5E2E1] ${
+        className={`relative shrink-0 overflow-hidden bg-kk-hair ${
           isDesktop
-            ? "h-20 w-20 rounded-xl border border-[#E5E2E1]"
+            ? "h-20 w-20 rounded-xl border border-kk-hair"
             : "h-20 w-20 rounded-lg"
         }`}
       >
@@ -54,7 +54,7 @@ export function CartItem({
           <Image src={image} alt={name} fill sizes="80px" className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <UtensilsCrossed className="size-6 text-[#5B403C]/30" />
+            <UtensilsCrossed className="size-6 text-kk-cocoa/30" />
           </div>
         )}
       </div>
@@ -65,17 +65,17 @@ export function CartItem({
       >
         <div>
           <h3
-            className={`font-inter ${isDesktop ? "text-[15px]" : "text-sm"} font-semibold text-[#1C1B1B]`}
+            className={`font-inter ${isDesktop ? "text-[15px]" : "text-sm"} font-semibold text-kk-ink`}
           >
             {name}
           </h3>
           {options && (
-            <p className="font-inter text-base text-[#5B403C]">{options}</p>
+            <p className="font-inter text-base text-kk-cocoa">{options}</p>
           )}
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="font-inter text-sm font-bold text-[#1C1B1B]">
+          <span className="font-inter text-sm font-bold text-kk-ink">
             {formatNaira(koboOf(price))}
           </span>
 
@@ -83,14 +83,14 @@ export function CartItem({
             {isDesktop && (
               <button
                 onClick={() => onRemove(id)}
-                className="font-inter text-xs font-medium text-[#906F6B] underline hover:text-[#5B403C] disabled:opacity-40"
+                className="font-inter text-xs font-medium text-kk-taupe underline hover:text-kk-cocoa disabled:opacity-40"
               >
                 Remove
               </button>
             )}
 
             <div
-              className={`flex h-10 items-center gap-3 rounded-full bg-[#F6F3F2] px-2 ${
+              className={`flex h-10 items-center gap-3 rounded-full bg-kk-sand px-2 ${
                 isDesktop ? "h-[38px]" : "h-10"
               }`}
             >
@@ -103,23 +103,23 @@ export function CartItem({
                 aria-label="Decrease quantity"
               >
                 <Minus
-                  className={`${isDesktop ? "size-3.5" : "size-[8px]"} text-[#B61913]`}
+                  className={`${isDesktop ? "size-3.5" : "size-[8px]"} text-kk-red-ink`}
                 />
               </button>
-              <span className="w-4 text-center font-inter text-sm font-semibold text-[#1C1B1B]">
+              <span className="w-4 text-center font-inter text-sm font-semibold text-kk-ink">
                 {qty}
               </span>
               <button
                 onClick={() => onQtyChange(id, qty + 1)}
-                className={`flex items-center justify-center rounded-full bg-[#B61913] shadow-sm hover:bg-[#9e1611] disabled:opacity-40 ${
+                className={`flex items-center justify-center rounded-full bg-kk-red shadow-sm hover:bg-kk-red-hover disabled:opacity-40 ${
                   isDesktop
-                    ? "h-7 w-7 border border-[#E5E2E1] bg-white hover:bg-gray-50"
+                    ? "h-7 w-7 border border-kk-hair bg-kk-card hover:bg-gray-50"
                     : "h-8 w-8"
                 }`}
                 aria-label="Increase quantity"
               >
                 <Plus
-                  className={`${isDesktop ? "size-3.5 text-[#1C1B1B]" : "size-[8px] text-white"}`}
+                  className={`${isDesktop ? "size-3.5 text-kk-ink" : "size-[8px] text-white"}`}
                 />
               </button>
             </div>

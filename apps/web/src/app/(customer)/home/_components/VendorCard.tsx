@@ -50,7 +50,7 @@ export function VendorCard({ vendor }: { vendor: VendorCardVendor }) {
   return (
     <Link
       href={`/vendors/${vendor.slug}`}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-kk-line/60 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-transparent hover:shadow-[0_26px_46px_-26px_rgba(90,25,20,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red/45 focus-visible:ring-offset-2"
+      className="group relative flex flex-col overflow-hidden rounded-3xl border border-kk-line/60 bg-kk-card transition-all duration-300 hover:-translate-y-1 hover:border-transparent hover:shadow-[0_26px_46px_-26px_rgba(90,25,20,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red/45 focus-visible:ring-offset-2"
     >
       <div className="relative aspect-16/10 w-full overflow-hidden bg-kk-sand">
         {vendor.banner_url ? (
@@ -81,7 +81,7 @@ export function VendorCard({ vendor }: { vendor: VendorCardVendor }) {
         />
 
         {vendor.rating_count > 0 && (
-          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 font-inter text-xs font-bold text-kk-ink shadow-sm backdrop-blur-sm">
+          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-kk-card/95 px-2.5 py-1 font-inter text-xs font-bold text-kk-ink shadow-sm backdrop-blur-sm">
             <Star className="size-3 fill-kk-orange text-kk-orange" />
             {vendor.rating_avg.toFixed(1)}
           </span>

@@ -42,26 +42,26 @@ export function TrackingDesktop({
     // here used to overflow the page by exactly the header's height.
     <div className="flex h-[calc(100vh-var(--kk-nav-h,0px)-var(--kk-tabbar-h,0px))]">
       {/* Left Sidebar - Details Panel */}
-      <div className="flex w-[420px] shrink-0 flex-col border-r border-[#E4BEB8] bg-[#FCF9F8] shadow-[8px_0px_24px_rgba(26,26,26,0.05)]">
+      <div className="flex w-[420px] shrink-0 flex-col border-r border-kk-line bg-kk-cream shadow-[8px_0px_24px_rgba(26,26,26,0.05)]">
         {/* Header Status */}
-        <div className="shrink-0 border-b border-[#F6F3F2] p-4 pb-6">
+        <div className="shrink-0 border-b border-kk-sand p-4 pb-6">
           <div className="mb-1 flex items-center justify-between">
-            <span className="font-inter text-xs font-semibold uppercase tracking-[0.7px] text-[#5B403C]">
+            <span className="font-inter text-xs font-semibold uppercase tracking-[0.7px] text-kk-cocoa">
               Order #{orderCode}
             </span>
             {isLive && (
-              <div className="flex items-center gap-1 rounded-full bg-[rgba(182,25,19,0.1)] px-3 py-1">
-                <span className="h-2 w-2 rounded-full bg-[#B61913]" />
-                <span className="font-inter text-xs font-bold text-[#B61913]">
+              <div className="flex items-center gap-1 rounded-full bg-kk-red/10 px-3 py-1">
+                <span className="h-2 w-2 rounded-full bg-kk-red" />
+                <span className="font-inter text-xs font-bold text-kk-red-ink">
                   Live
                 </span>
               </div>
             )}
           </div>
-          <h1 className="font-sora text-[32px] font-bold leading-10 tracking-[-0.32px] text-[#1C1B1B]">
+          <h1 className="font-sora text-[32px] font-bold leading-10 tracking-[-0.32px] text-kk-ink">
             {trackingHeadline(status)}
           </h1>
-          <p className="font-inter text-base text-[#5B403C]">
+          <p className="font-inter text-base text-kk-cocoa">
             We&apos;ll update this page automatically as your order moves.
           </p>
         </div>
@@ -75,7 +75,7 @@ export function TrackingDesktop({
                 (verify_delivery_and_release_escrow), so it's shown while the
                 order is actually en route, not only after the fact. */}
             {deliveryCode && (
-              <div className="rounded-xl border border-[#E4BEB8] bg-white shadow-sm">
+              <div className="rounded-xl border border-kk-line bg-kk-card shadow-sm">
                 <DeliveryCodeSection deliveryCode={deliveryCode} />
               </div>
             )}
@@ -93,7 +93,7 @@ export function TrackingDesktop({
             ) : driver ? (
               <DriverCard driver={driver} />
             ) : (
-              <div className="rounded-xl border border-[#E4BEB8] bg-white p-4 text-center text-sm text-[#5B403C] shadow-sm">
+              <div className="rounded-xl border border-kk-line bg-kk-card p-4 text-center text-sm text-kk-cocoa shadow-sm">
                 Waiting for a rider to be assigned…
               </div>
             )}

@@ -58,21 +58,21 @@ export function TrackingMobile({
         className="absolute left-4 top-4 z-10 rounded-full bg-[rgba(252,249,248,0.9)] p-3 shadow-lg backdrop-blur-sm"
         aria-label="Go back"
       >
-        <ChevronLeft className="size-5 text-[#1C1B1B]" />
+        <ChevronLeft className="size-5 text-kk-ink" />
       </button>
 
       {/* Bottom Sheet */}
       <div className="absolute bottom-0 left-0 right-0 z-10">
-        <div className="rounded-t-2xl border border-[#EAE7E7] bg-[#FCF9F8] px-4 pb-6 pt-3 shadow-[0_-8px_32px_rgba(26,26,26,0.08)]">
+        <div className="rounded-t-2xl border border-kk-hair-soft bg-kk-cream px-4 pb-6 pt-3 shadow-[0_-8px_32px_rgba(26,26,26,0.08)]">
           {/* Drag Handle */}
-          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#E5E2E1]" />
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-kk-hair" />
 
           {/* Status */}
           <div className="mb-4 text-center">
-            <h2 className="font-sora text-[28px] font-bold text-[#B61913]">
+            <h2 className="font-sora text-[28px] font-bold text-kk-red-ink">
               {trackingHeadline(status)}
             </h2>
-            <p className="font-inter text-sm font-semibold text-[#5B403C]">
+            <p className="font-inter text-sm font-semibold text-kk-cocoa">
               Order #{orderCode}
             </p>
           </div>
@@ -81,7 +81,7 @@ export function TrackingMobile({
               (verify_delivery_and_release_escrow), so it's shown while the
               order is actually en route, not only after the fact. */}
           {deliveryCode && (
-            <div className="mb-4 rounded-xl border border-[#F0EDED] bg-white shadow-sm">
+            <div className="mb-4 rounded-xl border border-kk-fill bg-kk-card shadow-sm">
               <DeliveryCodeSection deliveryCode={deliveryCode} />
             </div>
           )}
@@ -96,19 +96,19 @@ export function TrackingMobile({
               return (
                 <div key={step.id} className="flex flex-col items-center">
                   <div
-                    className={`flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#FCF9F8] ${
-                      isDone || isActive ? "bg-[#B61913]" : "bg-[#E5E2E1]"
+                    className={`flex h-6 w-6 items-center justify-center rounded-full border-2 border-kk-cream ${
+                      isDone || isActive ? "bg-kk-red" : "bg-kk-hair"
                     } ${isActive ? "shadow-[0_0_0_4px_rgba(182,25,19,0.1)]" : ""}`}
                   >
-                    {isDone && <span className="h-1.5 w-2 bg-white" />}
+                    {isDone && <span className="h-1.5 w-2 bg-kk-card" />}
                     {isActive && (
-                      <span className="h-3 w-3 rounded-full bg-[#B61913]" />
+                      <span className="h-3 w-3 rounded-full bg-kk-red" />
                     )}
                   </div>
                   <span
                     className={`mt-1 text-[10px] font-medium ${
-                      isActive ? "text-[#B61913]" : "text-[#5B403C]"
-                    } ${isPending ? "text-[#DCD9D9]" : ""}`}
+                      isActive ? "text-kk-red-ink" : "text-kk-cocoa"
+                    } ${isPending ? "text-kk-fill-deep" : ""}`}
                   >
                     {step.label}
                   </span>
@@ -121,7 +121,7 @@ export function TrackingMobile({
           {orderId && (
             <Link
               href={`/orders/${orderId}/delivered`}
-              className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#B61913] py-3 font-inter text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#9e1611]"
+              className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-kk-red py-3 font-inter text-sm font-semibold text-white shadow-sm transition-colors hover:bg-kk-red-hover"
             >
               <MapPin className="size-4" />
               View Delivery Details
@@ -129,7 +129,7 @@ export function TrackingMobile({
           )}
 
           {/* Divider */}
-          <div className="mb-4 h-px w-full bg-[#EAE7E7]" />
+          <div className="mb-4 h-px w-full bg-kk-hair-soft" />
 
           {/* Driver Info — dispatch (0019/0023/0026_rider_self_service.sql)
               is fully built, but a rider may still not be assigned to THIS
@@ -141,18 +141,18 @@ export function TrackingMobile({
               <DeliveredByCard storeName={vendor.name} compact />
             </div>
           ) : driver ? (
-            <div className="mb-4 flex items-center justify-between rounded-xl border border-[#F0EDED] bg-white p-3 shadow-sm">
+            <div className="mb-4 flex items-center justify-between rounded-xl border border-kk-fill bg-kk-card p-3 shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 overflow-hidden rounded-full bg-[#EAE7E7]">
-                  <div className="flex h-full w-full items-center justify-center bg-[#EAE7E7] text-xl">
+                <div className="h-12 w-12 overflow-hidden rounded-full bg-kk-hair-soft">
+                  <div className="flex h-full w-full items-center justify-center bg-kk-hair-soft text-xl">
                     <ContactRound />
                   </div>
                 </div>
                 <div>
-                  <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+                  <p className="font-inter text-sm font-semibold text-kk-ink">
                     {driver.name}
                   </p>
-                  <p className="font-inter text-xs text-[#5B403C]">
+                  <p className="font-inter text-xs text-kk-cocoa">
                     {[driver.car, driver.plateNumber].filter(Boolean).join(" ")}
                   </p>
                 </div>
@@ -167,7 +167,7 @@ export function TrackingMobile({
               </div>
             </div>
           ) : (
-            <div className="mb-4 rounded-xl border border-[#F0EDED] bg-white p-3 text-center text-sm text-[#5B403C] shadow-sm">
+            <div className="mb-4 rounded-xl border border-kk-fill bg-kk-card p-3 text-center text-sm text-kk-cocoa shadow-sm">
               Waiting for a rider to be assigned…
             </div>
           )}
@@ -175,19 +175,19 @@ export function TrackingMobile({
           {/* Vendor Info */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#EAE7E7]">
-                <MapPin className="size-5 text-[#B61913]" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-kk-hair-soft">
+                <MapPin className="size-5 text-kk-red-ink" />
               </div>
               <div>
-                <p className="font-inter text-sm font-semibold text-[#1C1B1B]">
+                <p className="font-inter text-sm font-semibold text-kk-ink">
                   {vendor.name}
                 </p>
-                <p className="font-inter text-xs text-[#5B403C]">
+                <p className="font-inter text-xs text-kk-cocoa">
                   {vendor.itemCount} items
                 </p>
               </div>
             </div>
-            <button className="font-inter text-sm font-semibold text-[#B61913] hover:underline">
+            <button className="font-inter text-sm font-semibold text-kk-red-ink hover:underline">
               View Menu
             </button>
           </div>
