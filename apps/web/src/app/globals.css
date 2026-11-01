@@ -1,6 +1,21 @@
 @import "tailwindcss";
 @import "@kiakia/ui/tokens.css";
 
+/* `dark:` follows the scoped theme in tokens.css (explicit dark, or "system"
+ * while the OS prefers dark) — not the OS preference alone, which Tailwind's
+ * default would use and which would fire inside light-only screens. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where([data-theme="system"], [data-theme="system"] *) {
+      @slot;
+    }
+  }
+}
+
 body {
   background: var(--color-surface);
   color: var(--color-ink);

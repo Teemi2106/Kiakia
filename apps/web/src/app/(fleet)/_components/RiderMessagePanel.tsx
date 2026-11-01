@@ -139,7 +139,7 @@ export function RiderMessagePanel({ riders }: { riders: readonly RiderRow[] }) {
             </p>
           )}
           {state.queued !== undefined && state.queued > 0 && state.chosen !== undefined && (
-            <p className="text-kk-green">
+            <p className="text-positive">
               {state.queued === state.chosen
                 ? `Sent to ${state.queued} ${state.queued === 1 ? "rider" : "riders"}.`
                 : `Sent to ${state.queued} of ${state.chosen}. The rest have no phone number or are suspended.`}

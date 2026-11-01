@@ -39,6 +39,8 @@
   --color-warning-surface: oklch(96% 0.06 80);
   --color-danger: oklch(58% 0.22 25); /* cancelled, failed, overdue */
   --color-danger-surface: oklch(95% 0.05 25);
+  --color-notice-surface: #ffdcc5; /* admin/fleet inline notices */
+  --color-notice-ink: #934b00;
 
   /* Shape */
   --radius-card: 1rem;
@@ -78,17 +80,21 @@
 }
 
 /**
- * Explicit opt-in only — deliberately NOT gated behind
- * `@media (prefers-color-scheme: dark)`. Every screen built from the
- * Figma file so far (marketing, auth, customer, vendor) is light-only;
- * there's no dark variant of the photography, logo, or any screen in that
- * file. Auto-switching on the visitor's OS preference silently broke every
- * page for anyone with system dark mode on (dark backgrounds against
- * light-background photography/logo assets) until this was caught here.
- * Nothing in the app sets `data-theme="dark"` yet — this block is inert
- * until a real theme toggle exists.
+ * Dark theme, scoped — not applied to <html>. Only the screens that have been
+ * converted to the tokens above (admin, fleet) opt in, by rendering
+ * `data-theme` on their own wrapper (see lib/theme.ts). The customer, vendor,
+ * auth and marketing screens are still painted with literal Figma hexes and
+ * light-only photography/logo assets, so a dark scope must never reach them:
+ * auto-switching on the OS preference once silently broke every page for
+ * anyone with system dark mode on.
+ *
+ *   data-theme="dark"   always dark
+ *   data-theme="system" dark only when the OS asks for it (pure CSS, so the
+ *                       server-rendered HTML is already right — no flash)
+ *   data-theme="light"  (or absent) the default tokens
  */
-:root[data-theme="dark"] {
+[data-theme="dark"] {
+  color-scheme: dark;
   --color-surface: oklch(20% 0.01 260);
   --color-surface-raised: oklch(24% 0.012 260);
   --color-surface-sunken: oklch(16% 0.01 260);
@@ -96,4 +102,41 @@
   --color-ink: oklch(96% 0.005 260);
   --color-ink-muted: oklch(72% 0.01 260);
   --color-ink-inverse: oklch(16% 0.01 260);
+  --color-brand-50: oklch(28% 0.06 25);
+  --color-brand-100: oklch(34% 0.08 25);
+  --color-brand-600: oklch(72% 0.17 25);
+  --color-brand-700: oklch(82% 0.11 25);
+  --color-positive: oklch(74% 0.16 150);
+  --color-positive-surface: oklch(30% 0.06 150);
+  --color-warning: oklch(80% 0.15 80);
+  --color-warning-surface: oklch(32% 0.07 80);
+  --color-danger: oklch(72% 0.19 25);
+  --color-danger-surface: oklch(30% 0.08 25);
+  --color-notice-surface: oklch(32% 0.07 60);
+  --color-notice-ink: oklch(85% 0.11 65);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    color-scheme: dark;
+    --color-surface: oklch(20% 0.01 260);
+    --color-surface-raised: oklch(24% 0.012 260);
+    --color-surface-sunken: oklch(16% 0.01 260);
+    --color-border: oklch(32% 0.012 260);
+    --color-ink: oklch(96% 0.005 260);
+    --color-ink-muted: oklch(72% 0.01 260);
+    --color-ink-inverse: oklch(16% 0.01 260);
+    --color-brand-50: oklch(28% 0.06 25);
+    --color-brand-100: oklch(34% 0.08 25);
+    --color-brand-600: oklch(72% 0.17 25);
+    --color-brand-700: oklch(82% 0.11 25);
+    --color-positive: oklch(74% 0.16 150);
+    --color-positive-surface: oklch(30% 0.06 150);
+    --color-warning: oklch(80% 0.15 80);
+    --color-warning-surface: oklch(32% 0.07 80);
+    --color-danger: oklch(72% 0.19 25);
+    --color-danger-surface: oklch(30% 0.08 25);
+    --color-notice-surface: oklch(32% 0.07 60);
+    --color-notice-ink: oklch(85% 0.11 65);
+  }
 }

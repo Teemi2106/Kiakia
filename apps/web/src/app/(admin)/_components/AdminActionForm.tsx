@@ -83,7 +83,7 @@ export function AdminActionForm({ action, submitLabel, variant, children, reason
 
       {state.error &&
         (warningErrors?.includes(state.error) ? (
-          <p role="alert" className="rounded-control bg-[#FFDCC5] px-3 py-2 text-sm text-kk-orange-deep">
+          <p role="alert" className="rounded-control bg-notice-surface px-3 py-2 text-sm text-notice-ink">
             {state.error}
           </p>
         ) : (

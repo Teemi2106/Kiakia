@@ -53,7 +53,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
       {suspended && (
         <p
           role="status"
-          className={`rounded-control px-3 py-2 text-sm ${signInBanned ? "bg-danger-surface text-danger" : "bg-[#FFDCC5] text-kk-orange-deep"}`}
+          className={`rounded-control px-3 py-2 text-sm ${signInBanned ? "bg-danger-surface text-danger" : "bg-notice-surface text-notice-ink"}`}
         >
           {signInBanned
             ? "This account is suspended and cannot sign in."

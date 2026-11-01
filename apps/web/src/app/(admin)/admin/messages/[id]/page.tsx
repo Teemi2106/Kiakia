@@ -42,7 +42,7 @@ export default async function AdminMessageDetailPage({ params }: { params: Promi
       </Link>
 
       {sending && (
-        <p role="status" className="rounded-control bg-[#FFDCC5] px-3 py-2 text-sm text-kk-orange-deep">
+        <p role="status" className="rounded-control bg-notice-surface px-3 py-2 text-sm text-notice-ink">
           This message is still going out. The numbers below update by themselves every few seconds.
         </p>
       )}
