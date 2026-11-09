@@ -569,7 +569,7 @@ function HomeShell({
       <div
         className={cn(
           "space-y-4 rounded-3xl border border-kk-line/40 bg-kk-card/65 p-4 shadow-[0_20px_50px_-45px_rgba(66,29,20,0.5)] sm:p-5",
-          (showHero || activeOrder) && "mt-10",
+          (showHero || activeOrder) && "mt-5 sm:mt-10",
         )}
       >
         <div className="flex items-center gap-3">
@@ -592,7 +592,7 @@ function HomeShell({
         <FilterChips searchParams={homeSearchParams} />
       </div>
 
-      <div id="vendor-results" className="mt-10 scroll-mt-40 lg:scroll-mt-24">
+      <div id="vendor-results" className="mt-6 scroll-mt-40 sm:mt-10 lg:scroll-mt-24">
         {children}
       </div>
     </div>

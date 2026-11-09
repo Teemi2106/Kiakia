@@ -50,7 +50,7 @@ const CHIPS: ChipDef[] = [
  */
 export function FilterChips({ searchParams }: { searchParams: HomeSearchParams }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pb-0">
       {CHIPS.map((chip) => {
         const isActive = searchParams[chip.key] === chip.activeValue;
         const params = new URLSearchParams();

@@ -77,8 +77,44 @@ export function VendorSidebar({ vendor }: { vendor: VendorSummary }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Compact mobile summary keeps the menu close while preserving details. */}
+      <div className="rounded-2xl border border-kk-line bg-kk-card p-3 shadow-sm lg:hidden">
+        <div className="flex items-center gap-3">
+          <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-kk-fill">
+            {vendor.logoUrl ? (
+              <Image src={vendor.logoUrl} alt={vendor.name} fill sizes="48px" className="object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <ShoppingBag className="size-5 text-kk-cocoa/40" />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate font-sora text-base font-bold text-kk-ink">{vendor.name}</h1>
+            <div className="mt-1 flex items-center gap-2 font-inter text-xs text-kk-cocoa">
+              <span>{vendor.category || "Various"}</span>
+              {vendor.ratingCount > 0 && <span className="flex items-center gap-1 font-semibold text-kk-ink"><Star className="size-3 fill-kk-orange text-kk-orange" />{vendor.ratingAvg.toFixed(1)}</span>}
+              <span>{vendor.isAcceptingOrders ? "Open" : "Closed"}</span>
+            </div>
+          </div>
+          <button type="button" onClick={() => setInfoOpen((value) => !value)} aria-expanded={infoOpen} className="flex shrink-0 items-center gap-1 rounded-full bg-kk-fill px-3 py-2 font-inter text-xs font-semibold text-kk-ink">
+            Info
+            <ChevronDown className={`size-3.5 transition-transform ${infoOpen ? "rotate-180" : ""}`} />
+          </button>
+        </div>
+        {infoOpen && (
+          <div className="mt-3 space-y-2 border-t border-kk-fill pt-3 font-inter text-sm text-kk-cocoa">
+            {hoursStatus && <p>{hoursStatus.label}</p>}
+            <p>{formatDeliveryReach(vendor.deliveryRadiusM)}</p>
+            <p>{vendor.minOrderKobo > 0 ? `Min. order ${formatNaira(koboOf(vendor.minOrderKobo))}` : "No minimum order"}</p>
+            <p>~{vendor.avgPrepMins} min prep time</p>
+            {vendor.description && <p className="border-t border-kk-fill pt-2">{vendor.description}</p>}
+          </div>
+        )}
+      </div>
+
       {/* Identity card */}
-      <div className="overflow-hidden rounded-2xl border border-kk-line bg-kk-card shadow-sm">
+      <div className="hidden overflow-hidden rounded-2xl border border-kk-line bg-kk-card shadow-sm lg:block">
         {vendor.bannerUrl && (
           <div className="relative h-24 w-full bg-kk-hair">
             <Image
@@ -183,7 +219,7 @@ export function VendorSidebar({ vendor }: { vendor: VendorSummary }) {
       </div>
 
       {/* Delivery & order info — real fields, no invented promo content */}
-      <div className="rounded-2xl border border-kk-line bg-kk-card p-5 shadow-sm">
+      <div className="hidden rounded-2xl border border-kk-line bg-kk-card p-5 shadow-sm lg:block">
         <h2 className="font-sora text-sm font-semibold text-kk-ink">
           Delivery &amp; order info
         </h2>

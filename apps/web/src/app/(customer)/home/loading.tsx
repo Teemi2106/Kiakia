@@ -13,7 +13,7 @@ export default function CustomerHomeLoading() {
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 pb-12 pt-5 sm:px-6 sm:pb-16 sm:pt-8">
       {/* Greeting panel */}
-      <div className="rounded-3xl border border-kk-line/60 bg-gradient-to-br from-kk-red-soft/50 via-kk-cream to-kk-orange/10 px-5 py-7 sm:px-8 sm:py-9">
+      <div className="min-h-[190px] rounded-3xl border border-kk-line/60 bg-gradient-to-br from-kk-red-soft/50 via-kk-cream to-kk-orange/10 px-5 py-5 sm:min-h-0 sm:px-8 sm:py-9">
         <Shimmer className="h-3 w-32" />
         <Shimmer className="mt-4 h-8 w-64 rounded-xl sm:h-10" />
         <Shimmer className="mt-3 h-4 w-full max-w-md" />
@@ -21,7 +21,7 @@ export default function CustomerHomeLoading() {
       </div>
 
       {/* Browse toolbar */}
-      <div className="mt-9 space-y-4">
+      <div className="mt-5 space-y-4 sm:mt-9">
         <Shimmer className="h-3 w-24" />
         <div className="flex gap-2.5 overflow-hidden">
           {Array.from({ length: 6 }, (_, i) => (
@@ -36,7 +36,7 @@ export default function CustomerHomeLoading() {
       </div>
 
       {/* Featured rail */}
-      <div className="mt-10">
+      <div className="mt-6 sm:mt-10">
         <Shimmer className="h-6 w-44 rounded-lg" />
         <div className="mt-5 flex gap-4 overflow-hidden">
           {Array.from({ length: 5 }, (_, i) => (
