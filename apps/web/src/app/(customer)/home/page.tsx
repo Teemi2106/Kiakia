@@ -5,6 +5,7 @@ import { Store } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { getOptionalSession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { getDefaultAddressLocation } from "@/lib/customer/default-address";
@@ -74,6 +75,32 @@ export default async function CustomerHomePage({
   const session = await getOptionalSession();
   const userId = session?.userId ?? null;
   const supabase = await createClient();
+  let guestDeliveryLocation: { lat: number; lng: number; state: string | null } | null = null;
+  if (!userId) {
+    const rawLocation = (await cookies()).get("kk_delivery_location")?.value;
+    if (rawLocation) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(rawLocation)) as {
+          lat?: unknown;
+          lng?: unknown;
+          state?: unknown;
+        };
+        if (
+          typeof parsed.lat === "number" && Number.isFinite(parsed.lat) &&
+          typeof parsed.lng === "number" && Number.isFinite(parsed.lng) &&
+          parsed.lat >= 4.2 && parsed.lat <= 13.9 && parsed.lng >= 2.6 && parsed.lng <= 14.7
+        ) {
+          guestDeliveryLocation = {
+            lat: parsed.lat,
+            lng: parsed.lng,
+            state: typeof parsed.state === "string" ? parsed.state : null,
+          };
+        }
+      } catch {
+        // An absent or stale guest preference should leave browse unfiltered.
+      }
+    }
+  }
 
   // Everything that depends on nothing but the session goes out together.
   // The customer's own state/coordinates come from their default (or first)
@@ -106,11 +133,13 @@ export default async function CustomerHomePage({
         : Promise.resolve({ data: null })),
     ]);
 
-  const customerState = customerAddress?.state?.trim() || null;
+  const customerState = customerAddress?.state?.trim() || guestDeliveryLocation?.state?.trim() || null;
   const customerCoords =
     customerAddress?.location_lat != null && customerAddress?.location_lng != null
       ? { lat: customerAddress.location_lat, lng: customerAddress.location_lng }
-      : null;
+      : guestDeliveryLocation
+        ? { lat: guestDeliveryLocation.lat, lng: guestDeliveryLocation.lng }
+        : null;
   const firstName = firstNameOf(profile?.full_name);
 
   const liveOrders = activeOrderRows ?? [];
@@ -281,14 +310,9 @@ export default async function CustomerHomePage({
     );
   }
 
-  // Filtered/search/chip state: one flat, honestly-labeled result list.
-  // A search matches either the vendor's own name OR one of its menu item
-  // names — "jollof" should surface every vendor that sells jollof, not
-  // just a vendor literally named "Jollof". No FK embed (menu_items ->
-  // vendors) for this, same reasoning as the Featured carousel above: two
-  // plain queries + a JS-side id union, matching this codebase's
-  // established pattern instead of a PostgREST embed.
-  const [{ data: liveOrderVendor }, matchedVendorIds, categoryMatch] = await Promise.all([
+  // Filtered/search state: search spans menu items, category labels and
+  // vendor names so customers can find food in any of those ways.
+  const [{ data: liveOrderVendor }, searchMatch, categoryMatch] = await Promise.all([
     liveOrderVendorQuery,
     resolveSearchMatches(supabase, q),
     resolveCategoryMatches(supabase, category),
@@ -296,7 +320,7 @@ export default async function CustomerHomePage({
   // Both resolvers return null when their own filter isn't active, so this
   // collapses to "whichever one filter is active" unless both are — in
   // which case a vendor must satisfy both (search AND category).
-  const idFilter = intersectOrSingle(matchedVendorIds, categoryMatch?.vendorIds ?? null);
+  const idFilter = intersectOrSingle(searchMatch?.vendorIds ?? null, categoryMatch?.vendorIds ?? null);
 
   let vendors: VendorCardVendor[] = [];
   // A non-null-but-empty idFilter means an active filter matched nothing —
@@ -344,6 +368,16 @@ export default async function CustomerHomePage({
       if (categoryDishes.length >= 24) break;
     }
   }
+  const searchDishes: FeaturedVendor[] = [];
+  for (const dish of searchMatch?.dishes ?? []) {
+    const vendor = vendorById.get(dish.vendorId);
+    if (!vendor || !dish.imageUrl) continue;
+    searchDishes.push({ vendor, dishName: dish.name, dishImageUrl: dish.imageUrl });
+    if (searchDishes.length >= 24) break;
+  }
+  const matchedCategories = q?.trim()
+    ? categories.filter((mealCategory) => mealCategory.label.toLowerCase().includes(q.trim().toLowerCase()))
+    : [];
 
   return (
     <HomeShell
@@ -358,6 +392,30 @@ export default async function CustomerHomePage({
     >
       {q?.trim() && <TrackEvent eventType="search" searchQuery={q.trim().slice(0, 80)} />}
       <div className="space-y-12">
+        {matchedCategories.length > 0 && (
+          <section>
+            <SectionHeading title="Categories" count={matchedCategories.length} />
+            <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {matchedCategories.map((mealCategory) => (
+                <Link
+                  key={mealCategory.key}
+                  href={`/home?category=${encodeURIComponent(mealCategory.key)}`}
+                  className="shrink-0 rounded-full border border-kk-line/70 bg-kk-card px-4 py-2 font-inter text-sm font-semibold text-kk-cocoa transition-colors hover:border-kk-red/40 hover:text-kk-red-ink"
+                >
+                  {mealCategory.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {searchDishes.length > 0 && (
+          <section>
+            <SectionHeading title="Food" count={searchDishes.length} hint="Matching dishes from available menus." />
+            <FeaturedCarousel items={searchDishes} />
+          </section>
+        )}
+
         {categoryDishes.length > 0 && (
           <section>
             <SectionHeading
@@ -371,7 +429,7 @@ export default async function CustomerHomePage({
 
         <section>
           <SectionHeading
-            title={q ? `Results for “${q}”` : "Filtered vendors"}
+            title="Vendors"
             count={vendors.length}
             hint={
               sort === "rating" ? "Highest rated first." : "Nearest to your delivery address first."
@@ -471,30 +529,59 @@ function intersectOrSingle(a: string[] | null, b: string[] | null): string[] | n
   return a ?? b;
 }
 
-/** Vendor ids whose own name, or one of whose menu items, matches `q`. Null
- * when there is no search term at all — which is different from "matched
- * nothing", the empty array. */
+interface SearchMatch {
+  readonly vendorIds: string[];
+  readonly dishes: readonly CategoryDish[];
+}
+
+/** Matches vendor names, dish names, and fixed menu category labels. Null
+ * means there is no search term; an empty vendorIds array means no match. */
 async function resolveSearchMatches(
   supabase: Awaited<ReturnType<typeof createClient>>,
   q: string | undefined,
-): Promise<string[] | null> {
+): Promise<SearchMatch | null> {
   if (!q) return null;
 
-  const [{ data: nameMatches }, { data: dishMatches }] = await Promise.all([
+  const matchingCategoryKeys = MEAL_CATEGORIES
+    .filter((mealCategory) => mealCategory.label.toLowerCase().includes(q.trim().toLowerCase()))
+    .map((mealCategory) => mealCategory.key);
+  const [{ data: nameMatches }, { data: dishMatches }, { data: categoryRows }] = await Promise.all([
     supabase.from("vendors").select("id").eq("status", "active").ilike("name", `%${q}%`),
     supabase
       .from("menu_items")
-      .select("vendor_id")
+      .select("vendor_id, name, image_url")
       .eq("is_available", true)
-      .ilike("name", `%${q}%`),
+      .ilike("name", `%${q}%`)
+      .limit(100),
+    matchingCategoryKeys.length > 0
+      ? supabase.from("menu_categories").select("id").eq("is_active", true).in("category_key", matchingCategoryKeys)
+      : Promise.resolve({ data: [] }),
   ]);
 
-  return Array.from(
-    new Set<string>([
-      ...(nameMatches ?? []).map((v) => v.id),
-      ...(dishMatches ?? []).map((m) => m.vendor_id).filter((id): id is string => Boolean(id)),
-    ]),
-  );
+  const categoryIds = (categoryRows ?? []).map((row) => row.id);
+  const { data: categoryDishRows } = categoryIds.length > 0
+    ? await supabase
+        .from("menu_items")
+        .select("vendor_id, name, image_url")
+        .in("category_id", categoryIds)
+        .eq("is_available", true)
+        .limit(100)
+    : { data: [] };
+  const dishes = [...(dishMatches ?? []), ...(categoryDishRows ?? [])];
+
+  return {
+    vendorIds: Array.from(new Set<string>([
+      ...(nameMatches ?? []).map((vendor) => vendor.id),
+      ...dishes.map((dish) => dish.vendor_id).filter((id): id is string => Boolean(id)),
+    ])),
+    dishes: Array.from(new Map(
+      dishes.map((dish) => [`${dish.vendor_id}:${dish.name}`, {
+        vendorId: dish.vendor_id,
+        name: dish.name,
+        imageUrl: dish.image_url,
+      }]),
+    ).values()),
+  };
 }
 
 function toActiveOrder(

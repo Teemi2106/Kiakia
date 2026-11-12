@@ -15,9 +15,9 @@ export function CravingBlocks() {
         <div><p className="flex items-center gap-1.5 font-inter text-[10px] font-bold uppercase tracking-[0.22em] text-kk-red-ink"><Sparkles className="size-3.5" /> Tell us the mood</p><h2 className="mt-2 font-sora text-xl font-bold tracking-tight text-kk-ink sm:text-2xl">What would hit the spot?</h2></div>
         <Flame className="size-6 text-kk-orange" />
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {CRAVINGS.map(({ label, detail, href, icon: Icon, tone }) => (
-          <Link key={label} href={href} className={`group relative min-h-36 overflow-hidden rounded-3xl bg-gradient-to-br ${tone} p-4 text-white transition duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-40 sm:p-5`}>
+          <Link key={label} href={href} className={`group relative min-h-36 w-[min(44vw,240px)] shrink-0 snap-start overflow-hidden rounded-3xl bg-gradient-to-br ${tone} p-4 text-white transition duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-40 sm:w-[240px] sm:p-5`}>
             <span aria-hidden="true" className="absolute -bottom-10 -right-8 size-28 rounded-full border-[18px] border-white/10 transition duration-500 group-hover:scale-125" />
             <Icon className="size-6 text-white/80" />
             <h3 className="mt-7 font-sora text-[15px] font-bold leading-tight sm:text-lg">{label}</h3>

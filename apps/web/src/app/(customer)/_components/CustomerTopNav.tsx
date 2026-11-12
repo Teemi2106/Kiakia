@@ -1,7 +1,7 @@
 // app/(customer)/_components/CustomerTopNav.tsx
 "use client";
 
-import { ArrowLeftRight, ChevronRight, MapPin, Search, ShoppingCart, Truck, User } from "lucide-react";
+import { ArrowLeftRight, Search, ShoppingCart, Truck, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -10,6 +10,7 @@ import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
 import { selectIsGuest, selectItemCount } from "@/lib/customer/store";
 import { switchToVendorAction } from "@/app/actions/session";
 import { NotificationsButton } from "@/app/_components/NotificationsButton";
+import { AddressPicker } from "./AddressPicker";
 
 // Text-only on desktop; the icon versions of these live in CustomerBottomNav,
 // which is what renders below `lg`.
@@ -42,7 +43,6 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
   const itemCount = useCustomerStore(selectItemCount);
   const isGuest = useCustomerStore(selectIsGuest);
   const setCartOpen = useCustomerStore((s) => s.setCartOpen);
-  const defaultAddressLabel = useCustomerStore((s) => s.addressLabel);
 
   return (
     <nav className="fixed inset-x-0 top-0 z-40 border-b border-kk-line/50 bg-kk-cream/85 backdrop-blur-xl">
@@ -59,11 +59,11 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
           />
         </Link>
 
-        <AddressPill className="ml-1 hidden xl:flex" label={defaultAddressLabel} />
+        <AddressPicker />
 
         {/* Search lives inline on desktop; below lg it moves to its own row. */}
-        <form action="/home" method="GET" className="hidden min-w-0 flex-1 lg:block">
-          <SearchField placeholder="Search for a dish or a vendor…" />
+        <form action="/home" method="GET" className="hidden min-w-0 flex-1 max-w-md lg:block">
+          <SearchField placeholder="Search food, category or vendor…" />
         </form>
 
         <div className="hidden items-center gap-1 lg:flex">
@@ -162,9 +162,9 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
 
       {/* -------------------------------------- address + search row */}
       <div className="flex h-21 flex-col justify-center gap-2 px-4 sm:px-6 lg:hidden">
-        <AddressPill label={defaultAddressLabel} compact />
+        <AddressPicker compact />
         <form action="/home" method="GET">
-          <SearchField placeholder="What are you craving?" />
+          <SearchField placeholder="Search food, category or vendor…" />
         </form>
       </div>
     </nav>
@@ -182,55 +182,5 @@ function SearchField({ placeholder }: { placeholder: string }) {
         className="h-11 w-full rounded-2xl border border-kk-line/70 bg-kk-card pl-11 pr-3 font-inter text-sm text-kk-ink placeholder:text-kk-cocoa/60 transition-colors focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20 lg:h-10"
       />
     </div>
-  );
-}
-
-function AddressPill({
-  label,
-  compact,
-  className,
-}: {
-  label: string | null;
-  compact?: boolean;
-  className?: string;
-}) {
-  if (compact) {
-    return (
-      <Link href="/profile/addresses" className="flex items-center gap-1.5">
-        <MapPin className="size-3.5 shrink-0 text-kk-red-ink" />
-        <span className="truncate font-inter text-xs text-kk-cocoa">
-          {label ? (
-            <>
-              Deliver to <span className="font-semibold text-kk-ink">{label}</span>
-            </>
-          ) : (
-            <span className="font-semibold text-kk-red-ink">Set a delivery address</span>
-          )}
-        </span>
-        <ChevronRight className="size-3.5 shrink-0 text-kk-cocoa" />
-      </Link>
-    );
-  }
-
-  return (
-    <Link
-      href="/profile/addresses"
-      className={cn(
-        "shrink-0 items-center gap-2 rounded-full border border-kk-line/70 bg-kk-card/70 py-1.5 pl-3 pr-2.5 transition-colors hover:border-kk-red/40 hover:bg-kk-card",
-        className,
-      )}
-      title={label ? `Delivering to ${label}` : "Set delivery address"}
-    >
-      <MapPin className="size-4 shrink-0 text-kk-red-ink" />
-      <span className="flex flex-col leading-tight">
-        <span className="font-inter text-[10px] font-medium uppercase tracking-wide text-kk-cocoa/70">
-          Deliver to
-        </span>
-        <span className="max-w-[140px] truncate font-inter text-xs font-semibold text-kk-ink">
-          {label ?? "Set address"}
-        </span>
-      </span>
-      <ChevronRight className="size-3.5 shrink-0 text-kk-cocoa" />
-    </Link>
   );
 }

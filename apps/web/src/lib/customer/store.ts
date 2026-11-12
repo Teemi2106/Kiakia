@@ -50,6 +50,7 @@ export interface CustomerState {
   notify: (text: string, tone: Notice["tone"]) => void;
   dismissNotice: () => void;
   setCartOpen: (open: boolean) => void;
+  setAddressLabel: (label: string | null) => void;
   setUnreadCount: (count: number | ((current: number) => number)) => void;
   /** Resolves true when the item went into the cart (the write itself may still be in flight). */
   addToCart: (input: AddToCartInput, confirmSwitch?: (itemName: string) => boolean) => Promise<boolean>;
@@ -167,6 +168,7 @@ export function createCustomerStore(initial: CustomerSnapshot) {
       },
       dismissNotice: () => set({ notice: null }),
       setCartOpen: (cartOpen) => set({ cartOpen }),
+      setAddressLabel: (addressLabel) => set({ addressLabel }),
       setUnreadCount: (count) =>
         set((s) => ({
           unreadCount: typeof count === "function" ? count(s.unreadCount) : count,

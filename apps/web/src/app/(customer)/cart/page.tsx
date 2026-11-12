@@ -1,11 +1,15 @@
 // app/(customer)/cart/page.tsx
 import type { Metadata } from "next";
-import { CartPageView } from "./_components/CartPageView";
+import CustomerHomePage from "../home/page";
+import type { HomeSearchParams } from "../home/_components/FilterChips";
 
 export const metadata: Metadata = { title: "Cart" };
 
-// The cart renders from the customer store the layout hydrates from
-// customer_bootstrap(), so this page does no data fetching of its own.
-export default function CartPage() {
-  return <CartPageView />;
+// A direct visit to /cart opens over the normal customer home surface.
+export default async function CartPage({
+  searchParams,
+}: {
+  searchParams: Promise<HomeSearchParams>;
+}) {
+  return <CustomerHomePage searchParams={searchParams} />;
 }

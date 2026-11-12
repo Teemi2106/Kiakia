@@ -33,9 +33,9 @@ export function PersonalizedSection({
         </div>
         {personalised && <Link href="/orders/history" className="hidden items-center gap-1 font-inter text-xs font-bold text-kk-red-ink hover:underline sm:flex">Order history <ArrowRight className="size-3.5" /></Link>}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((dish) => (
-          <RecommendationLink key={dish.menuItemId} href={`/vendors/${dish.vendorSlug}`} menuItemId={dish.menuItemId} className="group flex min-w-0 gap-3 rounded-2xl border border-kk-line/45 bg-kk-cream p-2.5 transition hover:-translate-y-0.5 hover:border-kk-orange/50 hover:shadow-lg">
+          <RecommendationLink key={dish.menuItemId} href={`/vendors/${dish.vendorSlug}`} menuItemId={dish.menuItemId} className="group flex w-[min(88vw,360px)] shrink-0 snap-start gap-3 rounded-2xl border border-kk-line/45 bg-kk-cream p-2.5 transition hover:-translate-y-0.5 hover:border-kk-orange/50 hover:shadow-lg">
             <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-kk-sand">
               {dish.imageUrl ? <Image src={dish.imageUrl} alt="" fill sizes="96px" className="object-cover transition duration-500 group-hover:scale-105" /> : <span className="flex size-full items-center justify-center font-sora text-2xl font-bold text-kk-red-ink/30">{dish.name.charAt(0)}</span>}
             </div>

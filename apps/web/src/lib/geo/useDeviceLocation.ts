@@ -12,6 +12,8 @@ interface Options {
 }
 
 const UNAVAILABLE = "Couldn't get your location. Please enable location access and try again.";
+const INACCURATE = "Your location is too approximate to use. Move somewhere with a clearer GPS signal and try again, or place the pin manually.";
+const OUTSIDE_SERVICE_AREA = "Your device reported a location outside Nigeria. Check your device location settings, or place the pin manually in Nigeria.";
 
 export function useDeviceLocation({ auto = false, onFound }: Options) {
   const [locating, setLocating] = useState(false);
@@ -32,7 +34,19 @@ export function useDeviceLocation({ auto = false, onFound }: Options) {
     setError(null);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        if (position.coords.accuracy > 2_000) {
+          setError(INACCURATE);
+          setLocating(false);
+          return;
+        }
         const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+        // KiaKia currently serves Nigeria. Browser geolocation can return an
+        // unexpected fix (for example, a stale or misconfigured device position).
+        if (coords.lat < 4.2 || coords.lat > 13.9 || coords.lng < 2.6 || coords.lng > 14.7) {
+          setError(OUTSIDE_SERVICE_AREA);
+          setLocating(false);
+          return;
+        }
         const address = await reverseGeocode(coords);
         onFoundRef.current(coords, address);
         setLocating(false);
@@ -41,7 +55,7 @@ export function useDeviceLocation({ auto = false, onFound }: Options) {
         setError(UNAVAILABLE);
         setLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 10_000 },
+      { enableHighAccuracy: true, timeout: 20_000, maximumAge: 0 },
     );
   }, []);
 

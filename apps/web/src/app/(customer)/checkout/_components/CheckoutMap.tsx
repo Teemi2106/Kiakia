@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Map, Marker, Source, Layer, type MapRef } from "react-map-gl/mapbox";
 import type { LayerProps } from "react-map-gl/mapbox";
 import { Home, Store } from "lucide-react";
+import { haversineDistanceM } from "@kiakia/domain";
 import { clientEnv } from "@/lib/env.client";
 import type { LatLng } from "@kiakia/domain";
 
@@ -21,6 +22,8 @@ interface CheckoutMapProps {
   /** A real road-following route from lib/maps/directions.ts (Mapbox Directions), or
    * null while it's still loading / unavailable — see the fallback below. */
   routeGeometry: GeoJSON.LineString | null;
+  onDestinationChange?: (point: LatLng) => void;
+  resetViewRequestId?: number;
 }
 
 const routeLineLayer: LayerProps = {
@@ -47,7 +50,7 @@ const fallbackLineLayer: LayerProps = {
   },
 };
 
-export default function CheckoutMap({ vendor, destination, routeGeometry }: CheckoutMapProps) {
+export default function CheckoutMap({ vendor, destination, routeGeometry, onDestinationChange, resetViewRequestId = 0 }: CheckoutMapProps) {
   const mapRef = useRef<MapRef | null>(null);
   const hasVendor = vendor !== null;
   const hasDestination = destination !== null;
@@ -96,6 +99,12 @@ export default function CheckoutMap({ vendor, destination, routeGeometry }: Chec
       : points.map((p) => [p.lng, p.lat]);
     const lngs = boundsCoords.map((c) => c[0]);
     const lats = boundsCoords.map((c) => c[1]);
+    const crossesContinentalDistance =
+      vendor && destination && haversineDistanceM(vendor, destination) > 1_000_000;
+    if (crossesContinentalDistance) {
+      map.easeTo({ center: [destination.lng, destination.lat], zoom: 13, duration: 600 });
+      return;
+    }
     map.fitBounds(
       [
         [Math.min(...lngs), Math.min(...lats)],
@@ -105,6 +114,11 @@ export default function CheckoutMap({ vendor, destination, routeGeometry }: Chec
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on marker presence + the route arriving, not raw point/geometry identity.
   }, [hasVendor, hasDestination, routeGeometry]);
+
+  useEffect(() => {
+    if (resetViewRequestId === 0 || !destination) return;
+    mapRef.current?.getMap().easeTo({ center: [destination.lng, destination.lat], zoom: 14, duration: 600 });
+  }, [resetViewRequestId, destination?.lat, destination?.lng]);
 
   if (points.length === 0) {
     return (
@@ -145,7 +159,16 @@ export default function CheckoutMap({ vendor, destination, routeGeometry }: Chec
       )}
 
       {destination && (
-        <Marker longitude={destination.lng} latitude={destination.lat} anchor="bottom">
+        <Marker
+          longitude={destination.lng}
+          latitude={destination.lat}
+          anchor="bottom"
+          draggable={Boolean(onDestinationChange)}
+          onDragEnd={(event) => {
+            const point = event.target.getLngLat();
+            onDestinationChange?.({ lat: point.lat, lng: point.lng });
+          }}
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-kk-red bg-kk-red shadow-lg">
             <Home className="size-4 text-white" />
           </div>

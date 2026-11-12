@@ -9,7 +9,9 @@ import type { LatLng } from "@kiakia/domain";
 import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
 import { StateSelect } from "@/app/_components/StateSelect";
 import { useDeviceLocation } from "@/lib/geo/useDeviceLocation";
+import type { AddressSearchResult } from "@/lib/geo/search-addresses";
 import { createClient } from "@/lib/supabase/client";
+import { AddressSearch } from "./AddressSearch";
 import { CheckoutMapArea } from "./CheckoutMapArea";
 import type { Address } from "./types";
 
@@ -34,6 +36,9 @@ export function AddressSection({
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     null,
   );
+  const [updatingAddressLocation, setUpdatingAddressLocation] = useState(false);
+  const [resetMapRequestId, setResetMapRequestId] = useState(0);
+  const [searchResult, setSearchResult] = useState<AddressSearchResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showMap] = useState(true);
@@ -57,6 +62,7 @@ export function AddressSection({
     auto: isAddingNew,
     onFound: (found, resolved) => {
       setCoords(found);
+      setSearchResult(null);
       setNewAddress((current) => ({
         ...current,
         state: resolved?.state ?? current.state,
@@ -65,6 +71,18 @@ export function AddressSection({
       }));
     },
   });
+
+  function selectSearchResult(result: AddressSearchResult) {
+    setCoords(result.point);
+    setSearchResult(result);
+    setNewAddress((current) => ({
+      ...current,
+      line1: result.line1,
+      city: result.city || current.city,
+      state: result.state ?? current.state,
+    }));
+    setSaveError(null);
+  }
 
   const handleSaveAddress = async () => {
     if (!newAddress.line1 || !coords) {
@@ -111,6 +129,38 @@ export function AddressSection({
       state: "FCT",
     });
     setCoords(null);
+    setSearchResult(null);
+    router.refresh();
+  };
+
+  const handleUpdateAddressLocation = async () => {
+    if (!address || !coords) return;
+    setUpdatingAddressLocation(true);
+    setSaveError(null);
+    const { data: updatedAddress, error } = await createClient()
+      .from("addresses")
+      .update({
+        location: `POINT(${coords.lng} ${coords.lat})`,
+        ...(searchResult ? {
+          line1: searchResult.line1,
+          city: searchResult.city || address.city,
+          state: searchResult.state ?? address.state,
+        } : {}),
+      })
+      .eq("id", address.id)
+      .eq("customer_id", userId)
+      .select("id, label, line1, landmark, city, state, is_default, location_lat, location_lng")
+      .single();
+    setUpdatingAddressLocation(false);
+
+    if (error || !updatedAddress) {
+      setSaveError("Could not update this address location. Please try again.");
+      return;
+    }
+
+    onAddressChange(updatedAddress);
+    setCoords(null);
+    setSearchResult(null);
     router.refresh();
   };
 
@@ -134,6 +184,12 @@ export function AddressSection({
             Add new address
           </button>
         </div>
+        <AddressSearch
+          onSelect={(result) => {
+            selectSearchResult(result);
+            setIsAddingNew(true);
+          }}
+        />
         {addresses.length > 0 && (
           <div className="space-y-2">
             <p className="font-inter text-xs font-medium text-kk-cocoa">
@@ -179,6 +235,8 @@ export function AddressSection({
             <X className="size-4 text-kk-cocoa" />
           </button>
         </div>
+
+        <AddressSearch onSelect={selectSearchResult} />
 
         <div className="space-y-3">
           <div>
@@ -295,6 +353,7 @@ export function AddressSection({
           </div>
         </div>
       </div>
+
     );
   }
 
@@ -333,14 +392,17 @@ export function AddressSection({
       </div>
 
       {/* Map: vendor pin, delivery pin, and the distance between them */}
+      <AddressSearch onSelect={selectSearchResult} />
       {showMap && (
         <CheckoutMapArea
           vendor={vendorLocation}
           destination={
-            address?.location_lat != null && address?.location_lng != null
+            coords ?? (address?.location_lat != null && address?.location_lng != null
               ? { lat: address.location_lat, lng: address.location_lng }
-              : coords
+              : null)
           }
+          onDestinationChange={setCoords}
+          resetViewRequestId={resetMapRequestId}
         />
       )}
 
@@ -399,6 +461,35 @@ export function AddressSection({
             ? "Update with current location"
             : "Use my current location"}
       </button>
+      {coords && address && (
+        <div className="space-y-2">
+          <p className="text-center font-inter text-xs text-kk-cocoa">
+            The pin is at {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}. Drag it to adjust the exact spot.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setCoords(null);
+                setSearchResult(null);
+                setResetMapRequestId((id) => id + 1);
+              }}
+              className="flex-1 rounded-xl border border-kk-hair px-4 py-3 text-sm font-semibold text-kk-cocoa hover:bg-kk-sand"
+            >
+              Keep saved location
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleUpdateAddressLocation()}
+              disabled={updatingAddressLocation}
+              className="flex-1 rounded-xl bg-kk-red px-4 py-3 text-sm font-semibold text-white hover:bg-kk-red-hover disabled:opacity-50"
+            >
+              {updatingAddressLocation ? "Saving location…" : "Save new location"}
+            </button>
+          </div>
+        </div>
+      )}
+      {saveError && <p className="text-xs text-danger">{saveError}</p>}
       {locationError && <p className="text-xs text-danger">{locationError}</p>}
     </div>
   );

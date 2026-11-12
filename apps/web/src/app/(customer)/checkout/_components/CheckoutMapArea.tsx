@@ -19,6 +19,8 @@ const CheckoutMap = dynamic(() => import("./CheckoutMap"), {
 interface CheckoutMapAreaProps {
   vendor: LatLng | null;
   destination: LatLng | null;
+  onDestinationChange?: (point: LatLng) => void;
+  resetViewRequestId?: number;
 }
 
 function MapMessage({ icon, message }: { icon?: ReactNode; message: string }) {
@@ -49,7 +51,7 @@ function formatDuration(durationS: number): string {
  * neutral "map unavailable" panel rather than ever attempting to load
  * mapbox-gl, same as the order-tracking MapArea.tsx.
  */
-export function CheckoutMapArea({ vendor, destination }: CheckoutMapAreaProps) {
+export function CheckoutMapArea({ vendor, destination, onDestinationChange, resetViewRequestId }: CheckoutMapAreaProps) {
   const { route, loading: routeLoading } = useDrivingRoute(vendor, destination);
   const straightLineM = vendor && destination ? haversineDistanceM(vendor, destination) : null;
 
@@ -57,7 +59,13 @@ export function CheckoutMapArea({ vendor, destination }: CheckoutMapAreaProps) {
     <div className="space-y-2">
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-kk-line">
         {clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN ? (
-          <CheckoutMap vendor={vendor} destination={destination} routeGeometry={route?.geometry ?? null} />
+          <CheckoutMap
+            vendor={vendor}
+            destination={destination}
+            routeGeometry={route?.geometry ?? null}
+            onDestinationChange={onDestinationChange}
+            resetViewRequestId={resetViewRequestId}
+          />
         ) : (
           <MapMessage
             icon={<MapPinOff className="size-6 text-kk-cocoa" />}

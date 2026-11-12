@@ -24,8 +24,10 @@ const GUEST_SNAPSHOT: CustomerSnapshot = {
 
 export default async function CustomerLayout({
   children,
+  cart,
 }: {
   children: React.ReactNode;
+  cart: React.ReactNode;
 }) {
   // Browsing and filling a cart are open to signed-out visitors, so the
   // layout no longer redirects them: pages that need an account (orders,
@@ -95,6 +97,7 @@ export default async function CustomerLayout({
         <CustomerBottomNav />
         {/* Fixed overlays stay inside the themed wrapper so they pick up its tokens. */}
         <CartFab />
+        {cart}
         <CartDrawer />
         <StoreNotice />
       </div>
