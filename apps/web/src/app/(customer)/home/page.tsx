@@ -575,11 +575,13 @@ async function resolveSearchMatches(
       ...dishes.map((dish) => dish.vendor_id).filter((id): id is string => Boolean(id)),
     ])),
     dishes: Array.from(new Map(
-      dishes.map((dish) => [`${dish.vendor_id}:${dish.name}`, {
-        vendorId: dish.vendor_id,
-        name: dish.name,
-        imageUrl: dish.image_url,
-      }]),
+      dishes
+        .filter((dish): dish is typeof dish & { image_url: string } => Boolean(dish.image_url))
+        .map((dish) => [`${dish.vendor_id}:${dish.name}`, {
+          vendorId: dish.vendor_id,
+          name: dish.name,
+          imageUrl: dish.image_url,
+        }]),
     ).values()),
   };
 }
