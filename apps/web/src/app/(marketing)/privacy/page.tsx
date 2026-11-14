@@ -4,6 +4,7 @@ import { LEGAL, LegalPage, type LegalSection } from "../_components/LegalPage";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
+  alternates: { canonical: "/privacy" },
   description: "What personal data KiaKia collects, why we use it, who we share it with, and your rights.",
 };
 

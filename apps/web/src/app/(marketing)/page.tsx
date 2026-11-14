@@ -28,6 +28,7 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: "Fast. Fresh. Reliable.",
   description: DESCRIPTION,
+  alternates: { canonical: "/" },
   openGraph: {
     title: "KiaKia | Fast. Fresh. Reliable.",
     description: DESCRIPTION,

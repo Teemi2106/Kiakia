@@ -13,6 +13,7 @@ import { Reveal } from "../_components/Reveal";
 
 export const metadata: Metadata = {
   title: "Ride with KiaKia",
+  alternates: { canonical: "/ride" },
   description:
     "Deliver for KiaKia: accept the orders you want, ride short trips near you and earn the full delivery fee. The rider app is coming soon.",
 };

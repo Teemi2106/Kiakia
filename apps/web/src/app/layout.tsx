@@ -29,12 +29,33 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.kiakia.ng"),
   title: {
     default: "KiaKia — Food & goods delivery",
     template: "%s · KiaKia",
   },
   description:
     "Order food and goods from vendors near you, delivered kia kia — tracked live and in your hand in minutes.",
+  applicationName: "KiaKia",
+  openGraph: {
+    type: "website",
+    siteName: "KiaKia",
+    locale: "en_NG",
+    title: "KiaKia — Food & goods delivery",
+    description:
+      "Order food and goods from vendors near you, delivered kia kia — tracked live and in your hand in minutes.",
+    images: ["/assets/hero-banner.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KiaKia — Food & goods delivery",
+    description:
+      "Order food and goods from vendors near you, delivered kia kia — tracked live and in your hand in minutes.",
+    images: ["/assets/hero-banner.png"],
+  },
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 export const viewport: Viewport = {

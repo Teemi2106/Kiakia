@@ -20,6 +20,7 @@ import { Reveal } from "../_components/Reveal";
 
 export const metadata: Metadata = {
   title: "Partner with KiaKia",
+  alternates: { canonical: "/partner" },
   description:
     "KiaKia puts your kitchen or shop in front of hungry customers, sends a rider for every order, and pays you when it is delivered.",
 };

@@ -4,7 +4,10 @@ import { getMarketingAccount } from "@/lib/auth/marketing-account";
 import { Header } from "../_components/Header";
 import { Footer } from "../_components/Footer";
 
-export const metadata: Metadata = { title: "Support" };
+export const metadata: Metadata = {
+  title: "Support",
+  alternates: { canonical: "/support" },
+};
 
 // PLACEHOLDER — not a real support line yet, just wired to unblock the
 // "Live chat" link. Swap for KiaKia's actual WhatsApp Business number
