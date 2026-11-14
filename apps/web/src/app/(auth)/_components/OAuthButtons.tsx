@@ -42,14 +42,14 @@ export function OAuthButtons({
           type="button"
           onClick={continueWithGoogle}
           disabled={pending}
-          className="flex h-12 items-center justify-center gap-2.5 rounded-2xl border border-kk-line/70 bg-kk-card font-inter text-sm font-semibold text-kk-ink transition-colors hover:bg-kk-line/20 disabled:cursor-wait disabled:opacity-60"
+          className="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl border border-kk-line/70 bg-kk-card font-inter text-sm font-semibold text-kk-ink transition-colors hover:bg-kk-line/20 disabled:cursor-wait disabled:opacity-60"
         >
           <GoogleIcon />
           {pending ? "Opening Google…" : "Google"}
         </button>
       </div>
 
-      {error ? (
+      {error && (
         <p role="alert" className="mt-3.5 text-center font-inter text-xs text-danger">{error}</p>
       )}
     </div>

@@ -14,7 +14,12 @@
         "MONNIFY_API_KEY",
         "MONNIFY_API_SECRET",
         "MONNIFY_CONTRACT_CODE",
-        "MONNIFY_BASE_URL"
+        "MONNIFY_BASE_URL",
+        "MONNIFY_REDIRECT_BASE_URL",
+        "RESEND_API_KEY",
+        "MESSAGE_FROM_EMAIL",
+        "MESSAGE_WORKER_SECRET",
+        "SITE_URL"
       ]
     },
     "dev": {
