@@ -1,12 +1,18 @@
 "use client";
 
-import { loginAction, type FormState } from "@/app/actions/auth";
+import {
+  loginAction,
+  verifyEmailAction,
+  vendorVerifyEmailAction,
+  type FormState,
+} from "@/app/actions/auth";
 import { Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useActionState } from "react";
 import { AuthField, AuthPasswordField } from "./AuthField";
 import { AuthError, AuthSubmit } from "./AuthFeedback";
 import { OAuthButtons } from "./OAuthButtons";
+import { VerifyCodeForm } from "./VerifyCodeForm";
 import type { OAuthIntent } from "@/app/actions/auth";
 
 const initialState: FormState = {};
@@ -22,6 +28,19 @@ interface LoginFormProps {
 
 export function LoginForm({ action = loginAction, next = null, intent = "customer", oauthError = null }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
+
+  if (state.verifyEmail) {
+    return (
+      <VerifyCodeForm
+        email={state.verifyEmail}
+        action={intent === "vendor" ? vendorVerifyEmailAction : verifyEmailAction}
+        next={next}
+        signInHref={intent === "vendor" ? "/vendor/login" : "/login"}
+        initialError={state.error}
+        initialNotice={state.success}
+      />
+    );
+  }
 
   return (
     <div className="rounded-3xl border border-kk-line/50 bg-kk-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(28,27,27,0.45)] backdrop-blur-sm sm:p-7">

@@ -17,6 +17,8 @@ interface VerifyCodeFormProps {
   /** Same-origin path to return to once verified (already validated by the page). */
   next?: string | null;
   signInHref?: string;
+  initialError?: string;
+  initialNotice?: string;
 }
 
 /**
@@ -24,7 +26,14 @@ interface VerifyCodeFormProps {
  * the confirmation email. The code itself is Supabase's — see
  * verifySignupCode() in actions/auth.ts.
  */
-export function VerifyCodeForm({ email, action, next = null, signInHref = "/login" }: VerifyCodeFormProps) {
+export function VerifyCodeForm({
+  email,
+  action,
+  next = null,
+  signInHref = "/login",
+  initialError,
+  initialNotice,
+}: VerifyCodeFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const [resendState, resendAction, resending] = useActionState(resendSignupCodeAction, initialState);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
@@ -52,6 +61,11 @@ export function VerifyCodeForm({ email, action, next = null, signInHref = "/logi
           We sent a verification code to <span className="font-semibold text-kk-ink">{email}</span>.
         </p>
       </div>
+
+      {initialError ? <AuthError message={initialError} /> : null}
+      {initialNotice ? (
+        <p role="status" className="mt-4 text-center font-inter text-sm text-kk-green-ink">{initialNotice}</p>
+      ) : null}
 
       <form action={formAction} className="mt-6 flex flex-col gap-4">
         <input type="hidden" name="email" value={email} />

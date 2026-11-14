@@ -78,6 +78,10 @@ async function isPhoneTaken(phone: string): Promise<boolean> {
   return data === true;
 }
 
+function isEmailNotConfirmed(error: { code?: string; message: string }): boolean {
+  return error.code === "email_not_confirmed" || error.message.toLowerCase().includes("email not confirmed");
+}
+
 export async function registerAction(_prevState: FormState, formData: FormData): Promise<FormState> {
   const parsed = customerRegisterSchema.safeParse({
     fullName: formData.get("fullName"),
@@ -253,6 +257,17 @@ export async function loginAction(_prevState: FormState, formData: FormData): Pr
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
+    if (isEmailNotConfirmed(error)) {
+      const { error: resendError } = await supabase.auth.resend({ type: "signup", email: parsed.data.email });
+      if (resendError) {
+        console.error("[auth] unverified login resend failed", { status: resendError.status, code: resendError.code });
+        return {
+          verifyEmail: parsed.data.email,
+          error: "Your email still needs verification. Enter your existing code, or request a new one shortly.",
+        };
+      }
+      return { verifyEmail: parsed.data.email, success: "Your email isn't verified yet. We sent a fresh code." };
+    }
     return { error: "Incorrect email or password." };
   }
 
@@ -301,6 +316,17 @@ export async function vendorLoginAction(_prevState: FormState, formData: FormDat
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
+    if (isEmailNotConfirmed(error)) {
+      const { error: resendError } = await supabase.auth.resend({ type: "signup", email: parsed.data.email });
+      if (resendError) {
+        console.error("[auth] unverified vendor login resend failed", { status: resendError.status, code: resendError.code });
+        return {
+          verifyEmail: parsed.data.email,
+          error: "Your email still needs verification. Enter your existing code, or request a new one shortly.",
+        };
+      }
+      return { verifyEmail: parsed.data.email, success: "Your email isn't verified yet. We sent a fresh code." };
+    }
     return { error: "Incorrect email or password." };
   }
 
