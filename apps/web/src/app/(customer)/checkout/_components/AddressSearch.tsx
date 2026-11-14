@@ -4,6 +4,7 @@ import { MapPin, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { AddressSearchResult } from "@/lib/geo/search-addresses";
 import { searchAddresses } from "@/lib/geo/search-addresses";
+import { clientEnv } from "@/lib/env.client";
 
 export function AddressSearch({ onSelect }: { onSelect: (result: AddressSearchResult) => void }) {
   const [query, setQuery] = useState("");
@@ -72,6 +73,11 @@ export function AddressSearch({ onSelect }: { onSelect: (result: AddressSearchRe
         {loading && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-inter text-xs text-kk-cocoa">Searching…</span>}
       </div>
       <p className="font-inter text-xs text-kk-cocoa">Search for an area, street or landmark. Results appear as you type.</p>
+      {clientEnv.NEXT_PUBLIC_GEOAPIFY_API_KEY ? (
+        <p className="font-inter text-[11px] text-kk-cocoa">
+          Search data: <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer" className="underline">Geoapify</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline">© OpenStreetMap contributors</a>
+        </p>
+      ) : null}
       {error && <p role="status" className="font-inter text-xs text-kk-cocoa">{error}</p>}
       {results.length > 0 && (
         <ul className="max-h-52 divide-y divide-kk-hair overflow-y-auto rounded-xl border border-kk-hair bg-kk-card">

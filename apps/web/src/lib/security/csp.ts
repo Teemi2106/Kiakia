@@ -21,6 +21,7 @@ const MONNIFY_ORIGINS = ["https://sdk.monnify.com", "https://api.monnify.com", "
 // is its telemetry beacon. Both are plain fetch/XHR calls, so connect-src is
 // the only directive that needs them.
 const MAPBOX_ORIGINS = ["https://api.mapbox.com", "https://events.mapbox.com"];
+const GEOAPIFY_ORIGINS = ["https://api.geoapify.com"];
 
 export function buildContentSecurityPolicy(nonce: string, supabaseHostname: string | null): string {
   const supabaseHttps = supabaseHostname ? `https://${supabaseHostname}` : "";
@@ -45,7 +46,7 @@ export function buildContentSecurityPolicy(nonce: string, supabaseHostname: stri
     // no origin addition needed here.
     "img-src": `'self' data: blob: ${supabaseHttps} ${supabaseHttp}`,
     "font-src": "'self' data:",
-    "connect-src": `'self' ${supabaseHttps} ${supabaseWss} ${supabaseHttp} ${supabaseWs} ${MONNIFY_ORIGINS.join(" ")} ${MAPBOX_ORIGINS.join(" ")}`,
+    "connect-src": `'self' ${supabaseHttps} ${supabaseWss} ${supabaseHttp} ${supabaseWs} ${MONNIFY_ORIGINS.join(" ")} ${MAPBOX_ORIGINS.join(" ")} ${GEOAPIFY_ORIGINS.join(" ")}`,
     "frame-src": `'self' ${MONNIFY_ORIGINS.join(" ")}`,
     // mapbox-gl spins up its tile-decoding workers from blob: URLs, not a
     // same-origin script file — without this they're silently blocked and

@@ -88,7 +88,9 @@ const sections: LegalSection[] = [
           </li>
           <li>
             <strong>Service providers</strong> acting for us: Monnify (payments and payouts), Supabase (database,
-            authentication and hosting), our email delivery provider, and mapping and push-notification services.
+            authentication and hosting), Geoapify (address suggestions when you search for a delivery location), our
+            email delivery provider, and mapping and push-notification services. The address search text is sent to
+            Geoapify to return matching Nigerian locations.
           </li>
           <li>
             <strong>Authorities and advisers</strong> where required by law, to enforce our terms, or to protect

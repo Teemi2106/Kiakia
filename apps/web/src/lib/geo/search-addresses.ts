@@ -9,6 +9,26 @@ export interface AddressSearchResult {
   readonly city: string;
   readonly state: NigerianState | null;
   readonly point: LatLng;
+  readonly provider: "geoapify" | "mapbox";
+}
+
+interface GeoapifyResponse {
+  readonly results?: ReadonlyArray<{
+    readonly place_id?: string;
+    readonly lat?: number;
+    readonly lon?: number;
+    readonly formatted?: string;
+    readonly address_line1?: string;
+    readonly name?: string;
+    readonly city?: string;
+    readonly town?: string;
+    readonly village?: string;
+    readonly municipality?: string;
+    readonly suburb?: string;
+    readonly district?: string;
+    readonly state?: string;
+    readonly country_code?: string;
+  }>;
 }
 
 interface GeocodingResponse {
@@ -34,6 +54,51 @@ interface GeocodingResponse {
 
 /** Search Nigerian streets, neighborhoods and towns with storable results. */
 export async function searchAddresses(query: string, signal?: AbortSignal): Promise<AddressSearchResult[]> {
+  const geoapifyKey = clientEnv.NEXT_PUBLIC_GEOAPIFY_API_KEY;
+  if (geoapifyKey) {
+    try {
+      const url = new URL("https://api.geoapify.com/v1/geocode/autocomplete");
+      url.searchParams.set("text", query.trim());
+      url.searchParams.set("filter", "countrycode:ng");
+      url.searchParams.set("lang", "en");
+      url.searchParams.set("limit", "10");
+      url.searchParams.set("format", "json");
+      url.searchParams.set("apiKey", geoapifyKey);
+
+      const response = await fetch(url, { signal });
+      if (response.ok) {
+        const body = (await response.json()) as GeoapifyResponse;
+        const results = (body.results ?? []).flatMap((result) => {
+          const lat = result.lat;
+          const lng = result.lon;
+          if (
+            typeof lat !== "number" || typeof lng !== "number" ||
+            !Number.isFinite(lat) || !Number.isFinite(lng) ||
+            lat < 4.2 || lat > 13.9 || lng < 2.6 || lng > 14.7 ||
+            (result.country_code && result.country_code.toLowerCase() !== "ng")
+          ) return [];
+
+          const label = result.formatted ?? result.address_line1 ?? result.name ?? "Address";
+          const line1 = result.address_line1 ?? result.name ?? label;
+          const city = result.city ?? result.town ?? result.village ?? result.municipality ?? result.suburb ?? result.district ?? "";
+          return [{
+            id: result.place_id ?? `${lng},${lat}`,
+            label,
+            line1,
+            city,
+            state: normalizeNigerianState(result.state ?? null),
+            point: { lat, lng },
+            provider: "geoapify" as const,
+          }];
+        });
+        if (results.length > 0) return results;
+      }
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      // Keep the existing Mapbox search available if Geoapify is unavailable.
+    }
+  }
+
   const token = clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token) throw new Error("Address search is unavailable right now.");
 
@@ -75,6 +140,7 @@ export async function searchAddresses(query: string, signal?: AbortSignal): Prom
       city,
       state,
       point: { lat, lng },
+      provider: "mapbox" as const,
     }];
   });
 }
