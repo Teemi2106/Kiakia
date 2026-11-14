@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { AddressSearch } from "@/app/(customer)/checkout/_components/AddressSearch";
+import { AddressPreviewMap } from "./AddressPreviewMap";
 import type { AddressSearchResult } from "@/lib/geo/search-addresses";
 import { useDeviceLocation } from "@/lib/geo/useDeviceLocation";
 import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
@@ -136,24 +137,35 @@ export function AddressPicker({ compact = false }: { compact?: boolean }) {
       </button>
 
       {open && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-3 sm:p-6" onMouseDown={(event) => {
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-kk-ink/55 p-3 backdrop-blur-[3px] sm:p-6" onMouseDown={(event) => {
           if (event.target === event.currentTarget) setOpen(false);
         }}>
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="delivery-location-title"
-            className="relative max-h-[min(82vh,700px)] w-full max-w-xl overflow-y-auto rounded-3xl bg-kk-card p-5 shadow-2xl sm:p-8"
+            aria-describedby="delivery-location-description"
+            className="relative max-h-[min(88dvh,760px)] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-white/70 bg-[radial-gradient(ellipse_at_top_right,rgba(255,215,173,0.35),transparent_45%),linear-gradient(145deg,#fffdfa_0%,#ffffff_52%,#fff9f4_100%)] p-5 shadow-[0_32px_100px_-30px_rgba(29,21,18,0.55)] sm:p-8 md:p-10"
           >
             <button
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close delivery location picker"
-              className="absolute right-4 top-4 rounded-full p-2 text-kk-cocoa hover:bg-kk-sand"
+              className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full border border-kk-line/60 bg-white/80 text-kk-cocoa shadow-sm transition hover:rotate-90 hover:bg-white hover:text-kk-ink sm:right-6 sm:top-6"
             >
               <X className="size-5" />
             </button>
-            <h2 id="delivery-location-title" className="mb-6 pr-10 font-sora text-2xl font-bold text-kk-ink sm:text-3xl">Delivery location</h2>
+
+            <div className="mb-7 flex items-start gap-4 pr-12 sm:mb-8">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-kk-red to-orange-500 text-white shadow-[0_10px_24px_-12px_rgba(190,32,26,0.75)] sm:size-14">
+                <MapPin className="size-6 sm:size-7" />
+              </span>
+              <div>
+                <p className="mb-1 font-inter text-[11px] font-bold uppercase tracking-[0.18em] text-kk-red-ink">Delivery made easy</p>
+                <h2 id="delivery-location-title" className="font-sora text-2xl font-bold tracking-tight text-kk-ink sm:text-3xl">Where should we bring your order?</h2>
+                <p id="delivery-location-description" className="mt-2 max-w-lg font-inter text-sm leading-6 text-kk-cocoa">Choose an area or share your location so we can find the right delivery options for you.</p>
+              </div>
+            </div>
 
             <AddressSearch onSelect={chooseResult} />
 
@@ -161,29 +173,47 @@ export function AddressPicker({ compact = false }: { compact?: boolean }) {
               type="button"
               onClick={locate}
               disabled={locating}
-              className="mt-4 flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left font-inter text-sm font-semibold text-kk-red-ink hover:bg-kk-sand disabled:opacity-60"
+              className="mt-5 flex w-full items-center gap-3 rounded-2xl border border-kk-line/55 bg-white/70 px-4 py-3.5 text-left transition hover:border-kk-red/25 hover:bg-white hover:shadow-sm disabled:opacity-60"
             >
-              <LocateFixed className="size-5 shrink-0" />
-              {locating ? "Finding your location…" : "Use your current location"}
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-kk-red/10 text-kk-red-ink">
+                <LocateFixed className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-inter text-sm font-semibold text-kk-ink">{locating ? "Finding your location…" : "Use your current location"}</span>
+                <span className="mt-0.5 block font-inter text-xs text-kk-cocoa/75">Quickly set your delivery spot from your device</span>
+              </span>
             </button>
-            {locationError && <p role="status" className="px-2 text-xs text-kk-danger-ink">{locationError}</p>}
+            {locationError && <p role="status" className="mt-2 px-2 text-xs text-kk-danger-ink">{locationError}</p>}
 
             {location && (
-              <div className="mt-4 rounded-xl border border-kk-hair bg-kk-sand p-3">
-                <p className="text-xs font-medium text-kk-cocoa">Selected delivery area</p>
-                <p className="mt-1 font-inter text-sm font-semibold text-kk-ink">{location.label}</p>
+              <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-kk-red/15 bg-white/85 shadow-[0_16px_40px_-28px_rgba(190,32,26,0.5)]">
+                <div className="flex items-start gap-3 p-4">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-kk-red/10 text-kk-red-ink"><MapPin className="size-4" /></span>
+                  <div className="min-w-0">
+                    <p className="font-inter text-[10px] font-bold uppercase tracking-[0.14em] text-kk-red-ink">Your selected area</p>
+                    <p className="mt-1 font-inter text-sm font-semibold leading-5 text-kk-ink">{location.label}</p>
+                  </div>
+                </div>
+                <div className="h-56 overflow-hidden border-t border-kk-line/50 sm:h-64">
+                  <AddressPreviewMap
+                    point={{ lat: location.lat, lng: location.lng }}
+                    onChange={(point) => setLocation((current) => current ? { ...current, ...point } : current)}
+                  />
+                </div>
+                <p className="bg-kk-cream/70 px-4 py-2.5 font-inter text-xs text-kk-cocoa">Drag the pin or tap the map to fine-tune your delivery spot.</p>
               </div>
             )}
-            {saveError && <p role="alert" className="mt-3 text-sm text-kk-danger-ink">{saveError}</p>}
+            {saveError && <p role="alert" className="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-sm text-kk-danger-ink">{saveError}</p>}
 
             <button
               type="button"
               onClick={() => void saveLocation()}
               disabled={!location || saving}
-              className="mt-5 w-full rounded-xl bg-kk-red px-4 py-3 font-inter text-sm font-semibold text-white hover:bg-kk-red-hover disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-6 w-full rounded-2xl bg-gradient-to-r from-kk-red to-[#d52d22] px-5 py-4 font-inter text-sm font-bold text-white shadow-[0_14px_30px_-16px_rgba(190,32,26,0.8)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-16px_rgba(190,32,26,0.8)] disabled:translate-y-0 disabled:cursor-not-allowed disabled:from-kk-red/45 disabled:to-kk-red/45 disabled:shadow-none"
             >
               {saving ? "Saving…" : "Set delivery location"}
             </button>
+            {!location ? <p className="mt-3 text-center font-inter text-xs text-kk-cocoa/70">Pick a search result or use your current location to continue.</p> : null}
           </section>
         </div>,
         document.body,

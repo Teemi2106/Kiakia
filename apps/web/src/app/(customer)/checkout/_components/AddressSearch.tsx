@@ -67,15 +67,17 @@ export function AddressSearch({ onSelect }: { onSelect: (result: AddressSearchRe
             }}
             placeholder="Search street, area or city"
             aria-label="Search delivery area"
-            className="h-11 w-full rounded-xl border border-kk-hair bg-kk-card pl-10 pr-3 font-inter text-sm text-kk-ink placeholder:text-kk-cocoa/60 focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20"
+            className="h-13 w-full rounded-2xl border border-kk-hair bg-white pl-11 pr-3 font-inter text-sm text-kk-ink shadow-[0_6px_18px_-16px_rgba(40,28,24,0.45)] transition focus:border-kk-red/50 focus:outline-none focus:ring-4 focus:ring-kk-red/10 placeholder:text-kk-cocoa/55"
           />
         </label>
         {loading && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-inter text-xs text-kk-cocoa">Searching…</span>}
       </div>
-      <p className="font-inter text-xs text-kk-cocoa">Search for an area, street or landmark. Results appear as you type.</p>
+      <p className="font-inter text-xs leading-5 text-kk-cocoa/80">Search a Nigerian street, neighbourhood or landmark.</p>
       {clientEnv.NEXT_PUBLIC_GEOAPIFY_API_KEY ? (
-        <p className="font-inter text-[11px] text-kk-cocoa">
-          Search data: <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer" className="underline">Geoapify</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline">© OpenStreetMap contributors</a>
+        <p className="pt-1 font-inter text-[10px] leading-4 text-kk-cocoa/55">
+          <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer" className="underline underline-offset-2">Geoapify</a>
+          {" · "}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline underline-offset-2">© OpenStreetMap contributors</a>
         </p>
       ) : null}
       {error && <p role="status" className="font-inter text-xs text-kk-cocoa">{error}</p>}
@@ -91,10 +93,12 @@ export function AddressSearch({ onSelect }: { onSelect: (result: AddressSearchRe
                   selectedLabelRef.current = result.label.trim();
                   setQuery(result.label);
                 }}
-                className="flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-kk-sand"
+                className="group flex w-full items-start gap-3 px-3 py-3.5 text-left transition-colors hover:bg-kk-sand/75"
               >
-                <MapPin className="mt-0.5 size-4 shrink-0 text-kk-red-ink" />
-                <span className="font-inter text-sm text-kk-ink">{result.label}</span>
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-kk-red/10 text-kk-red-ink transition-colors group-hover:bg-kk-red/15">
+                  <MapPin className="size-4" />
+                </span>
+                <span className="pt-1 font-inter text-sm leading-5 text-kk-ink">{result.label}</span>
               </button>
             </li>
           ))}
