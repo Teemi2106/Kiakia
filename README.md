@@ -114,13 +114,18 @@ sign-up continues to `/onboarding`; existing vendor accounts return to their
 dashboard.
 
 To activate the provider, create a **Web application** OAuth client in Google
-Cloud, set the authorized JavaScript origin to `https://kiakia.ng`, and add the
+Cloud, set the authorized JavaScript origins to `https://kiakia.ng` and
+`https://www.kiakia.ng`, and add the
 callback URI displayed on Supabase's **Authentication → Providers → Google**
 settings page as an authorized redirect URI in Google Cloud. Then enable Google
 on that Supabase page and enter the Google client ID and client secret there.
 In Supabase **Authentication → URL Configuration**, allow
-`https://kiakia.ng/auth/callback` as a redirect URL. For local development,
-also allow `http://localhost:3000/auth/callback` and use
+`https://kiakia.ng/auth/callback**` and
+`https://www.kiakia.ng/auth/callback**` as redirect URLs. The wildcard allows
+the callback's `intent` and optional `next` query parameters. Set
+`NEXT_PUBLIC_SITE_URL` in Vercel to the production hostname users visit
+(currently `https://www.kiakia.ng`). For local development, also allow
+`http://localhost:3000/auth/callback**` and use
 `NEXT_PUBLIC_SITE_URL=http://localhost:3000` locally. Keep the Google client
 secret in Supabase; it is not an app environment variable.
 
@@ -168,7 +173,8 @@ To enable delivery in a Supabase project:
 2. Deploy `supabase functions deploy message-worker`.
 3. Set Edge Function secrets: `supabase secrets set RESEND_API_KEY=re_... MESSAGE_FROM_EMAIL="KiaKia <orders@your-verified-domain.com>" MESSAGE_WORKER_SECRET=<random-secret> SITE_URL=https://your-site.example`. Add `MESSAGE_REPLY_TO` if needed. `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are supplied by Supabase.
 4. Store the matching worker URL and secret in Vault using the SQL shown in the header of `supabase/migrations/0096_rider_offer_sms_and_scheduling.sql`. The existing `message-worker-tick` cron job drains the outbox; the database triggers also nudge it immediately.
-5. If signup email verification is enabled, configure Supabase Auth's SMTP settings to use Resend too. The database welcome email is separate from Supabase's verification link email. Resend only delivers from a verified sending domain.
+5. If signup email verification is enabled, configure Supabase Auth's SMTP settings to use Resend too. The database welcome email is separate from Supabase Auth's verification email. Resend only delivers from a verified sending domain.
+6. For hosted Supabase, set the **Confirm signup** email template separately in **Authentication â†’ Email Templates**. Set the subject to `Your KiaKia verification code` and copy the content from `supabase/templates/confirmation.html`. It uses `{{ .Token }}` for the six-digit code. `supabase db push` does not update hosted Auth email templates; `supabase/config.toml` configures local Supabase.
 
 Never put `RESEND_API_KEY` or `MESSAGE_WORKER_SECRET` in the web app's public
 environment variables or commit them to the repository.

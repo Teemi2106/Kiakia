@@ -119,7 +119,7 @@ export async function registerAction(_prevState: FormState, formData: FormData):
 
   // Supabase returns a session immediately only when email confirmation is
   // disabled on the project; otherwise there's no session until the user
-  // clicks the confirmation link, and redirecting to /home would just
+  // enters the emailed OTP, and redirecting to /home would just
   // bounce off proxy.ts. Handle both without assuming the project's config.
   if (data.session) {
     await setActiveRole("customer");
