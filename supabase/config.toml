@@ -45,7 +45,7 @@ enable_signup = true
 
 [auth.email]
 enable_signup = true
-enable_confirmations = false
+enable_confirmations = true
 # Emailed code length (6-10) and lifetime; keep otpCodeSchema in
 # apps/web/src/lib/validation/auth.ts in step with the length.
 otp_length = 6

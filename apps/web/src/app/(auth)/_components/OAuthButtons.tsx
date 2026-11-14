@@ -1,16 +1,32 @@
-/**
- * The "OR CONTINUE WITH" Google/Apple pair from the Figma screens, rendered
- * disabled. Wiring real OAuth needs a Google/Apple OAuth app + client
- * credentials configured in the Supabase dashboard, which don't exist for
- * this project yet; shipping enabled buttons that error on click would be
- * worse than not having them.
- *
- * They stay in the redesign for the same reason they were drawn: the divider
- * gives the form a natural end, and the pair marks where social sign-in will
- * land so its arrival isn't a layout change. `disabled` + the "coming soon"
- * line keep the promise honest.
- */
-export function OAuthButtons() {
+"use client";
+
+import { startGoogleOAuth, type OAuthIntent } from "@/app/actions/auth";
+import { useState, useTransition } from "react";
+
+export function OAuthButtons({
+  next = null,
+  intent = "customer",
+  initialError = null,
+}: {
+  next?: string | null;
+  intent?: OAuthIntent;
+  initialError?: string | null;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState(initialError);
+
+  function continueWithGoogle() {
+    setError(null);
+    startTransition(async () => {
+      const result = await startGoogleOAuth(next, intent);
+      if (result.url) {
+        window.location.assign(result.url);
+      } else {
+        setError(result.error ?? "Google sign-in is unavailable right now. Please try again.");
+      }
+    });
+  }
+
   return (
     <div className="mt-6">
       <div className="flex items-center gap-3">
@@ -21,29 +37,22 @@ export function OAuthButtons() {
         <div className="h-px flex-1 bg-kk-line/50" />
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <OAuthButton label="Google" icon={<GoogleIcon />} />
-        <OAuthButton label="Apple" icon={<AppleIcon />} />
+      <div className="mt-4">
+        <button
+          type="button"
+          onClick={continueWithGoogle}
+          disabled={pending}
+          className="flex h-12 items-center justify-center gap-2.5 rounded-2xl border border-kk-line/70 bg-kk-card font-inter text-sm font-semibold text-kk-ink transition-colors hover:bg-kk-line/20 disabled:cursor-wait disabled:opacity-60"
+        >
+          <GoogleIcon />
+          {pending ? "Opening Google…" : "Google"}
+        </button>
       </div>
 
-      <p className="mt-3.5 text-center font-inter text-[11px] text-kk-cocoa/55">
-        Social sign-in is coming soon, so use email and password for now.
-      </p>
+      {error ? (
+        <p role="alert" className="mt-3.5 text-center font-inter text-xs text-danger">{error}</p>
+      )}
     </div>
-  );
-}
-
-function OAuthButton({ label, icon }: { label: string; icon: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      disabled
-      title="Coming soon"
-      className="flex h-12 items-center justify-center gap-2.5 rounded-2xl border border-kk-line/70 bg-kk-card font-inter text-sm font-semibold text-kk-ink opacity-55"
-    >
-      {icon}
-      {label}
-    </button>
   );
 }
 
@@ -70,13 +79,3 @@ function GoogleIcon() {
   );
 }
 
-function AppleIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path
-        d="M13.78 1.94c.65-.79 1.47-1.35 2.42-1.94.02.75-.25 1.46-.67 2.05-.46.65-1.05 1.13-1.79 1.58-.68.42-1.45.73-2.3.84-.02-.78.27-1.48.7-2.08.41-.57.98-1.08 1.64-1.45zM9.5 3.06c-1.31 0-2.45-.75-3.76-.75-1.66 0-3.32.91-4.19 2.34-1.25 2.08-.88 5.4.79 8.08.58.93 1.33 1.95 2.3 1.95.92 0 1.2-.6 2.44-.6 1.23 0 1.48.6 2.44.6.98 0 1.82-1.15 2.4-2.08a8.35 8.35 0 0 0 1.02-2.35c-1.38-.59-2.33-1.94-2.33-3.54 0-1.41.78-2.56 1.9-3.17a4.85 4.85 0 0 0-2.01-.48z"
-        fill="#1C1B1B"
-      />
-    </svg>
-  );
-}

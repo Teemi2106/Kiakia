@@ -16,8 +16,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  const next = safeNextPath((await searchParams).next);
+export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ next?: string; oauth_error?: string }> }) {
+  const params = await searchParams;
+  const next = safeNextPath(params.next);
+  const oauthError = params.oauth_error === "google" ? "Google sign-in did not complete. Please try again." : null;
   const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
 
   return (
@@ -46,7 +48,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
       footer={<AuthSwap prompt="Already have an account?" href={loginHref} cta="Sign in" />}
       legal={<AuthLegal verb="creating an account," />}
     >
-      <RegisterForm phoneOptional next={next} />
+      <RegisterForm phoneOptional next={next} oauthError={oauthError} />
     </AuthShell>
   );
 }

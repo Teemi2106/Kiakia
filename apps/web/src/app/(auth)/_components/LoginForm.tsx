@@ -7,6 +7,7 @@ import { useActionState } from "react";
 import { AuthField, AuthPasswordField } from "./AuthField";
 import { AuthError, AuthSubmit } from "./AuthFeedback";
 import { OAuthButtons } from "./OAuthButtons";
+import type { OAuthIntent } from "@/app/actions/auth";
 
 const initialState: FormState = {};
 
@@ -15,9 +16,11 @@ interface LoginFormProps {
   action?: typeof loginAction;
   /** Same-origin path to return to after signing in (already validated by the page). */
   next?: string | null;
+  intent?: OAuthIntent;
+  oauthError?: string | null;
 }
 
-export function LoginForm({ action = loginAction, next = null }: LoginFormProps) {
+export function LoginForm({ action = loginAction, next = null, intent = "customer", oauthError = null }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
@@ -56,7 +59,7 @@ export function LoginForm({ action = loginAction, next = null }: LoginFormProps)
         <AuthSubmit pending={pending}>Sign in</AuthSubmit>
       </form>
 
-      <OAuthButtons />
+      <OAuthButtons next={next} intent={intent} initialError={oauthError} />
     </div>
   );
 }

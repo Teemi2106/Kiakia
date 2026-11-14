@@ -15,10 +15,16 @@
     "ci": "turbo run lint typecheck test build"
   },
   "devDependencies": {
+    "supabase": "^2.110.0",
     "turbo": "^2.5.0",
     "typescript": "^5.7.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "sharp", "unrs-resolver"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "supabase",
+      "unrs-resolver"
+    ]
   }
 }

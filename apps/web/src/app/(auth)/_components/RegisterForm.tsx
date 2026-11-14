@@ -1,6 +1,7 @@
 "use client";
 
 import { registerAction, verifyEmailAction, type FormState } from "@/app/actions/auth";
+import type { OAuthIntent } from "@/app/actions/auth";
 import { Lock, Mail, Phone, User } from "lucide-react";
 import { useActionState } from "react";
 import { AuthField, AuthPasswordField } from "./AuthField";
@@ -21,6 +22,8 @@ interface RegisterFormProps {
   phoneOptional?: boolean;
   /** Same-origin path to return to once signed in (already validated by the page). */
   next?: string | null;
+  intent?: OAuthIntent;
+  oauthError?: string | null;
 }
 
 export function RegisterForm({
@@ -28,6 +31,8 @@ export function RegisterForm({
   verifyAction = verifyEmailAction,
   signInHref = "/login", phoneOptional = false,
   next = null,
+  intent = "customer",
+  oauthError = null,
 }: RegisterFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
@@ -94,7 +99,7 @@ export function RegisterForm({
         <AuthSubmit pending={pending}>Create account</AuthSubmit>
       </form>
 
-      <OAuthButtons />
+      <OAuthButtons next={next} intent={intent} initialError={oauthError} />
     </div>
   );
 }

@@ -11,7 +11,9 @@ export const metadata: Metadata = {
     "Partner with KiaKia to reach more customers, dispatch riders automatically, and get paid the moment an order is delivered.",
 };
 
-export default function VendorRegisterPage() {
+export default async function VendorRegisterPage({ searchParams }: { searchParams: Promise<{ oauth_error?: string }> }) {
+  const { oauth_error: oauthErrorParam } = await searchParams;
+  const oauthError = oauthErrorParam === "google" ? "Google sign-in did not complete. Please try again." : null;
   return (
     <AuthShell
       variant="vendor"
@@ -51,7 +53,7 @@ export default function VendorRegisterPage() {
         </p>
       }
     >
-      <RegisterForm action={vendorRegisterAction} verifyAction={vendorVerifyEmailAction} signInHref="/vendor/login" />
+      <RegisterForm action={vendorRegisterAction} verifyAction={vendorVerifyEmailAction} signInHref="/vendor/login" intent="vendor" oauthError={oauthError} />
     </AuthShell>
   );
 }

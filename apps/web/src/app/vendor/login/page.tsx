@@ -9,7 +9,9 @@ export const metadata: Metadata = {
   description: "Sign in to your KiaKia vendor dashboard to manage orders, menu and payouts.",
 };
 
-export default function VendorLoginPage() {
+export default async function VendorLoginPage({ searchParams }: { searchParams: Promise<{ oauth_error?: string }> }) {
+  const { oauth_error: oauthErrorParam } = await searchParams;
+  const oauthError = oauthErrorParam === "google" ? "Google sign-in did not complete. Please try again." : null;
   return (
     <AuthShell
       variant="vendor"
@@ -39,7 +41,7 @@ export default function VendorLoginPage() {
       }
       legal={<AuthLegal verb="signing in," />}
     >
-      <LoginForm action={vendorLoginAction} />
+      <LoginForm action={vendorLoginAction} intent="vendor" oauthError={oauthError} />
     </AuthShell>
   );
 }

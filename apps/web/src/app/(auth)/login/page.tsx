@@ -15,8 +15,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  const next = safeNextPath((await searchParams).next);
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; oauth_error?: string }> }) {
+  const params = await searchParams;
+  const next = safeNextPath(params.next);
+  const oauthError = params.oauth_error === "google" ? "Google sign-in did not complete. Please try again." : null;
   const registerHref = next ? `/register?next=${encodeURIComponent(next)}` : "/register";
 
   return (
@@ -45,7 +47,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       footer={<AuthSwap prompt="New to KiaKia?" href={registerHref} cta="Create an account" />}
       legal={<AuthLegal verb="signing in," />}
     >
-      <LoginForm next={next} />
+      <LoginForm next={next} oauthError={oauthError} />
     </AuthShell>
   );
 }

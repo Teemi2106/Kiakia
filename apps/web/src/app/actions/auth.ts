@@ -35,6 +35,32 @@ export interface FormState {
   readonly verifyEmail?: string;
 }
 
+export type OAuthIntent = "customer" | "vendor";
+
+/** Starts Google's PKCE flow and lets Supabase persist the verifier cookie. */
+export async function startGoogleOAuth(
+  nextPath: string | null,
+  intent: OAuthIntent,
+): Promise<{ url?: string; error?: string }> {
+  const next = safeNextPath(nextPath);
+  const safeIntent: OAuthIntent = intent === "vendor" ? "vendor" : "customer";
+  const callback = new URL("/auth/callback", serverEnv.NEXT_PUBLIC_SITE_URL);
+  callback.searchParams.set("intent", safeIntent);
+  if (next) callback.searchParams.set("next", next);
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: callback.toString() },
+  });
+
+  if (error || !data.url) {
+    console.error("[auth] Google OAuth start failed", { code: error?.code, status: error?.status });
+    return { error: "Google sign-in is unavailable right now. Please try again." };
+  }
+  return { url: data.url };
+}
+
 const PHONE_TAKEN_MESSAGE = "That phone number is already linked to an account. Sign in, or use a different number.";
 
 /**
