@@ -19,7 +19,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { HorizontalScrollIndicators } from "../../_components/HorizontalScrollIndicators";
 
 // Keyed by the same preset keys menu items are categorized under
 // (packages/domain/src/meal-categories.ts's MEAL_CATEGORIES) — falls back to
@@ -111,7 +110,6 @@ export function CategoryChips({ categories, activeCategory, preserveParams }: Ca
           className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-kk-cream to-transparent"
         />
       </div>
-      <HorizontalScrollIndicators targetId="home-categories-rail" />
     </div>
   );
 }
