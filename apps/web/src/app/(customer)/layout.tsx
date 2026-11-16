@@ -91,7 +91,7 @@ export default async function CustomerLayout({
           72px row + 1px border at `lg` and up. --kk-tabbar-h matches
           BottomNav's floating 72px slab plus its edge clearance, which
           disappears at the same `lg` breakpoint. */}
-      <div data-theme={theme} className="flex min-h-screen flex-col bg-kk-cream text-kk-ink [--kk-nav-h:141px] [--kk-tabbar-h:7.5rem] lg:[--kk-nav-h:73px] lg:[--kk-tabbar-h:0px]">
+      <div data-theme={theme} className="flex min-h-[100dvh] flex-col bg-kk-cream text-kk-ink [--kk-nav-h:141px] [--kk-tabbar-h:7.5rem] lg:[--kk-nav-h:73px] lg:[--kk-tabbar-h:0px]">
         <CustomerTopNav canSwitchToVendor={canSwitchToVendor} isFleetManager={isFleetManager} />
         <main className="flex-1 pt-(--kk-nav-h) pb-(--kk-tabbar-h) transition-[padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">{children}</main>
         <CustomerBottomNav />

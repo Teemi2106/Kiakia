@@ -21,6 +21,30 @@ body {
   color: var(--color-ink);
 }
 
+/* Mobile Safari exposes the document canvas during safe-area and overscroll
+ * bounce. Match that canvas to the scoped customer theme so the status and
+ * home-indicator areas don't flash cream around a dark page. */
+html:has([data-theme="dark"]),
+body:has([data-theme="dark"]) {
+  background-color: #151211;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:has([data-theme="system"]),
+  body:has([data-theme="system"]) {
+    background-color: #151211;
+  }
+}
+
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
+body {
+  min-height: 100dvh;
+}
+
 /* Customer bottom-nav active state: a small glass lens over the walnut slab. */
 .kk-liquid-tab {
   position: relative;
