@@ -79,7 +79,14 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
     };
 
     const onScroll = () => {
-      const currentY = Math.max(0, window.scrollY);
+      // iOS Safari reports elastic rubber-band movement beyond the document
+      // edges. Ignore that overscroll so it can't reverse the header state and
+      // animate the reserved content inset while the page is being dragged.
+      const maxScrollY = Math.max(
+        0,
+        document.documentElement.scrollHeight - window.innerHeight,
+      );
+      const currentY = Math.min(maxScrollY, Math.max(0, window.scrollY));
       const delta = currentY - previousY;
       const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
       if (isDesktop || currentY <= 32) transitionCompactState(false);

@@ -36,15 +36,6 @@ body:has([data-theme="dark"]) {
   }
 }
 
-html,
-body {
-  overscroll-behavior-y: none;
-}
-
-body {
-  min-height: 100dvh;
-}
-
 /* Customer bottom-nav active state: a small glass lens over the walnut slab. */
 .kk-liquid-tab {
   position: relative;

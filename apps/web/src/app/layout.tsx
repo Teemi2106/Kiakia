@@ -69,7 +69,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       data-scroll-behavior="smooth"
       className={`${sora.variable} ${inter.variable} ${geistMono.variable}`}
     >
-      <body className="flex min-h-[100dvh] flex-col antialiased">
+      <body className="flex min-h-screen flex-col antialiased">
         <ActionResponseBuffer />
         {children}
       </body>
