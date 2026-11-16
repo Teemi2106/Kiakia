@@ -1,5 +1,6 @@
 import { Banknote, Flame, MapPin, Sparkles, Timer, Utensils } from "lucide-react";
 import Link from "next/link";
+import { HorizontalScrollIndicators } from "../../_components/HorizontalScrollIndicators";
 
 const CRAVINGS = [
   { label: "Something filling", detail: "Big comfort, zero compromise", href: "/home?category=swallow_soup_combos", icon: Utensils, tone: "from-[#4d160f] to-[#9b2719]" },
@@ -15,7 +16,7 @@ export function CravingBlocks() {
         <div><p className="flex items-center gap-1.5 font-inter text-[10px] font-bold uppercase tracking-[0.22em] text-kk-red-ink"><Sparkles className="size-3.5" /> Tell us the mood</p><h2 className="mt-2 font-sora text-xl font-bold tracking-tight text-kk-ink sm:text-2xl">What would hit the spot?</h2></div>
         <Flame className="size-6 text-kk-orange" />
       </div>
-      <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div id="home-cravings-rail" className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {CRAVINGS.map(({ label, detail, href, icon: Icon, tone }) => (
           <Link key={label} href={href} className={`group relative min-h-36 w-[min(44vw,240px)] shrink-0 snap-start overflow-hidden rounded-3xl bg-gradient-to-br ${tone} p-4 text-white transition duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-40 sm:w-[240px] sm:p-5`}>
             <span aria-hidden="true" className="absolute -bottom-10 -right-8 size-28 rounded-full border-[18px] border-white/10 transition duration-500 group-hover:scale-125" />
@@ -25,6 +26,7 @@ export function CravingBlocks() {
           </Link>
         ))}
       </div>
+      <HorizontalScrollIndicators targetId="home-cravings-rail" />
     </section>
   );
 }

@@ -1,10 +1,11 @@
 // app/(customer)/home/_components/FeaturedCarousel.tsx
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { FeaturedItemCard } from "./FeaturedItemCard";
 import type { VendorCardVendor } from "./VendorCard";
+import { HorizontalScrollIndicators } from "../../_components/HorizontalScrollIndicators";
 
 export interface FeaturedVendor {
   vendor: VendorCardVendor;
@@ -28,6 +29,7 @@ export interface FeaturedVendor {
  */
 export function FeaturedCarousel({ items }: { items: readonly FeaturedVendor[] }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const railId = `featured-dishes-rail-${useId()}`;
 
   function scrollByAmount(direction: 1 | -1) {
     const scroller = scrollerRef.current;
@@ -43,6 +45,7 @@ export function FeaturedCarousel({ items }: { items: readonly FeaturedVendor[] }
     <div className="group/carousel relative">
       <div
         ref={scrollerRef}
+        id={railId}
         className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {items.map(({ vendor, dishName, dishImageUrl }) => (
@@ -55,6 +58,7 @@ export function FeaturedCarousel({ items }: { items: readonly FeaturedVendor[] }
           />
         ))}
       </div>
+      <HorizontalScrollIndicators targetId={railId} />
 
       {items.length > 2 && (
         <>

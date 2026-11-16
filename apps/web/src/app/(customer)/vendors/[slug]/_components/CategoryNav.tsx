@@ -2,6 +2,7 @@
 "use client";
 
 import { cn } from "@kiakia/ui";
+import { HorizontalScrollIndicators } from "../../../_components/HorizontalScrollIndicators";
 
 interface CategoryNavProps {
   categories: readonly { id: string; name: string }[];
@@ -19,7 +20,7 @@ export function CategoryNav({ categories, activeId, onSelect }: CategoryNavProps
 
   return (
     <div className="sticky top-[56px] z-30 border-b border-kk-hair bg-kk-cream/95 backdrop-blur-sm sm:top-[63px]">
-      <div className="flex gap-6 overflow-x-auto px-1 [-webkit-overflow-scrolling:touch]">
+      <div id="vendor-category-tabs-rail" className="flex gap-6 overflow-x-auto px-1 [-webkit-overflow-scrolling:touch]">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -37,6 +38,7 @@ export function CategoryNav({ categories, activeId, onSelect }: CategoryNavProps
           </button>
         ))}
       </div>
+      <HorizontalScrollIndicators targetId="vendor-category-tabs-rail" className="mb-2" />
     </div>
   );
 }

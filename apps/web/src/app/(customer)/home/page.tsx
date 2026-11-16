@@ -10,6 +10,7 @@ import { getOptionalSession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { getDefaultAddressLocation } from "@/lib/customer/default-address";
 import { TrackEvent } from "../_components/TrackEvent";
+import { HorizontalScrollIndicators } from "../_components/HorizontalScrollIndicators";
 import { RealtimeRefresh } from "@/lib/realtime/RealtimeRefresh";
 import { ActiveOrderCard, type ActiveOrder } from "./_components/ActiveOrderCard";
 import { CategoryChips } from "./_components/CategoryChips";
@@ -395,7 +396,7 @@ export default async function CustomerHomePage({
         {matchedCategories.length > 0 && (
           <section>
             <SectionHeading title="Categories" count={matchedCategories.length} />
-            <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div id="home-matched-categories-rail" className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {matchedCategories.map((mealCategory) => (
                 <Link
                   key={mealCategory.key}
@@ -406,6 +407,7 @@ export default async function CustomerHomePage({
                 </Link>
               ))}
             </div>
+            <HorizontalScrollIndicators targetId="home-matched-categories-rail" />
           </section>
         )}
 

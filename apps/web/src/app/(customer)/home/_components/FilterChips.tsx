@@ -2,6 +2,7 @@
 import { cn } from "@kiakia/ui";
 import { Check, Clock3, Star, Zap } from "lucide-react";
 import Link from "next/link";
+import { HorizontalScrollIndicators } from "../../_components/HorizontalScrollIndicators";
 
 export interface HomeSearchParams {
   q?: string;
@@ -50,46 +51,49 @@ const CHIPS: ChipDef[] = [
  */
 export function FilterChips({ searchParams }: { searchParams: HomeSearchParams }) {
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pb-0">
-      {CHIPS.map((chip) => {
-        const isActive = searchParams[chip.key] === chip.activeValue;
-        const params = new URLSearchParams();
-        if (searchParams.q) params.set("q", searchParams.q);
-        if (searchParams.category) params.set("category", searchParams.category);
-        if (searchParams.open) params.set("open", searchParams.open);
-        if (searchParams.quick) params.set("quick", searchParams.quick);
-        if (searchParams.sort) params.set("sort", searchParams.sort);
+    <>
+      <div id="home-filter-chips-rail" className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pb-0">
+        {CHIPS.map((chip) => {
+          const isActive = searchParams[chip.key] === chip.activeValue;
+          const params = new URLSearchParams();
+          if (searchParams.q) params.set("q", searchParams.q);
+          if (searchParams.category) params.set("category", searchParams.category);
+          if (searchParams.open) params.set("open", searchParams.open);
+          if (searchParams.quick) params.set("quick", searchParams.quick);
+          if (searchParams.sort) params.set("sort", searchParams.sort);
 
-        if (isActive) {
-          params.delete(chip.key);
-        } else {
-          params.set(chip.key, chip.activeValue);
-        }
+          if (isActive) {
+            params.delete(chip.key);
+          } else {
+            params.set(chip.key, chip.activeValue);
+          }
 
-        const href = params.size > 0 ? `/home?${params.toString()}` : "/home";
+          const href = params.size > 0 ? `/home?${params.toString()}` : "/home";
 
-        return (
-          <Link
-            key={chip.key}
-            href={href}
-            className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 font-inter text-xs font-semibold transition-all duration-200",
-              isActive
-                ? "border-kk-ink bg-kk-ink text-kk-cream"
-                : "border-kk-line/70 bg-kk-card/70 text-kk-cocoa hover:border-kk-ink/25 hover:text-kk-ink",
-            )}
-            aria-pressed={isActive}
-          >
-            {isActive ? <Check className="size-3.5" /> : chip.icon}
-            {chip.label}
-            {chip.key === "quick" && (
-              <span className={cn("font-normal", isActive ? "text-white/60" : "text-kk-cocoa/55")}>
-                under 30 min
-              </span>
-            )}
-          </Link>
-        );
-      })}
-    </div>
+          return (
+            <Link
+              key={chip.key}
+              href={href}
+              className={cn(
+                "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 font-inter text-xs font-semibold transition-all duration-200",
+                isActive
+                  ? "border-kk-ink bg-kk-ink text-kk-cream"
+                  : "border-kk-line/70 bg-kk-card/70 text-kk-cocoa hover:border-kk-ink/25 hover:text-kk-ink",
+              )}
+              aria-pressed={isActive}
+            >
+              {isActive ? <Check className="size-3.5" /> : chip.icon}
+              {chip.label}
+              {chip.key === "quick" && (
+                <span className={cn("font-normal", isActive ? "text-white/60" : "text-kk-cocoa/55")}>
+                  under 30 min
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+      <HorizontalScrollIndicators targetId="home-filter-chips-rail" />
+    </>
   );
 }

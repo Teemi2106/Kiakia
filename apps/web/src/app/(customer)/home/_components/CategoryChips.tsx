@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { HorizontalScrollIndicators } from "../../_components/HorizontalScrollIndicators";
 
 // Keyed by the same preset keys menu items are categorized under
 // (packages/domain/src/meal-categories.ts's MEAL_CATEGORIES) — falls back to
@@ -71,43 +72,46 @@ export function CategoryChips({ categories, activeCategory, preserveParams }: Ca
   ];
 
   return (
-    <div className="relative">
-      <div className="flex gap-2.5 overflow-x-auto pb-2 pr-10 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {items.map((item) => {
-          const isActive = item.key === (activeCategory ?? null);
-          const Icon = item.key ? (CATEGORY_ICONS[item.key] ?? Utensils) : LayoutGrid;
+    <div>
+      <div className="relative">
+        <div id="home-categories-rail" className="flex gap-2.5 overflow-x-auto pb-2 pr-10 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {items.map((item) => {
+            const isActive = item.key === (activeCategory ?? null);
+            const Icon = item.key ? (CATEGORY_ICONS[item.key] ?? Utensils) : LayoutGrid;
 
-          return (
-            <Link
-              key={item.label}
-              href={hrefFor(item.key, preserveParams)}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex h-11 shrink-0 items-center gap-2 rounded-full border pl-2.5 pr-4 font-inter text-sm font-semibold transition-all duration-200",
-                isActive
-                  ? "border-transparent bg-kk-red text-white shadow-[0_10px_22px_-12px_rgba(182,25,19,0.95)]"
-                  : "border-kk-line/70 bg-kk-card text-kk-cocoa hover:-translate-y-0.5 hover:border-kk-red/40 hover:text-kk-ink",
-              )}
-            >
-              <span
+            return (
+              <Link
+                key={item.label}
+                href={hrefFor(item.key, preserveParams)}
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex size-7 items-center justify-center rounded-full transition-colors",
-                  isActive ? "bg-kk-card/20 text-white" : "bg-kk-sand text-kk-red-ink",
+                  "flex h-11 shrink-0 items-center gap-2 rounded-full border pl-2.5 pr-4 font-inter text-sm font-semibold transition-all duration-200",
+                  isActive
+                    ? "border-transparent bg-kk-red text-white shadow-[0_10px_22px_-12px_rgba(182,25,19,0.95)]"
+                    : "border-kk-line/70 bg-kk-card text-kk-cocoa hover:-translate-y-0.5 hover:border-kk-red/40 hover:text-kk-ink",
                 )}
               >
-                <Icon className="size-4" />
-              </span>
-              {item.label}
-            </Link>
-          );
-        })}
-      </div>
+                <span
+                  className={cn(
+                    "flex size-7 items-center justify-center rounded-full transition-colors",
+                    isActive ? "bg-kk-card/20 text-white" : "bg-kk-sand text-kk-red-ink",
+                  )}
+                >
+                  <Icon className="size-4" />
+                </span>
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
 
-      {/* Fades the rail out at the right edge so it reads as scrollable. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-kk-cream to-transparent"
-      />
+        {/* Fades the rail out at the right edge so it reads as scrollable. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-kk-cream to-transparent"
+        />
+      </div>
+      <HorizontalScrollIndicators targetId="home-categories-rail" />
     </div>
   );
 }
