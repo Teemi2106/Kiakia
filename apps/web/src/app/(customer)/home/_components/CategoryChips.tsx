@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { AutoSwipeRail } from "./AutoSwipeRail";
 
 // Keyed by the same preset keys menu items are categorized under
 // (packages/domain/src/meal-categories.ts's MEAL_CATEGORIES) — falls back to
@@ -73,7 +74,7 @@ export function CategoryChips({ categories, activeCategory, preserveParams }: Ca
   return (
     <div>
       <div className="relative">
-        <div id="home-categories-rail" className="flex gap-2.5 overflow-x-auto pb-2 pr-10 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <AutoSwipeRail id="home-categories-rail" className="flex gap-2.5 overflow-x-auto pb-2 pr-10 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((item) => {
             const isActive = item.key === (activeCategory ?? null);
             const Icon = item.key ? (CATEGORY_ICONS[item.key] ?? Utensils) : LayoutGrid;
@@ -102,7 +103,7 @@ export function CategoryChips({ categories, activeCategory, preserveParams }: Ca
               </Link>
             );
           })}
-        </div>
+        </AutoSwipeRail>
 
         {/* Fades the rail out at the right edge so it reads as scrollable. */}
         <span

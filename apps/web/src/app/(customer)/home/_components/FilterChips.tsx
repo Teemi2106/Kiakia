@@ -2,6 +2,7 @@
 import { cn } from "@kiakia/ui";
 import { Check, Clock3, Star, Zap } from "lucide-react";
 import Link from "next/link";
+import { AutoSwipeRail } from "./AutoSwipeRail";
 
 export interface HomeSearchParams {
   q?: string;
@@ -50,7 +51,7 @@ const CHIPS: ChipDef[] = [
  */
 export function FilterChips({ searchParams }: { searchParams: HomeSearchParams }) {
   return (
-    <div id="home-filter-chips-rail" className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pb-0">
+    <AutoSwipeRail id="home-filter-chips-rail" className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pb-0">
         {CHIPS.map((chip) => {
           const isActive = searchParams[chip.key] === chip.activeValue;
           const params = new URLSearchParams();
@@ -90,6 +91,6 @@ export function FilterChips({ searchParams }: { searchParams: HomeSearchParams }
             </Link>
           );
         })}
-      </div>
+    </AutoSwipeRail>
   );
 }
