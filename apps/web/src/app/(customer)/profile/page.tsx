@@ -13,7 +13,12 @@ import { SignOutButton } from "./_components/SignOutButton";
 
 export const metadata: Metadata = { title: "Profile" };
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const query = (await searchParams).q?.trim().toLowerCase() ?? "";
   const session = await verifySession();
   const supabase = await createClient();
 
@@ -30,37 +35,50 @@ export default async function ProfilePage() {
       .order("is_default", { ascending: false }),
   ]);
 
+  const matches = (...values: string[]) => values.some((value) => {
+    const normalized = value.toLowerCase();
+    return normalized.includes(query) || query.includes(normalized);
+  });
+  const showAccount = !query || matches("profile", "account", "name", "email", "phone", profile?.full_name ?? "", session.email ?? "", profile?.phone ?? "");
+  const showSettings = !query || matches("settings", "address", "delivery", "location", "notification", "theme", "password", "preferences");
+  const showSupport = !query || matches("help", "support", "faq", "contact", "question", "order", "payment", "delivery issue");
+  const showLegal = !query || matches("legal", "privacy", "terms", "policy");
+  const showSignOut = !query || matches("sign out", "logout", "log out", "account");
+  const hasResults = showAccount || showSettings || showSupport || showLegal || showSignOut;
+
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-30 sm:px-6 sm:py-18">
       {/* Desktop Layout - Two Columns */}
+      {hasResults ? (
+      <>
       <div className="hidden flex-col gap-6 md:flex md:flex-row md:items-start md:gap-8">
         {/* Left Column */}
         <div className="flex w-full flex-col gap-6 md:w-[314.67px] md:shrink-0">
-          <ProfileCard
+          {showAccount && <ProfileCard
             fullName={profile?.full_name ?? ""}
             email={session.email ?? ""}
             phone={profile?.phone}
             memberSince={profile?.created_at}
             avatarUrl={profile?.avatar_url}
             role="Customer"
-          />
-          <SettingsNav />
+          />}
+          {showSettings && <SettingsNav />}
           {/* Sign Out Button - Desktop */}
-          <SignOutButton />
+          {showSignOut && <SignOutButton />}
         </div>
 
         {/* Right Column */}
         <div className="flex-1">
           <div className="rounded-2xl border border-kk-hair bg-kk-card p-6 shadow-sm">
-            <SupportSection />
-            <FAQSection />
+            {showSupport && <><SupportSection /><FAQSection /></>}
+            {showLegal && <MobileLegal />}
           </div>
         </div>
       </div>
 
       {/* Mobile Layout - Full Width */}
       <div className="flex flex-col gap-6 md:hidden">
-        <ProfileCard
+        {showAccount && <ProfileCard
           fullName={profile?.full_name ?? ""}
           email={session.email ?? ""}
           phone={profile?.phone}
@@ -68,16 +86,22 @@ export default async function ProfilePage() {
           avatarUrl={profile?.avatar_url}
           role="Customer"
           variant="mobile"
-        />
+        />}
 
-        <MobileSettings addresses={addresses ?? []} />
-        <MobileHelp />
-        <MobileLegal />
+        {showSettings && <MobileSettings addresses={addresses ?? []} />}
+        {showSupport && <MobileHelp />}
+        {showLegal && <MobileLegal />}
 
-        <div className="mt-4">
+        {showSignOut && <div className="mt-4">
           <SignOutButton />
-        </div>
+        </div>}
       </div>
+      </>
+      ) : (
+        <div className="rounded-2xl border border-kk-line bg-kk-card p-8 text-center font-inter text-sm text-kk-cocoa">
+          No profile sections match “{query}”.
+        </div>
+      )}
     </div>
   );
 }

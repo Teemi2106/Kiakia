@@ -1,7 +1,7 @@
 // app/(customer)/vendors/[slug]/_components/VendorMenu.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SearchX } from "lucide-react";
 import { useCustomerStore } from "@/lib/customer/CustomerStoreProvider";
 import { plainLineFor } from "@/lib/customer/store";
@@ -15,18 +15,22 @@ import type { MenuCategory, MenuItem, VendorSummary } from "./types";
 export function VendorMenu({
   vendor,
   categories,
+  initialSearchQuery,
 }: {
   vendor: VendorSummary;
   categories: readonly MenuCategory[];
+  initialSearchQuery: string;
 }) {
   const [activeItem, setActiveItem] = useState<MenuItem | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [activeCategoryId, setActiveCategoryId] = useState("all");
   const lines = useCustomerStore((s) => s.lines);
   const cartVendorId = useCustomerStore((s) => s.cart?.vendorId);
   const addToCart = useCustomerStore((s) => s.addToCart);
   const setQty = useCustomerStore((s) => s.setQty);
   const notify = useCustomerStore((s) => s.notify);
+
+  useEffect(() => setSearchQuery(initialSearchQuery), [initialSearchQuery]);
 
   const visibleCategories = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -36,6 +40,7 @@ export function VendorMenu({
         items: category.items.filter((item) => {
           if (!query) return true;
           return (
+            category.name.toLowerCase().includes(query) ||
             item.name.toLowerCase().includes(query) ||
             (item.description ?? "").toLowerCase().includes(query)
           );

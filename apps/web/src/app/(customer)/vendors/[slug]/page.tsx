@@ -37,10 +37,12 @@ const getVendorBySlug = cache(async (slug: string) => {
 
 export default async function VendorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
-  const { slug } = await params;
+  const [{ slug }, { q }] = await Promise.all([params, searchParams]);
   const [supabase, { data: vendorRow }] = await Promise.all([createClient(), getVendorBySlug(slug)]);
 
   if (!vendorRow || vendorRow.status !== "active") {
@@ -163,7 +165,7 @@ export default async function VendorPage({
   return (
     <>
       <TrackEvent eventType="view_vendor" vendorId={vendor.id} />
-      <VendorMenu vendor={vendor} categories={categories} />
+      <VendorMenu vendor={vendor} categories={categories} initialSearchQuery={q ?? ""} />
     </>
   );
 }

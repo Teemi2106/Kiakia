@@ -73,6 +73,60 @@ body {
   }
 }
 
+/* Native shared-element transitions make the mobile search field glide from
+ * its full-width row into the compact header slot. Browsers without View
+ * Transitions use the equivalent CSS property transitions on the elements. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(kk-search),
+::view-transition-group(kk-brand),
+::view-transition-group(kk-actions) {
+  animation-duration: 520ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(kk-search) {
+  animation: kk-search-bubble-out 180ms ease-in both;
+}
+
+::view-transition-new(kk-search) {
+  animation: kk-search-bubble-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes kk-search-bubble-out {
+  to {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: blur(2px);
+  }
+}
+
+@keyframes kk-search-bubble-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(kk-search),
+  ::view-transition-group(kk-brand),
+  ::view-transition-group(kk-actions),
+  ::view-transition-old(kk-search),
+  ::view-transition-new(kk-search) {
+    animation-duration: 1ms;
+  }
+}
+
 /* Text swap for the home greeting: the new line fades up into place. */
 .kk-swap {
   animation: kk-swap 600ms ease-out both;

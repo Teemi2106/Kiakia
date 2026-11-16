@@ -36,7 +36,12 @@ function formatAddress(address: unknown): string | undefined {
   return parts.join(", ");
 }
 
-export default async function ActiveOrdersPage() {
+export default async function ActiveOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const query = (await searchParams).q?.trim().toLowerCase() ?? "";
   const session = await verifySession();
   const supabase = await createClient();
 
@@ -88,6 +93,19 @@ export default async function ActiveOrdersPage() {
     delivery_address: formatAddress(order.delivery_address),
     items: itemsByOrderId.get(order.id) ?? [],
   }));
+  const visibleOrders = query
+    ? orders.filter((order) => {
+        const vendorName = vendors.find((vendor) => vendor.id === order.vendor_id)?.name ?? "";
+        const searchable = [
+          order.code,
+          order.status.replaceAll("_", " "),
+          order.delivery_address ?? "",
+          vendorName,
+          ...(order.items ?? []).map((item) => item.name),
+        ].join(" ").toLowerCase();
+        return searchable.includes(query);
+      })
+    : orders;
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-12">
@@ -106,23 +124,23 @@ export default async function ActiveOrdersPage() {
         </p>
       </div>
 
-      {orders.length === 0 ? (
+      {visibleOrders.length === 0 ? (
         <div className="mt-8">
           <EmptyState
-            title="No active orders"
-            description="Track your incoming meals here once you place an order."
-            action={
+            title={query ? "No matching orders" : "No active orders"}
+            description={query ? `No active orders match “${query}”.` : "Track your incoming meals here once you place an order."}
+            action={!query ? (
               <Link
                 href="/home"
                 className={buttonVariants({ variant: "primary" })}
               >
                 Browse vendors
               </Link>
-            }
+            ) : undefined}
           />
         </div>
       ) : (
-        <OrdersList orders={orders} vendors={vendors} />
+        <OrdersList orders={visibleOrders} vendors={vendors} />
       )}
     </div>
   );

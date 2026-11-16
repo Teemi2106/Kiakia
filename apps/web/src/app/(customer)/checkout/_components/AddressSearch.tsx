@@ -72,14 +72,6 @@ export function AddressSearch({ onSelect }: { onSelect: (result: AddressSearchRe
         </label>
         {loading && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-inter text-xs text-kk-cocoa">Searching…</span>}
       </div>
-      <p className="font-inter text-xs leading-5 text-kk-cocoa/80">Search a Nigerian street, neighbourhood or landmark.</p>
-      {clientEnv.NEXT_PUBLIC_GEOAPIFY_API_KEY ? (
-        <p className="pt-1 font-inter text-[10px] leading-4 text-kk-cocoa/55">
-          <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer" className="underline underline-offset-2">Geoapify</a>
-          {" · "}
-          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline underline-offset-2">© OpenStreetMap contributors</a>
-        </p>
-      ) : null}
       {error && <p role="status" className="font-inter text-xs text-kk-cocoa">{error}</p>}
       {results.length > 0 && (
         <ul className="max-h-52 divide-y divide-kk-hair overflow-y-auto rounded-xl border border-kk-hair bg-kk-card">
@@ -102,6 +94,14 @@ export function AddressSearch({ onSelect }: { onSelect: (result: AddressSearchRe
               </button>
             </li>
           ))}
+          {clientEnv.NEXT_PUBLIC_GEOAPIFY_API_KEY && (
+            <li className="border-t border-kk-hair px-3 py-2 text-right font-inter text-[10px] leading-4 text-kk-cocoa/55">
+              Powered by{" "}
+              <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer" className="underline underline-offset-2">Geoapify</a>
+              {" · "}
+              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline underline-offset-2">© OpenStreetMap contributors</a>
+            </li>
+          )}
         </ul>
       )}
     </div>

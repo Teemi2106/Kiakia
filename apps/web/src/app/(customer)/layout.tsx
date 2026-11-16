@@ -93,7 +93,7 @@ export default async function CustomerLayout({
           disappears at the same `lg` breakpoint. */}
       <div data-theme={theme} className="flex min-h-screen flex-col bg-kk-cream text-kk-ink [--kk-nav-h:141px] [--kk-tabbar-h:7.5rem] lg:[--kk-nav-h:73px] lg:[--kk-tabbar-h:0px]">
         <CustomerTopNav canSwitchToVendor={canSwitchToVendor} isFleetManager={isFleetManager} />
-        <main className="flex-1 pt-(--kk-nav-h) pb-(--kk-tabbar-h)">{children}</main>
+        <main className="flex-1 pt-(--kk-nav-h) pb-(--kk-tabbar-h) transition-[padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">{children}</main>
         <CustomerBottomNav />
         {/* Fixed overlays stay inside the themed wrapper so they pick up its tokens. */}
         <CartFab />

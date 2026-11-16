@@ -16,7 +16,12 @@ const TERMINAL_STATUSES = [
   "cancelled_by_platform",
 ] as const;
 
-export default async function OrderHistoryPage() {
+export default async function OrderHistoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const query = (await searchParams).q?.trim().toLowerCase() ?? "";
   const session = await verifySession();
   const supabase = await createClient();
 
@@ -37,14 +42,18 @@ export default async function OrderHistoryPage() {
       ? supabase.from("vendors").select("id, name, logo_url").in("id", vendorIds)
       : Promise.resolve({ data: [] }),
     orderIds.length
-      ? supabase.from("order_items").select("order_id").in("order_id", orderIds)
+      ? supabase.from("order_items").select("order_id, name_snapshot").in("order_id", orderIds)
       : Promise.resolve({ data: [] }),
   ]);
   const vendors = realVendors ?? [];
 
   const itemCountByOrderId = new Map<string, number>();
+  const itemNamesByOrderId = new Map<string, string[]>();
   for (const row of itemRows ?? []) {
     itemCountByOrderId.set(row.order_id, (itemCountByOrderId.get(row.order_id) ?? 0) + 1);
+    const names = itemNamesByOrderId.get(row.order_id) ?? [];
+    names.push(row.name_snapshot);
+    itemNamesByOrderId.set(row.order_id, names);
   }
 
   if (orders.length === 0) {
@@ -53,8 +62,8 @@ export default async function OrderHistoryPage() {
         <h1 className="text-xl font-semibold text-ink">Order History</h1>
         <div className="mt-4">
           <EmptyState
-            title="No past orders yet"
-            description="Your completed and cancelled orders will show up here."
+            title={query ? "No matching orders" : "No past orders yet"}
+            description={query ? `No order history matches “${query}”.` : "Your completed and cancelled orders will show up here."}
           />
         </div>
       </div>
@@ -65,14 +74,23 @@ export default async function OrderHistoryPage() {
     ...order,
     item_count: itemCountByOrderId.get(order.id) ?? 0,
   }));
+  const visibleOrders = query
+    ? ordersWithItemCount.filter((order) => {
+        const vendorName = vendors.find((vendor) => vendor.id === order.vendor_id)?.name ?? "";
+        return [order.code, order.status.replaceAll("_", " "), vendorName, ...(itemNamesByOrderId.get(order.id) ?? [])]
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      })
+    : ordersWithItemCount;
 
   return (
     <>
       <div className="hidden lg:block">
-        <OrderHistoryDesktop orders={ordersWithItemCount} vendors={vendors} />
+        <OrderHistoryDesktop orders={visibleOrders} vendors={vendors} />
       </div>
       <div className="lg:hidden">
-        <OrderHistoryMobile orders={ordersWithItemCount} vendors={vendors} />
+        <OrderHistoryMobile orders={visibleOrders} vendors={vendors} />
       </div>
     </>
   );
