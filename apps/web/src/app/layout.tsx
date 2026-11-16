@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Sora, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ActionResponseBuffer } from "./_components/ActionResponseBuffer";
+import { getTheme } from "@/lib/theme";
 
 /**
  * Sora (display) + Inter (text) are the two families the Figma screens were
@@ -58,9 +59,19 @@ export const metadata: Metadata = {
     : undefined,
 };
 
-export const viewport: Viewport = {
-  themeColor: "#B61913",
-};
+export async function generateViewport(): Promise<Viewport> {
+  const theme = await getTheme();
+
+  if (theme === "dark") return { themeColor: "#151211" };
+  if (theme === "light") return { themeColor: "#fcf9f8" };
+
+  return {
+    themeColor: [
+      { media: "(prefers-color-scheme: light)", color: "#fcf9f8" },
+      { media: "(prefers-color-scheme: dark)", color: "#151211" },
+    ],
+  };
+}
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
