@@ -273,23 +273,13 @@ export function DoorHangerCta() {
 
   return (
     <div ref={sceneRef} className={styles.scene}>
-      <span className={styles.doorSurface} aria-hidden="true">
-        <Image
-          className={styles.doorSurfaceImage}
-          src="/assets/door-panel-surface.png"
-          alt=""
-          fill
-          sizes="(max-width: 379px) 105px, (max-width: 639px) 135px, (max-width: 1023px) 172px, (max-width: 1199px) 173px, 288px"
-        />
-      </span>
-
       <Image
         className={styles.rosette}
-        src="/assets/door-handle-rosette.png"
+        src="/assets/door-handle-rosette-cutout.png"
         alt=""
-        width={1536}
-        height={1024}
-        sizes="(max-width: 379px) 46px, (max-width: 639px) 54px, (max-width: 1023px) 56px, (max-width: 1199px) 64px, 80px"
+        width={1254}
+        height={1254}
+        sizes="(max-width: 379px) 28px, (max-width: 639px) 32px, (max-width: 1023px) 36px, (max-width: 1199px) 42px, 48px"
       />
 
       <span ref={hangerRef} className={styles.hanger}>
@@ -319,10 +309,10 @@ export function DoorHangerCta() {
         <span ref={leverRef} className={styles.leverMotion}>
           <Image
             className={styles.leverImage}
-            src="/assets/door-handle-lever-refined.png"
+            src="/assets/door-handle-lever-cutout.png"
             alt=""
-            width={2164}
-            height={727}
+            width={2172}
+            height={724}
             sizes="(max-width: 379px) 64px, (max-width: 639px) 84px, (max-width: 1023px) 120px, (max-width: 1199px) 132px, 150px"
           />
         </span>

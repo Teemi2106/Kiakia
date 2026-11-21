@@ -6,12 +6,12 @@
   --hanger-left: calc(var(--scene-width) - var(--hanger-right) - var(--placard-width));
   --hanger-pivot-offset: 4.8125rem;
   --hanger-pivot-x: calc(var(--hanger-left) + var(--hanger-pivot-offset));
-  --rosette-width: 5rem;
-  --rosette-height: 3.333rem;
-  --rosette-top: 2.125rem;
+  --rosette-width: 3rem;
+  --rosette-height: 3rem;
+  --rosette-top: 2.3125rem;
   --lever-width: 9.375rem;
   --lever-height: 3.125rem;
-  --lever-pivot-offset: 8.625rem;
+  --lever-pivot-offset: 8.1875rem;
   --lever-left: calc(var(--hanger-pivot-x) - var(--lever-pivot-offset));
   --lever-top: 2.25rem;
 
@@ -24,26 +24,6 @@
   overflow: visible;
   isolation: isolate;
   pointer-events: none;
-}
-
-.doorSurface {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  left: var(--lever-left);
-  width: calc(var(--scene-width) - var(--lever-left) + 1rem);
-  height: calc(var(--placard-height) + 1rem);
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 92%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 92%, transparent 100%);
-  pointer-events: none;
-}
-
-.doorSurfaceImage {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .rosette {
@@ -131,7 +111,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  transform-origin: 92% 50%;
+  transform-origin: 87.5% 50%;
   filter: drop-shadow(0 2px 3px rgb(46 29 16 / 24%));
 }
 
@@ -186,12 +166,12 @@
     --placard-height: 13.625rem;
     --hanger-right: -1rem;
     --hanger-pivot-offset: 4.25rem;
-    --rosette-width: 4rem;
-    --rosette-height: 2.667rem;
-    --rosette-top: 2.1875rem;
+    --rosette-width: 2.625rem;
+    --rosette-height: 2.625rem;
+    --rosette-top: 2.25rem;
     --lever-width: 8.25rem;
     --lever-height: 2.75rem;
-    --lever-pivot-offset: 7.59rem;
+    --lever-pivot-offset: 7.25rem;
     --lever-top: 2.1875rem;
     margin-right: 1rem;
   }
@@ -208,12 +188,12 @@
     --placard-width: 6.375rem;
     --placard-height: 12rem;
     --hanger-pivot-offset: 3.5rem;
-    --rosette-width: 3.5rem;
-    --rosette-height: 2.333rem;
-    --rosette-top: 2rem;
+    --rosette-width: 2.25rem;
+    --rosette-height: 2.25rem;
+    --rosette-top: 1.875rem;
     --lever-width: 7.5rem;
     --lever-height: 2.5rem;
-    --lever-pivot-offset: 6.9rem;
+    --lever-pivot-offset: 6.5rem;
     --lever-top: 1.9375rem;
   }
 
@@ -235,12 +215,12 @@
     --placard-height: 8.875rem;
     --hanger-right: 0px;
     --hanger-pivot-offset: 2.625rem;
-    --rosette-width: 3.375rem;
-    --rosette-height: 2.25rem;
+    --rosette-width: 2rem;
+    --rosette-height: 2rem;
     --rosette-top: 1.25rem;
     --lever-width: 5.25rem;
     --lever-height: 1.75rem;
-    --lever-pivot-offset: 4.83rem;
+    --lever-pivot-offset: 4.5625rem;
     --lever-top: 1.5rem;
     margin-right: 0.75rem;
   }
@@ -270,12 +250,12 @@
     --placard-width: 4.25rem;
     --placard-height: 7.875rem;
     --hanger-pivot-offset: 2.375rem;
-    --rosette-width: 2.875rem;
-    --rosette-height: 1.917rem;
+    --rosette-width: 1.75rem;
+    --rosette-height: 1.75rem;
     --rosette-top: 1.125rem;
     --lever-width: 4rem;
     --lever-height: 1.333rem;
-    --lever-pivot-offset: 3.68rem;
+    --lever-pivot-offset: 3.5rem;
     --lever-top: 1.4375rem;
   }
 
