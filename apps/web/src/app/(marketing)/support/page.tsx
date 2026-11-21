@@ -1,5 +1,6 @@
 // app/(marketing)/support/page.tsx
 import type { Metadata } from "next";
+import { getMarketingAccount } from "@/lib/auth/marketing-account";
 import { Header } from "../_components/Header";
 import { Footer } from "../_components/Footer";
 
@@ -14,10 +15,12 @@ export const metadata: Metadata = {
 const WHATSAPP_SUPPORT_NUMBER = "2340000000000";
 const WHATSAPP_SUPPORT_URL = `https://wa.me/${WHATSAPP_SUPPORT_NUMBER}`;
 
-export default function SupportPage() {
+export default async function SupportPage() {
+  const account = await getMarketingAccount();
+
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
-      <Header />
+      <Header account={account} />
       <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
         <h1 className="font-sora text-3xl font-bold text-[#1C1B1B]">
           Support

@@ -2,7 +2,8 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
@@ -148,8 +149,9 @@ export function Cravings() {
         className="kk-rail relative mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:px-6 lg:px-[max(2rem,calc((100vw-80rem)/2+2rem))]"
       >
         {CRAVINGS.map((craving) => (
-          <div
+          <Link
             key={craving.label}
+            href="/home"
             className="group relative aspect-[4/5] w-[218px] shrink-0 snap-start overflow-hidden rounded-[28px] shadow-[0_25px_50px_-30px_rgba(90,25,20,0.6)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_35px_70px_-30px_rgba(90,25,20,0.7)] sm:w-[248px]"
           >
             {craving.image ? (
@@ -181,11 +183,12 @@ export function Cravings() {
               <span className="mt-1 font-inter text-[13px] leading-5 text-white/70">
                 {craving.hint}
               </span>
-              <span className="mt-3 inline-flex items-center font-inter text-[13px] font-semibold text-kk-mint">
-                Coming soon
+              <span className="mt-3 inline-flex items-center gap-1.5 font-inter text-[13px] font-semibold text-kk-mint opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                Order this
+                <ArrowRight className="size-3.5" />
               </span>
             </span>
-          </div>
+          </Link>
         ))}
       </div>
 

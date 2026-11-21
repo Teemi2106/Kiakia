@@ -1,6 +1,9 @@
 // app/(marketing)/_components/Hero.tsx
 import Image from "next/image";
-import { BadgeCheck, Bike, Flame, Timer } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, BadgeCheck, Bike, Flame, Store, Timer } from "lucide-react";
+import { switchToCustomerAction, switchToVendorAction } from "@/app/actions/session";
+import type { MarketingAccount } from "@/lib/auth/marketing-account";
 
 /**
  * The noun that cycles as the first line of the headline. SIZER is whichever
@@ -26,7 +29,7 @@ const SIZER = CRAVINGS.reduce((widest, word) => (word.length > widest.length ? w
 // 10-word keyframes: each word gets a tenth of the cycle.
 const WORD_STAGGER_MS = 24_000 / CRAVINGS.length;
 
-export function Hero() {
+export function Hero({ account }: { account: MarketingAccount | null }) {
   return (
     <section className="relative overflow-hidden bg-kk-cream pb-20 pt-6 sm:pb-28 sm:pt-10">
       {/* Ambient wash. Purely decorative, so it stays out of the a11y tree. */}
@@ -110,9 +113,40 @@ export function Hero() {
             className="kk-enter mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
             style={{ "--kk-delay": "280ms" } as React.CSSProperties}
           >
-            <span className="kk-shine inline-flex h-14 items-center justify-center rounded-2xl bg-kk-red px-8 font-inter text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(182,25,19,0.95)]">
-              Coming soon
-            </span>
+            {account ? (
+              <>
+                <form action={switchToCustomerAction}>
+                  <button
+                    type="submit"
+                    className="kk-shine group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-kk-red px-8 font-inter text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(182,25,19,0.95)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-kk-red-deep"
+                  >
+                    Are you hungry?
+                    <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </button>
+                </form>
+                {account.isVendor && (
+                  <form action={switchToVendorAction}>
+                    <button
+                      type="submit"
+                      className="group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl border border-kk-line bg-white/70 px-7 font-inter text-base font-semibold text-kk-ink backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-kk-ink/25 hover:bg-white"
+                    >
+                      <Store className="size-5 text-kk-orange-deep" />
+                      Vendor dashboard
+                    </button>
+                  </form>
+                )}
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/home"
+                  className="kk-shine group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-kk-red px-8 font-inter text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(182,25,19,0.95)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-kk-red-deep"
+                >
+                  Order something now
+                  <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              </>
+            )}
           </div>
 
           <div
