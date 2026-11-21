@@ -10,15 +10,15 @@ const COLUMNS = [
       { label: "How it works", href: "/#how-it-works" },
       { label: "What we deliver", href: "/#cravings" },
       { label: "Questions", href: "/#faq" },
-      { label: "Create an account", href: "/register" },
-      { label: "Log in", href: "/login" },
+      { label: "Coming soon", href: undefined },
+      { label: "Coming soon", href: undefined },
     ],
   },
   {
     heading: "Partners",
     links: [
       { label: "Become a vendor", href: "/partner" },
-      { label: "Vendor login", href: "/vendor/login" },
+      { label: "Coming soon", href: undefined },
       { label: "Ride with KiaKia", href: "/ride" },
     ],
   },
@@ -71,15 +71,21 @@ export function Footer() {
                 {column.heading}
               </h2>
               <ul className="mt-5 space-y-3.5">
-                {column.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="group inline-flex items-center font-inter text-[15px] text-white/70 transition-colors hover:text-white"
-                    >
-                      <span className="mr-0 h-px w-0 bg-kk-red transition-all duration-300 group-hover:mr-2 group-hover:w-4" />
-                      {link.label}
-                    </Link>
+                {column.links.map((link, index) => (
+                  <li key={`${column.heading}-${index}`}>
+                    {link.href ? (
+                      <Link
+                        href={link.href}
+                        className="group inline-flex items-center font-inter text-[15px] text-white/70 transition-colors hover:text-white"
+                      >
+                        <span className="mr-0 h-px w-0 bg-kk-red transition-all duration-300 group-hover:mr-2 group-hover:w-4" />
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center font-inter text-[15px] text-white/45">
+                        {link.label}
+                      </span>
+                    )}
                   </li>
                 ))}
                 {column.heading === "Partners" && (

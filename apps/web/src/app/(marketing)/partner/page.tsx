@@ -2,18 +2,14 @@
 //
 // The step between "Partner with KiaKia" on the landing page and the vendor
 // sign-up form: it tells a would-be vendor what KiaKia is to them before
-// asking for an account. Static apart from the header's account read.
+// signup becomes available.
 import {
-  ArrowRight,
   Bike,
-  ClipboardCheck,
   MapPin,
   Store,
   Wallet,
 } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
-import { getMarketingAccount } from "@/lib/auth/marketing-account";
 import { Footer } from "../_components/Footer";
 import { Header } from "../_components/Header";
 import { Reveal } from "../_components/Reveal";
@@ -62,12 +58,10 @@ const STEPS = [
   },
 ] as const;
 
-export default async function PartnerPage() {
-  const account = await getMarketingAccount();
-
+export default function PartnerPage() {
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
-      <Header account={account} />
+      <Header />
 
       <section className="relative overflow-hidden pb-16 pt-6 sm:pb-24 sm:pt-10">
         <div
@@ -93,19 +87,12 @@ export default async function PartnerPage() {
               fast reliable delivery.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link
-                href="/vendor/register"
-                className="kk-shine group inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-kk-red px-8 font-inter text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(182,25,19,0.95)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-kk-red-deep"
-              >
-                Create your vendor account
-                <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
-              <Link
-                href="/vendor/login"
-                className="inline-flex h-14 items-center justify-center rounded-2xl border border-kk-line bg-white/70 px-7 font-inter text-base font-semibold text-kk-ink backdrop-blur transition-all duration-300 hover:border-kk-ink/25 hover:bg-white"
-              >
-                Already a vendor? Sign in
-              </Link>
+              <span className="kk-shine inline-flex h-14 items-center justify-center rounded-2xl bg-kk-red px-8 font-inter text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(182,25,19,0.95)]">
+                Coming soon
+              </span>
+              <span className="inline-flex h-14 items-center justify-center rounded-2xl border border-kk-line bg-white/70 px-7 font-inter text-base font-semibold text-kk-ink backdrop-blur">
+                Coming soon
+              </span>
             </div>
           </div>
         </div>
@@ -175,13 +162,9 @@ export default async function PartnerPage() {
                 Ready to put your kitchen on KiaKia?
               </p>
             </div>
-            <Link
-              href="/vendor/register"
-              className="inline-flex h-12 shrink-0 items-center gap-2 rounded-2xl bg-white px-6 font-inter text-sm font-semibold text-kk-red transition-transform duration-300 hover:-translate-y-0.5"
-            >
-              <ClipboardCheck className="size-4" />
-              Create your vendor account
-            </Link>
+            <span className="inline-flex h-12 shrink-0 items-center rounded-2xl bg-white px-6 font-inter text-sm font-semibold text-kk-red">
+              Coming soon
+            </span>
           </div>
         </div>
       </section>

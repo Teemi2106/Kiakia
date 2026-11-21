@@ -2,7 +2,6 @@
 // numbered sections, footer. Content lives in each page as data so the two
 // documents stay structurally identical.
 import type { ReactNode } from "react";
-import { getMarketingAccount } from "@/lib/auth/marketing-account";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 
@@ -26,7 +25,7 @@ export interface LegalSection {
   body: ReactNode;
 }
 
-export async function LegalPage({
+export function LegalPage({
   title,
   intro,
   sections,
@@ -35,11 +34,9 @@ export async function LegalPage({
   intro: ReactNode;
   sections: LegalSection[];
 }) {
-  const account = await getMarketingAccount();
-
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
-      <Header account={account} />
+      <Header />
       <article className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
         <h1 className="font-sora text-3xl font-bold text-[#1C1B1B]">{title}</h1>
         <p className="mt-2 text-sm text-[#5B403C]/80">Last updated: {LEGAL.lastUpdated}</p>
