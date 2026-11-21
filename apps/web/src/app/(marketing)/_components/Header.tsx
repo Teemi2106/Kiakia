@@ -182,8 +182,10 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center justify-center border-t border-kk-line/60 p-3">
-          <DoorHangerCta />
+        <div className="border-t border-kk-line/60 px-5 py-5 text-center">
+          <p className="font-inter text-sm font-semibold text-kk-cocoa">
+            KiaKia is coming soon.
+          </p>
         </div>
       </div>
     </>

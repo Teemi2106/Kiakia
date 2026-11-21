@@ -40,7 +40,7 @@ export function Hero() {
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:px-8">
         {/* ------------------------------------------------------ copy */}
-        <div className="max-w-2xl">
+        <div className="max-w-2xl max-lg:pr-24">
           <p
             className="kk-enter flex items-center gap-3 font-inter text-[11px] font-semibold uppercase tracking-[0.28em] text-kk-red"
             style={{ "--kk-delay": "40ms" } as React.CSSProperties}
@@ -221,9 +221,10 @@ export function Hero() {
           {/* Speed badge. Desktop only — on a phone the two cards above already
               fill the frame, and a third would crowd the photo out. The
               rotation sits on an inner element because kk-float animates
-              `transform`, which would otherwise replace it. */}
+              `transform`, which would otherwise replace it. It sits opposite
+              the hanger so neither element covers the other. */}
           <div
-            className="kk-float absolute -top-3 right-0 hidden sm:-right-6 sm:block"
+            className="kk-float absolute -top-3 left-0 hidden sm:-left-6 sm:block"
             style={{ "--kk-delay": "700ms" } as React.CSSProperties}
           >
             <div className="flex -rotate-6 items-center gap-2 rounded-2xl border border-kk-line bg-kk-cream px-4 py-3 shadow-[0_20px_40px_-20px_rgba(28,27,27,0.5)]">
