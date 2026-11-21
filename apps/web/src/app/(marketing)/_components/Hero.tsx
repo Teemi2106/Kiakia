@@ -28,7 +28,7 @@ const WORD_STAGGER_MS = 24_000 / CRAVINGS.length;
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-kk-cream pb-20 pt-6 sm:pb-28 sm:pt-10">
+    <section className="relative overflow-hidden bg-kk-cream pb-20 pt-6 sm:pb-28 sm:pt-10 lg:pb-44">
       {/* Ambient wash. Purely decorative, so it stays out of the a11y tree. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="kk-blob -left-40 -top-52 size-[560px] bg-kk-red/25" />
@@ -107,16 +107,7 @@ export function Hero() {
           </p>
 
           <div
-            className="kk-enter mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
-            style={{ "--kk-delay": "280ms" } as React.CSSProperties}
-          >
-            <span className="kk-shine inline-flex h-14 items-center justify-center rounded-2xl bg-kk-red px-8 font-inter text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(182,25,19,0.95)]">
-              Coming soon
-            </span>
-          </div>
-
-          <div
-            className="kk-enter mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 font-inter text-sm text-kk-cocoa"
+            className="kk-enter mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 font-inter text-sm text-kk-cocoa"
             style={{ "--kk-delay": "360ms" } as React.CSSProperties}
           >
             <span className="inline-flex items-center gap-2.5">
@@ -136,7 +127,7 @@ export function Hero() {
             the cards, which are positioned against the wrapper, land on top
             of its edges rather than outside the viewport. */}
         <div
-          className="kk-enter relative mx-auto w-full max-w-[460px] px-7 sm:px-0 lg:max-w-[500px]"
+          className="kk-enter relative mx-auto w-full max-w-[460px] px-7 sm:px-0 lg:max-w-[500px] lg:translate-y-36"
           style={{ "--kk-delay": "260ms" } as React.CSSProperties}
         >
           {/* Photo card */}

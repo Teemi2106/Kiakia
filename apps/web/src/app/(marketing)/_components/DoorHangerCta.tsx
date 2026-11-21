@@ -136,7 +136,7 @@ export function DoorHangerCta() {
         motion.angularVelocity *= Math.pow(0.82, delta);
       }
 
-      motion.angle = clamp(motion.angle + motion.angularVelocity * delta, -15, 15);
+      motion.angle = clamp(motion.angle + motion.angularVelocity * delta, -12, 12);
       hanger.style.transform = `rotate(${motion.angle.toFixed(2)}deg)`;
 
       let leverAngle = 0;
@@ -176,7 +176,7 @@ export function DoorHangerCta() {
         }
       }
 
-      lever.style.transform = `rotate(${leverAngle.toFixed(2)}deg)`;
+      lever.style.transform = `rotate(${(-leverAngle).toFixed(2)}deg)`;
 
       if (!motion.reducedMotion || attemptActiveRef.current) {
         frame = window.requestAnimationFrame(animate);
@@ -201,7 +201,7 @@ export function DoorHangerCta() {
 
       if (!motion.reducedMotion) {
         // Downward scroll pushes the hanging sign back; upward scroll pushes it forward.
-        motion.angularVelocity += clamp(-velocity * 0.52, -4.5, 4.5);
+        motion.angularVelocity += clamp(-velocity * 0.26, -2.4, 2.4);
         requestFrame();
       }
     };
@@ -264,7 +264,7 @@ export function DoorHangerCta() {
     }
     motion.attemptStartedAt = performance.now();
     motion.lockClickPlayed = false;
-    motion.angularVelocity += motion.reducedMotion ? -2.2 : -7;
+    motion.angularVelocity += motion.reducedMotion ? -0.9 : -1.6;
     setIsAttempting(true);
     setShowFeedback(false);
     playLockClick(lockClickAudioRef.current, motion.reducedMotion ? 110 : 155);
@@ -279,7 +279,7 @@ export function DoorHangerCta() {
         alt=""
         width={1536}
         height={1024}
-        sizes="(max-width: 379px) 68px, (max-width: 639px) 78px, (max-width: 1023px) 102px, 132px"
+        sizes="(max-width: 379px) 68px, (max-width: 639px) 78px, (max-width: 1023px) 80px, (max-width: 1199px) 112px, 132px"
       />
 
       <span ref={hangerRef} className={styles.hanger}>
@@ -289,7 +289,7 @@ export function DoorHangerCta() {
           alt=""
           width={887}
           height={1774}
-          sizes="(max-width: 379px) 68px, (max-width: 639px) 78px, (max-width: 1023px) 108px, (max-width: 1199px) 124px, 142px"
+          sizes="(max-width: 379px) 72px, (max-width: 639px) 84px, (max-width: 1023px) 108px, (max-width: 1199px) 132px, 152px"
         />
         <span className={styles.message}>
           COMING
@@ -313,7 +313,7 @@ export function DoorHangerCta() {
             alt=""
             width={2172}
             height={724}
-            sizes="(max-width: 379px) 96px, (max-width: 639px) 112px, (max-width: 1023px) 140px, 195px"
+            sizes="(max-width: 379px) 64px, (max-width: 639px) 96px, (max-width: 1023px) 140px, (max-width: 1199px) 144px, 180px"
           />
         </span>
       </button>
