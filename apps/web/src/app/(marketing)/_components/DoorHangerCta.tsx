@@ -285,11 +285,11 @@ export function DoorHangerCta() {
       <span ref={hangerRef} className={styles.hanger}>
         <Image
           className={styles.hangerImage}
-          src="/assets/restaurant-door-hanger-refined.png"
+          src="/assets/restaurant-door-hanger-elongated.png"
           alt=""
-          width={955}
-          height={1647}
-          sizes="(max-width: 379px) 68px, (max-width: 639px) 78px, (max-width: 1023px) 102px, (max-width: 1199px) 124px, 136px"
+          width={1024}
+          height={1536}
+          sizes="(max-width: 379px) 84px, (max-width: 639px) 94px, (max-width: 1023px) 128px, (max-width: 1199px) 148px, 166px"
         />
         <span className={styles.message}>
           COMING

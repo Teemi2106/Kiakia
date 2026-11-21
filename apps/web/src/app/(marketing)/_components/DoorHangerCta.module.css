@@ -1,11 +1,13 @@
 .scene {
   --scene-width: 13.5rem;
-  --placard-width: 8.75rem;
-  --placard-height: 14.5rem;
+  --placard-width: 10.375rem;
+  --placard-height: 15.5rem;
   --hanger-right: clamp(0px, calc(25vw - 18rem), 4.5rem);
-  --hanger-left: calc(var(--scene-width) - var(--hanger-right) - var(--placard-width));
-  --hanger-pivot-offset: 4.8125rem;
+  --hanger-image-offset: 1.25rem;
+  --hanger-left: calc(var(--scene-width) - var(--hanger-right) - var(--placard-width) + var(--hanger-image-offset));
+  --hanger-pivot-offset: 5.1875rem;
   --hanger-pivot-x: calc(var(--hanger-left) + var(--hanger-pivot-offset));
+  --hanger-pivot-y: 24.6%;
   --rosette-width: 3rem;
   --rosette-height: 3rem;
   --rosette-top: 2.3125rem;
@@ -48,7 +50,7 @@
   display: block;
   width: var(--placard-width);
   height: var(--placard-height);
-  transform-origin: 55% 26%;
+  transform-origin: 50% var(--hanger-pivot-y);
   pointer-events: none;
   filter: drop-shadow(0 10px 14px rgb(57 38 22 / 22%));
 }
@@ -62,17 +64,18 @@
 
 .message {
   position: absolute;
-  top: 58%;
-  right: 7%;
-  left: 7%;
-  color: #4b3020;
-  font-family: var(--font-sora-face, Georgia, serif);
-  font-size: clamp(1rem, 1.3vw, 1.16rem);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.055em;
+  top: 65%;
+  right: 12%;
+  left: 12%;
+  color: #533724;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.05rem, 1.35vw, 1.16rem);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: 0.07em;
   text-align: center;
-  text-shadow: 0 1px 1px rgb(255 249 232 / 55%);
+  text-shadow: 0 1px 0 rgb(255 247 228 / 78%), 0 -1px 1px rgb(65 42 26 / 22%);
+  transform: translateY(-50%);
   white-space: nowrap;
 }
 
@@ -162,10 +165,12 @@
 @media (min-width: 1024px) and (max-width: 1199px) {
   .scene {
     --scene-width: 12rem;
-    --placard-width: 7.75rem;
+    --placard-width: 9.25rem;
     --placard-height: 13.625rem;
+    --hanger-image-offset: 1.125rem;
+    --hanger-pivot-y: 26%;
     --hanger-right: -1rem;
-    --hanger-pivot-offset: 4.25rem;
+    --hanger-pivot-offset: 4.625rem;
     --rosette-width: 2.625rem;
     --rosette-height: 2.625rem;
     --rosette-top: 2.25rem;
@@ -178,16 +183,18 @@
 
   .message {
     font-size: 0.9rem;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.07em;
   }
 }
 
 @media (min-width: 640px) and (max-width: 1023px) {
   .scene {
     --scene-width: 10.25rem;
-    --placard-width: 6.375rem;
+    --placard-width: 8rem;
     --placard-height: 12rem;
-    --hanger-pivot-offset: 3.5rem;
+    --hanger-image-offset: 1.125rem;
+    --hanger-pivot-y: 26%;
+    --hanger-pivot-offset: 4rem;
     --rosette-width: 2.25rem;
     --rosette-height: 2.25rem;
     --rosette-top: 1.875rem;
@@ -198,8 +205,8 @@
   }
 
   .message {
-    font-size: 0.8rem;
-    letter-spacing: 0.045em;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
   }
 
   .feedback {
@@ -211,10 +218,12 @@
 @media (max-width: 639px) {
   .scene {
     --scene-width: 7.75rem;
-    --placard-width: 4.875rem;
+    --placard-width: 5.875rem;
     --placard-height: 8.875rem;
+    --hanger-image-offset: 0.6875rem;
+    --hanger-pivot-y: 26%;
     --hanger-right: 0px;
-    --hanger-pivot-offset: 2.625rem;
+    --hanger-pivot-offset: 2.9375rem;
     --rosette-width: 2rem;
     --rosette-height: 2rem;
     --rosette-top: 1.25rem;
@@ -230,9 +239,8 @@
   }
 
   .message {
-    top: 58%;
-    font-size: 0.68rem;
-    letter-spacing: 0.025em;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
   }
 
   .feedback {
@@ -247,9 +255,11 @@
 @media (max-width: 380px) {
   .scene {
     --scene-width: 6.875rem;
-    --placard-width: 4.25rem;
+    --placard-width: 5.25rem;
     --placard-height: 7.875rem;
-    --hanger-pivot-offset: 2.375rem;
+    --hanger-image-offset: 0.75rem;
+    --hanger-pivot-y: 26%;
+    --hanger-pivot-offset: 2.625rem;
     --rosette-width: 1.75rem;
     --rosette-height: 1.75rem;
     --rosette-top: 1.125rem;
@@ -264,9 +274,8 @@
   }
 
   .message {
-    top: 58%;
-    font-size: 0.6rem;
-    letter-spacing: 0.015em;
+    font-size: 0.62rem;
+    letter-spacing: 0.03em;
   }
 
   .feedback {
