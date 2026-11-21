@@ -1,18 +1,19 @@
 .scene {
-  --scene-width: 14rem;
-  --placard-width: 9.5rem;
-  --placard-height: 18.5rem;
-  --hanger-right: clamp(0px, calc(25vw - 18rem), 5rem);
+  --scene-width: 13.5rem;
+  --placard-width: 8.75rem;
+  --placard-height: 14.5rem;
+  --hanger-right: clamp(0px, calc(25vw - 18rem), 4.5rem);
   --hanger-left: calc(var(--scene-width) - var(--hanger-right) - var(--placard-width));
-  --hanger-pivot-offset: 5.125rem;
+  --hanger-pivot-offset: 4.8125rem;
   --hanger-pivot-x: calc(var(--hanger-left) + var(--hanger-pivot-offset));
-  --rosette-width: 8.25rem;
-  --rosette-height: 5.5rem;
-  --lever-width: 11.25rem;
-  --lever-height: 3.75rem;
-  --lever-pivot-offset: 10.25rem;
+  --rosette-width: 5rem;
+  --rosette-height: 3.333rem;
+  --rosette-top: 2.125rem;
+  --lever-width: 9.375rem;
+  --lever-height: 3.125rem;
+  --lever-pivot-offset: 8.625rem;
   --lever-left: calc(var(--hanger-pivot-x) - var(--lever-pivot-offset));
-  --lever-top: 0.875rem;
+  --lever-top: 2.25rem;
 
   position: relative;
   z-index: 45;
@@ -25,31 +26,51 @@
   pointer-events: none;
 }
 
+.doorSurface {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: var(--lever-left);
+  width: calc(var(--scene-width) - var(--lever-left) + 1rem);
+  height: calc(var(--placard-height) + 1rem);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 92%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 92%, transparent 100%);
+  pointer-events: none;
+}
+
+.doorSurfaceImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .rosette {
   position: absolute;
-  z-index: 3;
-  top: 0;
+  z-index: 2;
+  top: var(--rosette-top);
   left: var(--hanger-pivot-x);
   width: var(--rosette-width);
   height: var(--rosette-height);
   object-fit: contain;
   pointer-events: none;
-  filter: drop-shadow(0 2px 3px rgb(65 39 18 / 24%));
+  filter: saturate(0.78) brightness(1.04) drop-shadow(0 2px 3px rgb(65 39 18 / 22%));
   transform: translateX(-50%);
 }
 
 .hanger {
   position: absolute;
-  z-index: 2;
+  z-index: 4;
   top: 0;
   right: auto;
   left: var(--hanger-left);
   display: block;
   width: var(--placard-width);
   height: var(--placard-height);
-  transform-origin: 55% 14%;
+  transform-origin: 55% 26%;
   pointer-events: none;
-  filter: drop-shadow(0 14px 17px rgb(57 38 22 / 24%));
+  filter: drop-shadow(0 10px 14px rgb(57 38 22 / 22%));
 }
 
 .hangerImage {
@@ -61,15 +82,15 @@
 
 .message {
   position: absolute;
-  top: 60%;
+  top: 58%;
   right: 7%;
   left: 7%;
   color: #4b3020;
   font-family: var(--font-sora-face, Georgia, serif);
-  font-size: clamp(1.1rem, 1.45vw, 1.35rem);
+  font-size: clamp(1rem, 1.3vw, 1.16rem);
   font-weight: 800;
   line-height: 1;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.055em;
   text-align: center;
   text-shadow: 0 1px 1px rgb(255 249 232 / 55%);
   white-space: nowrap;
@@ -77,7 +98,7 @@
 
 .leverButton {
   position: absolute;
-  z-index: 4;
+  z-index: 3;
   top: var(--lever-top);
   left: var(--lever-left);
   display: block;
@@ -110,8 +131,8 @@
   display: block;
   width: 100%;
   height: 100%;
-  transform-origin: 91% 50%;
-  filter: drop-shadow(0 4px 4px rgb(46 29 16 / 34%));
+  transform-origin: 92% 50%;
+  filter: drop-shadow(0 2px 3px rgb(46 29 16 / 24%));
 }
 
 .leverImage {
@@ -161,41 +182,43 @@
 @media (min-width: 1024px) and (max-width: 1199px) {
   .scene {
     --scene-width: 12rem;
-    --placard-width: 8.25rem;
-    --placard-height: 15.5rem;
+    --placard-width: 7.75rem;
+    --placard-height: 13.625rem;
     --hanger-right: -1rem;
-    --hanger-pivot-offset: 4.5rem;
-    --rosette-width: 7rem;
-    --rosette-height: 4.667rem;
-    --lever-width: 9rem;
-    --lever-height: 3rem;
-    --lever-pivot-offset: 8.1875rem;
-    --lever-top: 0.833rem;
+    --hanger-pivot-offset: 4.25rem;
+    --rosette-width: 4rem;
+    --rosette-height: 2.667rem;
+    --rosette-top: 2.1875rem;
+    --lever-width: 8.25rem;
+    --lever-height: 2.75rem;
+    --lever-pivot-offset: 7.59rem;
+    --lever-top: 2.1875rem;
     margin-right: 1rem;
   }
 
   .message {
-    font-size: 1rem;
-    letter-spacing: 0.065em;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
   }
 }
 
 @media (min-width: 640px) and (max-width: 1023px) {
   .scene {
     --scene-width: 10.25rem;
-    --placard-width: 6.75rem;
-    --placard-height: 13.5rem;
-    --hanger-pivot-offset: 3.6875rem;
-    --rosette-width: 5rem;
-    --rosette-height: 3.333rem;
-    --lever-width: 8.75rem;
-    --lever-height: 2.917rem;
-    --lever-pivot-offset: 7.9375rem;
-    --lever-top: 0.1875rem;
+    --placard-width: 6.375rem;
+    --placard-height: 12rem;
+    --hanger-pivot-offset: 3.5rem;
+    --rosette-width: 3.5rem;
+    --rosette-height: 2.333rem;
+    --rosette-top: 2rem;
+    --lever-width: 7.5rem;
+    --lever-height: 2.5rem;
+    --lever-pivot-offset: 6.9rem;
+    --lever-top: 1.9375rem;
   }
 
   .message {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     letter-spacing: 0.045em;
   }
 
@@ -208,16 +231,17 @@
 @media (max-width: 639px) {
   .scene {
     --scene-width: 7.75rem;
-    --placard-width: 5.25rem;
-    --placard-height: 9.75rem;
+    --placard-width: 4.875rem;
+    --placard-height: 8.875rem;
     --hanger-right: 0px;
-    --hanger-pivot-offset: 2.875rem;
-    --rosette-width: 4.875rem;
-    --rosette-height: 3.25rem;
-    --lever-width: 6rem;
-    --lever-height: 2rem;
-    --lever-pivot-offset: 5.4375rem;
-    --lever-top: 0.75rem;
+    --hanger-pivot-offset: 2.625rem;
+    --rosette-width: 3.375rem;
+    --rosette-height: 2.25rem;
+    --rosette-top: 1.25rem;
+    --lever-width: 5.25rem;
+    --lever-height: 1.75rem;
+    --lever-pivot-offset: 4.83rem;
+    --lever-top: 1.5rem;
     margin-right: 0.75rem;
   }
 
@@ -226,7 +250,7 @@
   }
 
   .message {
-    top: 61%;
+    top: 58%;
     font-size: 0.68rem;
     letter-spacing: 0.025em;
   }
@@ -243,15 +267,16 @@
 @media (max-width: 380px) {
   .scene {
     --scene-width: 6.875rem;
-    --placard-width: 4.5rem;
-    --placard-height: 8.5rem;
-    --hanger-pivot-offset: 2.5rem;
-    --rosette-width: 4.25rem;
-    --rosette-height: 2.833rem;
+    --placard-width: 4.25rem;
+    --placard-height: 7.875rem;
+    --hanger-pivot-offset: 2.375rem;
+    --rosette-width: 2.875rem;
+    --rosette-height: 1.917rem;
+    --rosette-top: 1.125rem;
     --lever-width: 4rem;
     --lever-height: 1.333rem;
-    --lever-pivot-offset: 3.625rem;
-    --lever-top: 0.75rem;
+    --lever-pivot-offset: 3.68rem;
+    --lever-top: 1.4375rem;
   }
 
   .scene {
@@ -259,7 +284,8 @@
   }
 
   .message {
-    font-size: 0.58rem;
+    top: 58%;
+    font-size: 0.6rem;
     letter-spacing: 0.015em;
   }
 

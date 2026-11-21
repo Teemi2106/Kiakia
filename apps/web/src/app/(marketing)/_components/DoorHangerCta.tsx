@@ -273,23 +273,33 @@ export function DoorHangerCta() {
 
   return (
     <div ref={sceneRef} className={styles.scene}>
+      <span className={styles.doorSurface} aria-hidden="true">
+        <Image
+          className={styles.doorSurfaceImage}
+          src="/assets/door-panel-surface.png"
+          alt=""
+          fill
+          sizes="(max-width: 379px) 105px, (max-width: 639px) 135px, (max-width: 1023px) 172px, (max-width: 1199px) 173px, 288px"
+        />
+      </span>
+
       <Image
         className={styles.rosette}
         src="/assets/door-handle-rosette.png"
         alt=""
         width={1536}
         height={1024}
-        sizes="(max-width: 379px) 68px, (max-width: 639px) 78px, (max-width: 1023px) 80px, (max-width: 1199px) 112px, 132px"
+        sizes="(max-width: 379px) 46px, (max-width: 639px) 54px, (max-width: 1023px) 56px, (max-width: 1199px) 64px, 80px"
       />
 
       <span ref={hangerRef} className={styles.hanger}>
         <Image
           className={styles.hangerImage}
-          src="/assets/restaurant-door-hanger.png"
+          src="/assets/restaurant-door-hanger-refined.png"
           alt=""
-          width={887}
-          height={1774}
-          sizes="(max-width: 379px) 72px, (max-width: 639px) 84px, (max-width: 1023px) 108px, (max-width: 1199px) 132px, 152px"
+          width={955}
+          height={1647}
+          sizes="(max-width: 379px) 68px, (max-width: 639px) 78px, (max-width: 1023px) 102px, (max-width: 1199px) 124px, 136px"
         />
         <span className={styles.message}>
           COMING
@@ -309,11 +319,11 @@ export function DoorHangerCta() {
         <span ref={leverRef} className={styles.leverMotion}>
           <Image
             className={styles.leverImage}
-            src="/assets/door-handle-lever.png"
+            src="/assets/door-handle-lever-refined.png"
             alt=""
-            width={2172}
-            height={724}
-            sizes="(max-width: 379px) 64px, (max-width: 639px) 96px, (max-width: 1023px) 140px, (max-width: 1199px) 144px, 180px"
+            width={2164}
+            height={727}
+            sizes="(max-width: 379px) 64px, (max-width: 639px) 84px, (max-width: 1023px) 120px, (max-width: 1199px) 132px, 150px"
           />
         </span>
       </button>
