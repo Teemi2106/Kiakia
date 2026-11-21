@@ -1,0 +1,116 @@
+.wrapper {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 10rem;
+  height: 5rem;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.handle {
+  position: absolute;
+  z-index: 0;
+  top: 0.5rem;
+  left: 0;
+  width: 9.5rem;
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgb(67 40 16 / 24%));
+}
+
+.hanger {
+  position: absolute;
+  z-index: 1;
+  top: 0.875rem;
+  left: 6.125rem;
+  display: block;
+  width: 2.75rem;
+  height: 4.125rem;
+  transform-origin: 50% 15%;
+  pointer-events: none;
+}
+
+.hangerImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 3px rgb(67 40 16 / 20%));
+}
+
+.message {
+  position: absolute;
+  top: 44%;
+  right: 5%;
+  left: 5%;
+  color: #762b22;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.43rem;
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: 0.045em;
+  text-align: center;
+  text-shadow: 0 1px 1px rgb(96 56 37 / 15%);
+  white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+  .wrapper {
+    width: 7.75rem;
+    height: 4rem;
+  }
+
+  .handle {
+    top: 0.45rem;
+    width: 7.3rem;
+  }
+
+  .hanger {
+    top: 0.55rem;
+    left: 4.8rem;
+    width: 2.125rem;
+    height: 3.1875rem;
+  }
+
+  .message {
+    font-size: 0.32rem;
+    letter-spacing: 0.025em;
+  }
+}
+
+@media (max-width: 380px) {
+  .wrapper {
+    width: 7rem;
+    height: 3.5rem;
+  }
+
+  .handle {
+    top: 0.4rem;
+    width: 6.4rem;
+  }
+
+  .hanger {
+    top: 0.45rem;
+    left: 4rem;
+    width: 1.9rem;
+    height: 2.85rem;
+  }
+
+  .message {
+    font-size: 0.27rem;
+    letter-spacing: 0.015em;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hanger {
+    will-change: transform;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hanger {
+    transform: none !important;
+  }
+}

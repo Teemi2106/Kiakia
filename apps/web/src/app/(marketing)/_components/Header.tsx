@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { DoorHangerCta } from "./DoorHangerCta";
 
 const NAV = [
   { label: "What we deliver", href: "/#cravings" },
@@ -79,7 +80,7 @@ export function Header() {
             : "bg-transparent",
         )}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:h-20 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:h-20 sm:gap-4 sm:px-6 lg:px-8">
           <button
             type="button"
             className="-ml-2 rounded-full p-2 text-kk-red transition-colors hover:bg-kk-red/10 lg:hidden"
@@ -114,18 +115,7 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
-            <span className="rounded-full px-4 py-2 font-inter text-[15px] font-semibold text-kk-ink">
-              Coming soon
-            </span>
-            <span className="inline-flex items-center rounded-full bg-kk-red px-5 py-2.5 font-inter text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(182,25,19,0.9)]">
-              Coming soon
-            </span>
-          </div>
-
-          <span className="-mr-2 rounded-full border border-kk-line px-3 py-2 font-inter text-xs font-semibold text-kk-red lg:hidden">
-            Coming soon
-          </span>
+          <DoorHangerCta />
         </div>
 
         {/* Read-progress rail, hairline along the header's bottom edge. */}
@@ -192,13 +182,8 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex flex-col gap-3 border-t border-kk-line/60 p-5">
-          <span className="flex items-center justify-center rounded-2xl bg-kk-red px-4 py-3.5 font-inter text-sm font-semibold text-white">
-            Coming soon
-          </span>
-          <span className="flex items-center justify-center rounded-2xl border border-kk-line px-4 py-3.5 font-inter text-sm font-semibold text-kk-ink">
-            Coming soon
-          </span>
+        <div className="flex items-center justify-center border-t border-kk-line/60 p-3">
+          <DoorHangerCta />
         </div>
       </div>
     </>
