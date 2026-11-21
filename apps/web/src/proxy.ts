@@ -30,7 +30,50 @@ function supabaseHost(): string | null {
   }
 }
 
+const PUBLIC_LAUNCH_HOSTS = new Set(["kiakia.ng", "www.kiakia.ng"]);
+
+function isPublicLaunchHost(hostname: string): boolean {
+  return PUBLIC_LAUNCH_HOSTS.has(hostname.toLowerCase());
+}
+
 export async function proxy(request: NextRequest) {
+  // Keep the production domain in a launch hold while the sandbox branch
+  // remains fully usable at sandbox.kiakia.ng. This host check also covers
+  // direct links to login, signup, dashboards, and API routes.
+  if (isPublicLaunchHost(request.nextUrl.hostname)) {
+    const nonce = generateNonce();
+    const csp = buildContentSecurityPolicy(nonce, supabaseHost());
+    const headers = new Headers(request.headers);
+    headers.set("x-nonce", nonce);
+
+    if (
+      (request.method !== "GET" && request.method !== "HEAD") ||
+      request.nextUrl.pathname === "/api" ||
+      request.nextUrl.pathname.startsWith("/api/")
+    ) {
+      return new Response("KiaKia is coming soon.", {
+        status: 503,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Content-Security-Policy": csp,
+          "Retry-After": "3600",
+        },
+      });
+    }
+
+    const target = request.nextUrl.clone();
+    target.pathname = "/coming-soon";
+    target.search = "";
+    const response =
+      request.nextUrl.pathname === "/coming-soon"
+        ? NextResponse.next({ request: { headers } })
+        : NextResponse.rewrite(target, { request: { headers } });
+    response.headers.set("Content-Security-Policy", csp);
+    return response;
+  }
+
+  const isSandboxHost = request.nextUrl.hostname.toLowerCase() === "sandbox.kiakia.ng";
+
   // RFC 8058 one-click unsubscribe POSTs to the same /unsubscribe?token=... URL the confirm page lives at.
   // A page cannot answer a POST that is not a Server Action (those carry a Next-Action header), so hand it
   // to the route handler. Public on purpose: the signed token is the credential, there is no session.
@@ -166,6 +209,9 @@ export async function proxy(request: NextRequest) {
   }
 
   response.headers.set("Content-Security-Policy", csp);
+  if (isSandboxHost) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
   return response;
 }
 
