@@ -16,9 +16,40 @@ const PROTECTED_PREFIXES = [
   "/fleet",
 ];
 
+// Keep the production domain on its Coming Soon experience while the app is
+// available on sandbox. Public marketing and unsubscribe pages stay open.
+const MAIN_APP_PREFIXES = [
+  "/admin",
+  "/auth",
+  "/cart",
+  "/checkout",
+  "/dashboard",
+  "/fleet",
+  "/forgot-password",
+  "/home",
+  "/login",
+  "/onboarding",
+  "/orders",
+  "/profile",
+  "/register",
+  "/reset-password",
+  "/u",
+  "/vendor",
+  "/vendors",
+];
+
+const MAIN_HOSTS = new Set(["kiakia.ng", "www.kiakia.ng"]);
+
 function requiresAuth(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
+function isMainAppRoute(pathname: string): boolean {
+  const normalizedPath = pathname.toLowerCase();
+  return MAIN_APP_PREFIXES.some(
+    (prefix) => normalizedPath === prefix || normalizedPath.startsWith(`${prefix}/`),
   );
 }
 
@@ -32,6 +63,14 @@ function supabaseHost(): string | null {
 
 export async function proxy(request: NextRequest) {
   const isSandboxHost = request.nextUrl.hostname.toLowerCase() === "sandbox.kiakia.ng";
+  const isMainHost = MAIN_HOSTS.has(request.nextUrl.hostname.toLowerCase());
+
+  // Direct links to app routes must not bypass the Coming Soon homepage on
+  // production. Keep the sandbox branch fully usable for internal testing.
+  if (isMainHost && isMainAppRoute(request.nextUrl.pathname)) {
+    const redirectStatus = request.method === "GET" || request.method === "HEAD" ? 307 : 303;
+    return NextResponse.redirect(new URL("/", request.url), redirectStatus);
+  }
 
   // RFC 8058 one-click unsubscribe POSTs to the same /unsubscribe?token=... URL the confirm page lives at.
   // A page cannot answer a POST that is not a Server Action (those carry a Next-Action header), so hand it
