@@ -1,0 +1,319 @@
+.scene {
+  --scene-width: 10rem;
+  --pivot-x: 8rem;
+  --plaque-width: 6.5rem;
+  --plaque-height: 9.75rem;
+  --rosette-width: 2.625rem;
+  --rosette-height: 2.625rem;
+  --rosette-top: 0.1875rem;
+  --lever-width: 7.25rem;
+  --lever-height: 2.25rem;
+  --lever-pivot-offset: 6.34375rem;
+  --lever-left: calc(var(--pivot-x) - var(--lever-pivot-offset));
+  --lever-top: 0.375rem;
+  --assembly-height: 18rem;
+  --feedback-top: 5.25rem;
+
+  position: relative;
+  z-index: 45;
+  display: block;
+  flex: none;
+  width: var(--scene-width);
+  height: 5rem;
+  overflow: visible;
+  isolation: isolate;
+  pointer-events: none;
+}
+
+.rosette {
+  position: absolute;
+  z-index: 2;
+  top: var(--rosette-top);
+  left: var(--pivot-x);
+  width: var(--rosette-width);
+  height: var(--rosette-height);
+  object-fit: contain;
+  pointer-events: none;
+  filter: saturate(0.82) brightness(1.04) drop-shadow(0 1px 2px rgb(65 39 18 / 20%));
+  transform: translateX(-50%);
+}
+
+.cord {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: var(--assembly-height);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.cordShadow,
+.cordCore,
+.cordTwist {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.cordShadow {
+  stroke: #50351f;
+  stroke-width: 2.6px;
+  stroke-opacity: 0.24;
+}
+
+.cordCore {
+  stroke: url(#restaurant-cord-tone);
+  stroke-width: 1.2px;
+}
+
+.cordTwist {
+  stroke: #f0d8ad;
+  stroke-width: 0.45px;
+  stroke-opacity: 0.8;
+  stroke-dasharray: 0.55 2.1;
+}
+
+.cordKnot {
+  fill: rgb(247 229 195 / 58%);
+  stroke: #8b6945;
+  stroke-width: 0.85px;
+  vector-effect: non-scaling-stroke;
+}
+
+.plaqueMotion {
+  position: absolute;
+  z-index: 5;
+  top: 4.5rem;
+  left: calc(var(--pivot-x) - (var(--plaque-width) / 2));
+  display: block;
+  width: var(--plaque-width);
+  height: var(--plaque-height);
+  transform-origin: 50% 5%;
+  filter: drop-shadow(0 7px 9px rgb(59 39 23 / 20%));
+  pointer-events: none;
+}
+
+.plaqueImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.message {
+  position: absolute;
+  top: 69%;
+  right: 10%;
+  left: 10%;
+  color: #4b3020;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.54rem, 0.72vw, 0.68rem);
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-shadow: 0 0.5px 0 rgb(255 239 210 / 85%), 0 -0.5px 0 rgb(66 43 26 / 14%);
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.leverButton {
+  position: absolute;
+  z-index: 3;
+  top: var(--lever-top);
+  left: var(--lever-left);
+  display: block;
+  width: var(--lever-width);
+  height: var(--lever-height);
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.leverButton:disabled {
+  cursor: wait;
+}
+
+.leverButton::before {
+  position: absolute;
+  inset: -0.5rem -0.125rem;
+  border-radius: 999px;
+  content: "";
+}
+
+.leverButton:focus-visible {
+  outline: 2px solid #7a3328;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgb(255 250 239 / 78%);
+}
+
+.leverMotion {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 87.5% 50%;
+  filter: drop-shadow(0 1px 2px rgb(46 29 16 / 22%));
+}
+
+.leverImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.feedback {
+  position: absolute;
+  z-index: 7;
+  top: var(--feedback-top);
+  right: calc(100% + 0.5rem);
+  width: 13rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.7rem 0.875rem;
+  border: 1px solid rgb(132 95 60 / 24%);
+  border-radius: 1rem;
+  background: rgb(255 253 247 / 97%);
+  box-shadow: 0 16px 36px -20px rgb(37 27 20 / 48%);
+  color: #57382a;
+  font-family: var(--font-inter-face, ui-sans-serif, system-ui, sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0.35rem);
+  transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+  visibility: hidden;
+}
+
+.feedbackVisible {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .scene {
+    --scene-width: 9rem;
+    --pivot-x: 6.625rem;
+    --plaque-width: 5.625rem;
+    --plaque-height: 8.4375rem;
+    --rosette-width: 2.125rem;
+    --rosette-height: 2.125rem;
+    --rosette-top: 0.1875rem;
+    --lever-width: 6rem;
+    --lever-height: 2rem;
+    --lever-pivot-offset: 5.25rem;
+    --lever-top: 0.25rem;
+    --assembly-height: 16rem;
+    --feedback-top: 5rem;
+  }
+
+  .plaqueMotion {
+    top: 4rem;
+  }
+
+  .message {
+    font-size: 0.58rem;
+    letter-spacing: 0.085em;
+  }
+}
+
+@media (max-width: 639px) {
+  .scene {
+    --scene-width: 7.875rem;
+    --pivot-x: 5.5rem;
+    --plaque-width: 5.625rem;
+    --plaque-height: 8.4375rem;
+    --rosette-width: 1.6rem;
+    --rosette-height: 1.6rem;
+    --rosette-top: 0.2rem;
+    --lever-width: 4.25rem;
+    --lever-height: 1.45rem;
+    --lever-pivot-offset: 3.71875rem;
+    --lever-top: 0.35rem;
+    --assembly-height: 14.75rem;
+    --feedback-top: 11.75rem;
+    height: 4rem;
+  }
+
+  .plaqueMotion {
+    top: 3.5rem;
+  }
+
+  .message {
+    top: 69%;
+    font-size: 0.58rem;
+    letter-spacing: 0.07em;
+  }
+
+  .feedback {
+    right: -0.25rem;
+    width: 10rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .scene {
+    --scene-width: 6.75rem;
+    --pivot-x: 5rem;
+    --plaque-width: 4.75rem;
+    --plaque-height: 7.125rem;
+    --rosette-width: 1.45rem;
+    --rosette-height: 1.45rem;
+    --rosette-top: 0.18rem;
+    --lever-width: 3.875rem;
+    --lever-height: 1.3rem;
+    --lever-pivot-offset: 3.390625rem;
+    --lever-top: 0.25rem;
+    --assembly-height: 13.5rem;
+    --feedback-top: 17.25rem;
+  }
+
+  .feedback {
+    width: 9rem;
+  }
+
+  .plaqueMotion {
+    top: 3.125rem;
+  }
+
+  .message {
+    font-size: 0.5rem;
+    letter-spacing: 0.055em;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .plaqueMotion,
+  .leverMotion {
+    will-change: transform;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plaqueMotion,
+  .leverMotion {
+    will-change: auto;
+  }
+
+  .feedback {
+    transition: none;
+  }
+}

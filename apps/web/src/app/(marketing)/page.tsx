@@ -4,15 +4,14 @@
 // Coming soon.
 //
 // Running order is deliberate: appetite first (Hero, Marquee, Cravings),
-// then the reason to believe it will be quick (Speed, HowItWorks), and only
-// then a slim Assurance band. Trust is a footnote to hunger here, not the
+// then the delivery journey (HowItWorks), followed by a slim Assurance band.
+// Trust is a footnote to hunger here, not the
 // pitch — a visitor arrives wanting dinner, not a payments explainer.
 import type { Metadata } from "next";
 import { Header } from "./_components/Header";
 import { Hero } from "./_components/Hero";
 import { Marquee } from "./_components/Marquee";
 import { Cravings } from "./_components/Cravings";
-import { Speed } from "./_components/Speed";
 import { HowItWorks } from "./_components/HowItWorks";
 import { Assurance } from "./_components/Assurance";
 import { Faq } from "./_components/Faq";
@@ -40,7 +39,6 @@ export default function MarketingHome() {
       <Hero />
       <Marquee />
       <Cravings />
-      <Speed />
       <HowItWorks />
       <Assurance />
       <Faq />

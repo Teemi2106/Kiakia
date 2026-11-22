@@ -6,7 +6,7 @@ import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DoorHangerCta } from "./DoorHangerCta";
+import { RestaurantSign } from "./RestaurantSign";
 
 const NAV = [
   { label: "What we deliver", href: "/#cravings" },
@@ -115,7 +115,7 @@ export function Header() {
             ))}
           </nav>
 
-          <DoorHangerCta />
+          <RestaurantSign />
         </div>
 
         {/* Read-progress rail, hairline along the header's bottom edge. */}

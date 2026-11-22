@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import styles from "./DoorHangerCta.module.css";
+import styles from "./RestaurantSign.module.css";
 
 const LOCKED_MESSAGE = "Not just yet. We're getting ready!";
 
 type DoorMotion = {
   angle: number;
   angularVelocity: number;
-  pointerAngle: number;
+  leverAngle: number;
   reducedMotion: boolean;
   lastScrollY: number;
   lastScrollAt: number;
@@ -17,14 +17,14 @@ type DoorMotion = {
   lockClickPlayed: boolean;
 };
 
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
 type LockClickAudio = {
   context: AudioContext;
   buffer: AudioBuffer;
 };
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
 
 function createLockClickAudio(): LockClickAudio | null {
   try {
@@ -40,7 +40,6 @@ function createLockClickAudio(): LockClickAudio | null {
 
     return { context, buffer };
   } catch {
-    // The visual interaction still works when audio is unavailable.
     return null;
   }
 }
@@ -59,7 +58,7 @@ function playLockClick(audio: LockClickAudio | null, delayMs: number) {
     filter.type = "bandpass";
     filter.frequency.setValueAtTime(1500, clickAt);
     filter.Q.setValueAtTime(0.85, clickAt);
-    volume.gain.setValueAtTime(0.035, clickAt);
+    volume.gain.setValueAtTime(0.025, clickAt);
     volume.gain.exponentialRampToValueAtTime(0.0001, clickAt + 0.04);
 
     source.connect(filter);
@@ -73,19 +72,25 @@ function playLockClick(audio: LockClickAudio | null, delayMs: number) {
   }
 }
 
-export function DoorHangerCta() {
+export function RestaurantSign() {
   const sceneRef = useRef<HTMLDivElement>(null);
-  const hangerRef = useRef<HTMLSpanElement>(null);
+  const plaqueRef = useRef<HTMLSpanElement>(null);
   const leverRef = useRef<HTMLSpanElement>(null);
   const leverButtonRef = useRef<HTMLButtonElement>(null);
+  const cordSvgRef = useRef<SVGSVGElement>(null);
+  const cordShadowRef = useRef<SVGPathElement>(null);
+  const cordCoreRef = useRef<SVGPathElement>(null);
+  const cordTwistRef = useRef<SVGPathElement>(null);
+  const cordKnotRef = useRef<SVGEllipseElement>(null);
   const lockClickAudioRef = useRef<LockClickAudio | null>(null);
   const attemptActiveRef = useRef(false);
-  const frameRequestRef = useRef<(() => void) | null>(null);
+  const frameRef = useRef(0);
+  const requestFrameRef = useRef<(() => void) | null>(null);
   const feedbackTimerRef = useRef<number | null>(null);
   const motionRef = useRef<DoorMotion>({
     angle: 0,
     angularVelocity: 0,
-    pointerAngle: 0,
+    leverAngle: 0,
     reducedMotion: false,
     lastScrollY: 0,
     lastScrollAt: 0,
@@ -97,18 +102,25 @@ export function DoorHangerCta() {
 
   useEffect(() => {
     const scene = sceneRef.current;
-    const hanger = hangerRef.current;
+    const plaque = plaqueRef.current;
     const lever = leverRef.current;
     const leverButton = leverButtonRef.current;
-    if (!scene || !hanger || !lever || !leverButton) return;
+    const cordSvg = cordSvgRef.current;
+    const cordShadow = cordShadowRef.current;
+    const cordCore = cordCoreRef.current;
+    const cordTwist = cordTwistRef.current;
+    const cordKnot = cordKnotRef.current;
 
-    lockClickAudioRef.current = createLockClickAudio();
+    if (!scene || !plaque || !lever || !leverButton || !cordSvg || !cordShadow || !cordCore || !cordTwist || !cordKnot) {
+      return;
+    }
+
     const motion = motionRef.current;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     motion.reducedMotion = reducedMotion.matches;
     motion.lastScrollY = window.scrollY;
     motion.lastScrollAt = performance.now();
-    let frame = 0;
+
     let lastFrameAt = performance.now();
 
     const showLockedMessage = () => {
@@ -122,39 +134,75 @@ export function DoorHangerCta() {
       }, 2400);
     };
 
+    const paintAssembly = () => {
+      const sceneBounds = scene.getBoundingClientRect();
+      const leverBounds = leverButton.getBoundingClientRect();
+      const pivotX = leverBounds.left - sceneBounds.left + leverBounds.width * 0.875;
+      const pivotY = leverBounds.top - sceneBounds.top + leverBounds.height * 0.5;
+      const loopRadius = clamp(leverBounds.width * 0.09, 5, 10);
+      const leverRadians = (motion.leverAngle * Math.PI) / 180;
+      const anchorX = pivotX - loopRadius * Math.cos(leverRadians);
+      const anchorY = pivotY + loopRadius * Math.sin(leverRadians);
+      const ropeLength = scene.clientWidth < 130 ? 45 : scene.clientWidth < 150 ? 51 : 58;
+      const angleRadians = (motion.angle * Math.PI) / 180;
+      const plaqueWidth = plaque.offsetWidth;
+      const plaqueHeight = plaque.offsetHeight;
+      const holeOffset = plaqueHeight * 0.05;
+      const endX = anchorX + ropeLength * Math.sin(angleRadians);
+      const endY = anchorY + ropeLength * Math.cos(angleRadians);
+      const deltaX = endX - anchorX;
+      const deltaY = endY - anchorY;
+      const softBow = 3 + Math.min(Math.abs(motion.angle) * 0.1, 1.5);
+      const side = motion.angle < 0 ? -1 : 1;
+      const curve = [
+        `M ${anchorX.toFixed(2)} ${anchorY.toFixed(2)}`,
+        `C ${(anchorX + deltaX * 0.32 + softBow * side).toFixed(2)} ${(anchorY + deltaY * 0.32).toFixed(2)}`,
+        `${(endX - deltaX * 0.28 + softBow * side).toFixed(2)} ${(endY - deltaY * 0.28).toFixed(2)}`,
+        `${endX.toFixed(2)} ${endY.toFixed(2)}`,
+      ].join(" ");
+
+      cordSvg.setAttribute("viewBox", `0 0 ${scene.clientWidth} ${cordSvg.clientHeight}`);
+      cordShadow.setAttribute("d", curve);
+      cordCore.setAttribute("d", curve);
+      cordTwist.setAttribute("d", curve);
+      cordKnot.setAttribute("cx", anchorX.toFixed(2));
+      cordKnot.setAttribute("cy", anchorY.toFixed(2));
+
+      plaque.style.left = `${anchorX - plaqueWidth / 2}px`;
+      plaque.style.top = `${anchorY + ropeLength - holeOffset}px`;
+      plaque.style.transform = `translate3d(${(ropeLength * Math.sin(angleRadians)).toFixed(2)}px, ${(ropeLength * (Math.cos(angleRadians) - 1)).toFixed(2)}px, 0) rotate(${motion.angle.toFixed(2)}deg)`;
+    };
+
     const animate = (time: number) => {
-      frame = 0;
-      const delta = Math.min((time - lastFrameAt) / 16.67, 2);
+      frameRef.current = 0;
+      const delta = Math.min(Math.max((time - lastFrameAt) / 16.67, 0.5), 2);
       lastFrameAt = time;
 
       if (!motion.reducedMotion) {
-        const idleSway = Math.sin(time * 0.00115) * 0.24;
-        const targetAngle = idleSway + motion.pointerAngle;
-        motion.angularVelocity += (targetAngle - motion.angle) * 0.04 * delta;
-        motion.angularVelocity *= Math.pow(0.92, delta);
+        const idleAngle = Math.sin(time * 0.00105) * 0.38;
+        motion.angularVelocity += (idleAngle - motion.angle) * 0.014 * delta;
+        motion.angularVelocity *= Math.pow(0.945, delta);
       } else {
-        motion.angularVelocity *= Math.pow(0.82, delta);
+        motion.angularVelocity *= Math.pow(0.72, delta);
       }
 
-      motion.angle = clamp(motion.angle + motion.angularVelocity * delta, -12, 12);
-      hanger.style.transform = `rotate(${motion.angle.toFixed(2)}deg)`;
+      motion.angle = clamp(motion.angle + motion.angularVelocity * delta, -10, 10);
 
       let leverAngle = 0;
       if (attemptActiveRef.current) {
         const elapsed = time - motion.attemptStartedAt;
-        const pressDuration = motion.reducedMotion ? 110 : 155;
-        const maxLeverAngle = motion.reducedMotion ? 7 : 14;
+        const pressDuration = motion.reducedMotion ? 85 : 145;
+        const maxLeverAngle = motion.reducedMotion ? 7 : 12;
 
         if (elapsed <= pressDuration) {
-          const pressEase = 1 - Math.exp(-elapsed / (motion.reducedMotion ? 42 : 54));
-          leverAngle = maxLeverAngle * pressEase;
+          leverAngle = maxLeverAngle * (1 - Math.exp(-elapsed / (motion.reducedMotion ? 38 : 52)));
         } else {
           const releaseTime = elapsed - pressDuration;
-          const spring = Math.exp(-releaseTime / (motion.reducedMotion ? 105 : 150));
-          const bounce = Math.cos(releaseTime / (motion.reducedMotion ? 43 : 48));
-          const vibration = (motion.reducedMotion ? 0.3 : 0.8)
-            * Math.sin(releaseTime / 7)
-            * Math.exp(-releaseTime / 45);
+          const spring = Math.exp(-releaseTime / (motion.reducedMotion ? 76 : 132));
+          const bounce = Math.cos(releaseTime / (motion.reducedMotion ? 32 : 42));
+          const vibration = (motion.reducedMotion ? 0.16 : 0.55)
+            * Math.sin(releaseTime / 8)
+            * Math.exp(-releaseTime / 48);
           leverAngle = maxLeverAngle * spring * bounce + vibration;
         }
 
@@ -163,33 +211,34 @@ export function DoorHangerCta() {
           showLockedMessage();
         }
 
-        if (elapsed >= (motion.reducedMotion ? 500 : 720)) {
+        if (elapsed >= (motion.reducedMotion ? 400 : 700)) {
           attemptActiveRef.current = false;
           motion.attemptStartedAt = 0;
           leverAngle = 0;
           if (motion.reducedMotion) {
             motion.angle = 0;
             motion.angularVelocity = 0;
-            hanger.style.transform = "none";
           }
           setIsAttempting(false);
         }
       }
 
-      lever.style.transform = `rotate(${(-leverAngle).toFixed(2)}deg)`;
+      motion.leverAngle = leverAngle;
+      lever.style.transform = `rotate(${-leverAngle.toFixed(2)}deg)`;
+      paintAssembly();
 
       if (!motion.reducedMotion || attemptActiveRef.current) {
-        frame = window.requestAnimationFrame(animate);
+        frameRef.current = window.requestAnimationFrame(animate);
       }
     };
 
     const requestFrame = () => {
-      if (frame || (motion.reducedMotion && !attemptActiveRef.current)) return;
+      if (frameRef.current || (motion.reducedMotion && !attemptActiveRef.current)) return;
       lastFrameAt = performance.now();
-      frame = window.requestAnimationFrame(animate);
+      frameRef.current = window.requestAnimationFrame(animate);
     };
 
-    frameRequestRef.current = requestFrame;
+    requestFrameRef.current = requestFrame;
 
     const onScroll = () => {
       const now = performance.now();
@@ -200,22 +249,13 @@ export function DoorHangerCta() {
       motion.lastScrollAt = now;
 
       if (!motion.reducedMotion) {
-        // Downward scroll pushes the hanging sign back; upward scroll pushes it forward.
-        motion.angularVelocity += clamp(-velocity * 0.26, -2.4, 2.4);
+        motion.angularVelocity += clamp(-velocity * 0.18, -2, 2);
         requestFrame();
       }
     };
 
-    const onPointerMove = (event: PointerEvent) => {
-      if (motion.reducedMotion || event.pointerType === "touch") return;
-      const bounds = leverButton.getBoundingClientRect();
-      const position = clamp((event.clientX - bounds.left) / bounds.width, 0, 1);
-      motion.pointerAngle = (position - 0.5) * 1.15;
-      requestFrame();
-    };
-
-    const onPointerLeave = () => {
-      motion.pointerAngle = 0;
+    const onResize = () => {
+      paintAssembly();
       requestFrame();
     };
 
@@ -224,32 +264,33 @@ export function DoorHangerCta() {
       if (event.matches && !attemptActiveRef.current) {
         motion.angle = 0;
         motion.angularVelocity = 0;
-        motion.pointerAngle = 0;
-        hanger.style.transform = "none";
+        motion.leverAngle = 0;
+        lever.style.transform = "none";
+        paintAssembly();
       } else {
         requestFrame();
       }
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    leverButton.addEventListener("pointermove", onPointerMove, { passive: true });
-    leverButton.addEventListener("pointerleave", onPointerLeave);
+    window.addEventListener("resize", onResize, { passive: true });
     reducedMotion.addEventListener("change", onMotionPreferenceChange);
+    paintAssembly();
     requestFrame();
 
     return () => {
       window.removeEventListener("scroll", onScroll);
-      leverButton.removeEventListener("pointermove", onPointerMove);
-      leverButton.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("resize", onResize);
       reducedMotion.removeEventListener("change", onMotionPreferenceChange);
-      frameRequestRef.current = null;
-      if (frame) window.cancelAnimationFrame(frame);
+      if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
       if (feedbackTimerRef.current !== null) {
         window.clearTimeout(feedbackTimerRef.current);
       }
       if (lockClickAudioRef.current?.context.state !== "closed") {
         void lockClickAudioRef.current?.context.close().catch(() => undefined);
       }
+      frameRef.current = 0;
+      requestFrameRef.current = null;
       lockClickAudioRef.current = null;
     };
   }, []);
@@ -258,17 +299,21 @@ export function DoorHangerCta() {
     if (attemptActiveRef.current) return;
     attemptActiveRef.current = true;
     const motion = motionRef.current;
+
     if (feedbackTimerRef.current !== null) {
       window.clearTimeout(feedbackTimerRef.current);
       feedbackTimerRef.current = null;
     }
+
+    lockClickAudioRef.current ??= createLockClickAudio();
     motion.attemptStartedAt = performance.now();
     motion.lockClickPlayed = false;
-    motion.angularVelocity += motion.reducedMotion ? -0.9 : -1.6;
+    motion.angularVelocity += motion.reducedMotion ? -0.55 : -1.45;
     setIsAttempting(true);
     setShowFeedback(false);
-    playLockClick(lockClickAudioRef.current, motion.reducedMotion ? 110 : 155);
-    frameRequestRef.current?.();
+    playLockClick(lockClickAudioRef.current, motion.reducedMotion ? 85 : 145);
+
+    requestFrameRef.current?.();
   };
 
   return (
@@ -279,17 +324,37 @@ export function DoorHangerCta() {
         alt=""
         width={1254}
         height={1254}
-        sizes="(max-width: 379px) 28px, (max-width: 639px) 32px, (max-width: 1023px) 36px, (max-width: 1199px) 42px, 48px"
+        sizes="(max-width: 639px) 26px, (max-width: 1023px) 34px, 42px"
       />
 
-      <span ref={hangerRef} className={styles.hanger}>
+      <svg
+        ref={cordSvgRef}
+        className={styles.cord}
+        viewBox="0 0 160 288"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="restaurant-cord-tone" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#65472c" />
+            <stop offset="0.48" stopColor="#c5a273" />
+            <stop offset="1" stopColor="#795637" />
+          </linearGradient>
+        </defs>
+        <path ref={cordShadowRef} className={styles.cordShadow} />
+        <path ref={cordCoreRef} className={styles.cordCore} />
+        <path ref={cordTwistRef} className={styles.cordTwist} />
+        <ellipse ref={cordKnotRef} className={styles.cordKnot} rx="2.4" ry="1.8" />
+      </svg>
+
+      <span ref={plaqueRef} className={styles.plaqueMotion}>
         <Image
-          className={styles.hangerImage}
-          src="/assets/restaurant-door-hanger-elongated.png"
+          className={styles.plaqueImage}
+          src="/assets/restaurant-sign-plaque.png"
           alt=""
           width={1024}
           height={1536}
-          sizes="(max-width: 379px) 84px, (max-width: 639px) 94px, (max-width: 1023px) 128px, (max-width: 1199px) 148px, 166px"
+          sizes="(max-width: 359px) 76px, (max-width: 639px) 90px, (max-width: 1023px) 90px, 104px"
         />
         <span className={styles.message}>
           COMING
@@ -305,6 +370,7 @@ export function DoorHangerCta() {
         onClick={tryDoor}
         disabled={isAttempting}
         aria-label={isAttempting ? "Trying the locked KiaKia door" : "Try the KiaKia door handle"}
+        aria-describedby="restaurant-sign-feedback"
       >
         <span ref={leverRef} className={styles.leverMotion}>
           <Image
@@ -313,13 +379,13 @@ export function DoorHangerCta() {
             alt=""
             width={2172}
             height={724}
-            sizes="(max-width: 379px) 64px, (max-width: 639px) 84px, (max-width: 1023px) 120px, (max-width: 1199px) 132px, 150px"
+            sizes="(max-width: 639px) 68px, (max-width: 1023px) 94px, 116px"
           />
         </span>
       </button>
 
       <span
-        id="door-hanger-feedback"
+        id="restaurant-sign-feedback"
         className={`${styles.feedback} ${showFeedback ? styles.feedbackVisible : ""}`}
         role="status"
         aria-live="polite"
