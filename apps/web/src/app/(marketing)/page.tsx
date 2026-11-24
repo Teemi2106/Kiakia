@@ -33,7 +33,7 @@ export default async function MarketingHome() {
 
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
-      <Header account={account} />
+      <Header account={account} prelaunch />
       <Hero />
       <LaunchCountdown
         launchAt={LAUNCH_AT_ISO}

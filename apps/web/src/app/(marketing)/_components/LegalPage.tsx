@@ -39,7 +39,7 @@ export async function LegalPage({
 
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
-      <Header account={account} />
+      <Header account={account} prelaunch />
       <article className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
         <h1 className="font-sora text-3xl font-bold text-[#1C1B1B]">{title}</h1>
         <p className="mt-2 text-sm text-[#5B403C]/80">Last updated: {LEGAL.lastUpdated}</p>

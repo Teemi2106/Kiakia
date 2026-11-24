@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { signOutAction } from "@/app/actions/auth";
+import { DoorHangerCta } from "./DoorHangerCta";
 
 interface Account {
   fullName: string;
@@ -202,15 +203,7 @@ export function Header({ account, prelaunch = false }: { account: Account | null
                 </Link>
               </>
             )}
-            {prelaunch && (
-              <Link
-                href="/#notify"
-                className="kk-shine group inline-flex items-center gap-2 rounded-full bg-kk-red px-5 py-2.5 font-inter text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(182,25,19,0.9)] transition-colors hover:bg-kk-red-deep"
-              >
-                Get launch alert
-                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-              </Link>
-            )}
+            {prelaunch && <DoorHangerCta />}
           </div>
 
           <Link
@@ -337,6 +330,11 @@ export function Header({ account, prelaunch = false }: { account: Account | null
             </>
           )}
         </div>
+        {prelaunch && (
+          <div className="border-t border-kk-line/60 px-5 py-5 text-center">
+            <p className="font-inter text-sm font-semibold text-kk-cocoa">KiaKia is coming soon.</p>
+          </div>
+        )}
       </div>
     </>
   );
