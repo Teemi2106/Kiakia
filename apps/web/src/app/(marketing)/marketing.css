@@ -379,9 +379,8 @@
 .kk-ticket-wrap { position: relative; width: min(100%, 29rem); margin: 0 auto; perspective: 1200px; }
 .kk-ticket { position: relative; width: 100%; aspect-ratio: 1122 / 1402; transform: rotate(1.1deg); animation: kk-ticket-arrive 900ms cubic-bezier(.2,.8,.2,1) both, kk-ticket-float 7s ease-in-out 1s infinite; filter: drop-shadow(0 2rem 2rem rgba(56, 37, 25, 0.2)); }
 .kk-ticket-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-/* The blank paper narrows and leans left as it hangs. Shear the whole print
-   layer with the same angle, and inset it so its rules stay on the paper. */
-.kk-ticket-content { position: absolute; inset: 24% 21% 8.5%; display: flex; flex-direction: column; align-items: stretch; color: #332923; text-align: center; transform: skewX(-5deg); transform-origin: center; }
+/* Match the print plane to the paper lean and its perspective taper. */
+.kk-ticket-content { position: absolute; inset: 24% 21% 8.5%; display: flex; flex-direction: column; align-items: stretch; color: #332923; text-align: center; transform: rotateX(-12deg) rotate(1deg) skewX(-8deg); transform-origin: center; }
 .kk-ticket-brandline { display: flex; align-items: center; justify-content: center; gap: 0.45rem; }
 .kk-ticket-logo { width: clamp(4.5rem, 13vw, 7.5rem); height: auto; mix-blend-mode: multiply; }
 .kk-ticket-dot { width: 0.45rem; height: 0.45rem; flex: 0 0 auto; border-radius: 50%; background: #bc3022; box-shadow: 0 0 0 0.2rem rgba(188, 48, 34, 0.12); }
