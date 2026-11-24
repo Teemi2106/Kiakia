@@ -7,7 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { signOutAction } from "@/app/actions/auth";
-import { DoorHangerCta } from "./DoorHangerCta";
+import { RestaurantSign } from "./RestaurantSign";
 
 interface Account {
   fullName: string;
@@ -21,14 +21,6 @@ const NAV = [
   { label: "For vendors", href: "/partner" },
   { label: "For riders", href: "/ride" },
   { label: "FAQ", href: "/#faq" },
-] as const;
-
-const PRELAUNCH_NAV = [
-  { label: "Launch countdown", href: "/#ticket" },
-  { label: "Get launch alert", href: "/#notify" },
-  { label: "For vendors", href: "/partner" },
-  { label: "For riders", href: "/ride" },
-  { label: "Support", href: "/support" },
 ] as const;
 
 export function Header({ account, prelaunch = false }: { account: Account | null; prelaunch?: boolean }) {
@@ -82,7 +74,6 @@ export function Header({ account, prelaunch = false }: { account: Account | null
   }, [isAccountMenuOpen]);
 
   const closeMenu = useCallback(() => setIsMobileMenuOpen(false), []);
-  const navItems = prelaunch ? PRELAUNCH_NAV : NAV;
 
   // Lock the page behind the drawer, and let Escape close it.
   useEffect(() => {
@@ -132,7 +123,7 @@ export function Header({ account, prelaunch = false }: { account: Account | null
           </Link>
 
           <nav className="hidden items-center gap-1 lg:flex">
-            {navItems.map((item) => (
+            {NAV.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
@@ -144,75 +135,80 @@ export function Header({ account, prelaunch = false }: { account: Account | null
             ))}
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
-            {account ? (
-              <div className="relative" ref={accountMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsAccountMenuOpen((open) => !open)}
-                  aria-expanded={isAccountMenuOpen}
-                  className="flex items-center gap-2 rounded-full border border-kk-line bg-white/80 py-1.5 pl-1.5 pr-3 transition-colors hover:border-kk-red/40 hover:bg-white"
-                >
-                  <AccountAvatar account={account} />
-                  <span className="max-w-[9rem] truncate font-inter text-sm font-medium text-kk-ink">
-                    {account.fullName}
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "size-4 text-kk-cocoa transition-transform duration-200",
-                      isAccountMenuOpen && "rotate-180",
-                    )}
-                  />
-                </button>
-
-                {isAccountMenuOpen && (
-                  <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-kk-line bg-white py-1.5 shadow-[0_20px_45px_-20px_rgba(28,27,27,0.35)]">
-                    <Link
-                      href={account.accountHref}
-                      className="block px-4 py-2.5 font-inter text-sm text-kk-ink transition-colors hover:bg-kk-cream"
-                      onClick={() => setIsAccountMenuOpen(false)}
+          {prelaunch ? (
+            <RestaurantSign />
+          ) : (
+            <>
+              <div className="hidden items-center gap-3 lg:flex">
+                {account ? (
+                  <div className="relative" ref={accountMenuRef}>
+                    <button
+                      type="button"
+                      onClick={() => setIsAccountMenuOpen((open) => !open)}
+                      aria-expanded={isAccountMenuOpen}
+                      className="flex items-center gap-2 rounded-full border border-kk-line bg-white/80 py-1.5 pl-1.5 pr-3 transition-colors hover:border-kk-red/40 hover:bg-white"
                     >
-                      My account
-                    </Link>
-                    <form action={signOutAction}>
-                      <button
-                        type="submit"
-                        className="flex w-full items-center gap-2 px-4 py-2.5 font-inter text-sm text-kk-red transition-colors hover:bg-kk-red-soft"
-                      >
-                        <LogOut className="size-4" />
-                        Log out
-                      </button>
-                    </form>
+                      <AccountAvatar account={account} />
+                      <span className="max-w-[9rem] truncate font-inter text-sm font-medium text-kk-ink">
+                        {account.fullName}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "size-4 text-kk-cocoa transition-transform duration-200",
+                          isAccountMenuOpen && "rotate-180",
+                        )}
+                      />
+                    </button>
+
+                    {isAccountMenuOpen && (
+                      <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-kk-line bg-white py-1.5 shadow-[0_20px_45px_-20px_rgba(28,27,27,0.35)]">
+                        <Link
+                          href={account.accountHref}
+                          className="block px-4 py-2.5 font-inter text-sm text-kk-ink transition-colors hover:bg-kk-cream"
+                          onClick={() => setIsAccountMenuOpen(false)}
+                        >
+                          My account
+                        </Link>
+                        <form action={signOutAction}>
+                          <button
+                            type="submit"
+                            className="flex w-full items-center gap-2 px-4 py-2.5 font-inter text-sm text-kk-red transition-colors hover:bg-kk-red-soft"
+                          >
+                            <LogOut className="size-4" />
+                            Log out
+                          </button>
+                        </form>
+                      </div>
+                    )}
                   </div>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="rounded-full px-4 py-2 font-inter text-[15px] font-semibold text-kk-ink transition-colors hover:text-kk-red"
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      href="/home"
+                      className="kk-shine group inline-flex items-center gap-2 rounded-full bg-kk-red px-5 py-2.5 font-inter text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(182,25,19,0.9)] transition-colors hover:bg-kk-red-deep"
+                    >
+                      Order now
+                      <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                    </Link>
+                  </>
                 )}
               </div>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="rounded-full px-4 py-2 font-inter text-[15px] font-semibold text-kk-ink transition-colors hover:text-kk-red"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/home"
-                  className={cn("kk-shine group inline-flex items-center gap-2 rounded-full bg-kk-red px-5 py-2.5 font-inter text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(182,25,19,0.9)] transition-colors hover:bg-kk-red-deep", prelaunch && "hidden")}
-                >
-                  Order now
-                  <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-                </Link>
-              </>
-            )}
-            {prelaunch && <DoorHangerCta />}
-          </div>
 
-          <Link
-            className="-mr-2 rounded-full p-2 text-kk-red transition-colors hover:bg-kk-red/10 lg:hidden"
-            aria-label={account ? "Your account" : "Log in"}
-            href={account ? account.accountHref : "/login"}
-          >
-            {account ? <AccountAvatar account={account} /> : <User className="size-5" />}
-          </Link>
+              <Link
+                className="-mr-2 rounded-full p-2 text-kk-red transition-colors hover:bg-kk-red/10 lg:hidden"
+                aria-label={account ? "Your account" : "Log in"}
+                href={account ? account.accountHref : "/login"}
+              >
+                {account ? <AccountAvatar account={account} /> : <User className="size-5" />}
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Read-progress rail, hairline along the header's bottom edge. */}
@@ -263,7 +259,7 @@ export function Header({ account, prelaunch = false }: { account: Account | null
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 px-5 pt-6">
-          {navItems.map((item, i) => (
+          {NAV.map((item, i) => (
             <Link
               key={item.label}
               href={item.href}
@@ -282,16 +278,6 @@ export function Header({ account, prelaunch = false }: { account: Account | null
         <div className="flex flex-col gap-3 border-t border-kk-line/60 p-5">
           {account ? (
             <>
-              {prelaunch && (
-                <Link
-                  href="/#notify"
-                  onClick={closeMenu}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-kk-red px-4 py-3.5 font-inter text-sm font-semibold text-white"
-                >
-                  Get launch alert
-                  <ArrowRight className="size-4" />
-                </Link>
-              )}
               <Link
                 href={account.accountHref}
                 className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 font-inter text-sm font-semibold text-kk-ink"
@@ -310,14 +296,14 @@ export function Header({ account, prelaunch = false }: { account: Account | null
                 </button>
               </form>
             </>
-          ) : (
+          ) : !prelaunch ? (
             <>
               <Link
-                href={prelaunch ? "/#notify" : "/home"}
+                href="/home"
                 onClick={closeMenu}
                 className="flex items-center justify-center gap-2 rounded-2xl bg-kk-red px-4 py-3.5 font-inter text-sm font-semibold text-white"
               >
-                {prelaunch ? "Get launch alert" : "Order now"}
+                Order now
                 <ArrowRight className="size-4" />
               </Link>
               <Link
