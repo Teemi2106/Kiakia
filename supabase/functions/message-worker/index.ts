@@ -28,6 +28,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { sendOutboxPush } from "../_shared/expo.ts";
 import {
+  buildLaunchEmail,
+  createLaunchDeliveryToken,
+  hashLaunchDeliveryToken,
+  KIAKIA_PRODUCTION_URL,
+} from "../_shared/launch-email.ts";
+import {
   buildEmail,
   buildSms,
   emailUnsubscribeUrl,
@@ -110,17 +116,68 @@ async function processRow(supabase: any, cfg: ReturnType<typeof loadConfig>, row
     } else if (row.channel === "email") {
       provider = "resend";
       let unsubscribeUrl: string | undefined;
-      if (row.category === "promotional") {
-        if (!row.recipient_user_id || !cfg.siteUrl || !cfg.unsubscribeSecret) {
-          // Never send a promotional message without a working opt-out path.
-          result = { ok: false, permanent: false, error: "provider_not_configured: unsubscribe" };
+      if (row.kind === "launch_welcome" || row.kind === "launch_announcement") {
+        if (!row.launch_subscriber_id || !cfg.unsubscribeSecret) {
+          result = { ok: false, permanent: false, error: "provider_not_configured: launch_unsubscribe" };
           return await record(supabase, row, provider, result);
         }
-        const token = await signUnsubscribeToken(row.recipient_user_id, "email", cfg.unsubscribeSecret);
-        unsubscribeUrl = emailUnsubscribeUrl(cfg.siteUrl, token);
+
+        // Derive a stable, high-entropy token per outbox row. Resend may have
+        // accepted the first attempt even if message_mark_sent timed out; a
+        // retry must use the exact same payload for its idempotency key.
+        const token = await createLaunchDeliveryToken(cfg.unsubscribeSecret, row.id, row.launch_subscriber_id);
+        const tokenHash = await hashLaunchDeliveryToken(token);
+        const { data: issuedCount, error: issueError } = await supabase.rpc("issue_launch_unsubscribe_tokens", {
+          p_tokens: [{ subscriber_id: row.launch_subscriber_id, token_hash: tokenHash }],
+        });
+        if (issueError) {
+          result = { ok: false, permanent: false, error: "launch_unsubscribe_token_issue_failed" };
+          return await record(supabase, row, provider, result);
+        }
+        if (issuedCount !== 1) {
+          // A retry reuses the hash already stored on the first attempt. If it
+          // is not valid now, the subscriber opted out and the message stops.
+          const { data: tokenValid, error: validateError } = await supabase.rpc("validate_launch_unsubscribe_token", {
+            p_token_hash: tokenHash,
+          });
+          if (validateError) {
+            result = { ok: false, permanent: false, error: "launch_unsubscribe_token_check_failed" };
+            return await record(supabase, row, provider, result);
+          }
+          if (tokenValid !== true) {
+            await supabase.rpc("message_mark_suppressed", { p_id: row.id, p_reason: "opted_out" });
+            return "suppressed";
+          }
+        }
+
+        const unsubscribe = new URL("/launch/unsubscribe", KIAKIA_PRODUCTION_URL);
+        unsubscribe.searchParams.set("token", token);
+        unsubscribeUrl = unsubscribe.toString();
+        const oneClickUnsubscribe = new URL("/launch/unsubscribe/one-click", KIAKIA_PRODUCTION_URL);
+        oneClickUnsubscribe.searchParams.set("token", token);
+        const kind = row.kind === "launch_welcome" ? "welcome" : "announcement";
+        const email = buildLaunchEmail(kind, unsubscribeUrl);
+        result = await sendEmailViaResend(
+          cfg,
+          row,
+          email,
+          unsubscribeUrl,
+          undefined,
+          cfg.oneClickUnsubscribe ? oneClickUnsubscribe.toString() : unsubscribeUrl,
+        );
+      } else {
+        if (row.category === "promotional") {
+          if (!row.recipient_user_id || !cfg.siteUrl || !cfg.unsubscribeSecret) {
+            // Never send a promotional message without a working opt-out path.
+            result = { ok: false, permanent: false, error: "provider_not_configured: unsubscribe" };
+            return await record(supabase, row, provider, result);
+          }
+          const token = await signUnsubscribeToken(row.recipient_user_id, "email", cfg.unsubscribeSecret);
+          unsubscribeUrl = emailUnsubscribeUrl(cfg.siteUrl, token);
+        }
+        const email = buildEmail({ subject: row.subject ?? "", body: row.body, unsubscribeUrl });
+        result = await sendEmailViaResend(cfg, row, email, unsubscribeUrl);
       }
-      const email = buildEmail({ subject: row.subject ?? "", body: row.body, unsubscribeUrl });
-      result = await sendEmailViaResend(cfg, row, email, unsubscribeUrl);
     } else {
       provider = "termii";
       let optOutUrl: string | undefined;

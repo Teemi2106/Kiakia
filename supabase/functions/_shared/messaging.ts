@@ -34,6 +34,9 @@ export interface OutboxRow {
   /** Push rows only: the structured payload ({type, orderId, offerId}); null otherwise. */
   data?: Record<string, unknown> | null;
   expires_at?: string | null;
+  /** Pre-launch contacts are separate from auth.users and carry their own consent record. */
+  launch_subscriber_id?: string | null;
+  launch_campaign_id?: string | null;
 }
 
 export type SendResult =
@@ -264,13 +267,14 @@ export async function sendEmailViaResend(
   email: BuiltEmail,
   unsubscribeUrl: string | undefined,
   fetchImpl: FetchLike = fetch,
+  listUnsubscribeUrl = unsubscribeUrl,
 ): Promise<SendResult> {
   if (!cfg.resendApiKey || !cfg.fromEmail) {
     return { ok: false, permanent: false, error: "provider_not_configured: resend" };
   }
   const headers: Record<string, string> = {};
-  if (unsubscribeUrl) {
-    headers["List-Unsubscribe"] = `<${unsubscribeUrl}>`;
+  if (listUnsubscribeUrl) {
+    headers["List-Unsubscribe"] = `<${listUnsubscribeUrl}>`;
     if (cfg.oneClickUnsubscribe) headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
   }
   const payload: Record<string, unknown> = {

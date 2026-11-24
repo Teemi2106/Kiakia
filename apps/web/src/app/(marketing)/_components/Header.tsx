@@ -2,11 +2,17 @@
 "use client";
 
 import { cn } from "@kiakia/ui";
-import { Menu, X } from "lucide-react";
+import { ArrowRight, ChevronDown, LogOut, Menu, User, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RestaurantSign } from "./RestaurantSign";
+import { signOutAction } from "@/app/actions/auth";
+
+interface Account {
+  fullName: string;
+  avatarUrl: string | null;
+  accountHref: string;
+}
 
 const NAV = [
   { label: "What we deliver", href: "/#cravings" },
@@ -16,9 +22,19 @@ const NAV = [
   { label: "FAQ", href: "/#faq" },
 ] as const;
 
-export function Header() {
+const PRELAUNCH_NAV = [
+  { label: "Launch countdown", href: "/#ticket" },
+  { label: "Get launch alert", href: "/#notify" },
+  { label: "For vendors", href: "/partner" },
+  { label: "For riders", href: "/ride" },
+  { label: "Support", href: "/support" },
+] as const;
+
+export function Header({ account, prelaunch = false }: { account: Account | null; prelaunch?: boolean }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
   // Read-progress rail + the transparent→solid swap. Written straight to the
@@ -53,7 +69,19 @@ export function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isAccountMenuOpen) return;
+    function onClickOutside(event: MouseEvent) {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
+        setIsAccountMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [isAccountMenuOpen]);
+
   const closeMenu = useCallback(() => setIsMobileMenuOpen(false), []);
+  const navItems = prelaunch ? PRELAUNCH_NAV : NAV;
 
   // Lock the page behind the drawer, and let Escape close it.
   useEffect(() => {
@@ -80,7 +108,7 @@ export function Header() {
             : "bg-transparent",
         )}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:h-20 sm:gap-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:h-20 sm:px-6 lg:px-8">
           <button
             type="button"
             className="-ml-2 rounded-full p-2 text-kk-red transition-colors hover:bg-kk-red/10 lg:hidden"
@@ -103,7 +131,7 @@ export function Header() {
           </Link>
 
           <nav className="hidden items-center gap-1 lg:flex">
-            {NAV.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
@@ -115,7 +143,83 @@ export function Header() {
             ))}
           </nav>
 
-          <RestaurantSign />
+          <div className="hidden items-center gap-3 lg:flex">
+            {account ? (
+              <div className="relative" ref={accountMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsAccountMenuOpen((open) => !open)}
+                  aria-expanded={isAccountMenuOpen}
+                  className="flex items-center gap-2 rounded-full border border-kk-line bg-white/80 py-1.5 pl-1.5 pr-3 transition-colors hover:border-kk-red/40 hover:bg-white"
+                >
+                  <AccountAvatar account={account} />
+                  <span className="max-w-[9rem] truncate font-inter text-sm font-medium text-kk-ink">
+                    {account.fullName}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "size-4 text-kk-cocoa transition-transform duration-200",
+                      isAccountMenuOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+
+                {isAccountMenuOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-kk-line bg-white py-1.5 shadow-[0_20px_45px_-20px_rgba(28,27,27,0.35)]">
+                    <Link
+                      href={account.accountHref}
+                      className="block px-4 py-2.5 font-inter text-sm text-kk-ink transition-colors hover:bg-kk-cream"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                    >
+                      My account
+                    </Link>
+                    <form action={signOutAction}>
+                      <button
+                        type="submit"
+                        className="flex w-full items-center gap-2 px-4 py-2.5 font-inter text-sm text-kk-red transition-colors hover:bg-kk-red-soft"
+                      >
+                        <LogOut className="size-4" />
+                        Log out
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="rounded-full px-4 py-2 font-inter text-[15px] font-semibold text-kk-ink transition-colors hover:text-kk-red"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/home"
+                  className={cn("kk-shine group inline-flex items-center gap-2 rounded-full bg-kk-red px-5 py-2.5 font-inter text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(182,25,19,0.9)] transition-colors hover:bg-kk-red-deep", prelaunch && "hidden")}
+                >
+                  Order now
+                  <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                </Link>
+              </>
+            )}
+            {prelaunch && (
+              <Link
+                href="/#notify"
+                className="kk-shine group inline-flex items-center gap-2 rounded-full bg-kk-red px-5 py-2.5 font-inter text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(182,25,19,0.9)] transition-colors hover:bg-kk-red-deep"
+              >
+                Get launch alert
+                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+              </Link>
+            )}
+          </div>
+
+          <Link
+            className="-mr-2 rounded-full p-2 text-kk-red transition-colors hover:bg-kk-red/10 lg:hidden"
+            aria-label={account ? "Your account" : "Log in"}
+            href={account ? account.accountHref : "/login"}
+          >
+            {account ? <AccountAvatar account={account} /> : <User className="size-5" />}
+          </Link>
         </div>
 
         {/* Read-progress rail, hairline along the header's bottom edge. */}
@@ -166,7 +270,7 @@ export function Header() {
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 px-5 pt-6">
-          {NAV.map((item, i) => (
+          {navItems.map((item, i) => (
             <Link
               key={item.label}
               href={item.href}
@@ -182,12 +286,78 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="border-t border-kk-line/60 px-5 py-5 text-center">
-          <p className="font-inter text-sm font-semibold text-kk-cocoa">
-            KiaKia is coming soon.
-          </p>
+        <div className="flex flex-col gap-3 border-t border-kk-line/60 p-5">
+          {account ? (
+            <>
+              {prelaunch && (
+                <Link
+                  href="/#notify"
+                  onClick={closeMenu}
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-kk-red px-4 py-3.5 font-inter text-sm font-semibold text-white"
+                >
+                  Get launch alert
+                  <ArrowRight className="size-4" />
+                </Link>
+              )}
+              <Link
+                href={account.accountHref}
+                className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 font-inter text-sm font-semibold text-kk-ink"
+                onClick={closeMenu}
+              >
+                <AccountAvatar account={account} />
+                <span className="truncate">{account.fullName}</span>
+              </Link>
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-kk-line px-4 py-3 font-inter text-sm font-semibold text-kk-red"
+                >
+                  <LogOut className="size-4" />
+                  Log out
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link
+                href={prelaunch ? "/#notify" : "/home"}
+                onClick={closeMenu}
+                className="flex items-center justify-center gap-2 rounded-2xl bg-kk-red px-4 py-3.5 font-inter text-sm font-semibold text-white"
+              >
+                {prelaunch ? "Get launch alert" : "Order now"}
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                href="/login"
+                onClick={closeMenu}
+                className="flex items-center justify-center rounded-2xl border border-kk-line px-4 py-3.5 font-inter text-sm font-semibold text-kk-ink"
+              >
+                Log in
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </>
+  );
+}
+
+function AccountAvatar({ account }: { account: Account }) {
+  if (account.avatarUrl) {
+    return (
+      <Image
+        src={account.avatarUrl}
+        alt=""
+        width={28}
+        height={28}
+        className="size-7 shrink-0 rounded-full object-cover"
+      />
+    );
+  }
+
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-kk-red/10 font-inter text-xs font-semibold text-kk-red">
+      {account.fullName.trim().charAt(0).toUpperCase() || "?"}
+    </span>
   );
 }

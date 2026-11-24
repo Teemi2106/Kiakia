@@ -1,49 +1,38 @@
-// app/(marketing)/page.tsx
-//
-// Keep the public marketing content available while app-entry actions show
-// Coming soon.
-//
-// Running order is deliberate: appetite first (Hero, Marquee, Cravings),
-// then the delivery journey (HowItWorks), followed by a slim Assurance band.
-// Trust is a footnote to hunger here, not the
-// pitch — a visitor arrives wanting dinner, not a payments explainer.
 import type { Metadata } from "next";
-import { Header } from "./_components/Header";
-import { Hero } from "./_components/Hero";
-import { Marquee } from "./_components/Marquee";
-import { Cravings } from "./_components/Cravings";
-import { HowItWorks } from "./_components/HowItWorks";
-import { Assurance } from "./_components/Assurance";
-import { Faq } from "./_components/Faq";
-import { FinalCta } from "./_components/FinalCta";
+import { getMarketingAccount } from "@/lib/auth/marketing-account";
+import { countdownUntil } from "@/lib/launch/countdown";
+import { LAUNCH_AT_ISO, formatLaunchDate } from "@/lib/launch/config";
 import { Footer } from "./_components/Footer";
+import { Header } from "./_components/Header";
+import { PrelaunchExperience } from "./_components/PrelaunchExperience";
 
 const DESCRIPTION =
-  "Jollof, suya, shawarma, amala and more, from kitchens on your own street, at your door in under 30 minutes. Order on KiaKia and watch your rider the whole way.";
+  "KiaKia is getting ready to serve Lagos. Get a launch alert and be among the first to order.";
 
 export const metadata: Metadata = {
-  title: "Fast. Fresh. Reliable.",
+  title: "KiaKia is getting ready to serve",
   description: DESCRIPTION,
   alternates: { canonical: "/" },
   openGraph: {
-    title: "KiaKia | Fast. Fresh. Reliable.",
+    title: "KiaKia | Getting ready to serve",
     description: DESCRIPTION,
-    images: ["/assets/hero-banner.png"],
+    images: ["/assets/kitchen-ticket-premium.png"],
   },
 };
 
-export default function MarketingHome() {
+export default async function MarketingHome() {
+  const account = await getMarketingAccount();
+  const now = Date.now();
+
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
-      <Header />
-      <Hero />
-      <Marquee />
-      <Cravings />
-      <HowItWorks />
-      <Assurance />
-      <Faq />
-      <FinalCta />
-      <Footer />
+      <Header account={account} prelaunch />
+      <PrelaunchExperience
+        launchAt={LAUNCH_AT_ISO}
+        launchDate={formatLaunchDate()}
+        initialCountdown={countdownUntil(Date.parse(LAUNCH_AT_ISO), now)}
+      />
+      <Footer prelaunch />
     </main>
   );
 }
