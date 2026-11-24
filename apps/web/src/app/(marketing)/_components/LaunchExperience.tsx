@@ -104,10 +104,10 @@ export function LaunchSignup() {
         {signup.status === "success" ? (
           <div className="kk-notify-success" role="status" aria-live="polite">
             <span className="kk-success-stamp">Notification confirmed</span>
-            <h2>You&apos;re on the list!</h2>
+            <h2 id="notify-title">You&apos;re on the list!</h2>
             <p>{signup.welcomeQueued
               ? "Your KiaKia welcome email is on its way. We will send your launch note and relevant pre-launch updates here."
-              : "You&apos;re already on the list. We&apos;ll send your launch note and relevant updates to this email."}</p>
+              : "You are already on the list. We will send your launch note and relevant updates to this email."}</p>
             {signup.unsubscribeUrl && <Link href={signup.unsubscribeUrl} className="kk-unsubscribe-link">Unsubscribe from launch emails</Link>}
           </div>
         ) : (
