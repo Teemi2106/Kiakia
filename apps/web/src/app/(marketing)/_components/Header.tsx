@@ -314,7 +314,7 @@ export function Header({ account, prelaunch = false }: { account: Account | null
                 Log in
               </Link>
             </>
-          )}
+          ) : null}
         </div>
         {prelaunch && (
           <div className="border-t border-kk-line/60 px-5 py-5 text-center">
