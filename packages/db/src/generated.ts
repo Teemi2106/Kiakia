@@ -70,6 +70,8 @@ export interface OrderRow {
   wallet_applied_kobo: number;
   /** 0117: when the wallet hold was taken; null when nothing is held. */
   wallet_held_at: string | null;
+  /** 0121: cashback rate in basis points, fixed when the order is placed. */
+  cashback_bps_snapshot: number | null;
   promo_code: string | null;
   delivery_address: Json;
   delivery_location: string;
@@ -803,6 +805,7 @@ export interface Database {
           payment_status: "pending" | "paid" | "failed" | "refunded";
           wallet_applied_kobo: number;
           wallet_held_at: string | null;
+          cashback_bps_snapshot: number | null;
           promo_code: string | null;
           delivery_address: Json;
           delivery_location: string;
@@ -909,13 +912,75 @@ export interface Database {
       transactions: {
         Row: {
           id: string;
-          kind: "payment_capture" | "escrow_release" | "payout" | "refund" | "adjustment";
+          kind: "payment_capture" | "escrow_release" | "payout" | "refund" | "adjustment" | "wallet_topup";
           reference: string;
           order_id: string | null;
           description: string | null;
           created_at: string;
         };
         Insert: never; // service-role only
+        Update: never;
+        Relationships: [];
+      };
+      customer_coin_entries: {
+        Row: {
+          id: string;
+          customer_id: string;
+          order_id: string;
+          entry_type: "cashback";
+          coins: number;
+          created_at: string;
+        };
+        Insert: never; // written by the delivered-order trigger
+        Update: never;
+        Relationships: [];
+      };
+      wallet_topups: {
+        Row: {
+          id: string;
+          reference: string;
+          customer_id: string;
+          amount_kobo: number;
+          captured_amount_kobo: number | null;
+          provider: "monnify";
+          provider_ref: string | null;
+          status: "pending" | "success" | "failed";
+          raw: Json;
+          created_at: string;
+          paid_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          reference: string;
+          customer_id: string;
+          amount_kobo: number;
+          captured_amount_kobo?: number | null;
+          provider?: "monnify";
+          provider_ref?: string | null;
+          status?: "pending" | "success" | "failed";
+          raw?: Json;
+          created_at?: string;
+          paid_at?: string | null;
+        };
+        Update: {
+          provider_ref?: string | null;
+          status?: "pending" | "success" | "failed";
+          captured_amount_kobo?: number | null;
+          raw?: Json;
+          paid_at?: string | null;
+        };
+        Relationships: [];
+      };
+      order_recipient_details: {
+        Row: {
+          order_id: string;
+          customer_id: string;
+          recipient_name: string;
+          recipient_phone: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never; // written only through the ownership-checking RPC
         Update: never;
         Relationships: [];
       };
@@ -1935,6 +2000,58 @@ export interface Database {
           description: string | null;
         }[];
       };
+      capture_wallet_topup: {
+        Args: {
+          p_reference: string;
+          p_provider_ref: string;
+          p_amount_kobo: number;
+          p_raw: Json;
+        };
+        Returns: string;
+      };
+      get_kiakia_coin_balance: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      get_cashback_bps: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      get_kiakia_coin_transactions: {
+        Args: { p_limit?: number };
+        Returns: {
+          created_at: string;
+          coins: number;
+          order_id: string;
+          order_code: string;
+        }[];
+      };
+      set_order_recipient_details: {
+        Args: {
+          p_order_id: string;
+          p_recipient_name: string;
+          p_recipient_phone: string;
+        };
+        Returns: string;
+      };
+      get_order_recipient_details: {
+        Args: { p_order_id: string };
+        Returns: {
+          recipient_name: string;
+          recipient_phone: string;
+        }[];
+      };
+      place_order_for_recipient: {
+        Args: {
+          p_cart_id: string;
+          p_delivery_address: Json;
+          p_delivery_location: string;
+          p_delivery_note: string | null;
+          p_recipient_name: string;
+          p_recipient_phone: string;
+        };
+        Returns: OrderRow;
+      };
       admin_reset_delivery_code_attempts: {
         Args: {
           p_order_id: string;
@@ -2278,7 +2395,7 @@ export interface Database {
       // admin_set_platform_fee (0092) - service_role only, finance tier, audited.
       admin_set_platform_fee: {
         Args: {
-          p_key: "service_fee_bps" | "default_vendor_commission_bps";
+          p_key: "service_fee_bps" | "default_vendor_commission_bps" | "cashback_bps";
           p_value: number;
           p_reason: string;
           p_actor_id: string;

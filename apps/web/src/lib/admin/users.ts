@@ -150,7 +150,7 @@ export interface WalletActivityEntry {
   readonly direction: "debit" | "credit";
   readonly amountKobo: number;
   readonly entryType: string;
-  readonly transactionKind: "payment_capture" | "escrow_release" | "payout" | "refund" | "adjustment" | null;
+  readonly transactionKind: "payment_capture" | "escrow_release" | "payout" | "refund" | "adjustment" | "wallet_topup" | null;
   readonly orderId: string | null;
   readonly orderCode: string | null;
 }

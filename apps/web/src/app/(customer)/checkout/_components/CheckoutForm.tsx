@@ -39,6 +39,9 @@ export function CheckoutForm({
   );
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [useWallet, setUseWallet] = useState(false);
+  const [orderForSomeoneElse, setOrderForSomeoneElse] = useState(false);
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
   const [deliveryNote, setDeliveryNote] = useState("");
   const [formState, formAction, pending] = useActionState(
     placeOrderAction,
@@ -86,6 +89,12 @@ export function CheckoutForm({
           deliveryNote={deliveryNote}
           onDeliveryNoteChange={setDeliveryNote}
           customerPhone={customerPhone}
+          orderForSomeoneElse={orderForSomeoneElse}
+          onOrderForSomeoneElseChange={setOrderForSomeoneElse}
+          recipientName={recipientName}
+          onRecipientNameChange={setRecipientName}
+          recipientPhone={recipientPhone}
+          onRecipientPhoneChange={setRecipientPhone}
           formAction={formAction}
           formState={formState}
           pending={pending}
@@ -109,6 +118,12 @@ export function CheckoutForm({
           deliveryNote={deliveryNote}
           onDeliveryNoteChange={setDeliveryNote}
           customerPhone={customerPhone}
+          orderForSomeoneElse={orderForSomeoneElse}
+          onOrderForSomeoneElseChange={setOrderForSomeoneElse}
+          recipientName={recipientName}
+          onRecipientNameChange={setRecipientName}
+          recipientPhone={recipientPhone}
+          onRecipientPhoneChange={setRecipientPhone}
           formAction={formAction}
           formState={formState}
           pending={pending}

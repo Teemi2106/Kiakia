@@ -60,6 +60,14 @@ export function OrderSummaryDetails({
         ))}
       </div>
 
+      {order.recipient_name && order.recipient_phone && (
+        <div className="rounded-xl border border-kk-hair bg-kk-cream p-4">
+          <p className="font-inter text-xs font-semibold uppercase tracking-wide text-kk-cocoa">Delivering to</p>
+          <p className="mt-1 font-inter text-sm font-semibold text-kk-ink">{order.recipient_name}</p>
+          <p className="mt-0.5 font-inter text-sm text-kk-cocoa">{order.recipient_phone}</p>
+        </div>
+      )}
+
       {/* Totals */}
       <div className="space-y-2 border-t border-kk-hair pt-4">
         <div className="flex items-center justify-between">

@@ -23,6 +23,12 @@ interface OrderSummaryProps {
    * is submitted here back to profiles.phone, so this only ever needs
    * asking once in practice. */
   customerPhone: string | null;
+  orderForSomeoneElse: boolean;
+  onOrderForSomeoneElseChange: (value: boolean) => void;
+  recipientName: string;
+  onRecipientNameChange: (value: string) => void;
+  recipientPhone: string;
+  onRecipientPhoneChange: (value: string) => void;
   // Kept in the prop shape for when a second payment method actually ships
   // (see PaymentSection); the submit button below no longer branches on it
   // since Card is the only method placeOrderAction supports today.
@@ -41,6 +47,12 @@ export function OrderSummary({
   deliveryNote,
   onDeliveryNoteChange,
   customerPhone,
+  orderForSomeoneElse,
+  onOrderForSomeoneElseChange,
+  recipientName,
+  onRecipientNameChange,
+  recipientPhone,
+  onRecipientPhoneChange,
   paymentMethod: _paymentMethod,
   formState,
   pending,
@@ -96,27 +108,67 @@ export function OrderSummary({
           ))}
         </div>
 
-        {/* Contact Phone — required so the rider can actually reach the
-            customer (get_rider_offer_details(), extended by 0072, reads
-            this straight off profiles.phone). Uncontrolled: unlike
-            deliveryNote, nothing else on this page needs its live value,
-            so a plain defaultValue read via FormData is enough. */}
-        <div>
-          <label htmlFor="contactPhone" className="font-inter text-sm font-semibold text-kk-ink">
-            Contact phone
+        <div className="space-y-3 rounded-xl border border-kk-hair bg-kk-cream p-4">
+          <label className="flex cursor-pointer items-center gap-3 font-inter text-sm font-semibold text-kk-ink">
+            <input
+              type="checkbox"
+              checked={orderForSomeoneElse}
+              onChange={(event) => onOrderForSomeoneElseChange(event.target.checked)}
+              className="size-4"
+            />
+            This order is for someone else
           </label>
-          <input
-            id="contactPhone"
-            name="contactPhone"
-            type="tel"
-            required
-            defaultValue={customerPhone ?? ""}
-            placeholder="0801 234 5678"
-            className="mt-2 w-full rounded-xl border border-kk-hair bg-kk-sand px-4 py-3 font-inter text-sm text-kk-ink placeholder:text-kk-cocoa focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20"
-          />
-          <p className="mt-1.5 font-inter text-xs text-kk-cocoa">
-            Your rider will use this number if they need to reach you.
-          </p>
+          {orderForSomeoneElse ? (
+            <>
+              <label className="block font-inter text-sm font-semibold text-kk-ink">
+                Recipient name
+                <input
+                  name="recipientName"
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={100}
+                  autoComplete="name"
+                  value={recipientName}
+                  onChange={(event) => onRecipientNameChange(event.target.value)}
+                  placeholder="Full name"
+                  className="mt-2 w-full rounded-xl border border-kk-hair bg-kk-sand px-4 py-3 font-inter text-sm font-normal text-kk-ink placeholder:text-kk-cocoa focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20"
+                />
+              </label>
+              <label className="block font-inter text-sm font-semibold text-kk-ink">
+                Recipient phone
+                <input
+                  name="recipientPhone"
+                  type="tel"
+                  required
+                  autoComplete="tel"
+                  value={recipientPhone}
+                  onChange={(event) => onRecipientPhoneChange(event.target.value)}
+                  placeholder="0801 234 5678"
+                  className="mt-2 w-full rounded-xl border border-kk-hair bg-kk-sand px-4 py-3 font-inter text-sm font-normal text-kk-ink placeholder:text-kk-cocoa focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20"
+                />
+              </label>
+              <p className="font-inter text-xs text-kk-cocoa">
+                Your rider will use these details to reach the recipient. You remain the order and payment owner.
+              </p>
+            </>
+          ) : (
+            <label className="block font-inter text-sm font-semibold text-kk-ink">
+              Contact phone
+              <input
+                name="contactPhone"
+                type="tel"
+                required
+                autoComplete="tel"
+                defaultValue={customerPhone ?? ""}
+                placeholder="0801 234 5678"
+                className="mt-2 w-full rounded-xl border border-kk-hair bg-kk-sand px-4 py-3 font-inter text-sm font-normal text-kk-ink placeholder:text-kk-cocoa focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red/20"
+              />
+              <span className="mt-1.5 block font-inter text-xs font-normal text-kk-cocoa">
+                Your rider will use this number if they need to reach you.
+              </span>
+            </label>
+          )}
         </div>
 
         {/* Delivery Note */}

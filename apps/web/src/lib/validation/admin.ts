@@ -102,19 +102,21 @@ export const setVendorCommissionSchema = z.object({
 /**
  * Platform-wide fees stored in platform_settings (0092). Entered as a
  * percentage, stored as basis points. The ceilings mirror
- * admin_set_platform_fee(): service fee 20%, default commission 50%.
+ * admin_set_platform_fee(): service fee 20%, default commission 50%, cashback 0.5%.
  */
-export const PLATFORM_FEE_KEYS = ["service_fee_bps", "default_vendor_commission_bps"] as const;
+export const PLATFORM_FEE_KEYS = ["service_fee_bps", "default_vendor_commission_bps", "cashback_bps"] as const;
 export type PlatformFeeKey = (typeof PLATFORM_FEE_KEYS)[number];
 
 export const PLATFORM_FEE_MAX_BPS: Record<PlatformFeeKey, number> = {
   service_fee_bps: 2000,
   default_vendor_commission_bps: 5000,
+  cashback_bps: 50,
 };
 
 const PLATFORM_FEE_NAMES: Record<PlatformFeeKey, string> = {
   service_fee_bps: "The service fee",
   default_vendor_commission_bps: "The default commission",
+  cashback_bps: "KiaKia Coins cashback",
 };
 
 export const setPlatformFeeSchema = z

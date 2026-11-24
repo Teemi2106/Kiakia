@@ -33,6 +33,14 @@ export const PLATFORM_FEES: readonly PlatformFeeInfo[] = [
     appliesTo: "Stores that join after you save. Stores already on KiaKia keep their current commission.",
     maxBps: 5000,
   },
+  {
+    key: "cashback_bps",
+    title: "KiaKia Coins cashback",
+    whoPays: "Customers earn the coins after their order is delivered.",
+    what: "The reward rate on the food subtotal after discounts, up to 0.5%. Rewards are capped at ₦500 (5,000 coins) per order. Ten KiaKia Coins are worth ₦1.",
+    appliesTo: "Orders placed after you save. Each order keeps the rate that was active when it was placed.",
+    maxBps: 50,
+  },
 ];
 
 const EXAMPLE_SUBTOTAL_KOBO = 500_000;
@@ -42,7 +50,11 @@ export function platformFeeExample(key: PlatformFeeKey, bps: number, format: (ko
   const amount = applyBps(koboOf(EXAMPLE_SUBTOTAL_KOBO), bps);
   const order = format(EXAMPLE_SUBTOTAL_KOBO).replace(/\.00$/, "");
   const fee = format(amount).replace(/\.00$/, "");
-  return key === "service_fee_bps"
-    ? `On a ${order} order the service fee is ${fee}.`
-    : `On ${order} of food sales a new vendor pays ${fee} commission.`;
+  if (key === "service_fee_bps") return `On a ${order} order the service fee is ${fee}.`;
+  if (key === "cashback_bps") {
+    const coins = Math.min(Math.floor(amount / 10), 5_000);
+    const reward = format(koboOf(coins * 10)).replace(/\.00$/, "");
+    return `On ${order} of delivered food orders customers earn up to ${coins} coins (${reward} value), capped at ₦500 per order.`;
+  }
+  return `On ${order} of food sales a new vendor pays ${fee} commission.`;
 }

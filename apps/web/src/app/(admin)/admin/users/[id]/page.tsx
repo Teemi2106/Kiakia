@@ -23,6 +23,7 @@ const WALLET_KINDS: Record<string, string> = {
   payment_capture: "Payment for an order",
   escrow_release: "Order paid out",
   refund: "Refund",
+  wallet_topup: "Wallet top-up",
   adjustment: "Adjustment",
   payout: "Payout",
 };
@@ -194,7 +195,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 
       <Section title="Wallet history">
         {walletActivity.length === 0 ? (
-          <EmptyState title="No wallet history yet" description="Refunds and wallet payments will be listed here." />
+          <EmptyState title="No wallet history yet" description="Top-ups, refunds, and wallet payments will be listed here." />
         ) : (
           <Table
             head={

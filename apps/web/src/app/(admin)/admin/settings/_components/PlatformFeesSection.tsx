@@ -27,8 +27,7 @@ export function PlatformFeesSection({
     <Section title="Platform fees">
       <div className="flex flex-col gap-6">
         <p className="text-sm text-ink-muted">
-          These are the fees that apply across all of KiaKia. A change applies to new orders only; orders already placed keep the fees they were placed with. Changing a fee changes how much money
-          customers pay and how much KiaKia and vendors earn.
+          These rates apply across KiaKia. Fee changes apply to future orders or vendors; cashback changes set the coin reward for future orders, which is credited after delivery.
         </p>
 
         {PLATFORM_FEES.map((info) => {

@@ -13,7 +13,7 @@ interface PaymentSectionProps {
   useWallet: boolean;
   onUseWalletChange: (useWallet: boolean) => void;
   /** The customer's own wallet balance in kobo (get_wallet_balance(),
-   * 0045_customer_wallet.sql). Zero for anyone who has never been refunded. */
+   * 0045_customer_wallet.sql). Zero before the first refund or top-up. */
   walletBalanceKobo: number;
   /** Used only to decide whether the wallet is offerable at all — see the
    * note on `walletCovers` below for why it is not the final word. */
@@ -27,11 +27,9 @@ interface PaymentSectionProps {
  * and marked "Coming soon" rather than left selectable while silently still
  * charging the card via Monnify.
  *
- * A wallet only exists here because an order was cancelled or rejected —
- * 0045_customer_wallet.sql credits the refund straight to it instead of
- * sending the customer away to wait days on a Monnify card refund. There is
- * no top-up flow, so a zero balance is the normal case and the option is
- * hidden entirely rather than shown as a dead entry.
+ * Wallet funds can come from a Monnify top-up or an order refund. A zero
+ * balance hides the wallet option instead of showing a payment method that
+ * cannot cover anything.
  */
 export function PaymentSection({
   paymentMethod,

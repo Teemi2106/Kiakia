@@ -35,7 +35,8 @@ export async function getPlatformFees(): Promise<PlatformFeeValue[]> {
   const people = await loadProfiles(admin, rows.map((row) => row.updated_by));
 
   return rows
-    .filter((row): row is typeof row & { key: PlatformFeeKey } => row.key === "service_fee_bps" || row.key === "default_vendor_commission_bps")
+    .filter((row): row is typeof row & { key: PlatformFeeKey } =>
+      row.key === "service_fee_bps" || row.key === "default_vendor_commission_bps" || row.key === "cashback_bps")
     .map((row) => ({
       key: row.key,
       valueBps: Number(row.value_int),
