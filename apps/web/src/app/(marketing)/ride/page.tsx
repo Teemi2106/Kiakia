@@ -6,6 +6,7 @@
 import { ArrowLeft, BellRing, Bike, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getMarketingAccount } from "@/lib/auth/marketing-account";
 import { Footer } from "../_components/Footer";
 import { Header } from "../_components/Header";
 import { Reveal } from "../_components/Reveal";
@@ -35,10 +36,12 @@ const POINTS = [
   },
 ] as const;
 
-export default function RidePage() {
+export default async function RidePage() {
+  const account = await getMarketingAccount();
+
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
-      <Header />
+      <Header account={account} />
 
       <section className="relative flex-1 overflow-hidden pb-16 pt-6 sm:pb-24 sm:pt-10">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">

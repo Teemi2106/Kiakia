@@ -10,6 +10,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { Metadata } from "next";
+import { getMarketingAccount } from "@/lib/auth/marketing-account";
 import { Footer } from "../_components/Footer";
 import { Header } from "../_components/Header";
 import { Reveal } from "../_components/Reveal";
@@ -58,10 +59,12 @@ const STEPS = [
   },
 ] as const;
 
-export default function PartnerPage() {
+export default async function PartnerPage() {
+  const account = await getMarketingAccount();
+
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
-      <Header />
+      <Header account={account} />
 
       <section className="relative overflow-hidden pb-16 pt-6 sm:pb-24 sm:pt-10">
         <div
