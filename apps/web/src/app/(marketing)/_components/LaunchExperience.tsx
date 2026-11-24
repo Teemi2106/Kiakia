@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { subscribeToLaunchAction, type LaunchSignupState } from "@/app/actions/launch";
-import type { CountdownParts } from "@/lib/launch/countdown";
+import { countdownUntil, type CountdownParts } from "@/lib/launch/countdown";
 import { LAUNCH_TICKET_REFERENCE } from "@/lib/launch/config";
 
 const EMPTY_STATE: LaunchSignupState = {};
@@ -15,44 +15,38 @@ const COUNTDOWN_PARTS: readonly { key: keyof CountdownParts; label: string }[] =
   { key: "seconds", label: "secs" },
 ];
 
-export function PrelaunchExperience({ launchAt, launchDate, initialCountdown }: {
+export function LaunchCountdown({ launchAt, launchDate, initialCountdown }: {
   launchAt: string;
   launchDate: string;
   initialCountdown: CountdownParts | null;
 }) {
   const [countdown, setCountdown] = useState(initialCountdown);
-  const [signup, formAction, isPending] = useActionState(subscribeToLaunchAction, EMPTY_STATE);
 
   useEffect(() => {
-    const tick = () => {
-      const millisecondsRemaining = Date.parse(launchAt) - Date.now();
-      if (millisecondsRemaining <= 0) {
-        setCountdown(null);
-        return false;
-      }
-      const remaining = Math.ceil(millisecondsRemaining / 1000);
-      setCountdown({
-        days: Math.floor(remaining / 86_400),
-        hours: Math.floor((remaining % 86_400) / 3_600),
-        minutes: Math.floor((remaining % 3_600) / 60),
-        seconds: remaining % 60,
-      });
-      return true;
+    const update = () => {
+      const next = countdownUntil(Date.parse(launchAt), Date.now());
+      setCountdown(next);
+      return next !== null;
     };
-    if (!tick()) return;
+
+    if (!update()) return;
     const timer = window.setInterval(() => {
-      if (!tick()) window.clearInterval(timer);
+      if (!update()) window.clearInterval(timer);
     }, 1000);
+
     return () => window.clearInterval(timer);
   }, [launchAt]);
 
   return (
-    <div className="kk-prelaunch">
-      <section id="ticket" className="kk-prelaunch-stage" aria-labelledby="prelaunch-title">
-        <div className="kk-prelaunch-intro">
-          <span className="kk-prelaunch-eyebrow">The city is getting hungry</span>
-          <h1 id="prelaunch-title">KiaKia is almost <span>ready to serve.</span></h1>
-          <p>Good things take a little prep. Your next favourite meal is getting closer.</p>
+    <section id="ticket" className="kk-launch-countdown-section" aria-labelledby="launch-countdown-title">
+      <div className="kk-launch-countdown-inner">
+        <div className="kk-launch-countdown-copy">
+          <span className="kk-prelaunch-eyebrow">The first serving is on the way</span>
+          <h2 id="launch-countdown-title">The KiaKia kitchen opens soon.</h2>
+          <p>We&apos;re getting the kitchens ready. KiaKia opens on <strong>{launchDate} WAT</strong>.</p>
+          <Link href="#notify" className="kk-launch-alert-link">
+            Get a launch reminder <span aria-hidden="true">&#8594;</span>
+          </Link>
         </div>
 
         <div className="kk-ticket-wrap">
@@ -79,13 +73,13 @@ export function PrelaunchExperience({ launchAt, launchDate, initialCountdown }: 
                 <div className="kk-countdown" role="timer" aria-label="Time remaining until launch">
                   {COUNTDOWN_PARTS.map(({ key, label }) => (
                     <div className="kk-countdown-unit" key={key}>
-                      <span className="kk-countdown-number" key={`${key}-${countdown[key]}`}>{String(countdown[key]).padStart(2, "0")}</span>
+                      <span className="kk-countdown-number" key={key + "-" + countdown[key]}>{String(countdown[key]).padStart(2, "0")}</span>
                       <span className="kk-countdown-label">{label}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <Link className="kk-ticket-open-link" href="/home">Explore KiaKia <span aria-hidden="true">↗</span></Link>
+                <Link className="kk-ticket-open-link" href="/home">Explore KiaKia <span aria-hidden="true">&#8599;</span></Link>
               )}
 
               <p className="kk-ticket-launch-date">{launchDate} WAT</p>
@@ -95,27 +89,33 @@ export function PrelaunchExperience({ launchAt, launchDate, initialCountdown }: 
               </div>
             </div>
           </div>
-          <span className="kk-ticket-orbit kk-ticket-orbit-one" aria-hidden="true" />
-          <span className="kk-ticket-orbit kk-ticket-orbit-two" aria-hidden="true" />
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      <section id="notify" className="kk-notify-card" aria-labelledby="notify-title">
+export function LaunchSignup() {
+  const [signup, formAction, isPending] = useActionState(subscribeToLaunchAction, EMPTY_STATE);
+
+  return (
+    <section id="notify" className="kk-launch-signup-section" aria-labelledby="notify-title">
+      <div className="kk-notify-card">
         {signup.status === "success" ? (
           <div className="kk-notify-success" role="status" aria-live="polite">
             <span className="kk-success-stamp">Notification confirmed</span>
-            <h2>You’re on the list!</h2>
+            <h2>You&apos;re on the list!</h2>
             <p>{signup.welcomeQueued
-              ? "Your KiaKia welcome email is on its way. We’ll send your launch note and relevant pre-launch updates here."
-              : "You’re already on the list. We’ll send your launch note and relevant updates to this email."}</p>
+              ? "Your KiaKia welcome email is on its way. We will send your launch note and relevant pre-launch updates here."
+              : "You&apos;re already on the list. We&apos;ll send your launch note and relevant updates to this email."}</p>
             {signup.unsubscribeUrl && <Link href={signup.unsubscribeUrl} className="kk-unsubscribe-link">Unsubscribe from launch emails</Link>}
           </div>
         ) : (
           <>
-            <span className="kk-notify-spark" aria-hidden="true">✳</span>
+            <span className="kk-notify-spark" aria-hidden="true">&#10022;</span>
             <p className="kk-notify-eyebrow">A little heads-up, right on time</p>
-            <h2 id="notify-title">Don’t miss the first serving.</h2>
-            <p className="kk-notify-description">Leave your email. We’ll let you know the moment KiaKia is live.</p>
+            <h2 id="notify-title">Don&apos;t miss the first serving.</h2>
+            <p className="kk-notify-description">Leave your email. We&apos;ll let you know the moment KiaKia is live.</p>
             <form action={formAction} className="kk-notify-form">
               <label className="kk-notify-label" htmlFor="launch-email">Your email address</label>
               <input
@@ -140,15 +140,14 @@ export function PrelaunchExperience({ launchAt, launchDate, initialCountdown }: 
               </div>
               {signup.status === "error" && <p id="launch-form-message" className="kk-form-error" role="alert">{signup.message}</p>}
               <button type="submit" className="kk-notify-button" disabled={isPending}>
-                {isPending ? "Saving your seat…" : "Notify me when it’s ready"}
-                <span aria-hidden="true">↗</span>
+                {isPending ? "Saving your seat..." : "Notify me when it is ready"}
+                <span aria-hidden="true">&#8599;</span>
               </button>
               <p className="kk-notify-privacy">Only launch news and relevant pre-launch updates. Unsubscribe any time.</p>
             </form>
           </>
         )}
-      </section>
-      <p className="kk-prelaunch-footnote">Made for Lagos appetites. Delivered fast fast.</p>
-    </div>
+      </div>
+    </section>
   );
 }
