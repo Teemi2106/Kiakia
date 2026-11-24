@@ -17,6 +17,8 @@ interface DeliveryAddressJson {
   landmark: string | null;
   city: string;
   state: string;
+  recipient_name?: string;
+  recipient_phone?: string;
 }
 
 interface SessionLike {
@@ -184,12 +186,20 @@ export async function placeOrderAction(
   // signup - see that migration's header). Normalized/validated with the
   // exact same phoneSchema registration itself uses, so a number entered
   // here and one entered at signup always end up in the same stored shape.
-  const contactPhoneRaw = (formData.get("contactPhone") as string | null) ?? "";
+  const orderForSomeoneElse = formData.get("orderForSomeoneElse") === "1";
+  const contactPhoneRaw = (formData.get(orderForSomeoneElse ? "recipientPhone" : "contactPhone") as string | null) ?? "";
   const contactPhoneResult = phoneSchema.safeParse(contactPhoneRaw);
   if (!contactPhoneResult.success) {
-    return { error: "Enter a valid phone number so your rider can reach you." };
+    return { error: orderForSomeoneElse
+      ? "Enter a valid recipient phone number so the rider can reach them."
+      : "Enter a valid phone number so your rider can reach you." };
   }
   const contactPhone = contactPhoneResult.data;
+  const recipientNameRaw = (formData.get("recipientName") as string | null) ?? "";
+  const recipientName = recipientNameRaw.trim();
+  if (orderForSomeoneElse && (recipientName.length < 2 || recipientName.length > 100)) {
+    return { error: "Enter the recipient's name (2 to 100 characters)." };
+  }
 
   const deliveryNote = (formData.get("deliveryNote") as string | null) || null;
   const savedAddressId = formData.get("addressId") as string | null;
@@ -222,7 +232,7 @@ export async function placeOrderAction(
   // this never touches updated_at (and any trigger keyed off it) on every
   // single checkout. "update own profile" (0007_rls.sql) permits this: the
   // authenticated customer updating their own row.
-  if (currentProfile?.phone !== contactPhone) {
+  if (!orderForSomeoneElse && currentProfile?.phone !== contactPhone) {
     sideWrites.push(supabase.from("profiles").update({ phone: contactPhone }).eq("id", session.userId));
   }
 
@@ -278,13 +288,22 @@ export async function placeOrderAction(
     return { error: "Your cart is empty." };
   }
 
+  const placeOrderArgs = {
+    p_cart_id: cart.id,
+    p_delivery_address: deliveryAddress as unknown as Json,
+    p_delivery_location: deliveryLocationWkt,
+    p_delivery_note: deliveryNote,
+  };
+  const orderRequest = orderForSomeoneElse
+    ? supabase.rpc("place_order_for_recipient", {
+        ...placeOrderArgs,
+        p_recipient_name: recipientName,
+        p_recipient_phone: contactPhone,
+      })
+    : supabase.rpc("place_order", placeOrderArgs);
+
   const [{ data: order, error: placeError }] = await Promise.all([
-    supabase.rpc("place_order", {
-      p_cart_id: cart.id,
-      p_delivery_address: deliveryAddress as unknown as Json,
-      p_delivery_location: deliveryLocationWkt,
-      p_delivery_note: deliveryNote,
-    }),
+    orderRequest,
     ...sideWrites,
   ]);
 

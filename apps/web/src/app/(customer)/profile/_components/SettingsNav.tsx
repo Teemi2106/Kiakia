@@ -12,7 +12,7 @@ const SETTINGS_LINKS = [
     href: "/profile/wallet",
     label: "Wallet",
     icon: Wallet,
-    description: "Refunds from cancelled orders, ready to spend",
+    description: "Top up, view refunds, and track KiaKia Coins",
   },
   {
     href: "/profile/addresses",

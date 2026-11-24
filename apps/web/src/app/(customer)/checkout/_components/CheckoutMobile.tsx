@@ -27,6 +27,12 @@ interface CheckoutMobileProps {
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
   customerPhone: string | null;
+  orderForSomeoneElse: boolean;
+  onOrderForSomeoneElseChange: (value: boolean) => void;
+  recipientName: string;
+  onRecipientNameChange: (value: string) => void;
+  recipientPhone: string;
+  onRecipientPhoneChange: (value: string) => void;
   formAction: (formData: FormData) => void;
   formState: CheckoutFormState;
   pending: boolean;
@@ -49,6 +55,12 @@ export function CheckoutMobile({
   deliveryNote,
   onDeliveryNoteChange,
   customerPhone,
+  orderForSomeoneElse,
+  onOrderForSomeoneElseChange,
+  recipientName,
+  onRecipientNameChange,
+  recipientPhone,
+  onRecipientPhoneChange,
   formAction,
   formState,
   pending,
@@ -78,6 +90,7 @@ export function CheckoutMobile({
         )}
         <input type="hidden" name="paymentMethod" value={paymentMethod} />
         <input type="hidden" name="useWallet" value={paymentMethod === "card" && useWallet ? "1" : "0"} />
+        <input type="hidden" name="orderForSomeoneElse" value={orderForSomeoneElse ? "1" : "0"} />
         {/* Step 1: Delivery Address */}
         <div className="rounded-2xl border border-kk-hair bg-kk-card p-4 shadow-sm">
           {/* No "Change" shortcut here — AddressSection already renders its
@@ -147,6 +160,12 @@ export function CheckoutMobile({
             deliveryNote={deliveryNote}
             onDeliveryNoteChange={onDeliveryNoteChange}
             customerPhone={customerPhone}
+            orderForSomeoneElse={orderForSomeoneElse}
+            onOrderForSomeoneElseChange={onOrderForSomeoneElseChange}
+            recipientName={recipientName}
+            onRecipientNameChange={onRecipientNameChange}
+            recipientPhone={recipientPhone}
+            onRecipientPhoneChange={onRecipientPhoneChange}
             paymentMethod={paymentMethod}
             formState={formState}
             pending={pending}

@@ -13,6 +13,8 @@ export interface OrderDetail {
   delivery_note: string | null;
   delivery_code: string | null;
   vendor_id: string;
+  recipient_name?: string | null;
+  recipient_phone?: string | null;
   /** True when the store itself delivers this order (no rider). */
   delivered_by_store?: boolean;
 }

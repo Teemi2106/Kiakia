@@ -28,9 +28,11 @@ export function PlatformFeeForm({ fee, currentBps }: { fee: PlatformFeeInfo; cur
   return (
     <AdminActionForm
       action={setPlatformFeeAction}
-      submitLabel="Save fee"
+      submitLabel="Save rate"
       reason={{ required: true, label: "Why are you changing it?" }}
-      confirmLabel="I understand this changes how much money moves on new orders, and it does not change orders already placed."
+      confirmLabel={fee.key === "cashback_bps"
+        ? "I understand this changes coins earned on orders placed after saving, and it does not change orders already placed."
+        : "I understand this changes how much money moves on new orders, and it does not change orders already placed."}
     >
       <input type="hidden" name="key" value={fee.key} />
       <Field label="New rate (percent)" htmlFor={`percent-${fee.key}`}>

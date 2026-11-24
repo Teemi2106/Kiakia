@@ -27,6 +27,12 @@ interface CheckoutDesktopProps {
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
   customerPhone: string | null;
+  orderForSomeoneElse: boolean;
+  onOrderForSomeoneElseChange: (value: boolean) => void;
+  recipientName: string;
+  onRecipientNameChange: (value: string) => void;
+  recipientPhone: string;
+  onRecipientPhoneChange: (value: string) => void;
   formAction: (formData: FormData) => void;
   formState: CheckoutFormState;
   pending: boolean;
@@ -49,6 +55,12 @@ export function CheckoutDesktop({
   deliveryNote,
   onDeliveryNoteChange,
   customerPhone,
+  orderForSomeoneElse,
+  onOrderForSomeoneElseChange,
+  recipientName,
+  onRecipientNameChange,
+  recipientPhone,
+  onRecipientPhoneChange,
   formAction,
   formState,
   pending,
@@ -78,6 +90,7 @@ export function CheckoutDesktop({
         )}
         <input type="hidden" name="paymentMethod" value={paymentMethod} />
         <input type="hidden" name="useWallet" value={paymentMethod === "card" && useWallet ? "1" : "0"} />
+        <input type="hidden" name="orderForSomeoneElse" value={orderForSomeoneElse ? "1" : "0"} />
 
         {/* Column 1: Address */}
         <AddressSection
@@ -111,6 +124,12 @@ export function CheckoutDesktop({
           deliveryNote={deliveryNote}
           onDeliveryNoteChange={onDeliveryNoteChange}
           customerPhone={customerPhone}
+          orderForSomeoneElse={orderForSomeoneElse}
+          onOrderForSomeoneElseChange={onOrderForSomeoneElseChange}
+          recipientName={recipientName}
+          onRecipientNameChange={onRecipientNameChange}
+          recipientPhone={recipientPhone}
+          onRecipientPhoneChange={onRecipientPhoneChange}
           paymentMethod={paymentMethod}
           formState={formState}
           pending={pending}

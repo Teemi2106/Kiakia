@@ -79,10 +79,15 @@ const sections: LegalSection[] = [
           KiaKia (which keeps its commission and fees).
         </p>
         <p>
-          <strong>Wallet.</strong> Some refunds are returned to your KiaKia wallet balance. Wallet balances can be
-          used towards future orders, in full or together with a card payment. They cannot be topped up directly and
-          are not a bank account, deposit or stored-value product. To have a refund returned to your original payment
-          method instead, contact support.
+          <strong>Wallet.</strong> You can add money through Monnify, and some refunds are returned to your KiaKia
+          wallet balance. Wallet balances can be used towards future orders, in full or together with a card payment.
+          They cannot be withdrawn. To have an eligible refund returned to your original payment method instead,
+          contact support.
+        </p>
+        <p>
+          <strong>KiaKia Coins.</strong> When an order is delivered, you earn KiaKia Coins on the eligible food
+          subtotal after discounts at the rate shown in your Wallet, up to 0.5% and capped at ₦500 (5,000 coins) per
+          order. Ten coins represent ₦1. Coins are shown as a reward balance and cannot currently be applied to an order.
         </p>
       </>
     ),

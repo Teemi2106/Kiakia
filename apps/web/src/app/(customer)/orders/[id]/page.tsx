@@ -117,7 +117,7 @@ export default async function OrderDetailPage({
   // "vendor staff read their vendor orders" policies), this query
   // naturally returns no row, so `code` below is undefined for them — that
   // is the fix, not an oversight.
-  const [{ data: vendor }, { data: rawItems }, { data: deliveryCodeRow }, { data: menuItemRows }, deliveredByStore] = await Promise.all([
+  const [{ data: vendor }, { data: rawItems }, { data: deliveryCodeRow }, { data: menuItemRows }, { data: recipientRows }, deliveredByStore] = await Promise.all([
     supabase
       .from("vendors")
       .select("name, logo_url")
@@ -131,6 +131,7 @@ export default async function OrderDetailPage({
     // The dish photos: this vendor's menu images, joined to the items in JS below.
     // Fetched beside the items rather than after them (it only needs the vendor).
     supabase.from("menu_items").select("id, image_url").eq("vendor_id", orderRow.vendor_id).not("image_url", "is", null),
+    supabase.rpc("get_order_recipient_details", { p_order_id: orderRow.id }),
     isDeliveredByStore(supabase, orderRow.id),
   ]);
 
@@ -149,7 +150,13 @@ export default async function OrderDetailPage({
     image_url: imageByMenuItemId.get(item.menu_item_id) ?? null,
   }));
 
-  const order = { ...orderRow, delivery_code: deliveryCodeRow?.code ?? null, delivered_by_store: deliveredByStore };
+  const order = {
+    ...orderRow,
+    delivery_code: deliveryCodeRow?.code ?? null,
+    delivered_by_store: deliveredByStore,
+    recipient_name: recipientRows?.[0]?.recipient_name ?? null,
+    recipient_phone: recipientRows?.[0]?.recipient_phone ?? null,
+  };
 
   // Check if payment is needed
   const needsPayment =
@@ -174,6 +181,11 @@ export default async function OrderDetailPage({
           <p className="text-sm text-ink">
             Payment wasn&apos;t completed for this order.
           </p>
+          {order.recipient_name && order.recipient_phone && (
+            <p className="mt-2 text-sm text-ink-muted">
+              Delivering to {order.recipient_name} · {order.recipient_phone}
+            </p>
+          )}
           {order.wallet_applied_kobo > 0 && (
             <p className="mt-2 text-sm text-ink-muted">
               {formatNaira(koboOf(order.wallet_applied_kobo))} of this order is covered by your wallet and is set aside for

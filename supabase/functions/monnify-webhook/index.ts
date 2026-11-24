@@ -70,6 +70,37 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  // Wallet top-ups use a separate reference namespace and ledger capture path:
+  // they credit the customer's wallet, not an order's escrow. The SQL RPC
+  // checks the stored provider reference and is idempotent across duplicate
+  // webhooks and the customer's return to the wallet page.
+  const { data: topup } = await supabase
+    .from("wallet_topups")
+    .select("reference")
+    .eq("reference", verified.paymentReference)
+    .maybeSingle();
+
+  if (topup) {
+    if (verified.currency !== "NGN" || !Number.isFinite(verified.amountPaid) || verified.amountPaid <= 0) {
+      console.error(`Monnify webhook: invalid verified wallet top-up amount/currency for ${topup.reference}`);
+      return Response.json({ error: "invalid wallet top-up amount" }, { status: 422 });
+    }
+
+    const { error } = await supabase.rpc("capture_wallet_topup", {
+      p_reference: topup.reference,
+      p_provider_ref: verified.transactionReference,
+      p_amount_kobo: Math.round(verified.amountPaid * 100),
+      p_raw: verified,
+    });
+
+    if (error) {
+      console.error("Monnify webhook: capture_wallet_topup failed", error);
+      return Response.json({ error: "wallet top-up capture failed" }, { status: 500 });
+    }
+
+    return Response.json({ ok: true });
+  }
+
   const { data: order } = await supabase
     .from("orders")
     .select("id")
