@@ -66,7 +66,10 @@ export async function requestWalletWithdrawalAction(
   redirect("/profile/wallet?withdrawal=requested");
 }
 
-export async function cancelWalletWithdrawalAction(formData: FormData): Promise<WalletWithdrawalState> {
+export async function cancelWalletWithdrawalAction(
+  _previousState: WalletWithdrawalState,
+  formData: FormData,
+): Promise<WalletWithdrawalState> {
   await verifySession();
   await requireActiveAccount();
   if ((await getActiveRole()) === "vendor") redirect("/dashboard");
