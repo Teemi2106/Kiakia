@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { CustomerBottomNav } from "./_components/CustomerBottomNav";
 import { CustomerTopNav } from "./_components/CustomerTopNav";
 import { StoreNotice } from "./_components/StoreNotice";
+import { MobileAppPrompt } from "@/app/_components/MobileAppPrompt";
 import { CartDrawer } from "./cart/_components/CartDrawer";
 import { CartFab } from "./cart/_components/CartFab";
 import { getFleetMembership, getOptionalSession, getRoles, hasRole, VENDOR_ROLES } from "@/lib/auth/dal";
@@ -95,6 +96,7 @@ export default async function CustomerLayout({
         <CustomerTopNav canSwitchToVendor={canSwitchToVendor} isFleetManager={isFleetManager} />
         <main className="flex-1 pt-(--kk-nav-h) pb-(--kk-tabbar-h) transition-[padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">{children}</main>
         <CustomerBottomNav />
+        <MobileAppPrompt enablePush={Boolean(session)} />
         {/* Fixed overlays stay inside the themed wrapper so they pick up its tokens. */}
         <CartFab />
         {cart}

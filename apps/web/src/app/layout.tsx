@@ -38,6 +38,9 @@ export const metadata: Metadata = {
   description:
     "Order food and goods from vendors near you, delivered kia kia — tracked live and in your hand in minutes.",
   applicationName: "KiaKia",
+  icons: {
+    apple: [{ url: "/assets/sec-logo.png", sizes: "128x122", type: "image/png" }],
+  },
   openGraph: {
     type: "website",
     siteName: "KiaKia",

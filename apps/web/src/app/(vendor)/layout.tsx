@@ -3,6 +3,7 @@ import { getTheme } from "@/lib/theme";
 import { VendorBottomNav } from "./_components/VendorBottomNav";
 import { VendorSidebar } from "./_components/VendorSidebar";
 import { VendorTopNav } from "./_components/VendorTopNav";
+import { MobileAppPrompt } from "@/app/_components/MobileAppPrompt";
 
 export default async function VendorLayout({
   children,
@@ -45,6 +46,7 @@ export default async function VendorLayout({
           {children}
         </main>
       </div>
+      <MobileAppPrompt enablePush={Boolean(vendor)} />
       {vendor && <VendorBottomNav />}
     </div>
   );

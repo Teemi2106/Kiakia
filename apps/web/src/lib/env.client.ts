@@ -31,8 +31,7 @@ const clientSchema = z.object({
   // function's own header). Optional for the same reason
   // NEXT_PUBLIC_MAPBOX_TOKEN is: no VAPID key pair has been provisioned by
   // default, and `pnpm build` must still succeed without one. When absent,
-  // the notifications bell's "Enable notifications" control (0069_web_push_
-  // subscriptions.sql) simply doesn't render, rather than crashing.
+  // push opt-in controls report that alerts are unavailable, rather than crashing.
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1).optional(),
 });
 

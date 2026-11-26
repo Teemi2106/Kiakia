@@ -47,7 +47,11 @@ self.addEventListener("notificationclick", (event) => {
   // Edge Function from which side of notifications a row belonged to) is
   // what a service worker can't otherwise infer.
   const ordersBasePath = audience === "vendor" ? "/dashboard/orders" : "/orders";
-  const targetPath = orderId ? `${ordersBasePath}/${orderId}` : ordersBasePath;
+  const targetPath = orderId
+    ? audience === "vendor"
+      ? `${ordersBasePath}/${orderId}`
+      : `${ordersBasePath}/${orderId}/tracking`
+    : ordersBasePath;
 
   event.waitUntil(
     (async () => {

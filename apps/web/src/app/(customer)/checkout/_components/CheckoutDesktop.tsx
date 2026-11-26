@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { CheckoutFormState } from "@/app/actions/orders";
 import { AddressSection } from "./AddressSection";
 import { PaymentSection } from "./PaymentSection";
+import { OrderRecipientSection } from "./OrderRecipientSection";
 import { OrderSummary } from "./OrderSummary";
 import type { Address, CartItem, Vendor, PaymentMethod } from "./types";
 import type { DeliveryFeeEstimate } from "@/lib/checkout/useDeliveryFeeEstimate";
@@ -26,7 +27,8 @@ interface CheckoutDesktopProps {
   deliveryFeeEstimate: DeliveryFeeEstimate;
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
-  customerPhone: string | null;
+  contactPhone: string;
+  onContactPhoneChange: (value: string) => void;
   orderForSomeoneElse: boolean;
   onOrderForSomeoneElseChange: (value: boolean) => void;
   recipientName: string;
@@ -54,7 +56,8 @@ export function CheckoutDesktop({
   deliveryFeeEstimate,
   deliveryNote,
   onDeliveryNoteChange,
-  customerPhone,
+  contactPhone,
+  onContactPhoneChange,
   orderForSomeoneElse,
   onOrderForSomeoneElseChange,
   recipientName,
@@ -92,6 +95,17 @@ export function CheckoutDesktop({
         <input type="hidden" name="useWallet" value={paymentMethod === "card" && useWallet ? "1" : "0"} />
         <input type="hidden" name="orderForSomeoneElse" value={orderForSomeoneElse ? "1" : "0"} />
 
+        <OrderRecipientSection
+          orderForSomeoneElse={orderForSomeoneElse}
+          onOrderForSomeoneElseChange={onOrderForSomeoneElseChange}
+          contactPhone={contactPhone}
+          onContactPhoneChange={onContactPhoneChange}
+          recipientName={recipientName}
+          onRecipientNameChange={onRecipientNameChange}
+          recipientPhone={recipientPhone}
+          onRecipientPhoneChange={onRecipientPhoneChange}
+        />
+
         {/* Column 1: Address */}
         <AddressSection
           address={selectedAddress}
@@ -123,13 +137,6 @@ export function CheckoutDesktop({
           deliveryFeeEstimate={deliveryFeeEstimate}
           deliveryNote={deliveryNote}
           onDeliveryNoteChange={onDeliveryNoteChange}
-          customerPhone={customerPhone}
-          orderForSomeoneElse={orderForSomeoneElse}
-          onOrderForSomeoneElseChange={onOrderForSomeoneElseChange}
-          recipientName={recipientName}
-          onRecipientNameChange={onRecipientNameChange}
-          recipientPhone={recipientPhone}
-          onRecipientPhoneChange={onRecipientPhoneChange}
           paymentMethod={paymentMethod}
           formState={formState}
           pending={pending}

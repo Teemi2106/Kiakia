@@ -286,10 +286,15 @@ function NotificationsMenu({
               onClick={() => void webPush.unsubscribe()}
               className="flex w-full items-center gap-2 border-b border-kk-line px-4 py-2.5 text-left font-inter text-xs font-medium text-kk-cocoa hover:bg-kk-sand"
             >
-              <BellRing className="size-3.5 shrink-0 text-kk-green-ink-ink" />
+              <BellRing className="size-3.5 shrink-0 text-kk-green-ink" />
               Push notifications on
               <span className="ml-auto text-[11px] font-normal underline">Turn off</span>
             </button>
+          )}
+          {webPush.error && (
+            <p role="status" className="border-b border-kk-line px-4 py-2 font-inter text-xs text-kk-red-ink">
+              {webPush.error}
+            </p>
           )}
 
           {items.length === 0 ? (

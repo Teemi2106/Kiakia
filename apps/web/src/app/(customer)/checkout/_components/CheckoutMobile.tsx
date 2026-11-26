@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { CheckoutFormState } from "@/app/actions/orders";
 import { AddressSection } from "./AddressSection";
 import { PaymentSection } from "./PaymentSection";
+import { OrderRecipientSection } from "./OrderRecipientSection";
 import { OrderSummary } from "./OrderSummary";
 import type { Address, CartItem, Vendor, PaymentMethod } from "./types";
 import type { DeliveryFeeEstimate } from "@/lib/checkout/useDeliveryFeeEstimate";
@@ -26,7 +27,8 @@ interface CheckoutMobileProps {
   deliveryFeeEstimate: DeliveryFeeEstimate;
   deliveryNote: string;
   onDeliveryNoteChange: (note: string) => void;
-  customerPhone: string | null;
+  contactPhone: string;
+  onContactPhoneChange: (value: string) => void;
   orderForSomeoneElse: boolean;
   onOrderForSomeoneElseChange: (value: boolean) => void;
   recipientName: string;
@@ -54,7 +56,8 @@ export function CheckoutMobile({
   deliveryFeeEstimate,
   deliveryNote,
   onDeliveryNoteChange,
-  customerPhone,
+  contactPhone,
+  onContactPhoneChange,
   orderForSomeoneElse,
   onOrderForSomeoneElseChange,
   recipientName,
@@ -118,13 +121,25 @@ export function CheckoutMobile({
           />
         </div>
 
-        {/* Step 2: Payment Method */}
+        <OrderRecipientSection
+          stepNumber={2}
+          orderForSomeoneElse={orderForSomeoneElse}
+          onOrderForSomeoneElseChange={onOrderForSomeoneElseChange}
+          contactPhone={contactPhone}
+          onContactPhoneChange={onContactPhoneChange}
+          recipientName={recipientName}
+          onRecipientNameChange={onRecipientNameChange}
+          recipientPhone={recipientPhone}
+          onRecipientPhoneChange={onRecipientPhoneChange}
+        />
+
+        {/* Step 3: Payment Method */}
         <div className="rounded-2xl border border-kk-hair bg-kk-card p-4 shadow-sm">
           {/* No "Change" shortcut — Card is the only supported method right
               now, so there's nothing to switch to yet (see PaymentSection). */}
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-kk-red/10 text-sm font-semibold text-kk-red-ink">
-              2
+              3
             </div>
             <h2 className="font-sora text-2xl font-semibold text-kk-ink">
               Payment Method
@@ -141,11 +156,11 @@ export function CheckoutMobile({
           />
         </div>
 
-        {/* Step 3: Order Review */}
+        {/* Step 4: Order Review */}
         <div className="rounded-2xl border border-kk-hair bg-kk-card p-4 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-kk-red/10 text-sm font-semibold text-kk-red-ink">
-              3
+              4
             </div>
             <h2 className="font-sora text-2xl font-semibold text-kk-ink">
               Order Review
@@ -159,13 +174,6 @@ export function CheckoutMobile({
             deliveryFeeEstimate={deliveryFeeEstimate}
             deliveryNote={deliveryNote}
             onDeliveryNoteChange={onDeliveryNoteChange}
-            customerPhone={customerPhone}
-            orderForSomeoneElse={orderForSomeoneElse}
-            onOrderForSomeoneElseChange={onOrderForSomeoneElseChange}
-            recipientName={recipientName}
-            onRecipientNameChange={onRecipientNameChange}
-            recipientPhone={recipientPhone}
-            onRecipientPhoneChange={onRecipientPhoneChange}
             paymentMethod={paymentMethod}
             formState={formState}
             pending={pending}

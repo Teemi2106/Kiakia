@@ -1,4 +1,3 @@
-// lib/push/useWebPushSubscription.ts
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -6,22 +5,21 @@ import { createClient } from "@/lib/supabase/client";
 import { clientEnv } from "@/lib/env.client";
 
 export type WebPushStatus =
-  /** No VAPID key configured, or the browser doesn't support Web Push at all (Safari < 16, most in-app browsers). */
   | "unsupported"
   | "loading"
   | "subscribed"
   | "not_subscribed"
-  /** The user (or a prior site visit) explicitly denied the permission prompt — subscribe() would just fail silently, so callers should hide the control rather than show a button that can't work. */
   | "denied";
 
 export interface WebPushSubscriptionState {
   status: WebPushStatus;
+  error: string | null;
   subscribe: () => Promise<void>;
   unsubscribe: () => Promise<void>;
 }
 
-/** RFC 8291's applicationServerKey wants a Uint8Array, not the base64url
- * string VAPID key pairs are normally generated/distributed as. */
+const PUSH_STATUS_EVENT = "kiakia:web-push-status";
+
 function urlBase64ToUint8Array(base64Url: string): Uint8Array {
   const padding = "=".repeat((4 - (base64Url.length % 4)) % 4);
   const base64 = (base64Url + padding).replaceAll("-", "+").replaceAll("_", "/");
@@ -29,18 +27,26 @@ function urlBase64ToUint8Array(base64Url: string): Uint8Array {
   return Uint8Array.from([...raw].map((char) => char.codePointAt(0) ?? 0));
 }
 
-/**
- * Registers public/sw.js and manages this browser's Web Push subscription —
- * the customer/vendor counterpart of the rider app's Expo push registration,
- * for order-status updates (0069_web_push_subscriptions.sql). Deliberately
- * opt-in only: nothing here runs until a caller (NotificationsButton.tsx)
- * actually invokes `subscribe()` from a real user gesture — registering a
- * service worker or requesting Notification permission on page load, before
- * the visitor has asked for either, is exactly the pattern that gets a site
- * auto-blocked from ever prompting again in most browsers.
- */
+/** Manages the signed-in user's push subscription on this browser. */
 export function useWebPushSubscription(): WebPushSubscriptionState {
   const [status, setStatus] = useState<WebPushStatus>("loading");
+  const [error, setError] = useState<string | null>(null);
+
+  const updateStatus = useCallback((next: WebPushStatus) => {
+    setStatus(next);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent<WebPushStatus>(PUSH_STATUS_EVENT, { detail: next }));
+    }
+  }, []);
+
+  useEffect(() => {
+    const onStatusChange = (event: Event) => {
+      const next = (event as CustomEvent<WebPushStatus>).detail;
+      if (next) setStatus(next);
+    };
+    window.addEventListener(PUSH_STATUS_EVENT, onStatusChange);
+    return () => window.removeEventListener(PUSH_STATUS_EVENT, onStatusChange);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,100 +55,105 @@ export function useWebPushSubscription(): WebPushSubscriptionState {
       if (
         typeof window === "undefined" ||
         !clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+        !("Notification" in window) ||
         !("serviceWorker" in navigator) ||
         !("PushManager" in window)
       ) {
-        if (!cancelled) setStatus("unsupported");
+        if (!cancelled) updateStatus("unsupported");
         return;
       }
 
       if (Notification.permission === "denied") {
-        if (!cancelled) setStatus("denied");
+        if (!cancelled) updateStatus("denied");
         return;
       }
 
-      // Only reads an EXISTING registration/subscription — never registers
-      // the service worker itself. A visitor who has never opted in has no
-      // registration yet, which is the expected, common case, not an error.
-      const registration = await navigator.serviceWorker.getRegistration("/");
-      const existing = await registration?.pushManager.getSubscription();
-      if (!cancelled) setStatus(existing ? "subscribed" : "not_subscribed");
+      try {
+        const registration = await navigator.serviceWorker.getRegistration("/");
+        const existing = await registration?.pushManager.getSubscription();
+        if (!cancelled) updateStatus(existing ? "subscribed" : "not_subscribed");
+      } catch (cause) {
+        console.error("useWebPushSubscription: could not read the browser subscription", cause);
+        if (!cancelled) updateStatus("not_subscribed");
+      }
     }
 
     void checkExisting();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [updateStatus]);
 
   const subscribe = useCallback(async () => {
-    if (!clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return;
-
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      setStatus(permission === "denied" ? "denied" : "not_subscribed");
+    setError(null);
+    if (!clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+      updateStatus("unsupported");
+      setError("Order alerts aren’t configured on this app yet.");
       return;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js");
-    await navigator.serviceWorker.ready;
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        updateStatus(permission === "denied" ? "denied" : "not_subscribed");
+        return;
+      }
 
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      // TS's DOM lib types applicationServerKey as BufferSource specifically
-      // over ArrayBuffer, while Uint8Array.from()'s return type is generic
-      // over ArrayBufferLike (which also covers SharedArrayBuffer) — a real
-      // runtime Uint8Array satisfies the browser API either way, this cast
-      // is purely to satisfy that lib-typing mismatch.
-      applicationServerKey: urlBase64ToUint8Array(clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY) as BufferSource,
-    });
+      const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY) as BufferSource,
+      });
+      const json = subscription.toJSON();
 
-    const json = subscription.toJSON();
-    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
-      // A subscription the browser itself couldn't fully populate is
-      // useless to the server — never register a partial one.
-      await subscription.unsubscribe();
-      return;
+      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+        await subscription.unsubscribe();
+        throw new Error("The browser returned an incomplete notification subscription.");
+      }
+
+      const supabase = createClient();
+      const { error: registrationError } = await supabase.rpc("register_web_push_subscription", {
+        p_endpoint: json.endpoint,
+        p_p256dh: json.keys.p256dh,
+        p_auth: json.keys.auth,
+      });
+      if (registrationError) throw registrationError;
+
+      updateStatus("subscribed");
+    } catch (cause) {
+      console.error("useWebPushSubscription: subscribe failed", cause);
+      updateStatus("not_subscribed");
+      setError("Couldn’t turn on alerts. Check your browser permission and try again.");
     }
-
-    const supabase = createClient();
-    const { error } = await supabase.rpc("register_web_push_subscription", {
-      p_endpoint: json.endpoint,
-      p_p256dh: json.keys.p256dh,
-      p_auth: json.keys.auth,
-    });
-
-    if (error) {
-      console.error("useWebPushSubscription: register_web_push_subscription failed", error);
-      return;
-    }
-
-    setStatus("subscribed");
-  }, []);
+  }, [updateStatus]);
 
   const unsubscribe = useCallback(async () => {
-    const registration = await navigator.serviceWorker.getRegistration("/");
-    const subscription = await registration?.pushManager.getSubscription();
-    if (!subscription) {
-      setStatus("not_subscribed");
-      return;
+    setError(null);
+    try {
+      const registration = await navigator.serviceWorker.getRegistration("/");
+      const subscription = await registration?.pushManager.getSubscription();
+      if (!subscription) {
+        updateStatus("not_subscribed");
+        return;
+      }
+
+      const endpoint = subscription.endpoint;
+      await subscription.unsubscribe();
+      const supabase = createClient();
+      const { error: unregisterError } = await supabase.rpc("unregister_web_push_subscription", {
+        p_endpoint: endpoint,
+      });
+      if (unregisterError) {
+        console.error("useWebPushSubscription: unregister failed", unregisterError);
+      }
+
+      updateStatus("not_subscribed");
+    } catch (cause) {
+      console.error("useWebPushSubscription: unsubscribe failed", cause);
+      setError("Couldn’t update this device’s alert settings. Please try again.");
     }
+  }, [updateStatus]);
 
-    const endpoint = subscription.endpoint;
-    await subscription.unsubscribe();
-
-    const supabase = createClient();
-    const { error } = await supabase.rpc("unregister_web_push_subscription", { p_endpoint: endpoint });
-    if (error) {
-      // The browser-side unsubscribe already succeeded — this user will
-      // not be pushed to again from THIS browser regardless. A stale
-      // server-side row is a cleanup nicety, not a correctness problem the
-      // UI needs to block on.
-      console.error("useWebPushSubscription: unregister_web_push_subscription failed", error);
-    }
-
-    setStatus("not_subscribed");
-  }, []);
-
-  return { status, subscribe, unsubscribe };
+  return { status, error, subscribe, unsubscribe };
 }
