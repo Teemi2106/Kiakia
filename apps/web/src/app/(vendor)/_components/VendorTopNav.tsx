@@ -32,9 +32,10 @@ export function VendorTopNav({ vendorId }: { vendorId: string | null }) {
       return;
     }
 
+    const activeVendorId = vendorId;
     let cancelled = false;
     const supabase = createClient();
-    const topic = `vendor-incoming-orders-count-${vendorId}`;
+    const topic = `vendor-incoming-orders-count-${activeVendorId}`;
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let refreshTimer: ReturnType<typeof setTimeout> | null = null;
@@ -44,7 +45,7 @@ export function VendorTopNav({ vendorId }: { vendorId: string | null }) {
       const { count, error } = await supabase
         .from("orders")
         .select("id", { count: "exact", head: true })
-        .eq("vendor_id", vendorId)
+        .eq("vendor_id", activeVendorId)
         .eq("status", "placed")
         .eq("payment_status", "paid");
 
@@ -87,7 +88,7 @@ export function VendorTopNav({ vendorId }: { vendorId: string | null }) {
             event: "*",
             schema: "public",
             table: "orders",
-            filter: `vendor_id=eq.${vendorId}`,
+            filter: `vendor_id=eq.${activeVendorId}`,
           },
           scheduleCountRefresh,
         )
