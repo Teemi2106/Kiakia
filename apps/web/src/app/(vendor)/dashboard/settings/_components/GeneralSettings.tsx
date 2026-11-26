@@ -38,7 +38,7 @@ export function GeneralSettings({ vendor }: GeneralSettingsProps) {
         <div className="rounded-2xl border border-kk-line bg-kk-card p-4 shadow-sm">
           <div className="flex items-center gap-2 text-sm text-kk-cocoa">
             <Clock className="size-4" />
-            Prep Time
+            Typical prep time
           </div>
           <p className="mt-1 font-sora text-xl font-bold text-kk-ink">
             {vendor.avgPrepMins} min
@@ -56,7 +56,7 @@ export function GeneralSettings({ vendor }: GeneralSettingsProps) {
         <div className="rounded-2xl border border-kk-line bg-kk-card p-4 shadow-sm">
           <div className="flex items-center gap-2 text-sm text-kk-cocoa">
             <MapPin className="size-4" />
-            Delivery Radius
+            Max delivery distance
           </div>
           <p className="mt-1 font-sora text-xl font-bold text-kk-ink">
             {(vendor.deliveryRadiusM / 1000).toFixed(1)} km

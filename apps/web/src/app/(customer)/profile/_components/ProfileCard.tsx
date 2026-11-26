@@ -88,7 +88,7 @@ export function ProfileCard({
       <div className="flex flex-col items-center gap-4 pb-4">
         {/* Avatar */}
         <div className="relative">
-          <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-sm">
+          <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-kk-card shadow-sm">
             {renderAvatar("size-10")}
           </div>
           <button
@@ -157,7 +157,7 @@ export function ProfileCard({
           </p>
         )}
         <div className="mt-2 flex items-center gap-2 rounded-full bg-kk-fill px-3 py-1 w-fit">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#934B00]" />
+          <span className="h-2.5 w-2.5 rounded-full bg-kk-orange-ink" />
           <span className="font-inter text-sm font-semibold text-kk-ink">
             {role}
           </span>

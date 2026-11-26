@@ -91,7 +91,7 @@ export default async function OrderDetailPage({
   const supabase = await createClient();
 
   const ORDER_COLUMNS =
-    "id, code, status, payment_status, wallet_applied_kobo, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, delivery_address, delivery_note, vendor_id";
+    "id, code, status, payment_status, wallet_applied_kobo, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, discount_kobo, total_kobo, expected_ready_at, delivery_address, delivery_note, vendor_id";
 
   let { data: orderRow } = await supabase.from("orders").select(ORDER_COLUMNS).eq("id", id).maybeSingle();
 

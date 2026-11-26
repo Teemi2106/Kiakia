@@ -3,7 +3,7 @@
 
 import { formatNaira, koboOf } from "@kiakia/domain";
 import { cn } from "@kiakia/ui";
-import { Banknote, Check, CreditCard, Wallet } from "lucide-react";
+import { Check, CreditCard, Wallet } from "lucide-react";
 import type { PaymentMethod } from "./types";
 
 interface PaymentSectionProps {
@@ -22,10 +22,7 @@ interface PaymentSectionProps {
 }
 
 /**
- * Card and wallet are the two methods placeOrderAction actually supports.
- * Cash on Delivery is listed so customers know it's planned, but disabled
- * and marked "Coming soon" rather than left selectable while silently still
- * charging the card via Monnify.
+ * Card and wallet are the payment methods placeOrderAction supports.
  *
  * Wallet funds can come from a Monnify top-up or an order refund. A zero
  * balance hides the wallet option instead of showing a payment method that
@@ -91,7 +88,7 @@ export function PaymentSection({
           selected={paymentMethod === "wallet"}
           onSelect={() => onPaymentMethodChange("wallet")}
           disabled={!walletCovers}
-          icon={<Wallet className="size-5 text-kk-green-ink-ink" />}
+          icon={<Wallet className="size-5 text-kk-green-ink" />}
           title="KiaKia Wallet"
           subtitle={
             walletCovers
@@ -101,13 +98,6 @@ export function PaymentSection({
         />
       )}
 
-      <PaymentOption
-        selected={false}
-        disabled
-        icon={<Banknote className="size-5 text-kk-cocoa" />}
-        title="Cash on Delivery"
-        subtitle="Coming soon"
-      />
     </div>
   );
 

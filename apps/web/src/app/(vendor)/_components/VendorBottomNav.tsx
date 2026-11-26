@@ -53,8 +53,10 @@ export function VendorBottomNav() {
         items={ITEMS}
         activeHref={pathname}
         LinkComponent={Link}
+        className="border-t border-kk-line bg-white dark:bg-[#211c1b]"
         activeBgClassName="bg-kk-red"
         activeTextClassName="text-white"
+        inactiveTextClassName="text-kk-cocoa"
       />
     </div>
   );

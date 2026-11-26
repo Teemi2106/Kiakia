@@ -45,12 +45,16 @@ export function AutoSwipeRail({ children, ...props }: AutoSwipeRailProps) {
     interactionEvents.forEach((eventName) =>
       rail.addEventListener(eventName, pauseForInteraction, { passive: true }),
     );
+    // Keep the horizontal nudge from competing with the customer's vertical
+    // page scroll when the pointer or touch is outside the rail.
+    window.addEventListener("scroll", pauseForInteraction, { passive: true });
 
     return () => {
       window.clearInterval(swipeTimer);
       interactionEvents.forEach((eventName) =>
         rail.removeEventListener(eventName, pauseForInteraction),
       );
+      window.removeEventListener("scroll", pauseForInteraction);
     };
   }, []);
 

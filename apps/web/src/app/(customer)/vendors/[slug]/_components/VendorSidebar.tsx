@@ -130,7 +130,7 @@ export function VendorSidebar({ vendor }: { vendor: VendorSummary }) {
           <div
             className={`flex items-center gap-3 ${vendor.bannerUrl ? "-mt-12" : ""}`}
           >
-            <div className="relative size-16 shrink-0 overflow-hidden rounded-2xl border-2 border-white bg-kk-fill shadow-sm">
+            <div className="relative size-16 shrink-0 overflow-hidden rounded-2xl border-2 border-kk-card bg-kk-fill shadow-sm">
               {vendor.logoUrl ? (
                 <Image
                   src={vendor.logoUrl}
@@ -158,7 +158,7 @@ export function VendorSidebar({ vendor }: { vendor: VendorSummary }) {
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {vendor.isAcceptingOrders ? (
-              <Badge className="bg-[rgba(218,53,41,0.1)] text-[#DA3529] hover:bg-[rgba(218,53,41,0.1)]">
+              <Badge className="bg-kk-red-wash text-kk-red-ink hover:bg-kk-red-wash">
                 Accepting orders
               </Badge>
             ) : (
@@ -182,7 +182,7 @@ export function VendorSidebar({ vendor }: { vendor: VendorSummary }) {
           {hoursStatus && (
             <div
               className={`mt-3 flex items-center gap-1.5 font-inter text-sm font-medium ${
-                hoursStatus.isOpenNow ? "text-kk-green-ink-ink" : "text-kk-cocoa"
+                hoursStatus.isOpenNow ? "text-kk-green-ink" : "text-kk-cocoa"
               }`}
             >
               <Clock className="size-4" />

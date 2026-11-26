@@ -2,7 +2,7 @@
 "use client";
 
 import { formatNaira, koboOf } from "@kiakia/domain";
-import { Download, Receipt } from "lucide-react";
+import { Receipt } from "lucide-react";
 import type { Payout } from "./types";
 
 interface PayoutHistoryProps {
@@ -19,12 +19,12 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
+  const getDirectionLabel = (direction: string) => {
+    switch (direction) {
       case "credit":
-        return "Success";
+        return "Money in";
       default:
-        return "Pending";
+        return "Money out";
     }
   };
 
@@ -35,7 +35,7 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
       case "refund":
         return "Refund";
       case "adjustment":
-        return "Adjustment";
+        return "Balance update";
       default:
         return entryType
           .replace(/_/g, " ")
@@ -47,15 +47,8 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
     <div className="overflow-hidden rounded-3xl border border-kk-line bg-kk-card shadow-sm">
       <div className="flex items-center justify-between border-b border-kk-line px-6 py-5">
         <h4 className="font-sora text-xl font-bold text-kk-ink">
-          Payout History
+          Recent activity
         </h4>
-        <button
-          type="button"
-          className="flex items-center gap-1 text-sm font-medium text-kk-red-ink transition-colors hover:underline"
-        >
-          <Download className="size-4" />
-          Download CSV
-        </button>
       </div>
 
       {payouts.length === 0 ? (
@@ -64,11 +57,10 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
             <Receipt className="size-6" />
           </div>
           <p className="font-sora text-base font-bold text-kk-ink">
-            No payouts yet
+            No activity yet
           </p>
           <p className="max-w-sm text-sm text-kk-cocoa">
-            Ledger entries will appear here once an order is delivered and
-            settled into your account.
+            Earnings and refunds will appear here after an order is completed.
           </p>
         </div>
       ) : (
@@ -83,13 +75,13 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
                   Date
                 </th>
                 <th className="px-6 py-4 text-sm font-medium text-kk-cocoa">
-                  Type
+                  Activity
                 </th>
                 <th className="px-6 py-4 text-sm font-medium text-kk-cocoa">
                   Amount
                 </th>
                 <th className="px-6 py-4 text-sm font-medium text-kk-cocoa">
-                  Status
+                  Direction
                 </th>
               </tr>
             </thead>
@@ -119,7 +111,7 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusColor(payout.direction)}`}
                     >
-                      {getStatusLabel(payout.direction)}
+                      {getDirectionLabel(payout.direction)}
                     </span>
                   </td>
                 </tr>
@@ -129,16 +121,6 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
         </div>
       )}
 
-      {payouts.length > 0 && (
-        <div className="border-t border-kk-line bg-kk-sand px-6 py-4 text-center">
-          <button
-            type="button"
-            className="text-sm font-medium text-kk-cocoa transition-colors hover:text-kk-red-ink"
-          >
-            View All Transactions
-          </button>
-        </div>
-      )}
     </div>
   );
 }

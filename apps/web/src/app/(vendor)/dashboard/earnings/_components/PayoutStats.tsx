@@ -51,14 +51,14 @@ export function PayoutStats({ payouts }: PayoutStatsProps) {
       {/* Entries shown */}
       <div className="rounded-3xl border border-kk-line bg-kk-card p-6 shadow-sm transition-all hover:shadow-md">
         <p className="mb-1 text-sm font-medium text-kk-cocoa">
-          Ledger Entries
+            Recent transactions
         </p>
         <h4 className="font-sora text-2xl font-bold text-kk-ink">
           {payouts.length}
         </h4>
         <div className="mt-2 flex items-center gap-1 text-sm font-medium text-kk-cocoa">
           <ListChecks className="size-4" />
-          Most recent, up to 50
+          Most recent 50
         </div>
       </div>
     </div>

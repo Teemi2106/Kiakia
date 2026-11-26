@@ -18,24 +18,24 @@ const TABS = [
   },
   {
     id: "hours",
-    label: "Operating Hours",
-    description: "Daily open & close times",
+    label: "Opening hours",
+    description: "When customers can order",
     icon: Clock,
     accent: "bg-notice-surface text-kk-orange-ink",
   },
   {
     id: "delivery",
-    label: "Delivery Zone",
-    description: "Radius & coverage map",
+    label: "Delivery area",
+    description: "Where customers can order",
     icon: Truck,
     accent: "bg-kk-danger-wash text-kk-red-ink",
   },
   {
     id: "staff",
-    label: "Staff Members",
-    description: "Team access & roles",
+    label: "Team",
+    description: "Who can help manage your store",
     icon: Users,
-    accent: "bg-[#A3F69D] text-[#005313]",
+    accent: "bg-kk-mint-wash text-kk-mint-ink",
   },
 ] as const;
 

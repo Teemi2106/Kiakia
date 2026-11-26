@@ -796,6 +796,8 @@ export interface Database {
           rider_id: string | null;
           service_area_id: string | null;
           status: OrderStatus;
+          prep_minutes: number | null;
+          expected_ready_at: string | null;
           subtotal_kobo: number;
           delivery_fee_kobo: number;
           service_fee_kobo: number;
@@ -1119,6 +1121,84 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      // Public pre-launch signup (0123_prelaunch_launch_subscribers.sql).
+      // RLS is enabled with no client policies; all access is service-role only.
+      launch_subscribers: {
+        Row: {
+          id: string;
+          email: string;
+          consented_at: string;
+          consent_version: string;
+          source: "homepage_prelaunch";
+          unsubscribed_at: string | null;
+          welcome_status: "not_queued" | "queued" | "sending" | "sent" | "failed" | "suppressed";
+          welcome_attempts: number;
+          welcome_sent_at: string | null;
+          launch_status: "not_queued" | "queued" | "sending" | "sent" | "failed" | "suppressed";
+          launch_attempts: number;
+          launch_sent_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      launch_subscriber_consent_events: {
+        Row: {
+          id: string;
+          subscriber_id: string;
+          event: "subscribed" | "unsubscribed";
+          consent_version: string;
+          source: "homepage_prelaunch" | "unsubscribe_link";
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      launch_signup_rate_limits: {
+        Row: {
+          rate_key: string;
+          window_started_at: string;
+          attempts: number;
+          last_attempt_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      launch_unsubscribe_tokens: {
+        Row: {
+          token_hash: string;
+          subscriber_id: string;
+          issued_at: string;
+          used_at: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      launch_campaigns: {
+        Row: {
+          id: string;
+          campaign_key: "kia-open-v1";
+          status: "queued" | "sending" | "sent" | "partial" | "failed";
+          approved_by: string;
+          approved_at: string;
+          recipient_count: number;
+          pending_count: number;
+          sent_count: number;
+          failed_count: number;
+          suppressed_count: number;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       // Messaging (0094_messaging_core.sql) - hand-authored. RLS on everywhere.
       // message_preferences: the owner may SELECT own row and UPDATE the two
       // marketing columns; absent row = both false. Writer of record is
@@ -1190,7 +1270,7 @@ export interface Database {
         Row: {
           id: string;
           broadcast_id: string | null;
-          kind: "broadcast" | "direct" | "rider_offer" | "system";
+          kind: "broadcast" | "direct" | "rider_offer" | "system" | "launch_welcome" | "launch_announcement";
           // 0103: "push" = rider dispatch-offer push (Expo); to_address null, tokens resolved at send time.
           channel: "email" | "sms" | "push";
           category: "transactional" | "promotional";
@@ -1213,6 +1293,8 @@ export interface Database {
           delivered_at: string | null;
           // 0103: structured payload of a push row ({type, orderId, offerId}); null for email/SMS.
           data: Json | null;
+          launch_subscriber_id: string | null;
+          launch_campaign_id: string | null;
         };
         Insert: never;
         Update: never;
@@ -1905,6 +1987,73 @@ export interface Database {
         // it at another user's wallet.
         Args: Record<string, never>;
         Returns: number;
+      };
+      get_wallet_reserved_balance: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      get_my_wallet_withdrawal_requests: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          amount_kobo: number;
+          bank_name: string;
+          account_name: string;
+          masked_account_number: string;
+          status: string;
+          review_reason: string | null;
+          created_at: string;
+          reviewed_at: string | null;
+          external_reference: string | null;
+        }[];
+      };
+      request_customer_wallet_withdrawal: {
+        Args: {
+          p_amount_kobo: number;
+          p_bank_name: string;
+          p_account_name: string;
+          p_account_number: string;
+          p_idempotency_key: string;
+        };
+        Returns: string;
+      };
+      cancel_my_wallet_withdrawal: {
+        Args: { p_request_id: string };
+        Returns: boolean;
+      };
+      admin_list_customer_wallet_withdrawals: {
+        Args: {
+          p_actor_id: string;
+          p_status?: string;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: {
+          id: string;
+          customer_id: string;
+          customer_name: string | null;
+          amount_kobo: number;
+          bank_name: string;
+          account_name: string;
+          account_number: string;
+          masked_account_number: string;
+          status: string;
+          review_reason: string | null;
+          external_reference: string | null;
+          created_at: string;
+          reviewed_at: string | null;
+          total_count: number;
+        }[];
+      };
+      admin_review_customer_wallet_withdrawal: {
+        Args: {
+          p_request_id: string;
+          p_decision: string;
+          p_external_reference: string;
+          p_reason: string;
+          p_actor_id: string;
+        };
+        Returns: string;
       };
       get_wallet_transactions: {
         Args: {
@@ -2654,6 +2803,18 @@ export interface Database {
         /** The new admin_audit_log.target_id for this export. */
         Returns: string;
       };
+      admin_log_launch_subscribers_export: {
+        Args: { p_actor_id: string };
+        Returns: string;
+      };
+      admin_launch_announcement_preview: {
+        Args: { p_actor_id: string };
+        Returns: Json;
+      };
+      admin_start_launch_announcement: {
+        Args: { p_actor_id: string; p_confirmation_phrase: string; p_expected_recipient_count: number };
+        Returns: Json;
+      };
       admin_export_orders_page: {
         Args: {
           p_actor_id: string;
@@ -2714,6 +2875,22 @@ export interface Database {
       //   {kind:"role", role:"vendor",   segment?: "all"|"active"|"pending"|"suspended"}
       //   {kind:"role", role:"rider",    segment?: "all"|"active"|"pending"|"online"}
       //   {kind:"user", user_id: uuid}
+      subscribe_launch_email: {
+        Args: { p_email: string; p_rate_key: string; p_consent_version: string; p_unsubscribe_token_hash: string };
+        Returns: { subscriber_id: string | null; outcome: string }[];
+      };
+      issue_launch_unsubscribe_tokens: {
+        Args: { p_tokens: Json };
+        Returns: number;
+      };
+      validate_launch_unsubscribe_token: {
+        Args: { p_token_hash: string };
+        Returns: boolean;
+      };
+      unsubscribe_launch_email: {
+        Args: { p_token_hash: string };
+        Returns: boolean;
+      };
       set_message_preferences: {
         Args: { p_marketing_email?: boolean | null; p_marketing_sms?: boolean | null };
         Returns: { user_id: string; marketing_email: boolean; marketing_sms: boolean; updated_at: string };

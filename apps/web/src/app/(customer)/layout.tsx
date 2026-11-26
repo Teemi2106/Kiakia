@@ -1,7 +1,7 @@
 // app/(customer)/layout.tsx
 import { redirect } from "next/navigation";
 import { CustomerBottomNav } from "./_components/CustomerBottomNav";
-import { CustomerTopNav } from "./_components/CustomerTopNav";
+import { CustomerPageFrame } from "./_components/CustomerPageFrame";
 import { StoreNotice } from "./_components/StoreNotice";
 import { MobileAppPrompt } from "@/app/_components/MobileAppPrompt";
 import { CartDrawer } from "./cart/_components/CartDrawer";
@@ -87,14 +87,19 @@ export default async function CustomerLayout({
           one), so the first line of most screens rendered underneath the
           header.
 
-          --kk-nav-h must equal CustomerTopNav's real height: 56px identity
+          --kk-nav-h matches CustomerTopNav's expanded height: 56px identity
           row + 84px address/search row + 1px border below `lg`, and a single
-          72px row + 1px border at `lg` and up. --kk-tabbar-h matches
+          72px row + 1px border at `lg` and up. It stays fixed while the header
+          compacts so scrolling never reflows the page. --kk-tabbar-h matches
           BottomNav's floating 72px slab plus its edge clearance, which
           disappears at the same `lg` breakpoint. */}
       <div data-theme={theme} className="flex min-h-screen flex-col bg-kk-cream text-kk-ink [--kk-nav-h:141px] [--kk-tabbar-h:7.5rem] lg:[--kk-nav-h:73px] lg:[--kk-tabbar-h:0px]">
-        <CustomerTopNav canSwitchToVendor={canSwitchToVendor} isFleetManager={isFleetManager} />
-        <main className="flex-1 pt-(--kk-nav-h) pb-(--kk-tabbar-h) transition-[padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">{children}</main>
+        <CustomerPageFrame
+          canSwitchToVendor={canSwitchToVendor}
+          isFleetManager={isFleetManager}
+        >
+          {children}
+        </CustomerPageFrame>
         <CustomerBottomNav />
         <MobileAppPrompt enablePush={Boolean(session)} />
         {/* Fixed overlays stay inside the themed wrapper so they pick up its tokens. */}

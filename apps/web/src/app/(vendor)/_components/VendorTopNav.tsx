@@ -1,11 +1,13 @@
 // app/(vendor)/_components/VendorTopNav.tsx
 "use client";
 
-import { ArrowLeftRight, User } from "lucide-react";
+import { ArrowLeftRight, ShoppingBag, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { switchToCustomerAction } from "@/app/actions/session";
 import { NotificationsButton } from "@/app/_components/NotificationsButton";
+import { createClient } from "@/lib/supabase/client";
 
 // Map paths to display names
 const PAGE_TITLES: Record<string, string> = {
@@ -19,6 +21,110 @@ const PAGE_TITLES: Record<string, string> = {
 
 export function VendorTopNav({ vendorId }: { vendorId: string | null }) {
   const pathname = usePathname();
+  const [incomingOrderCount, setIncomingOrderCount] = useState(0);
+
+  // Keep the pending-order badge live from the same vendor-scoped order rows
+  // that RLS exposes to vendor staff. Only paid orders that have not yet been
+  // accepted need the vendor's first response.
+  useEffect(() => {
+    if (!vendorId) {
+      setIncomingOrderCount(0);
+      return;
+    }
+
+    let cancelled = false;
+    const supabase = createClient();
+    const topic = `vendor-incoming-orders-count-${vendorId}`;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    let retryAttempt = 0;
+
+    async function refreshCount() {
+      const { count, error } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("vendor_id", vendorId)
+        .eq("status", "placed")
+        .eq("payment_status", "paid");
+
+      if (!cancelled && !error) setIncomingOrderCount(count ?? 0);
+    }
+
+    function scheduleCountRefresh() {
+      if (cancelled || refreshTimer) return;
+      // Coalesce related order updates without turning the listener into a
+      // polling loop or issuing one count query for each burst of DB events.
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        void refreshCount();
+      }, 100);
+    }
+
+    function scheduleRetry() {
+      if (cancelled || retryTimer) return;
+      const delay = Math.min(2_000 * 2 ** retryAttempt, 30_000);
+      retryAttempt += 1;
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        void openChannel();
+      }, delay);
+    }
+
+    async function openChannel() {
+      if (cancelled) return;
+      const stale = supabase
+        .getChannels()
+        .find((candidate) => candidate.topic === `realtime:${topic}`);
+      if (stale) await supabase.removeChannel(stale);
+      if (cancelled) return;
+
+      channel = supabase
+        .channel(topic)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "orders",
+            filter: `vendor_id=eq.${vendorId}`,
+          },
+          scheduleCountRefresh,
+        )
+        .subscribe((status) => {
+          if (cancelled) return;
+          if (status === "SUBSCRIBED") {
+            retryAttempt = 0;
+            // Catch up after both the initial join and reconnects so an order
+            // arriving between the initial count query and subscription is not missed.
+            void refreshCount();
+          } else if (
+            status === "TIMED_OUT" ||
+            status === "CHANNEL_ERROR" ||
+            status === "CLOSED"
+          ) {
+            scheduleRetry();
+          }
+        });
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible" && !cancelled)
+        void refreshCount();
+    }
+
+    void refreshCount();
+    void openChannel();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      if (refreshTimer) clearTimeout(refreshTimer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, [vendorId]);
 
   // Get the current page title
   const getPageTitle = () => {
@@ -79,6 +185,30 @@ export function VendorTopNav({ vendorId }: { vendorId: string | null }) {
               <button> with no handler and a permanently-lit red dot, so it
               both did nothing and claimed unread activity that did not
               exist. */}
+          <Link
+            href="/dashboard/orders"
+            className="relative flex items-center gap-1.5 rounded-full px-2 py-2 transition-colors hover:bg-kk-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red-ink/40"
+            aria-label={
+              incomingOrderCount === 1
+                ? "Orders, 1 incoming order needs attention"
+                : `Orders, ${incomingOrderCount} incoming orders need attention`
+            }
+            title={`${incomingOrderCount} incoming ${incomingOrderCount === 1 ? "order" : "orders"}`}
+          >
+            <ShoppingBag className="size-5 text-kk-cocoa" aria-hidden="true" />
+            <span className="font-inter text-xs font-semibold text-kk-cocoa sm:hidden">
+              Orders
+            </span>
+            {incomingOrderCount > 0 && (
+              <span
+                aria-hidden="true"
+                className="absolute -right-0.5 -top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-kk-red px-1 font-inter text-[10px] font-bold leading-none text-white"
+              >
+                {incomingOrderCount > 99 ? "99+" : incomingOrderCount}
+              </span>
+            )}
+          </Link>
+
           {vendorId && (
             <NotificationsButton
               audience="vendor"

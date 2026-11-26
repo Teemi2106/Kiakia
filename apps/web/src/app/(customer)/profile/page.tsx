@@ -10,6 +10,7 @@ import { MobileSettings } from "./_components/MobileSettings";
 import { MobileHelp } from "./_components/MobileHelp";
 import { MobileLegal } from "./_components/MobileLegal";
 import { SignOutButton } from "./_components/SignOutButton";
+import { ProfileWalletCard } from "./_components/ProfileWalletCard";
 
 export const metadata: Metadata = { title: "Profile" };
 
@@ -22,7 +23,7 @@ export default async function ProfilePage({
   const session = await verifySession();
   const supabase = await createClient();
 
-  const [{ data: profile }, { data: addresses }] = await Promise.all([
+  const [{ data: profile }, { data: addresses }, { data: walletBalance }, { data: coinBalance }] = await Promise.all([
     supabase
       .from("profiles")
       .select("full_name, phone, avatar_url, created_at")
@@ -33,6 +34,8 @@ export default async function ProfilePage({
       .select("id, label, line1, landmark, city, state, is_default")
       .eq("customer_id", session.userId)
       .order("is_default", { ascending: false }),
+    supabase.rpc("get_wallet_balance"),
+    supabase.rpc("get_kiakia_coin_balance"),
   ]);
 
   const matches = (...values: string[]) => values.some((value) => {
@@ -43,8 +46,9 @@ export default async function ProfilePage({
   const showSettings = !query || matches("settings", "address", "delivery", "location", "notification", "theme", "password", "preferences");
   const showSupport = !query || matches("help", "support", "faq", "contact", "question", "order", "payment", "delivery issue");
   const showLegal = !query || matches("legal", "privacy", "terms", "policy");
+  const showWallet = !query || matches("wallet", "money", "coins", "kiaKia", "balance", "cashback", "funding");
   const showSignOut = !query || matches("sign out", "logout", "log out", "account");
-  const hasResults = showAccount || showSettings || showSupport || showLegal || showSignOut;
+  const hasResults = showAccount || showWallet || showSettings || showSupport || showLegal || showSignOut;
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-30 sm:px-6 sm:py-18">
@@ -62,6 +66,7 @@ export default async function ProfilePage({
             avatarUrl={profile?.avatar_url}
             role="Customer"
           />}
+          {showWallet && <ProfileWalletCard balanceKobo={walletBalance ?? 0} coins={coinBalance ?? 0} />}
           {showSettings && <SettingsNav />}
           {/* Sign Out Button - Desktop */}
           {showSignOut && <SignOutButton />}
@@ -87,6 +92,8 @@ export default async function ProfilePage({
           role="Customer"
           variant="mobile"
         />}
+
+        {showWallet && <ProfileWalletCard balanceKobo={walletBalance ?? 0} coins={coinBalance ?? 0} />}
 
         {showSettings && <MobileSettings addresses={addresses ?? []} />}
         {showSupport && <MobileHelp />}

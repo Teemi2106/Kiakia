@@ -1,9 +1,8 @@
 // app/(customer)/_components/CustomerTopNav.tsx
 "use client";
 
-import { ArrowLeftRight, Search, ShoppingCart, Truck, User } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
+import { ArrowLeftRight, Search, ShoppingCart, Truck, User, Wallet } from "lucide-react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,7 +41,6 @@ interface CustomerTopNavProps {
  */
 export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = false }: CustomerTopNavProps) {
   const pathname = usePathname();
-  const navRef = useRef<HTMLElement>(null);
   const [compact, setCompact] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const itemCount = useCustomerStore(selectItemCount);
@@ -58,30 +56,20 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
   useEffect(() => {
     let previousY = window.scrollY;
     let compactNow = false;
+    let lastDirection = 0;
+    let directionDistance = 0;
+    const hysteresisPx = 28;
 
     const transitionCompactState = (next: boolean) => {
       if (next === compactNow) return;
       compactNow = next;
-      const viewTransitionDocument = document as Document & {
-        startViewTransition?: (update: () => void) => unknown;
-      };
-      if (viewTransitionDocument.startViewTransition) {
-        viewTransitionDocument.startViewTransition(() => flushSync(() => setCompact(next)));
-      } else {
-        setCompact(next);
-      }
-    };
-
-    const syncNavHeight = () => {
-      const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-      const height = isDesktop ? "73px" : compactNow ? "56px" : "141px";
-      navRef.current?.parentElement?.style.setProperty("--kk-nav-h", height);
+      setCompact(next);
     };
 
     const onScroll = () => {
       // iOS Safari reports elastic rubber-band movement beyond the document
-      // edges. Ignore that overscroll so it can't reverse the header state and
-      // animate the reserved content inset while the page is being dragged.
+      // edges. Ignore that overscroll so it can't reverse the header state
+      // while the page is being dragged.
       const maxScrollY = Math.max(
         0,
         document.documentElement.scrollHeight - window.innerHeight,
@@ -89,32 +77,50 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
       const currentY = Math.min(maxScrollY, Math.max(0, window.scrollY));
       const delta = currentY - previousY;
       const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-      if (isDesktop || currentY <= 32) transitionCompactState(false);
-      else if (delta > 5) transitionCompactState(true);
-      else if (delta < -5) transitionCompactState(false);
+      // Main keeps the expanded-header inset while scrolling. Collapse only
+      // after the content reaches the compact nav's lower edge, avoiding a
+      // blank band below the fixed header near the top of the page.
+      if (isDesktop || currentY <= 88) {
+        lastDirection = 0;
+        directionDistance = 0;
+        transitionCompactState(false);
+      } else if (Math.abs(delta) > 0) {
+        const direction = delta > 0 ? 1 : -1;
+        if (direction !== lastDirection) {
+          lastDirection = direction;
+          directionDistance = 0;
+        }
+        directionDistance += Math.abs(delta);
+        if (!compactNow && direction === 1 && directionDistance >= hysteresisPx) {
+          transitionCompactState(true);
+          directionDistance = 0;
+        } else if (compactNow && direction === -1 && directionDistance >= hysteresisPx) {
+          transitionCompactState(false);
+          directionDistance = 0;
+        }
+      }
 
       previousY = currentY;
-      syncNavHeight();
     };
 
     const onResize = () => {
       if (window.matchMedia("(min-width: 1024px)").matches) {
         transitionCompactState(false);
       }
-      syncNavHeight();
+      previousY = window.scrollY;
+      lastDirection = 0;
+      directionDistance = 0;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
-    syncNavHeight();
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
-      navRef.current?.parentElement?.style.removeProperty("--kk-nav-h");
     };
   }, []);
 
   return (
-    <nav ref={navRef} data-nav-compact={compact || undefined} className="fixed inset-x-0 top-0 z-40 border-b border-kk-line/50 bg-kk-cream/90 backdrop-blur-xl transition-[background-color]">
+    <nav data-nav-compact={compact || undefined} className="fixed inset-x-0 top-0 z-40 border-b border-kk-line/50 bg-kk-cream/90 backdrop-blur-xl transition-[background-color]">
       {/* ------------------------------------------------ identity row */}
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-4 transition-[height] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:gap-3 sm:px-6 lg:h-18 motion-reduce:transition-none">
         <Link href="/home" style={{ viewTransitionName: "kk-brand" }} className="shrink-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-[1.03] motion-reduce:transition-none">
@@ -152,6 +158,7 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
             <SearchField placeholder={searchContext.placeholder} value={searchQuery} onChange={setSearchQuery} transitionName="none" />
           </form>
         )}
+        {!searchContext && <div aria-hidden="true" className="hidden min-w-0 flex-1 lg:block" />}
 
         <div className="hidden items-center gap-1 lg:flex">
           {NAV_LINKS.map((link) => {
@@ -233,6 +240,14 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
             </div>
           ) : (
             <>
+              <Link
+                href="/profile/wallet"
+                aria-label="Your wallet"
+                title="Your wallet"
+                className="flex size-9 shrink-0 items-center justify-center rounded-full text-kk-cocoa transition-colors hover:bg-black/5 hover:text-kk-red-ink"
+              >
+                <Wallet className="size-[18px]" />
+              </Link>
               <NotificationsButton audience="customer" />
 
               <Link
@@ -312,9 +327,6 @@ function getSearchContext(pathname: string): { action: string; placeholder: stri
   }
   if (pathname === "/orders" || pathname.startsWith("/orders/")) {
     return { action: "/orders", placeholder: "Search your active orders…" };
-  }
-  if (pathname.startsWith("/vendors/")) {
-    return { action: pathname, placeholder: "Search this menu…" };
   }
   if (pathname === "/profile") {
     return { action: pathname, placeholder: "Search profile and help…" };

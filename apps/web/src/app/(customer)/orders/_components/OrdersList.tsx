@@ -51,7 +51,7 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
                 />
               ))
             ) : (
-              <div className="flex h-[296px] items-center justify-center rounded-2xl border border-dashed border-kk-hair bg-kk-cream">
+              <div className="flex h-[296px] items-center justify-center rounded-2xl border border-kk-line bg-kk-card">
                 <p className="font-inter text-sm text-kk-cocoa">
                   No orders in transit
                 </p>
@@ -73,7 +73,7 @@ export function OrdersList({ orders, vendors }: OrdersListProps) {
                 />
               ))
             ) : (
-              <div className="flex h-[296px] items-center justify-center rounded-2xl border border-dashed border-kk-hair bg-kk-cream">
+              <div className="flex h-[296px] items-center justify-center rounded-2xl border border-kk-line bg-kk-card">
                 <p className="font-inter text-sm text-kk-cocoa">
                   No orders preparing
                 </p>

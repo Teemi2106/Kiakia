@@ -3,6 +3,7 @@ import { formatNaira, koboOf, type OrderStatus } from "@kiakia/domain";
 import { cn } from "@kiakia/ui";
 import { ArrowRight, ChefHat, Bike, DoorOpen, Receipt, type LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { formatLagosTime } from "@/lib/time";
 
 export interface ActiveOrder {
   id: string;
@@ -10,6 +11,7 @@ export interface ActiveOrder {
   status: OrderStatus;
   total_kobo: number;
   vendorName: string | null;
+  expected_ready_at?: string | null;
 }
 
 /**
@@ -50,6 +52,9 @@ export function ActiveOrderCard({
 }) {
   const current = stageIndexFor(order.status);
   const CurrentIcon = STAGES[current].icon;
+  const expectedReadyTime = ["accepted", "preparing"].includes(order.status)
+    ? formatLagosTime(order.expected_ready_at)
+    : null;
 
   return (
     <section
@@ -80,6 +85,11 @@ export function ActiveOrderCard({
             {order.vendorName ?? "Your order"} · #{order.code} ·{" "}
             {formatNaira(koboOf(order.total_kobo))}
           </p>
+          {expectedReadyTime && (
+            <p className="mt-2 font-inter text-sm font-semibold text-white/80">
+              Food expected ready at {expectedReadyTime} WAT
+            </p>
+          )}
         </div>
 
         <Link

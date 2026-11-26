@@ -9,12 +9,27 @@ where key = 'cashback_bps'
   and value_int > 50;
 
 alter table platform_settings
-  drop constraint platform_settings_known_key_and_bounds;
+  drop constraint if exists platform_settings_known_key_and_bounds;
 
 alter table platform_settings
   add constraint platform_settings_known_key_and_bounds check (
     (key = 'service_fee_bps' and unit = 'bps' and value_int between 0 and 2000)
     or (key = 'default_vendor_commission_bps' and unit = 'bps' and value_int between 0 and 5000)
+    or (key = 'dispatch_radius_m' and unit = 'm' and (value_int = 0 or value_int between 1000 and 50000))
+    or (key = 'dispatch_max_riders' and unit = 'count' and value_int between 1 and 50)
+    or (key = 'dispatch_widen_after_seconds' and unit = 'seconds' and value_int between 0 and 1800)
+    or (key = 'dispatch_location_max_age_seconds' and unit = 'seconds' and value_int between 60 and 300)
+    or (key = 'dispatch_notify_vendor_after_seconds' and unit = 'seconds' and value_int between 0 and 1800)
+    or (key = 'dispatch_offer_timeout_seconds' and unit = 'seconds' and value_int between 15 and 120)
+    or (key = 'dispatch_h3_resolution' and unit = 'count' and value_int between 7 and 9)
+    or (key = 'dispatch_h3_initial_ring' and unit = 'count' and value_int between 0 and 10)
+    or (key = 'dispatch_h3_max_ring' and unit = 'count' and value_int between 1 and 30)
+    or (key = 'dispatch_secure_buffer_seconds' and unit = 'seconds' and value_int between 45 and 900)
+    or (key = 'dispatch_default_travel_seconds' and unit = 'seconds' and value_int between 60 and 3600)
+    or (key = 'dispatch_default_speed_kmh' and unit = 'kmh' and value_int between 5 and 60)
+    or (key = 'dispatch_road_factor_pct' and unit = 'pct' and value_int between 100 and 250)
+    or (key = 'dispatch_min_history_samples' and unit = 'count' and value_int between 5 and 1000)
+    or (key = 'dispatch_vendor_arrival_radius_m' and unit = 'm' and value_int between 30 and 500)
     or (key = 'cashback_bps' and unit = 'bps' and value_int between 0 and 50)
   );
 

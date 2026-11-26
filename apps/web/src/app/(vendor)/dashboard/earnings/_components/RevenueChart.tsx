@@ -51,10 +51,10 @@ export function RevenueChart({ payouts }: RevenueChartProps) {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h4 className="font-sora text-xl font-bold text-kk-ink">
-            Ledger Activity — Last 7 Days
+            Earnings over the last 7 days
           </h4>
           <p className="text-sm text-kk-cocoa">
-            Net credits to your account, from real ledger entries
+            Your earnings added to your balance each day
           </p>
         </div>
       </div>

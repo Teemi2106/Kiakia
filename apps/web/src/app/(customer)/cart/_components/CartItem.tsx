@@ -97,7 +97,7 @@ export function CartItem({
               <button
                 onClick={() => onQtyChange(id, qty - 1)}
                 disabled={qty <= 1}
-                className={`flex items-center justify-center rounded-full hover:bg-black/5 disabled:opacity-40 ${
+                className={`flex items-center justify-center rounded-full hover:bg-kk-fill disabled:opacity-40 ${
                   isDesktop ? "h-7 w-7" : "h-8 w-8"
                 }`}
                 aria-label="Decrease quantity"
@@ -111,10 +111,10 @@ export function CartItem({
               </span>
               <button
                 onClick={() => onQtyChange(id, qty + 1)}
-                className={`flex items-center justify-center rounded-full bg-kk-red shadow-sm hover:bg-kk-red-hover disabled:opacity-40 ${
+                className={`flex items-center justify-center rounded-full shadow-sm disabled:opacity-40 ${
                   isDesktop
-                    ? "h-7 w-7 border border-kk-hair bg-kk-card hover:bg-gray-50"
-                    : "h-8 w-8"
+                    ? "h-7 w-7 border border-kk-hair bg-kk-card text-kk-ink hover:bg-kk-sand"
+                    : "h-8 w-8 bg-kk-red text-white hover:bg-kk-red-hover"
                 }`}
                 aria-label="Increase quantity"
               >

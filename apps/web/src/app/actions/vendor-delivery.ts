@@ -43,10 +43,10 @@ export async function expandRiderSearchAction(orderId: string): Promise<Delivery
 }
 
 /**
- * "Need more time?": the store says the food will be ready in N minutes from now
- * (1-180). The database re-checks everything: that the caller is staff of this
- * store, that the order is still being prepared for a rider, the range, and the
- * limit on how often it can change. The rider, if one is assigned, is told there.
+ * Set the per-order prep duration: food will be ready in N minutes from now
+ * (1-180). The database re-checks store staff, order status, bounds, and the
+ * change limit. Rider delivery updates the dispatch ETA; the customer and rider
+ * read the same persisted expected-ready timestamp.
  */
 export async function updatePrepEstimateAction(orderId: string, readyInMinutes: number): Promise<DeliveryActionResult> {
   await requireVendorContext();

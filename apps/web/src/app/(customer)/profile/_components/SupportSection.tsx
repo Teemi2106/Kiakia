@@ -14,7 +14,7 @@ export function SupportSection() {
         {/* Live Chat Card */}
         <button className="flex flex-1 items-start gap-4 rounded-xl border border-kk-hair p-4 transition-colors hover:bg-kk-cream">
           <div className="rounded-full bg-notice-surface p-3">
-            <MessageCircle className="size-5 text-[#301400]" />
+            <MessageCircle className="size-5 text-notice-ink" />
           </div>
           <div className="flex-1 text-left">
             <h3 className="font-inter text-sm font-bold text-kk-ink">
@@ -28,8 +28,8 @@ export function SupportSection() {
 
         {/* Email Support Card */}
         <button className="flex flex-1 items-start gap-4 rounded-xl border border-kk-hair p-4 transition-colors hover:bg-kk-cream">
-          <div className="rounded-full bg-[#A3F69D] p-3">
-            <Mail className="size-5 text-[#002204]" />
+          <div className="rounded-full bg-kk-green-wash p-3">
+            <Mail className="size-5 text-kk-green-ink" />
           </div>
           <div className="flex-1 text-left">
             <h3 className="font-inter text-sm font-bold text-kk-ink">

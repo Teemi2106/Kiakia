@@ -11,6 +11,7 @@ import {
   KeyRound,
   LayoutDashboard,
   MessageSquare,
+  MailCheck,
   Landmark,
   Settings,
   ScrollText,
@@ -40,6 +41,7 @@ const NAV_GROUPS = [
       { href: "/admin/riders", label: "Riders", Icon: Bike },
       { href: "/admin/fleets", label: "Fleets", Icon: Truck },
       { href: "/admin/messages", label: "Messages", Icon: MessageSquare },
+      { href: "/admin/launch-subscribers", label: "Launch subscribers", Icon: MailCheck },
     ],
   },
   {

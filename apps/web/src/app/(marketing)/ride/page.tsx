@@ -41,7 +41,7 @@ export default async function RidePage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
-      <Header account={account} />
+      <Header account={account} prelaunch />
 
       <section className="relative flex-1 overflow-hidden pb-16 pt-6 sm:pb-24 sm:pt-10">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">

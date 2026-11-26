@@ -51,14 +51,14 @@ export function OperatingHours({ vendor }: { vendor: VendorSettings }) {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="font-sora text-2xl font-semibold text-kk-ink">
-            Operating Hours
+            Opening hours
           </h2>
           <p className="text-sm text-kk-cocoa">
             Set when your kitchen is open for orders.
           </p>
         </div>
         <Button type="submit" loading={pending}>
-          Save Changes
+          Save opening hours
         </Button>
       </div>
 

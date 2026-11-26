@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Order } from "./types";
 import { timeAgo } from "./timeAgo";
+import { formatLagosTime } from "@/lib/time";
 
 interface MobileOrderCardProps {
   order: Order;
@@ -36,6 +37,7 @@ export function MobileOrderCard({
         return null;
     }
   };
+  const expectedReadyTime = formatLagosTime(order.expected_ready_at);
 
   return (
     <div className="rounded-xl border border-kk-line bg-kk-card p-4">
@@ -93,12 +95,18 @@ export function MobileOrderCard({
         <div>
           <p className="font-inter text-xs text-kk-cocoa">Ordered</p>
           <p
-            className={`font-sora text-xl font-bold ${order.status === "in_transit" ? "text-kk-green-ink-mid" : "text-kk-ink"}`}
+            className={`font-sora text-xl font-bold ${order.status === "in_transit" ? "text-kk-green-ink" : "text-kk-ink"}`}
           >
             {timeAgo(order.created_at)}
           </p>
         </div>
       </div>
+
+      {expectedReadyTime && ["accepted", "preparing"].includes(order.status) && (
+        <p className="mt-3 rounded-lg border border-kk-line bg-kk-cream px-3 py-2 font-inter text-xs font-semibold text-kk-ink">
+          Food expected ready at {expectedReadyTime} WAT
+        </p>
+      )}
 
       {/* Actions */}
       <div className="mt-4 flex gap-3">

@@ -57,7 +57,7 @@ export default async function VendorOrdersPage() {
     supabase
       .from("orders")
       .select(
-        "id, code, status, subtotal_kobo, delivery_fee_kobo, total_kobo, created_at, delivery_address, delivery_note",
+        "id, code, status, subtotal_kobo, delivery_fee_kobo, total_kobo, created_at, expected_ready_at, delivery_address, delivery_note",
       )
       .eq("vendor_id", vendor.id)
       .in("status", ACTIVE_STATUSES)
@@ -132,6 +132,7 @@ export default async function VendorOrdersPage() {
       delivery_fee_kobo: order.delivery_fee_kobo,
       total_kobo: order.total_kobo,
       created_at: order.created_at,
+      expected_ready_at: order.expected_ready_at,
       customer_name: contact?.customer_name ?? undefined,
       customer_phone: contact?.customer_phone ?? undefined,
       items: itemsByOrderId.get(order.id) ?? [],

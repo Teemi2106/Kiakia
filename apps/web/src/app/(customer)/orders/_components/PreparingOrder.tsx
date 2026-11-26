@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Order } from "./types";
 import { timeAgo } from "./timeAgo";
+import { formatLagosTime } from "@/lib/time";
 
 interface PreparingOrderProps {
   order: Order;
@@ -21,6 +22,7 @@ export function PreparingOrder({
   vendorName,
   vendorProfileImageUrl,
 }: PreparingOrderProps) {
+  const expectedReadyTime = formatLagosTime(order.expected_ready_at);
   const getItemsSummary = (items?: Array<{ name: string; qty: number }>) => {
     if (!items || items.length === 0) return "No items";
     return items.map((item) => `${item.qty}x ${item.name}`).join(", ");
@@ -71,6 +73,12 @@ export function PreparingOrder({
           Ordered {timeAgo(order.created_at)}
         </span>
       </div>
+
+      {expectedReadyTime && ["accepted", "preparing"].includes(order.status) && (
+        <p className="mt-3 rounded-lg border border-kk-line bg-kk-cream px-3 py-2 font-inter text-xs font-semibold text-kk-ink">
+          Food expected ready at {expectedReadyTime} WAT
+        </p>
+      )}
 
       <div className="mt-6 flex items-center justify-between border-t border-kk-hair-soft pt-4">
         <div>

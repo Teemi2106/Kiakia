@@ -43,6 +43,10 @@ export function SettingsForm({ vendor }: { vendor: VendorSettings }) {
     <form action={formAction} className="flex flex-col gap-6">
       <input type="hidden" name="vendorId" value={vendor.id} />
       <input type="hidden" name="currentBannerUrl" value={vendor.bannerUrl ?? ""} />
+      {/* Preserve order settings while this form edits store details. */}
+      <input type="hidden" name="avgPrepMins" value={vendor.avgPrepMins} />
+      <input type="hidden" name="minOrderNaira" value={vendor.minOrderKobo / 100} />
+      <input type="hidden" name="deliveryRadiusM" value={vendor.deliveryRadiusM} />
 
       <div>
         <label htmlFor="banner" className="text-sm font-medium text-kk-ink">
@@ -98,55 +102,17 @@ export function SettingsForm({ vendor }: { vendor: VendorSettings }) {
           <label htmlFor="state" className="text-sm font-medium text-kk-ink">
             State
           </label>
-          <p className="text-xs text-kk-cocoa">
-            Customers outside this state will never see your store on the home page listing.
-          </p>
+          <p className="text-xs text-kk-cocoa">Choose the state where your kitchen is located.</p>
           <StateSelect id="state" name="state" value={storeState} onChange={setStoreState} className="mt-1" />
         </div>
       </div>
 
       <div className="space-y-4 border-t border-kk-line pt-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-kk-cocoa">Ordering settings</p>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div>
-            <label htmlFor="avgPrepMins" className="text-xs font-medium text-kk-cocoa">
-              Prep time (min)
-            </label>
-            <Input id="avgPrepMins" name="avgPrepMins" type="number" min={1} defaultValue={vendor.avgPrepMins} className="mt-1 w-full" />
-          </div>
-          <div>
-            <label htmlFor="minOrderNaira" className="text-xs font-medium text-kk-cocoa">
-              Min. order (₦)
-            </label>
-            <Input
-              id="minOrderNaira"
-              name="minOrderNaira"
-              type="number"
-              min={0}
-              defaultValue={vendor.minOrderKobo / 100}
-              className="mt-1 w-full"
-            />
-          </div>
-          <div>
-            <label htmlFor="deliveryRadiusM" className="text-xs font-medium text-kk-cocoa">
-              Delivery radius (m)
-            </label>
-            <Input
-              id="deliveryRadiusM"
-              name="deliveryRadiusM"
-              type="number"
-              min={500}
-              defaultValue={vendor.deliveryRadiusM}
-              className="mt-1 w-full"
-            />
-          </div>
-        </div>
-
+        <p className="text-xs font-semibold uppercase tracking-wide text-kk-cocoa">Order availability</p>
         <label className="flex cursor-pointer items-center justify-between rounded-xl border border-kk-line bg-kk-sand p-4">
           <span>
-            <span className="block text-sm font-medium text-kk-ink">Accepting orders</span>
-            <span className="block text-xs text-kk-cocoa">Customers can place new orders while this is on, once KiaKia has approved your store.</span>
+            <span className="block text-sm font-medium text-kk-ink">Take new orders</span>
+            <span className="block text-xs text-kk-cocoa">Turn this off whenever your kitchen cannot take orders.</span>
           </span>
           <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
             <input

@@ -2,6 +2,8 @@
 import { verifySession } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { isDeliveredByStore } from "@/lib/customer/delivered-by";
+import { RealtimeRefresh } from "@/lib/realtime/RealtimeRefresh";
+import { formatLagosTime } from "@/lib/time";
 import type { Database } from "@kiakia/db";
 import type { OrderStatus } from "@kiakia/domain";
 import type { Metadata } from "next";
@@ -34,6 +36,7 @@ function formatTime(value: string | null): string {
 
 interface OrderTimestamps {
   status: OrderStatus;
+  expected_ready_at: string | null;
   placed_at: string | null;
   accepted_at: string | null;
   ready_at: string | null;
@@ -84,7 +87,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .select(
-      "id, code, status, vendor_id, rider_id, placed_at, accepted_at, ready_at, assigned_at, picked_up_at, in_transit_at, arrived_at, delivered_at",
+      "id, code, status, vendor_id, rider_id, expected_ready_at, placed_at, accepted_at, ready_at, assigned_at, picked_up_at, in_transit_at, arrived_at, delivered_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -143,6 +146,9 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
 
   const status = order.status as OrderStatus;
   const steps = buildSteps({ ...order, status });
+  const expectedReadyTime = ["accepted", "preparing"].includes(status)
+    ? formatLagosTime(order.expected_ready_at)
+    : null;
 
   const vendor: Vendor = {
     name: vendorRow?.name ?? "Vendor",
@@ -175,6 +181,12 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
 
   return (
     <>
+      <RealtimeRefresh
+        table="orders"
+        filter={`id=eq.${order.id}`}
+        topic={`customer-tracking-order-${order.id}`}
+        enabled={!isTrackingTerminal(status)}
+      />
       <div className="hidden lg:block">
         <TrackingDesktop
           steps={steps}
@@ -184,6 +196,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
           orderId={id}
           orderCode={order.code}
           status={status}
+          expectedReadyTime={expectedReadyTime}
           deliveryCode={deliveryCode}
         />
       </div>
@@ -196,6 +209,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
           orderId={id}
           orderCode={order.code}
           status={status}
+          expectedReadyTime={expectedReadyTime}
           deliveryCode={deliveryCode}
         />
       </div>

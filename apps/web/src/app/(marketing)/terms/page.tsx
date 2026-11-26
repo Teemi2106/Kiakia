@@ -81,8 +81,11 @@ const sections: LegalSection[] = [
         <p>
           <strong>Wallet.</strong> You can add money through Monnify, and some refunds are returned to your KiaKia
           wallet balance. Wallet balances can be used towards future orders, in full or together with a card payment.
-          They cannot be withdrawn. To have an eligible refund returned to your original payment method instead,
-          contact support.
+          You may submit a withdrawal request from your wallet. The requested amount is reserved while our finance
+          team reviews it, so it cannot be used for orders or another withdrawal during that time. Submitting a
+          request does not mean a transfer has been made: requests are reviewed manually, and a withdrawal is
+          complete only after KiaKia records the bank transfer. We may decline a request and release its reserved
+          amount. To have an eligible refund returned to your original payment method instead, contact support.
         </p>
         <p>
           <strong>KiaKia Coins.</strong> When an order is delivered, you earn KiaKia Coins on the eligible food

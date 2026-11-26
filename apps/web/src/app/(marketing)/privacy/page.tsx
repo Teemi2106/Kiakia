@@ -46,6 +46,10 @@ const sections: LegalSection[] = [
           <strong>Technical data:</strong> device and browser type, IP address, and cookies needed to keep you signed
           in and remember your selected mode (customer or vendor).
         </li>
+        <li>
+            <strong>Launch alerts:</strong> if you ask us to send the launch announcement and relevant pre-launch updates, we store your email address,
+          when you gave consent, and whether you later unsubscribed. We do not store your IP address for this list.
+        </li>
       </ul>
     ),
   },
@@ -57,6 +61,7 @@ const sections: LegalSection[] = [
         <li>To process orders, take payment, hold it in escrow and pay out vendors and riders.</li>
         <li>To match orders with nearby riders and let you and the rider reach each other about a delivery.</li>
         <li>To send order updates and service messages by email, in-app and push notification.</li>
+        <li>To send the launch announcement and relevant pre-launch updates if you choose to join the KiaKia launch list.</li>
         <li>To provide support, handle refunds and resolve disputes.</li>
         <li>To prevent fraud, abuse and security incidents, and to meet legal and accounting obligations.</li>
         <li>To maintain and improve KiaKia.</li>
@@ -69,7 +74,8 @@ const sections: LegalSection[] = [
       <p>
         We process data to perform our contract with you (running your account and orders), to meet legal
         obligations, for our legitimate interests (security, fraud prevention and improving the service) and, where
-        required, with your consent, which you can withdraw at any time.
+        required, with your consent. Joining the launch list is optional; you can withdraw that consent at any time
+        using the unsubscribe link provided with the confirmation or by contacting us.
       </p>
     ),
   },
@@ -110,8 +116,10 @@ const sections: LegalSection[] = [
     body: (
       <p>
         We keep data for as long as your account is active and as long as needed for the purposes above. Financial and
-        order records are kept for the period the law requires, which is generally at least six years. When data is no
-        longer needed we delete or anonymise it.
+        order records are kept for the period the law requires, which is generally at least six years. Launch-list
+        addresses are kept until you unsubscribe or the launch campaign ends; an opted-out address may be retained in
+        a restricted suppression record so we do not contact you again. When other data is no longer needed we delete
+        or anonymise it.
       </p>
     ),
   },

@@ -5,13 +5,12 @@ import { extendedReadyMinutes, parseReadyInMinutes, PREP_EXTENSION_MINUTES } fro
 import { Button, Input } from "@kiakia/ui";
 import { Timer } from "lucide-react";
 import { useState, useTransition, type FormEvent } from "react";
+import { formatLagosTime } from "@/lib/time";
 
 /**
- * "Need more time?" for an order still being prepared. Quick buttons add 5, 10
- * or 15 minutes to the current ready time; or the store types "ready in N
- * minutes" (1 to 180). The rider search and the assigned rider follow the new
- * time. Shown only for accepted/preparing rider-delivery orders (the caller
- * decides; the database refuses anything else).
+ * A vendor can set an exact per-order preparation time in minutes (1 to 180).
+ * Quick buttons can extend the current time; customer and rider views use the
+ * same persisted ready-at timestamp.
  */
 export function PrepEstimateControl({ orderId, expectedReadyAt }: { orderId: string; expectedReadyAt: string | null }) {
   const [pending, startTransition] = useTransition();
@@ -19,6 +18,7 @@ export function PrepEstimateControl({ orderId, expectedReadyAt }: { orderId: str
   const [typed, setTyped] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const expectedReadyTime = formatLagosTime(expectedReadyAt);
 
   function send(minutes: number) {
     setError(null);
@@ -45,17 +45,17 @@ export function PrepEstimateControl({ orderId, expectedReadyAt }: { orderId: str
   return (
     <div className="flex flex-col gap-3">
       {!open && (
-        <div>
+        <div className="flex flex-wrap items-center gap-3">
+          {expectedReadyTime && <p className="text-sm font-medium text-kk-cocoa">Expected ready at {expectedReadyTime} WAT</p>}
           <Button type="button" variant="secondary" size="sm" disabled={pending} onClick={() => setOpen(true)}>
-            <Timer className="size-4" aria-hidden="true" />
-            Need more time?
+            <Timer className="size-4" aria-hidden="true" /> Set prep time
           </Button>
         </div>
       )}
       {open && (
         <div className="flex flex-col gap-3 rounded-xl border border-kk-line bg-kk-card p-4">
-          <p className="text-sm font-semibold text-kk-ink">Need more time?</p>
-          <p className="text-sm text-kk-cocoa">Tell us so the rider arrives when the food is ready, not before.</p>
+          <p className="text-sm font-semibold text-kk-ink">Set preparation time</p>
+          <p className="text-sm text-kk-cocoa">The customer and rider will see this expected-ready time. The order is marked ready automatically when it elapses.</p>
           {expectedReadyAt && (
             <div className="flex flex-wrap gap-2">
               {PREP_EXTENSION_MINUTES.map((extra) => (
@@ -78,7 +78,7 @@ export function PrepEstimateControl({ orderId, expectedReadyAt }: { orderId: str
           <form onSubmit={submitTyped} className="flex flex-wrap items-end gap-2">
             <div className="flex flex-col gap-1">
               <label htmlFor={`ready-in-${orderId}`} className="text-sm font-medium text-kk-ink">
-                Or: ready in how many minutes from now?
+                Food ready in how many minutes from now?
               </label>
               <Input
                 id={`ready-in-${orderId}`}
@@ -93,7 +93,7 @@ export function PrepEstimateControl({ orderId, expectedReadyAt }: { orderId: str
               />
             </div>
             <Button type="submit" size="sm" loading={pending} disabled={pending || typed === ""}>
-              Update
+              Save prep time
             </Button>
           </form>
           <div>

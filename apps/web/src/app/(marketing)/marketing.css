@@ -337,6 +337,142 @@
   display: none;
 }
 
+/* ----------------------------------------------------------- launch countdown */
+.kk-launch-countdown-section {
+  --font-inter: var(--font-inter-face);
+  --font-sora: var(--font-sora-face);
+  position: relative;
+  overflow: hidden;
+  padding: clamp(3rem, 6vw, 5.25rem) 1rem;
+  background: radial-gradient(ellipse at 78% 48%, rgba(255,255,255,.88), transparent 44%), linear-gradient(180deg, #fffaf1, #f7ecdf);
+}
+.kk-launch-countdown-section::before {
+  position: absolute;
+  top: 10%;
+  right: -11rem;
+  width: 22rem;
+  aspect-ratio: 1;
+  border: 1px solid rgba(182, 25, 19, 0.08);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2rem rgba(182, 25, 19, 0.025), 0 0 0 4rem rgba(182, 25, 19, 0.018);
+  content: "";
+  pointer-events: none;
+}
+.kk-launch-countdown-inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(100%, 74rem);
+  margin: 0 auto;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 29rem);
+  gap: clamp(1.5rem, 5vw, 5rem);
+}
+.kk-launch-countdown-copy { max-width: 31rem; }
+.kk-prelaunch-eyebrow,
+.kk-notify-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #a52b22;
+  font: 700 0.72rem/1.3 var(--font-inter), sans-serif;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+.kk-prelaunch-eyebrow::before { width: 1.4rem; height: 1px; background: currentColor; content: ""; }
+.kk-launch-countdown-copy h2 {
+  margin: 1rem 0 0.75rem;
+  color: #302722;
+  font: 600 clamp(2rem, 4vw, 3.4rem)/1.04 var(--font-sora), sans-serif;
+  letter-spacing: -0.06em;
+}
+.kk-launch-countdown-copy > p { max-width: 26rem; margin: 0; color: #6f5e52; font: 400 1rem/1.7 var(--font-inter), sans-serif; }
+.kk-launch-countdown-copy strong { color: #4b332d; font-weight: 700; }
+.kk-launch-alert-link { display: inline-flex; align-items: center; gap: 0.55rem; margin-top: 1.35rem; color: #a52b22; font: 700 0.82rem/1.3 var(--font-inter), sans-serif; letter-spacing: 0.07em; text-decoration: none; text-transform: uppercase; }
+.kk-launch-alert-link span { transition: transform 180ms ease; }
+.kk-launch-alert-link:hover span { transform: translateX(0.2rem); }
+
+.kk-ticket-wrap { position: relative; width: min(100%, 29rem); margin: 0 auto; perspective: 1200px; }
+.kk-ticket { position: relative; width: 100%; aspect-ratio: 1122 / 1402; transform: rotate(1.1deg); animation: kk-ticket-arrive 900ms cubic-bezier(.2,.8,.2,1) both, kk-ticket-float 7s ease-in-out 1s infinite; filter: drop-shadow(0 2rem 2rem rgba(56, 37, 25, 0.2)); }
+.kk-ticket-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* Match the print plane to the paper lean and its perspective taper. */
+.kk-ticket-content { position: absolute; inset: 24% 21% 8.5%; display: flex; flex-direction: column; align-items: stretch; color: #332923; text-align: center; transform: rotateX(-12deg) rotate(1deg) skewX(-8deg); transform-origin: center; }
+.kk-ticket-brandline { display: flex; align-items: center; justify-content: center; gap: 0.45rem; }
+.kk-ticket-logo { width: clamp(4.5rem, 13vw, 7.5rem); height: auto; mix-blend-mode: multiply; }
+.kk-ticket-dot { width: 0.45rem; height: 0.45rem; flex: 0 0 auto; border-radius: 50%; background: #bc3022; box-shadow: 0 0 0 0.2rem rgba(188, 48, 34, 0.12); }
+.kk-ticket-rule { height: 1px; margin: 0.8rem 0 0.9rem; background: linear-gradient(90deg, transparent, rgba(95, 66, 45, 0.28), transparent); }
+.kk-ticket-kicker { margin: 0; color: #a04736; font: 700 clamp(0.55rem, 1.15vw, 0.68rem)/1.2 var(--font-inter), sans-serif; letter-spacing: 0.2em; text-transform: uppercase; }
+.kk-ticket-status { margin: 0.35rem 0 0; font: 700 clamp(0.95rem, 1.8vw, 1.4rem)/1.12 var(--font-sora), sans-serif; letter-spacing: -0.045em; text-transform: uppercase; }
+.kk-ticket-message { margin: 0.5rem 0 0; color: #776456; font: 500 clamp(0.48rem, 1.05vw, 0.68rem)/1.4 var(--font-inter), sans-serif; letter-spacing: 0.025em; text-transform: uppercase; }
+.kk-countdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(0.12rem, 0.55vw, 0.4rem); margin: auto 0 0.3rem; padding: 0.65rem 0 0.55rem; border-top: 1px dashed rgba(91, 68, 51, 0.35); border-bottom: 1px dashed rgba(91, 68, 51, 0.35); }
+.kk-countdown-unit { display: flex; flex-direction: column; align-items: center; }
+.kk-countdown-number { color: #2f2721; font: 600 clamp(1rem, 2.6vw, 1.75rem)/1 var(--font-sora), sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -0.06em; animation: kk-countdown-tick 300ms ease both; }
+.kk-countdown-label { margin-top: 0.25rem; color: #8a7261; font: 700 clamp(0.38rem, 0.75vw, 0.52rem)/1 var(--font-inter), sans-serif; letter-spacing: 0.1em; text-transform: uppercase; }
+.kk-ticket-launch-date { margin: 0.55rem 0 0; color: #8a7261; font: 600 clamp(0.4rem, 0.78vw, 0.54rem)/1.35 var(--font-inter), sans-serif; letter-spacing: 0.035em; }
+.kk-ticket-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.15rem 0.25rem; width: 86%; margin: auto 14% 0 0; padding-top: 0.65rem; border-top: 1px solid rgba(95, 66, 45, 0.2); color: #806b5c; font: 700 clamp(0.3rem, 0.5vw, 0.36rem)/1.25 var(--font-inter), sans-serif; letter-spacing: 0.045em; text-align: left; text-transform: uppercase; }
+.kk-ticket-footer span:last-child { margin-left: auto; text-align: right; }
+.kk-ticket-open-link { margin: auto 0.3rem; color: #aa251c; font: 700 0.8rem/1.2 var(--font-inter), sans-serif; letter-spacing: 0.1em; text-transform: uppercase; }
+.kk-ticket-open-link span { margin-left: 0.3rem; }
+
+.kk-launch-signup-section { padding: clamp(2.25rem, 5vw, 4rem) 1rem; background: #fffaf1; }
+.kk-notify-card { width: min(100%, 43rem); margin: 0 auto; padding: clamp(1.6rem, 4.4vw, 3.25rem); border: 1px solid rgba(166, 126, 99, 0.2); border-radius: 1.25rem; background: rgba(255, 253, 249, 0.9); box-shadow: 0 1.5rem 4rem rgba(78, 54, 36, 0.09), inset 0 1px rgba(255,255,255,.8); text-align: center; backdrop-filter: blur(12px); }
+.kk-notify-spark { display: inline-block; color: #c94d32; font-size: 1.1rem; animation: kk-spark-turn 12s linear infinite; }
+.kk-notify-eyebrow { display: block; margin-top: 0.55rem; font-size: 0.65rem; }
+.kk-notify-card h2 { margin: 0.65rem 0 0; color: #302722; font: 600 clamp(1.7rem, 4vw, 2.6rem)/1.1 var(--font-sora), sans-serif; letter-spacing: -0.06em; text-transform: uppercase; }
+.kk-notify-description { max-width: 27rem; margin: 0.7rem auto 0; color: #75645a; font: 400 0.94rem/1.65 var(--font-inter), sans-serif; }
+.kk-notify-form { max-width: 30rem; margin: 1.65rem auto 0; text-align: left; }
+.kk-notify-label { display: block; margin-bottom: 0.45rem; color: #4d4037; font: 600 0.76rem/1.3 var(--font-inter), sans-serif; }
+.kk-notify-input { width: 100%; min-height: 3.35rem; padding: 0 1rem; border: 1px solid #dbcbbc; border-radius: 0.55rem; outline: none; background: #fffdfa; color: #2e2924; font: 500 0.94rem/1.4 var(--font-inter), sans-serif; transition: border-color 180ms ease, box-shadow 180ms ease; }
+.kk-notify-input:focus { border-color: #b61913; box-shadow: 0 0 0 3px rgba(182, 25, 19, 0.12); }
+.kk-notify-input::placeholder { color: #aa9b8e; }
+.kk-consent-row { display: flex; align-items: flex-start; gap: 0.6rem; margin: 0.95rem 0 0; color: #74665b; font: 400 0.74rem/1.55 var(--font-inter), sans-serif; }
+.kk-consent-row input { width: 1rem; height: 1rem; flex: 0 0 auto; margin: 0.12rem 0 0; accent-color: #b61913; }
+.kk-consent-row a,.kk-unsubscribe-link { color: #a62b22; text-decoration: underline; text-underline-offset: 3px; }
+.kk-notify-button { display: flex; width: 100%; min-height: 3.45rem; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.1rem; padding: 0.8rem 1.1rem 0.8rem 1.25rem; border: 0; border-radius: 0.55rem; background: #b61913; color: white; cursor: pointer; font: 700 0.8rem/1.2 var(--font-inter), sans-serif; letter-spacing: 0.1em; text-align: left; text-transform: uppercase; transition: background 180ms ease, transform 180ms ease; }
+.kk-notify-button:hover { transform: translateY(-1px); background: #951a15; }
+.kk-notify-button:disabled { cursor: wait; opacity: 0.7; }
+.kk-notify-button span { font-size: 1.15rem; }
+.kk-notify-privacy { margin: 0.75rem 0 0; color: #9a8c80; font: 400 0.7rem/1.4 var(--font-inter), sans-serif; text-align: center; }
+.kk-form-error { margin: 0.75rem 0 0; color: #a31b15; font: 600 0.8rem/1.45 var(--font-inter), sans-serif; }
+.kk-honeypot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.kk-notify-success { display: flex; min-height: 15rem; flex-direction: column; align-items: center; justify-content: center; }
+.kk-success-stamp { padding: 0.6rem 0.85rem; border: 1px solid rgba(151, 43, 31, 0.58); color: #9e2c20; font: 800 0.65rem/1 var(--font-inter), sans-serif; letter-spacing: 0.17em; text-transform: uppercase; transform: rotate(-3deg); animation: kk-stamp-in 500ms cubic-bezier(.16,1,.3,1) both; }
+.kk-notify-success h2 { margin-top: 1.5rem; text-transform: none; }
+.kk-notify-success p { margin: 0.55rem 0 0; color: #75645a; font: 400 0.94rem/1.6 var(--font-inter), sans-serif; }
+.kk-unsubscribe-link { margin-top: 1.1rem; font: 500 0.75rem/1.4 var(--font-inter), sans-serif; }
+.kk-unsubscribe-page { --font-inter: var(--font-inter-face); --font-sora: var(--font-sora-face); display: grid; min-height: 100vh; place-items: center; padding: 1.25rem; background: linear-gradient(145deg, #fffaf1, #f3e7db); }
+.kk-unsubscribe-panel { width: min(100%, 34rem); padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid rgba(166, 126, 99, 0.2); border-radius: 1.2rem; background: #fffdfa; box-shadow: 0 1.5rem 4rem rgba(78, 54, 36, 0.1); }
+.kk-unsubscribe-panel h1 { margin: 1rem 0 0.55rem; color: #302722; font: 600 clamp(1.8rem, 5vw, 2.6rem)/1.1 var(--font-sora), sans-serif; letter-spacing: -0.06em; }
+.kk-unsubscribe-panel > p { margin: 0 0 1.25rem; color: #75645a; font: 400 0.94rem/1.65 var(--font-inter), sans-serif; }
+.kk-unsubscribe-back { display: inline-block; margin-top: 1.2rem; color: #8d3329; font: 600 0.8rem/1.3 var(--font-inter), sans-serif; }
+
+@keyframes kk-ticket-arrive { from { opacity: 0; transform: translateY(1.2rem) rotate(4deg); } to { opacity: 1; transform: translateY(0) rotate(1.1deg); } }
+@keyframes kk-ticket-float { 0%,100% { translate: 0 0; } 50% { translate: 0 -0.5rem; } }
+@keyframes kk-countdown-tick { from { opacity: .55; transform: translateY(-2px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes kk-stamp-in { from { opacity: 0; transform: scale(1.3) rotate(-9deg); } to { opacity: 1; transform: scale(1) rotate(-3deg); } }
+@keyframes kk-spark-turn { to { transform: rotate(360deg); } }
+
+@media (max-width: 760px) {
+  .kk-launch-countdown-section { padding: 2.5rem 1rem; }
+  .kk-launch-countdown-inner { grid-template-columns: 1fr; gap: 1.3rem; }
+  .kk-launch-countdown-copy { margin: 0 auto; text-align: center; }
+  .kk-launch-countdown-copy .kk-prelaunch-eyebrow { justify-content: center; }
+  .kk-launch-countdown-copy h2 { max-width: 27rem; margin: 0.75rem auto 0.55rem; font-size: clamp(2rem, 8vw, 3rem); }
+  .kk-launch-countdown-copy > p { margin: 0 auto; font-size: 0.92rem; }
+  .kk-launch-alert-link { margin-top: 0.85rem; }
+  .kk-ticket-wrap { width: min(100%, 27rem); }
+  .kk-ticket-rule { margin: 0.55rem 0 0.65rem; }
+  .kk-countdown { padding: 0.5rem 0 0.42rem; }
+  .kk-ticket-launch-date { margin-top: 0.42rem; }
+  .kk-ticket-footer { padding-top: 0.48rem; }
+  .kk-launch-signup-section { padding: 2rem 1rem; }
+}
+
+@media (max-width: 380px) {
+  .kk-ticket-status { font-size: 0.88rem; }
+  .kk-ticket-message { font-size: 0.46rem; }
+  .kk-ticket-footer { font-size: 0.3rem; }
+}
 /* ------------------------------------------------------- reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .kk-reveal[data-shown="false"] {
@@ -354,9 +490,16 @@
   .kk-streak,
   .kk-runner,
   .kk-runner-fill,
-  .kk-track {
+  .kk-track,
+  .kk-ticket,
+  .kk-countdown-number,
+  .kk-success-stamp,
+  .kk-notify-spark {
     animation: none !important;
   }
+
+  .kk-ticket { transform: rotate(1.1deg); }
+  .kk-ticket { translate: none; }
 
   .kk-rail {
     scroll-behavior: auto;

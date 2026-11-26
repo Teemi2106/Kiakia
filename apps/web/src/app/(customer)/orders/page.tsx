@@ -47,7 +47,7 @@ export default async function ActiveOrdersPage({
 
   const { data: realOrders } = await supabase
     .from("orders")
-    .select("id, code, status, total_kobo, vendor_id, created_at, delivery_address")
+    .select("id, code, status, total_kobo, vendor_id, created_at, expected_ready_at, delivery_address")
     .eq("customer_id", session.userId)
     .not("status", "in", `(${TERMINAL_STATUSES.join(",")})`)
     // A "draft" order is one place_order() created but payment never
@@ -90,6 +90,7 @@ export default async function ActiveOrdersPage({
     total_kobo: order.total_kobo,
     vendor_id: order.vendor_id,
     created_at: order.created_at,
+    expected_ready_at: order.expected_ready_at,
     delivery_address: formatAddress(order.delivery_address),
     items: itemsByOrderId.get(order.id) ?? [],
   }));

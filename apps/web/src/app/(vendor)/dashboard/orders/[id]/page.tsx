@@ -34,7 +34,7 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
     supabase
       .from("orders")
       .select(
-        "id, code, status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, total_kobo, delivery_address, delivery_note, vendor_id, rider_id",
+        "id, code, status, subtotal_kobo, delivery_fee_kobo, service_fee_kobo, total_kobo, expected_ready_at, delivery_address, delivery_note, vendor_id, rider_id",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -95,6 +95,7 @@ export default async function VendorOrderDetailPage({ params }: { params: Promis
           status={order.status}
           deliveryBy={delivery?.deliveryBy}
           dispatch={delivery?.dispatch}
+          expectedReadyAt={order.expected_ready_at}
           deliveryFeeKobo={order.delivery_fee_kobo}
         />
       </div>

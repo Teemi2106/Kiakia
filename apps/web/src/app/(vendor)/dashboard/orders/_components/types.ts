@@ -18,6 +18,7 @@ export interface Order {
   delivery_fee_kobo?: number;
   total_kobo: number;
   created_at: string;
+  expected_ready_at?: string | null;
   customer_name?: string;
   customer_phone?: string;
   items?: OrderItem[];

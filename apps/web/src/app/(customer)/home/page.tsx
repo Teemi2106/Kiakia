@@ -121,7 +121,7 @@ export default async function CustomerHomePage({
       // full — the rest are a count linking to /orders.
       (userId ? supabase
         .from("orders")
-        .select("id, code, status, total_kobo, vendor_id")
+        .select("id, code, status, total_kobo, vendor_id, expected_ready_at")
         .eq("customer_id", userId)
         .not("status", "in", `(${TERMINAL_STATUS_LIST})`)
         // Same reasoning as /orders' own query: a "draft" order is an
@@ -589,7 +589,7 @@ async function resolveSearchMatches(
 }
 
 function toActiveOrder(
-  row: { id: string; code: string; status: string; total_kobo: number } | null,
+  row: { id: string; code: string; status: string; total_kobo: number; expected_ready_at?: string | null } | null,
   vendorName: string | null,
 ): ActiveOrder | null {
   if (!row) return null;
@@ -599,6 +599,7 @@ function toActiveOrder(
     status: row.status as OrderStatus,
     total_kobo: row.total_kobo,
     vendorName,
+    expected_ready_at: row.expected_ready_at,
   };
 }
 

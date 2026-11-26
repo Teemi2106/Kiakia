@@ -20,6 +20,7 @@ interface TrackingDesktopProps {
   orderId?: string;
   orderCode: string;
   status: OrderStatus;
+  expectedReadyTime?: string | null;
   /** Only passed by the page when status is in_transit/arrived — see page.tsx. */
   deliveryCode?: string;
 }
@@ -32,6 +33,7 @@ export function TrackingDesktop({
   orderId,
   orderCode,
   status,
+  expectedReadyTime,
   deliveryCode,
 }: TrackingDesktopProps) {
   const isLive = !isTrackingTerminal(status) && status !== "delivered";
@@ -64,6 +66,11 @@ export function TrackingDesktop({
           <p className="font-inter text-base text-kk-cocoa">
             We&apos;ll update this page automatically as your order moves.
           </p>
+          {expectedReadyTime && (
+            <p className="mt-2 font-inter text-sm font-semibold text-kk-red-ink">
+              Food expected ready at {expectedReadyTime} WAT
+            </p>
+          )}
         </div>
 
         {/* Scrollable Content */}

@@ -3,6 +3,7 @@ import { getVendorForCurrentUser, requireVendorContext } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { computeVendorPendingEscrowKobo } from "@/lib/vendor-escrow";
+import { RealtimeRefresh } from "@/lib/realtime/RealtimeRefresh";
 import { EmptyState } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -193,6 +194,11 @@ export default async function VendorDashboardPage() {
 
   return (
     <>
+      <RealtimeRefresh
+        table="orders"
+        filter={`vendor_id=eq.${vendor.id}`}
+        topic={`vendor-dashboard-orders-${vendor.id}`}
+      />
       <div className="hidden lg:block">
         <DashboardDesktop
           vendor={vendor}

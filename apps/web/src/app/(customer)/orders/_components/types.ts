@@ -6,6 +6,7 @@ export interface Order {
   total_kobo: number;
   vendor_id: string;
   created_at: string;
+  expected_ready_at?: string | null;
   delivery_address?: string;
   items?: Array<{ name: string; qty: number }>;
 }

@@ -50,6 +50,12 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
       : null,
   );
   const [radiusM, setRadiusM] = useState(vendor.deliveryRadiusM);
+  const radiusPresets = [
+    { value: 5_000, title: "Nearby", detail: "5 km" },
+    { value: 10_000, title: "Mid-range", detail: "10 km" },
+    { value: 20_000, title: "Widest area", detail: "20 km" },
+  ] as const;
+  const isRadiusPreset = radiusPresets.some((preset) => preset.value === radiusM);
 
   // Most vendors won't know how to find/drag a pin to their exact address —
   // "use my location" gets them a correct pin with one tap. flyToRequestId
@@ -90,9 +96,9 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
       <div className="rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-sora text-2xl font-semibold text-kk-ink">Store Location</h2>
+            <h2 className="font-sora text-2xl font-semibold text-kk-ink">Where is your kitchen?</h2>
             <p className="text-sm text-kk-cocoa">
-              This pin is the center point customers&apos; delivery distance is measured from.
+              Set the kitchen location customers will order from. Use your location, or move the pin on the map.
             </p>
           </div>
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-notice-surface">
@@ -138,9 +144,9 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
           <input type="hidden" name="lng" value={position?.lng ?? ""} />
 
           <p className="text-xs text-kk-cocoa">
-            {position
-              ? `Pinned at ${position.lat.toFixed(5)}, ${position.lng.toFixed(5)} — drag the pin or click elsewhere on the map to move it.`
-              : "Click anywhere on the map to drop a pin for your store."}
+              {position
+              ? "Kitchen location set. Drag the pin or tap the map to move it."
+              : "Tap the map to place a pin for your kitchen."}
           </p>
 
           <div className="flex items-center gap-3">
@@ -160,9 +166,9 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
       {/* Delivery & fulfillment settings */}
       <div className="rounded-2xl border border-kk-line bg-kk-card p-6 shadow-sm">
         <div className="mb-6">
-          <h2 className="font-sora text-2xl font-semibold text-kk-ink">Delivery &amp; Fulfillment</h2>
+          <h2 className="font-sora text-2xl font-semibold text-kk-ink">Delivery area and order settings</h2>
           <p className="text-sm text-kk-cocoa">
-            How far you&apos;ll deliver, your minimum order, and the prep time customers see at checkout.
+            Choose the maximum distance from your kitchen. KiaKia also checks whether the customer is in a delivery area we currently serve.
           </p>
         </div>
 
@@ -180,35 +186,67 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
           <input type="hidden" name="currentBannerUrl" value={vendor.bannerUrl ?? ""} />
           {vendor.isAcceptingOrders && <input type="hidden" name="isAcceptingOrders" value="on" />}
 
-          <div>
-            <label htmlFor="deliveryRadiusM" className="mb-2 block font-inter text-sm font-medium text-kk-ink">
-              How far will you deliver?
-            </label>
-            <input
-              id="deliveryRadiusM"
-              name="deliveryRadiusM"
-              type="range"
-              min={500}
-              max={20000}
-              step={500}
-              value={radiusM}
-              onChange={(e) => setRadiusM(Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-kk-fill accent-kk-red"
-            />
-            <div className="mt-2 flex justify-between text-sm text-kk-cocoa">
-              <span>0.5km</span>
-              <span className="font-bold text-kk-red-ink">{(radiusM / 1000).toFixed(1)}km</span>
-              <span>20km</span>
+          <fieldset>
+            <legend className="mb-2 block font-inter text-sm font-medium text-kk-ink">
+              How far away can a customer be?
+            </legend>
+            <p className="mb-3 text-sm text-kk-cocoa">
+              The red circle shows distance from your kitchen in a straight line. The road trip may be longer.
+            </p>
+            <div className="grid grid-cols-3 gap-2" role="group" aria-label="Choose delivery distance">
+              {radiusPresets.map((preset) => {
+                const selected = radiusM === preset.value;
+                return (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setRadiusM(preset.value)}
+                    className={`min-h-14 rounded-xl border px-2 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kk-red-ink/40 ${
+                      selected
+                        ? "border-kk-red bg-kk-red-tint text-kk-red-ink"
+                        : "border-kk-line bg-kk-card text-kk-ink hover:bg-kk-sand"
+                    }`}
+                  >
+                    <span className="block text-xs font-medium">{preset.title}</span>
+                    <span className="mt-0.5 block text-sm font-bold">{preset.detail}</span>
+                  </button>
+                );
+              })}
             </div>
-          </div>
+            <p className="mt-2 text-xs text-kk-cocoa">
+              20 km is the widest distance available. A customer must also be somewhere KiaKia currently delivers.
+            </p>
+            <details className="mt-3" open={!isRadiusPreset}>
+              <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold text-kk-red-ink">
+                Choose a different distance
+              </summary>
+              <label htmlFor="deliveryRadiusM" className="mb-2 block text-sm font-medium text-kk-ink">
+                Maximum distance: <span className="font-bold text-kk-red-ink">{(radiusM / 1000).toFixed(1)} km</span>
+              </label>
+              <input
+                id="deliveryRadiusM"
+                name="deliveryRadiusM"
+                type="range"
+                min={500}
+                max={20000}
+                step={500}
+                value={radiusM}
+                onChange={(e) => setRadiusM(Number(e.target.value))}
+                className="h-3 w-full cursor-pointer appearance-none rounded-lg bg-kk-fill accent-kk-red"
+              />
+              <div className="mt-1 flex justify-between text-xs text-kk-cocoa">
+                <span>0.5 km</span>
+                <span>20 km</span>
+              </div>
+            </details>
+          </fieldset>
 
           <div className="rounded-xl border border-[rgba(147,75,0,0.2)] bg-[rgba(255,220,197,0.3)] p-4">
             <div className="flex items-center gap-3 text-kk-orange-darkest">
               <Info className="size-5 shrink-0" />
               <p className="text-sm">
-                Customers can order from you only if their delivery address is within this distance of your
-                kitchen. The red circle on the map shows the area you cover. A smaller area means shorter
-                rides and faster deliveries.
+                Customers must be within this distance and inside a delivery area KiaKia serves. The circle is not a city boundary.
               </p>
             </div>
           </div>
@@ -216,7 +254,7 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="minOrderNaira" className="mb-2 block font-inter text-sm font-medium text-kk-ink">
-                Minimum Order Value
+                Minimum order
               </label>
               <div className="flex items-center">
                 <span className="rounded-l-xl border border-r-0 border-kk-line bg-kk-sand px-3 py-2 font-inter text-sm">
@@ -228,14 +266,16 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
                   type="number"
                   min={0}
                   defaultValue={vendor.minOrderKobo / 100}
+                  aria-describedby="minOrderHelp"
                   className="w-full rounded-r-xl border border-kk-line p-2 font-inter text-sm focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red-ink/20"
                 />
               </div>
+              <p id="minOrderHelp" className="mt-1 text-xs text-kk-cocoa">Customers must spend at least this amount before delivery.</p>
             </div>
 
             <div>
               <label htmlFor="avgPrepMins" className="mb-2 block font-inter text-sm font-medium text-kk-ink">
-                Average Prep Time
+                Typical prep time
               </label>
               <div className="flex items-center">
                 <input
@@ -244,12 +284,14 @@ export function DeliveryZone({ vendor }: { vendor: VendorSettings }) {
                   type="number"
                   min={1}
                   defaultValue={vendor.avgPrepMins}
+                  aria-describedby="prepTimeHelp"
                   className="w-full rounded-l-xl border border-kk-line p-2 font-inter text-sm focus:border-kk-red focus:outline-none focus:ring-2 focus:ring-kk-red-ink/20"
                 />
                 <span className="rounded-r-xl border border-l-0 border-kk-line bg-kk-sand px-3 py-2 font-inter text-sm">
                   min
                 </span>
               </div>
+              <p id="prepTimeHelp" className="mt-1 text-xs text-kk-cocoa">A usual estimate shown to customers before they order.</p>
             </div>
           </div>
 

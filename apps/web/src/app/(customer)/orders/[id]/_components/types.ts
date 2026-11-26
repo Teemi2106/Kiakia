@@ -3,6 +3,7 @@ export interface OrderDetail {
   id: string;
   code: string;
   status: string;
+  expected_ready_at?: string | null;
   payment_status: string;
   subtotal_kobo: number;
   delivery_fee_kobo: number;

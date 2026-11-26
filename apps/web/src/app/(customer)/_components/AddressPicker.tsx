@@ -145,13 +145,13 @@ export function AddressPicker({ compact = false }: { compact?: boolean }) {
             aria-modal="true"
             aria-labelledby="delivery-location-title"
             aria-describedby="delivery-location-description"
-            className="relative max-h-[min(88dvh,760px)] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-white/70 bg-[radial-gradient(ellipse_at_top_right,rgba(255,215,173,0.35),transparent_45%),linear-gradient(145deg,#fffdfa_0%,#ffffff_52%,#fff9f4_100%)] p-5 shadow-[0_32px_100px_-30px_rgba(29,21,18,0.55)] sm:p-8 md:p-10"
+            className="relative max-h-[min(88dvh,760px)] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-white/70 bg-[radial-gradient(ellipse_at_top_right,rgba(255,215,173,0.35),transparent_45%),linear-gradient(145deg,#fffdfa_0%,#ffffff_52%,#fff9f4_100%)] p-5 shadow-[0_32px_100px_-30px_rgba(29,21,18,0.55)] dark:border-kk-hair dark:bg-kk-card sm:p-8 md:p-10"
           >
             <button
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close delivery location picker"
-              className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full border border-kk-line/60 bg-white/80 text-kk-cocoa shadow-sm transition hover:rotate-90 hover:bg-white hover:text-kk-ink sm:right-6 sm:top-6"
+              className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full border border-kk-line/60 bg-kk-card/80 text-kk-cocoa shadow-sm transition hover:rotate-90 hover:bg-kk-card hover:text-kk-ink sm:right-6 sm:top-6"
             >
               <X className="size-5" />
             </button>
@@ -173,7 +173,7 @@ export function AddressPicker({ compact = false }: { compact?: boolean }) {
               type="button"
               onClick={locate}
               disabled={locating}
-              className="mt-5 flex w-full items-center gap-3 rounded-2xl border border-kk-line/55 bg-white/70 px-4 py-3.5 text-left transition hover:border-kk-red/25 hover:bg-white hover:shadow-sm disabled:opacity-60"
+              className="mt-5 flex w-full items-center gap-3 rounded-2xl border border-kk-line/55 bg-kk-card/70 px-4 py-3.5 text-left transition hover:border-kk-red/25 hover:bg-kk-card hover:shadow-sm disabled:opacity-60"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-kk-red/10 text-kk-red-ink">
                 <LocateFixed className="size-5" />
@@ -186,7 +186,7 @@ export function AddressPicker({ compact = false }: { compact?: boolean }) {
             {locationError && <p role="status" className="mt-2 px-2 text-xs text-kk-danger-ink">{locationError}</p>}
 
             {location && (
-              <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-kk-red/15 bg-white/85 shadow-[0_16px_40px_-28px_rgba(190,32,26,0.5)]">
+              <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-kk-red/15 bg-kk-card/85 shadow-[0_16px_40px_-28px_rgba(190,32,26,0.5)]">
                 <div className="flex items-start gap-3 p-4">
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-kk-red/10 text-kk-red-ink"><MapPin className="size-4" /></span>
                   <div className="min-w-0">
@@ -203,7 +203,7 @@ export function AddressPicker({ compact = false }: { compact?: boolean }) {
                 <p className="bg-kk-cream/70 px-4 py-2.5 font-inter text-xs text-kk-cocoa">Drag the pin or tap the map to fine-tune your delivery spot.</p>
               </div>
             )}
-            {saveError && <p role="alert" className="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-sm text-kk-danger-ink">{saveError}</p>}
+            {saveError && <p role="alert" className="mt-3 rounded-xl bg-kk-danger-wash px-4 py-3 text-sm text-kk-danger-ink">{saveError}</p>}
 
             <button
               type="button"

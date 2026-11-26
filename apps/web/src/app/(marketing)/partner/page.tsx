@@ -67,7 +67,7 @@ export default async function PartnerPage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-kk-cream">
-      <Header account={account} />
+      <Header account={account} prelaunch />
 
       <section className="relative overflow-hidden pb-16 pt-6 sm:pb-24 sm:pt-10">
         <div

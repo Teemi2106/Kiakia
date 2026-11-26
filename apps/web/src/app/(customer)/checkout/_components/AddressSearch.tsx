@@ -67,7 +67,7 @@ export function AddressSearch({ onSelect }: { onSelect: (result: AddressSearchRe
             }}
             placeholder="Search street, area or city"
             aria-label="Search delivery area"
-            className="h-13 w-full rounded-2xl border border-kk-hair bg-white pl-11 pr-3 font-inter text-sm text-kk-ink shadow-[0_6px_18px_-16px_rgba(40,28,24,0.45)] transition focus:border-kk-red/50 focus:outline-none focus:ring-4 focus:ring-kk-red/10 placeholder:text-kk-cocoa/55"
+            className="h-13 w-full rounded-2xl border border-kk-hair bg-kk-card pl-11 pr-3 font-inter text-sm text-kk-ink shadow-[0_6px_18px_-16px_rgba(40,28,24,0.45)] transition focus:border-kk-red/50 focus:outline-none focus:ring-4 focus:ring-kk-red/10 placeholder:text-kk-cocoa/55"
           />
         </label>
         {loading && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-inter text-xs text-kk-cocoa">Searching…</span>}

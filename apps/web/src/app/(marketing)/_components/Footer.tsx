@@ -32,8 +32,15 @@ const COLUMNS = [
   },
 ] as const;
 
-export function Footer() {
+const PRELAUNCH_COLUMNS = [
+  { heading: "The first serving", links: [{ label: "Launch countdown", href: "/#ticket" }, { label: "Get a launch alert", href: "/#notify" }] },
+  { heading: "Join KiaKia", links: [{ label: "Become a vendor", href: "/partner" }, { label: "Ride with KiaKia", href: "/ride" }] },
+  { heading: "Need a hand?", links: [{ label: "Support", href: "/support" }, { label: "Privacy policy", href: "/privacy" }, { label: "Terms of service", href: "/terms" }] },
+] as const;
+
+export function Footer({ prelaunch = false }: { prelaunch?: boolean }) {
   const currentYear = new Date().getFullYear();
+  const columns = prelaunch ? PRELAUNCH_COLUMNS : COLUMNS;
 
   return (
     <footer id="footer" className="relative overflow-hidden bg-kk-ink-deep px-4 pb-10 pt-16 sm:px-6 sm:pb-12 sm:pt-20 lg:px-8">
@@ -54,8 +61,9 @@ export function Footer() {
               />
             </Link>
             <p className="mt-6 max-w-xs font-inter text-[15px] leading-7 text-white/55">
-              Hot food and everyday goods from the kitchens and shops around your street,
-              at your door, fast fast.
+              {prelaunch
+                ? "Lagos, your next favourite meal is getting closer. We’ll be ready soon."
+                : "Hot food and everyday goods from the kitchens and shops around your street, at your door, fast fast."}
             </p>
             <div className="mt-6 flex flex-col gap-2.5 font-inter text-[13px] text-white/45">
               <span className="inline-flex items-center gap-2">
@@ -65,7 +73,7 @@ export function Footer() {
             </div>
           </div>
 
-          {COLUMNS.map((column) => (
+          {columns.map((column) => (
             <nav key={column.heading} aria-label={column.heading}>
               <h2 className="font-inter text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
                 {column.heading}
@@ -82,7 +90,7 @@ export function Footer() {
                     </Link>
                   </li>
                 ))}
-                {column.heading === "Partners" && (
+                {!prelaunch && column.heading === "Partners" && (
                   <li className="font-inter text-[15px] text-white/25">
                     Rider sign-up
                     <span className="ml-2 rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest">
@@ -97,10 +105,10 @@ export function Footer() {
 
         <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-7 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-inter text-[13px] text-white/40">
-            © {currentYear} KiaKia Food Delivery. Fast. Fresh. Reliable.
+            © {currentYear} KiaKia Food Delivery. {prelaunch ? "Good things take a little prep." : "Fast. Fresh. Reliable."}
           </p>
           <p className="font-inter text-[13px] text-white/40">
-            Your money moves when your food does.
+            {prelaunch ? "Made for Lagos appetites. Delivered fast fast." : "Your money moves when your food does."}
           </p>
         </div>
       </div>

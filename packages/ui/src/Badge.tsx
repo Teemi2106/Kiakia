@@ -10,10 +10,10 @@ const badgeVariants = cva(
   {
     variants: {
       tone: {
-        neutral: "bg-[#F0EDED] text-[#5B403C]",
-        positive: "bg-[#DFF3DC] text-[#176A22]",
-        warning: "bg-[#FFDCC5] text-[#934B00]",
-        danger: "bg-[#FFDAD5] text-[#BA1A1A]",
+        neutral: "bg-kk-fill text-kk-cocoa",
+        positive: "bg-kk-green-wash text-kk-green-ink",
+        warning: "bg-notice-surface text-notice-ink",
+        danger: "bg-kk-danger-wash text-kk-danger-ink",
       } satisfies Record<BadgeTone, string>,
     },
     defaultVariants: { tone: "neutral" },

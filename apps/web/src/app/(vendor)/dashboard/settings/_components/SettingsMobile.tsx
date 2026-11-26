@@ -21,25 +21,25 @@ export function SettingsMobile({ vendor }: SettingsMobileProps) {
   const menuItems = [
     {
       id: "hours",
-      label: "Operating Hours",
+      label: "Opening hours",
       icon: Clock,
       color: "bg-notice-surface text-kk-orange-ink",
     },
     {
       id: "delivery",
-      label: "Delivery Zone",
+      label: "Delivery area",
       icon: MapPin,
       color: "bg-kk-danger-wash text-kk-red-ink",
     },
     {
       id: "staff",
-      label: "Staff",
+      label: "Team",
       icon: Users,
-      color: "bg-[#A3F69D] text-[#005313]",
+      color: "bg-kk-mint-wash text-kk-mint-ink",
     },
     {
       id: "general",
-      label: "Account",
+      label: "Store details",
       icon: Settings,
       color: "bg-kk-fill text-kk-cocoa",
     },
@@ -71,7 +71,7 @@ export function SettingsMobile({ vendor }: SettingsMobileProps) {
           >
             <ChevronRight className="size-5 text-kk-red-ink" />
           </button>
-          <h2 className="font-sora text-2xl font-semibold text-kk-ink">
+          <h2 className="font-sora text-xl font-semibold text-kk-ink sm:text-2xl">
             {menuItems.find((item) => item.id === activeSubScreen)?.label}
           </h2>
         </header>
@@ -109,11 +109,11 @@ export function SettingsMobile({ vendor }: SettingsMobileProps) {
                       {item.id === "hours" &&
                         "Set your daily opening and closing times."}
                       {item.id === "delivery" &&
-                        "Manage your delivery radius and map boundaries."}
+                        "Choose how far customers can order from your kitchen."}
                       {item.id === "staff" &&
-                        "Manage team access and permissions."}
+                        "Add or remove people who help run your store."}
                       {item.id === "general" &&
-                        "Update kitchen profile and security settings."}
+                        "Update your store name, photo and details."}
                     </p>
                   </div>
                 </div>

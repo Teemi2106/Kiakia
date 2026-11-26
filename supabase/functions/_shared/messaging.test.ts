@@ -175,7 +175,35 @@ test("sendEmailViaResend sends the documented request and returns the provider i
   assert.equal(body.from, "KiaKia <noreply@mail.example.com>");
   assert.deepEqual(body.tags[0], { name: "outbox_id", value: OUTBOX });
   assert.equal(body.headers["List-Unsubscribe"], "<https://k.ng/unsubscribe?token=t>");
-  assert.equal(body.headers["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click", "RFC 8058 one-click is on by default (the web app handles POST /unsubscribe)");
+  assert.equal(body.headers["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click", "RFC 8058 one-click is on by default when the caller supplies its POST endpoint");
+});
+
+test("launch email retries preserve Resend idempotency and use the one-click opt-out endpoint", async () => {
+  const id = "launch-outbox-1";
+  const email = buildEmail({ subject: "Launch", body: "The kitchen is open." });
+  const keys: string[] = [];
+  const unsubscribeHeaders: string[] = [];
+  let attempt = 0;
+  const retryFetch = async (_url: string, init: RequestInit) => {
+    const headers = init.headers as Record<string, string>;
+    keys.push(headers["Idempotency-Key"]);
+    const payload = JSON.parse(init.body as string);
+    unsubscribeHeaders.push(payload.headers["List-Unsubscribe"]);
+    attempt += 1;
+    return attempt === 1
+      ? new Response(JSON.stringify({ name: "rate_limit" }), { status: 503 })
+      : new Response(JSON.stringify({ id: "re_launch_1" }), { status: 200 });
+  };
+  const manualUrl = "https://www.kiakia.ng/launch/unsubscribe?token=stable";
+  const oneClickUrl = "https://www.kiakia.ng/launch/unsubscribe/one-click?token=stable";
+
+  const first = await sendEmailViaResend(cfg, row({ id, kind: "launch_announcement" }), email, manualUrl, retryFetch, oneClickUrl);
+  const retry = await sendEmailViaResend(cfg, row({ id, kind: "launch_announcement" }), email, manualUrl, retryFetch, oneClickUrl);
+
+  assert.deepEqual(first, { ok: false, permanent: false, error: "resend_http_503:rate_limit" });
+  assert.deepEqual(retry, { ok: true, providerMessageId: "re_launch_1" });
+  assert.deepEqual(keys, [id, id]);
+  assert.deepEqual(unsubscribeHeaders, [`<${oneClickUrl}>`, `<${oneClickUrl}>`]);
 });
 
 test("sendEmailViaResend classifies failures and never leaks the address", async () => {

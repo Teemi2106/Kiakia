@@ -1,5 +1,6 @@
 import { listPayables, listPayoutHistory } from "@/lib/admin/finance";
-import { canManageFinance, requireAdminContext } from "@/lib/auth/dal";
+import { listCustomerWalletWithdrawals } from "@/lib/admin/customer-wallet-withdrawals";
+import { canManageFinance, requireAdminContext, requireFinanceContext } from "@/lib/auth/dal";
 import { Badge, EmptyState } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -10,19 +11,26 @@ import { MaskedAccountNumber } from "../../_components/MaskedAccountNumber";
 import { PageHeader } from "../../_components/PageHeader";
 import { Pagination } from "../../_components/Pagination";
 import { PayoutHistory } from "../../_components/PayoutHistory";
+import { CustomerWithdrawalReview } from "./_components/CustomerWithdrawalReview";
 import { firstParam, pageParam, type SearchParams } from "../../_components/search-params";
 
 export const metadata: Metadata = { title: "Payouts" };
 
 /** Each card carries a form, so a page is kept short. */
 const TO_PAY_PAGE_SIZE = 10;
+const CUSTOMER_WITHDRAWAL_PAGE_SIZE = 20;
 
 export default async function AdminPayoutsPage({ searchParams }: { searchParams: SearchParams }) {
   await requireAdminContext();
   const financeAccess = await canManageFinance();
 
   const raw = await searchParams;
-  const tab = firstParam(raw.tab) === "history" ? "history" : "to-pay";
+  const requestedTab = firstParam(raw.tab);
+  const tab = requestedTab === "history"
+    ? "history"
+    : requestedTab === "customer-withdrawals" && financeAccess
+      ? "customer-withdrawals"
+      : "to-pay";
   const page = pageParam(raw.page);
 
   // The To pay count shows on both tabs, so the list is read either way (one row is enough for the count).
@@ -30,12 +38,16 @@ export default async function AdminPayoutsPage({ searchParams }: { searchParams:
     listPayables(tab === "to-pay" ? { page, pageSize: TO_PAY_PAGE_SIZE } : { pageSize: 1 }),
     tab === "history" ? listPayoutHistory({ page }) : null,
   ]);
+  const withdrawalSession = tab === "customer-withdrawals" ? await requireFinanceContext() : null;
+  const customerWithdrawals = withdrawalSession
+    ? await listCustomerWalletWithdrawals({ actorId: withdrawalSession.userId, page, pageSize: CUSTOMER_WITHDRAWAL_PAGE_SIZE })
+    : null;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       <PageHeader
         title="Payouts"
-        description="Vendors and riders earn money as orders are delivered. After you pay someone from your bank, mark it as paid here so the amount owed stays correct."
+        description="Record completed vendor and rider transfers, or review customer wallet withdrawal requests. Customer requests remain reserved until rejected or recorded as paid after a transfer."
       />
 
       <LinkTabs
@@ -44,10 +56,42 @@ export default async function AdminPayoutsPage({ searchParams }: { searchParams:
         items={[
           { value: "to-pay", label: "To pay", href: "/admin/payouts", count: owed.total },
           { value: "history", label: "History", href: "/admin/payouts?tab=history", count: history?.total },
+          ...(financeAccess ? [{ value: "customer-withdrawals", label: "Customer withdrawals", href: "/admin/payouts?tab=customer-withdrawals" }] : []),
         ]}
       />
 
-      {tab === "history" && history ? (
+      {tab === "customer-withdrawals" && customerWithdrawals ? (
+        customerWithdrawals.rows.length === 0 ? (
+          <EmptyState title="No open customer requests" description="Customer wallet withdrawal requests awaiting review will appear here." />
+        ) : (
+          <>
+            <p className="text-sm text-ink-muted">
+              {customerWithdrawals.total} open customer {customerWithdrawals.total === 1 ? "request" : "requests"}. Approval reserves the amount; only record a payout after the bank transfer is complete.
+            </p>
+            <ul className="flex flex-col gap-4">
+              {customerWithdrawals.rows.map((row) => (
+                <CustomerWithdrawalReview
+                  key={row.id}
+                  request={{
+                    id: row.id,
+                    customerName: row.customer_name,
+                    amountKobo: row.amount_kobo,
+                    bankName: row.bank_name,
+                    accountName: row.account_name,
+                    accountNumber: row.account_number,
+                    maskedAccountNumber: row.masked_account_number,
+                    status: row.status,
+                    reviewReason: row.review_reason,
+                    externalReference: row.external_reference,
+                    createdAt: row.created_at,
+                  }}
+                />
+              ))}
+            </ul>
+            <Pagination basePath="/admin/payouts" params={{ tab: "customer-withdrawals" }} page={page} pageSize={CUSTOMER_WITHDRAWAL_PAGE_SIZE} total={customerWithdrawals.total} />
+          </>
+        )
+      ) : tab === "history" && history ? (
         <>
           <PayoutHistory payouts={history.rows} />
           <Pagination basePath="/admin/payouts" params={{ tab: "history" }} page={history.page} pageSize={history.pageSize} total={history.total} />

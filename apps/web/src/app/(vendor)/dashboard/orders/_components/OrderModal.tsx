@@ -252,6 +252,7 @@ export function OrderModal({
             status={order.status}
             deliveryBy={order.delivery_by}
             dispatch={order.dispatch}
+            expectedReadyAt={order.expected_ready_at}
             deliveryFeeKobo={order.delivery_fee_kobo ?? 0}
           />
 

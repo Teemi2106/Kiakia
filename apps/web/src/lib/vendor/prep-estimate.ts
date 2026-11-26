@@ -20,9 +20,9 @@ export const readyInMinutesSchema = z
   .min(MIN_READY_MINUTES, `Enter at least ${MIN_READY_MINUTES} minute.`)
   .max(MAX_READY_MINUTES, `Enter ${MAX_READY_MINUTES} minutes or fewer.`);
 
-/** Only an order still being prepared, delivered by a rider, has a ready time to revise. */
+/** Either delivery method can revise the ready time while the kitchen is working. */
 export function canAdjustPrep(order: { status: string; deliveryBy?: "rider" | "vendor" }): boolean {
-  return order.deliveryBy !== "vendor" && (order.status === "accepted" || order.status === "preparing");
+  return order.status === "accepted" || order.status === "preparing";
 }
 
 /** What the vendor typed in "ready in N minutes": a whole number in range, or the reason it is not. */
@@ -60,7 +60,7 @@ export function parsePrepEstimateResult(data: unknown): PrepEstimateResult {
 /** What the control reports after a change. */
 export function prepEstimateMessage(result: PrepEstimateResult): string {
   const time = formatLagosTime(result.expectedReadyAt);
-  const base = time ? `Got it. Food expected ready at ${time}.` : "Got it. The ready time is updated.";
+  const base = time ? `Saved. Food expected ready at ${time} WAT.` : "Saved. The ready time is updated.";
   return result.riderNotified ? `${base} Your rider has been told.` : base;
 }
 

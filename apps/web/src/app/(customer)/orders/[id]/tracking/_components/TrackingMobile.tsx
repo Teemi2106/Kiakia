@@ -26,6 +26,7 @@ interface TrackingMobileProps {
   orderId?: string; // Add orderId
   orderCode: string;
   status: OrderStatus;
+  expectedReadyTime?: string | null;
   /** Only passed by the page when status is in_transit/arrived — see page.tsx. */
   deliveryCode?: string;
 }
@@ -38,6 +39,7 @@ export function TrackingMobile({
   orderId,
   orderCode,
   status,
+  expectedReadyTime,
   deliveryCode,
 }: TrackingMobileProps) {
   const router = useRouter();
@@ -75,6 +77,11 @@ export function TrackingMobile({
             <p className="font-inter text-sm font-semibold text-kk-cocoa">
               Order #{orderCode}
             </p>
+            {expectedReadyTime && (
+              <p className="mt-1 font-inter text-xs font-semibold text-kk-red-ink">
+                Food expected ready at {expectedReadyTime} WAT
+              </p>
+            )}
           </div>
 
           {/* Delivery Code — the rider needs this to confirm delivery

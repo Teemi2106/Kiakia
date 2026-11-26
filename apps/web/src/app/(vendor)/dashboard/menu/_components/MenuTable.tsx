@@ -17,11 +17,11 @@ interface MenuTableProps {
 }
 
 const CATEGORY_COLORS = [
-  "bg-[#FFDCC5] text-[#703800]",
-  "bg-[#FFDAD5] text-[#930004]",
+  "bg-notice-surface text-notice-ink",
+  "bg-kk-danger-wash text-kk-danger-ink",
   "bg-kk-green-wash text-kk-green-ink",
-  "bg-[#E4D9FF] text-[#5B21B6]",
-  "bg-[#D6EFFF] text-[#0B5A8A]",
+  "bg-kk-violet-wash text-kk-violet-ink",
+  "bg-kk-blue-wash text-kk-blue-ink",
 ];
 
 export function MenuTable({

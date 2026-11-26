@@ -158,15 +158,12 @@ export function MenuItemForm({
               className="w-full rounded-xl border border-kk-line bg-kk-card py-2.5 pl-7 pr-3.5 text-sm text-kk-ink outline-none placeholder:text-kk-cocoa/50 focus:border-kk-red focus:ring-2 focus:ring-kk-red-ink/20"
             />
           </div>
-          {/* KiaKia's commission (vendors.commission_bps) comes straight off
-              the price the vendor sets here, same math
-              verify_delivery_and_release_escrow() actually pays out on
-              delivery (0044) — shown live so pricing isn't a guess about
-              what lands in their balance. */}
+          {/* Show the vendor's estimated earnings so the fee is clear before
+              they save a price. */}
           {payout && (
             <p className="mt-1.5 text-xs text-kk-cocoa">
-              You&apos;ll receive <span className="font-semibold text-kk-green-ink">{formatNaira(payout.netKobo)}</span>{" "}
-              after KiaKia&apos;s {(commissionBps / 100).toFixed(1)}% commission ({formatNaira(payout.commissionKobo)})
+              Estimated earnings: <span className="font-semibold text-kk-green-ink">{formatNaira(payout.netKobo)}</span>{" "}
+              after KiaKia&apos;s {(commissionBps / 100).toFixed(1)}% fee ({formatNaira(payout.commissionKobo)})
             </p>
           )}
         </div>

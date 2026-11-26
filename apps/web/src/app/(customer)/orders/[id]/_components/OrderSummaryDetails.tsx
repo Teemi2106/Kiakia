@@ -5,6 +5,7 @@ import { formatNaira, koboOf } from "@kiakia/domain";
 import type { OrderDetail, OrderItem } from "./types";
 import Image from "next/image";
 import { ForkKnifeCrossedIcon } from "lucide-react";
+import { formatLagosTime } from "@/lib/time";
 
 interface OrderSummaryDetailsProps {
   items: OrderItem[];
@@ -15,6 +16,7 @@ export function OrderSummaryDetails({
   items,
   order,
 }: OrderSummaryDetailsProps) {
+  const expectedReadyTime = formatLagosTime(order.expected_ready_at);
   return (
     <div className="space-y-4">
       <h2 className="font-sora text-2xl font-semibold text-kk-ink">
@@ -68,6 +70,13 @@ export function OrderSummaryDetails({
         </div>
       )}
 
+      {expectedReadyTime && ["accepted", "preparing"].includes(order.status) && (
+        <div className="rounded-xl border border-kk-line bg-kk-cream p-4">
+          <p className="font-inter text-xs font-semibold uppercase tracking-wide text-kk-cocoa">Expected ready time</p>
+          <p className="mt-1 font-inter text-sm font-semibold text-kk-ink">Food expected ready at {expectedReadyTime} WAT</p>
+        </div>
+      )}
+
       {/* Totals */}
       <div className="space-y-2 border-t border-kk-hair pt-4">
         <div className="flex items-center justify-between">
@@ -91,7 +100,7 @@ export function OrderSummaryDetails({
           </span>
         </div>
         {order.discount_kobo > 0 && (
-          <div className="flex items-center justify-between text-kk-green-ink-ink">
+          <div className="flex items-center justify-between text-kk-green-ink">
             <span className="font-inter text-sm">Discount</span>
             <span className="font-inter text-sm font-semibold">
               −{formatNaira(koboOf(order.discount_kobo))}

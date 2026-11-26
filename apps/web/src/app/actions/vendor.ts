@@ -63,6 +63,7 @@ export async function registerVendorAction(_prevState: FormState, formData: Form
   if (!name || name.trim().length < 2) {
     return { error: "Enter your store name." };
   }
+
   if (!state) {
     return { error: "Choose your store's state from the list." };
   }
@@ -140,6 +141,11 @@ export async function updateVendorSettingsAction(_prevState: FormState, formData
     return { error: "Enter your store name." };
   }
 
+  const deliveryRadiusM = Number(formData.get("deliveryRadiusM"));
+  if (!Number.isInteger(deliveryRadiusM) || deliveryRadiusM < 500 || deliveryRadiusM > 20_000) {
+    return { error: "Choose a delivery distance between 0.5 km and 20 km." };
+  }
+
   // A file input with nothing selected still submits an empty File (name
   // "", size 0), not null — only upload, and only overwrite banner_url,
   // when the vendor actually picked a new photo. Otherwise keep whatever
@@ -171,7 +177,7 @@ export async function updateVendorSettingsAction(_prevState: FormState, formData
       state: storeState,
       avg_prep_mins: Number(formData.get("avgPrepMins")) || 20,
       min_order_kobo: Math.round(Number(formData.get("minOrderNaira")) * 100) || 0,
-      delivery_radius_m: Number(formData.get("deliveryRadiusM")) || 3000,
+      delivery_radius_m: deliveryRadiusM,
       is_accepting_orders: formData.get("isAcceptingOrders") === "on",
       banner_url: bannerUrl,
     })

@@ -102,17 +102,22 @@
   --color-kk-toggle-off: #d8c2be;
   --color-kk-danger-wash: #ffdad5;
   --color-kk-green-wash: #dff3dc;
+  --color-kk-mint-wash: #a3f69d;
+  --color-kk-mint-ink: #005313;
+  --color-kk-violet-wash: #e4d9ff;
+  --color-kk-violet-ink: #5b21b6;
+  --color-kk-blue-wash: #d6efff;
+  --color-kk-blue-ink: #0b5a8a;
   --color-kk-red-tint: #fdedec;
 }
 
 /**
- * Dark theme, scoped — not applied to <html>. Only the screens that have been
- * converted to the tokens above (admin, fleet) opt in, by rendering
- * `data-theme` on their own wrapper (see lib/theme.ts). The customer, vendor,
- * auth and marketing screens are still painted with literal Figma hexes and
- * light-only photography/logo assets, so a dark scope must never reach them:
- * auto-switching on the OS preference once silently broke every page for
- * anyone with system dark mode on.
+ * Dark theme, scoped — not applied to <html>. Customer, vendor, auth, admin,
+ * fleet, onboarding and unsubscribe surfaces opt in by rendering `data-theme`
+ * on their own wrapper (see lib/theme.ts). Some legacy controls still use
+ * fixed light palette values, so new and touched UI should prefer semantic
+ * tokens or supply a dark variant for intentionally custom surfaces.
+ * Marketing pages remain light-only and do not render a themed wrapper.
  *
  *   data-theme="dark"   always dark
  *   data-theme="system" dark only when the OS asks for it (pure CSS, so the
@@ -163,6 +168,12 @@
   --color-kk-toggle-off: #5a4744;
   --color-kk-danger-wash: #4a1f1c;
   --color-kk-green-wash: #1c3a20;
+  --color-kk-mint-wash: #1c3a20;
+  --color-kk-mint-ink: #a3f69d;
+  --color-kk-violet-wash: #33254a;
+  --color-kk-violet-ink: #d3c1ff;
+  --color-kk-blue-wash: #19344a;
+  --color-kk-blue-ink: #a9dcff;
   --color-kk-red-tint: #3a1f1d;
 }
 
@@ -211,6 +222,12 @@
     --color-kk-toggle-off: #5a4744;
     --color-kk-danger-wash: #4a1f1c;
     --color-kk-green-wash: #1c3a20;
+    --color-kk-mint-wash: #1c3a20;
+    --color-kk-mint-ink: #a3f69d;
+    --color-kk-violet-wash: #33254a;
+    --color-kk-violet-ink: #d3c1ff;
+    --color-kk-blue-wash: #19344a;
+    --color-kk-blue-ink: #a9dcff;
     --color-kk-red-tint: #3a1f1d;
   }
 }
