@@ -52,10 +52,12 @@ export function DriverCard({ driver }: DriverCardProps) {
       {driver.phone && (
         <a
           href={`tel:${driver.phone}`}
-          className="mt-4 flex items-center justify-center gap-2 rounded-xl border-2 border-kk-orange-ink py-2 font-inter text-sm font-semibold text-kk-orange-ink hover:bg-kk-sand"
+          aria-label={`Call ${driver.name} at ${driver.phone}`}
+          className="mt-4 flex items-center gap-2 rounded-xl border-2 border-kk-orange-ink px-3 py-2 font-inter text-sm font-semibold text-kk-orange-ink hover:bg-kk-sand"
         >
           <Phone className="size-3.5" />
-          Call {driver.name.split(" ")[0]}
+          <span>{driver.phone}</span>
+          <span className="ml-auto">Call rider</span>
         </a>
       )}
     </div>

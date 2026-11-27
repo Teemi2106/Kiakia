@@ -23,4 +23,5 @@ export interface Vendor {
   name: string;
   itemCount: number;
   logoUrl?: string;
+  phone?: string;
 }

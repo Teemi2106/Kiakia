@@ -17,7 +17,7 @@ interface DeferredInstallPrompt extends Event {
 
 type PhonePlatform = "ios" | "android" | "other";
 
-const DISMISSAL_KEY = "kk-mobile-app-prompt-dismissed-until";
+const DISMISSAL_KEY = "kk-push-prompt-dismissed-until-v2";
 const DISMISSAL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function isStandaloneApp() {
@@ -70,13 +70,13 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
   }, []);
 
   useEffect(() => {
-    if (!ready || !isMobile || pathname.startsWith("/checkout")) {
+    if (!ready || pathname.startsWith("/checkout")) {
       setVisible(false);
       return;
     }
 
-    const hasInstallOption = !isStandalone;
-    const hasPushOption = enablePush && push.status === "not_subscribed";
+    const hasInstallOption = isMobile && !isStandalone;
+    const hasPushOption = enablePush && (push.status === "not_subscribed" || push.status === "denied");
     if (!hasInstallOption && !hasPushOption) {
       setVisible(false);
       return;
@@ -126,21 +126,26 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
     }
   }
 
+  const showInstallPrompt = isMobile && !isStandalone;
+
   if (!visible) return null;
 
   return (
     <aside
-      role="region"
-      aria-label="Save KiaKia and enable order alerts"
-      className="fixed bottom-28 left-3 right-3 z-[70] max-h-[60vh] overflow-y-auto rounded-2xl border border-kk-line bg-kk-card p-4 text-kk-ink shadow-[0_18px_50px_-16px_rgba(35,20,18,0.45)] sm:left-auto sm:right-4 sm:w-96 lg:hidden"
+      role="dialog"
+      aria-modal="false"
+      aria-label={showInstallPrompt ? "Save KiaKia and enable order alerts" : "Enable KiaKia order alerts"}
+      className="fixed bottom-28 left-3 right-3 z-[70] max-h-[60vh] overflow-y-auto rounded-2xl border border-kk-line bg-kk-card p-4 text-kk-ink shadow-[0_18px_50px_-16px_rgba(35,20,18,0.45)] sm:left-auto sm:right-4 sm:w-96 lg:bottom-24"
     >
       <div className="flex items-start gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-kk-red/10 text-kk-red-ink">
-          <Download className="size-5" />
+          {showInstallPrompt ? <Download className="size-5" /> : <BellRing className="size-5" />}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-sora text-base font-semibold">Keep KiaKia close</h2>
-          {!isStandalone && (
+          <h2 className="font-sora text-base font-semibold">
+            {showInstallPrompt ? "Keep KiaKia close" : "Get order updates"}
+          </h2>
+          {showInstallPrompt && (
             <>
               <p className="mt-1 font-inter text-sm text-kk-cocoa">
                 Save KiaKia to your home screen for quicker orders.
@@ -168,7 +173,7 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
         <button
           type="button"
           onClick={dismiss}
-          aria-label="Dismiss app prompt"
+          aria-label="Dismiss prompt"
           className="rounded-lg p-1.5 text-kk-cocoa hover:bg-kk-sand"
         >
           <X className="size-4" />
@@ -207,9 +212,14 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
       )}
 
       {enablePush && push.status === "denied" && (
-        <p className="mt-3 border-t border-kk-line pt-3 font-inter text-xs text-kk-cocoa">
-          Order alerts are blocked in this browser’s settings.
-        </p>
+        <div className="mt-4 border-t border-kk-line pt-3">
+          <div className="flex items-start gap-2">
+            <BellRing className="mt-0.5 size-4 shrink-0 text-kk-red-ink" />
+            <p className="font-inter text-xs leading-5 text-kk-cocoa">
+              Order alerts are blocked. Open KiaKia&apos;s site settings in your browser, allow notifications, then come back here.
+            </p>
+          </div>
+        </div>
       )}
 
       {enablePush && push.status === "subscribed" && (

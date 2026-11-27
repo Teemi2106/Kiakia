@@ -1842,6 +1842,7 @@ export interface Database {
           /** 0098 */
           delivery_by: "rider" | "vendor";
           vendor_name: string;
+          vendor_phone: string | null;
         };
       };
       // approve_rider / reject_rider (0027_rider_kyc_admin_approval.sql) — mirrors

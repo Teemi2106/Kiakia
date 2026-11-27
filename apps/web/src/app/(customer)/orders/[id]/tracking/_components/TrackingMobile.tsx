@@ -4,7 +4,6 @@
 import {
   ChevronLeft,
   Phone,
-  MessageCircle,
   MapPin,
   ContactRound,
 } from "lucide-react";
@@ -65,7 +64,7 @@ export function TrackingMobile({
 
       {/* Bottom Sheet */}
       <div className="absolute bottom-0 left-0 right-0 z-10">
-        <div className="rounded-t-2xl border border-kk-hair-soft bg-kk-cream px-4 pb-6 pt-3 shadow-[0_-8px_32px_rgba(26,26,26,0.08)]">
+        <div className="max-h-[70vh] overflow-y-auto rounded-t-2xl border border-kk-hair-soft bg-kk-cream px-4 pb-6 pt-3 shadow-[0_-8px_32px_rgba(26,26,26,0.08)]">
           {/* Drag Handle */}
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-kk-hair" />
 
@@ -162,15 +161,17 @@ export function TrackingMobile({
                   <p className="font-inter text-xs text-kk-cocoa">
                     {[driver.car, driver.plateNumber].filter(Boolean).join(" ")}
                   </p>
+                  {driver.phone && (
+                    <a
+                      href={`tel:${driver.phone}`}
+                      aria-label={`Call ${driver.name} at ${driver.phone}`}
+                      className="mt-1 inline-flex items-center gap-1 font-inter text-xs font-semibold text-kk-orange-ink"
+                    >
+                      <Phone className="size-3" />
+                      {driver.phone}
+                    </a>
+                  )}
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <button className="rounded-full bg-[#DA3529] p-2.5">
-                  <Phone className="size-4 text-white" />
-                </button>
-                <button className="rounded-full bg-[#DA3529] p-2.5">
-                  <MessageCircle className="size-4 text-white" />
-                </button>
               </div>
             </div>
           ) : (
@@ -192,6 +193,16 @@ export function TrackingMobile({
                 <p className="font-inter text-xs text-kk-cocoa">
                   {vendor.itemCount} items
                 </p>
+                {vendor.phone && (
+                  <a
+                    href={`tel:${vendor.phone}`}
+                    aria-label={`Call ${vendor.name} at ${vendor.phone}`}
+                    className="mt-1 inline-flex items-center gap-1 font-inter text-xs font-semibold text-kk-orange-ink"
+                  >
+                    <Phone className="size-3" />
+                    {vendor.phone}
+                  </a>
+                )}
               </div>
             </div>
             <button className="font-inter text-sm font-semibold text-kk-red-ink hover:underline">

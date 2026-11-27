@@ -137,9 +137,10 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
     // all. See 0071's own header for how this went unnoticed until now:
     // the broken direct query never errored, it just always returned an
     // empty driver card.
-    order.rider_id
-      ? supabase.rpc("get_order_tracking", { p_order_id: order.id }).single()
-      : Promise.resolve({ data: null }),
+    // Migration 0131 also returns the vendor owner's contact number through
+    // this authorized read, including before rider assignment and on store-
+    // delivered orders.
+    supabase.rpc("get_order_tracking", { p_order_id: order.id }).single(),
     supabase.from("order_delivery_codes").select("code").eq("order_id", order.id).maybeSingle(),
     isDeliveredByStore(supabase, order.id),
   ]);
@@ -150,13 +151,14 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
     ? formatLagosTime(order.expected_ready_at)
     : null;
 
+  const trackingRow = rawTrackingRow as GetOrderTrackingRow | null;
+
   const vendor: Vendor = {
-    name: vendorRow?.name ?? "Vendor",
+    name: vendorRow?.name ?? trackingRow?.vendor_name ?? "Vendor",
     itemCount: itemCount ?? 0,
     logoUrl: vendorRow?.logo_url ?? undefined,
+    phone: trackingRow?.vendor_phone ?? undefined,
   };
-
-  const trackingRow = rawTrackingRow as GetOrderTrackingRow | null;
 
   // Only the fields riders/profiles actually carry are shown — no rating,
   // no fabricated placeholder when a field is genuinely unset.

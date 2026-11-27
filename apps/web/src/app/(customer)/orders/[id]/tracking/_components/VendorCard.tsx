@@ -1,13 +1,14 @@
 // app/(customer)/tracking/_components/VendorCard.tsx
 "use client";
 
-import { ForkKnifeCrossed, MessageCircleQuestion } from "lucide-react";
+import { ForkKnifeCrossed, Phone } from "lucide-react";
 
 interface VendorCardProps {
   vendor: {
     name: string;
     itemCount: number;
     logoUrl?: string;
+    phone?: string;
   };
 }
 
@@ -36,11 +37,18 @@ export function VendorCard({ vendor }: VendorCardProps) {
             Order contains {vendor.itemCount} items
           </p>
         </div>
-
-        <button className="rounded-full p-2 hover:bg-black/5">
-          <MessageCircleQuestion className="size-4 text-kk-orange-ink" />
-        </button>
       </div>
+      {vendor.phone && (
+        <a
+          href={`tel:${vendor.phone}`}
+          aria-label={`Call ${vendor.name} at ${vendor.phone}`}
+          className="mt-3 flex items-center gap-2 rounded-xl border border-kk-line px-3 py-2 font-inter text-sm font-semibold text-kk-orange-ink hover:bg-kk-sand"
+        >
+          <Phone className="size-4" />
+          <span>{vendor.phone}</span>
+          <span className="ml-auto">Call vendor</span>
+        </a>
+      )}
     </div>
   );
 }
