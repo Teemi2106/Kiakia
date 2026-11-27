@@ -1,6 +1,11 @@
 // app/(marketing)/support/page.tsx
 import type { Metadata } from "next";
 import { getMarketingAccount } from "@/lib/auth/marketing-account";
+import {
+  SUPPORT_EMAIL,
+  SUPPORT_EMAIL_HREF,
+  SUPPORT_WHATSAPP_URL,
+} from "@/lib/support-contacts";
 import { Header } from "../_components/Header";
 import { Footer } from "../_components/Footer";
 
@@ -8,12 +13,6 @@ export const metadata: Metadata = {
   title: "Support",
   alternates: { canonical: "/support" },
 };
-
-// PLACEHOLDER — not a real support line yet, just wired to unblock the
-// "Live chat" link. Swap for KiaKia's actual WhatsApp Business number
-// before launch.
-const WHATSAPP_SUPPORT_NUMBER = "2340000000000";
-const WHATSAPP_SUPPORT_URL = `https://wa.me/${WHATSAPP_SUPPORT_NUMBER}`;
 
 export default async function SupportPage() {
   const account = await getMarketingAccount();
@@ -26,19 +25,25 @@ export default async function SupportPage() {
           Support
         </h1>
         <p className="mt-4 text-[#5B403C]">
-          Dedicated in-app support channels aren&apos;t set up yet in this
-          release. If you&apos;re having trouble with an order, please check
-          the order&apos;s status page for the latest updates, or reach us
-          on live chat below.
+          Need help with an order? Check its status page for updates, or contact
+          our team on WhatsApp or email.
         </p>
-        <a
-          href={WHATSAPP_SUPPORT_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="kk-shine group mt-8 inline-flex items-center gap-2 rounded-full bg-kk-red px-5 py-2.5 font-inter text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(182,25,19,0.9)] transition-colors hover:bg-kk-red-deep"
-        >
-          Live chat on WhatsApp
-        </a>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <a
+            href={SUPPORT_WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="kk-shine group inline-flex items-center gap-2 rounded-full bg-kk-red px-5 py-2.5 font-inter text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(182,25,19,0.9)] transition-colors hover:bg-kk-red-deep"
+          >
+            Live chat on WhatsApp
+          </a>
+          <a
+            href={SUPPORT_EMAIL_HREF}
+            className="inline-flex items-center gap-2 rounded-full border border-[#E4BEB8] px-5 py-2.5 font-inter text-[15px] font-semibold text-[#5B403C] transition-colors hover:bg-white"
+          >
+            Email {SUPPORT_EMAIL}
+          </a>
+        </div>
       </div>
       <Footer />
     </main>

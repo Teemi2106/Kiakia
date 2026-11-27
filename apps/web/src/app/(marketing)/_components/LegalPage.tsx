@@ -3,6 +3,7 @@
 // documents stay structurally identical.
 import type { ReactNode } from "react";
 import { getMarketingAccount } from "@/lib/auth/marketing-account";
+import { SUPPORT_EMAIL } from "@/lib/support-contacts";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 
@@ -17,7 +18,7 @@ export const LEGAL = {
   /** Registered office address. */
   address: "[Registered office address]",
   /** Monitored inbox for support, privacy requests and legal notices. */
-  email: "[support email address]",
+  email: SUPPORT_EMAIL,
   lastUpdated: "November 1, 2026",
 } as const;
 

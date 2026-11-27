@@ -120,7 +120,7 @@ const sections: LegalSection[] = [
           <li>If a vendor cannot fulfil your order or it is not delivered, you will be refunded in full.</li>
           <li>
             If your order arrives wrong, missing items or in unacceptable condition, report it through the app or to{" "}
-            {LEGAL.email} as soon as possible, ideally within 24 hours, with photos where relevant. We will review it
+            <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a> as soon as possible, ideally within 24 hours, with photos where relevant. We will review it
             and may refund all or part of the order.
           </li>
           <li>Refunds are returned to your wallet or, where you ask for it and we agree, to your original payment method.</li>
@@ -233,7 +233,7 @@ const sections: LegalSection[] = [
       <p>
         {LEGAL.entity}, {LEGAL.address}
         <br />
-        Email: {LEGAL.email}
+        Email: <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>
       </p>
     ),
   },

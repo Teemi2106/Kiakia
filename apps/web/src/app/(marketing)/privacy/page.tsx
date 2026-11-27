@@ -148,7 +148,7 @@ const sections: LegalSection[] = [
           <li>complain to the Nigeria Data Protection Commission.</li>
         </ul>
         <p>
-          To exercise any of these, email {LEGAL.email}. We may need to verify your identity first.
+          To exercise any of these, email <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>. We may need to verify your identity first.
         </p>
       </>
     ),
@@ -187,7 +187,7 @@ const sections: LegalSection[] = [
       <p>
         {LEGAL.entity}, {LEGAL.address}
         <br />
-        Email: {LEGAL.email}
+        Email: <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>
       </p>
     ),
   },
