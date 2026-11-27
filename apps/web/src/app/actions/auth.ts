@@ -240,7 +240,7 @@ export async function resendSignupCodeAction(_prevState: FormState, formData: Fo
     return { error: "We couldn't send a new code just yet. Wait a moment and try again." };
   }
 
-  return { success: "A new code is on its way." };
+  return { success: "Check your inbox and spam folder for the new code." };
 }
 
 export async function loginAction(_prevState: FormState, formData: FormData): Promise<FormState> {
@@ -266,7 +266,10 @@ export async function loginAction(_prevState: FormState, formData: FormData): Pr
           error: "Your email still needs verification. Enter your existing code, or request a new one shortly.",
         };
       }
-      return { verifyEmail: parsed.data.email, success: "Your email isn't verified yet. We sent a fresh code." };
+      return {
+        verifyEmail: parsed.data.email,
+        success: "Check your inbox and spam folder for a fresh code. Request another if it does not arrive.",
+      };
     }
     return { error: "Incorrect email or password." };
   }
@@ -325,7 +328,10 @@ export async function vendorLoginAction(_prevState: FormState, formData: FormDat
           error: "Your email still needs verification. Enter your existing code, or request a new one shortly.",
         };
       }
-      return { verifyEmail: parsed.data.email, success: "Your email isn't verified yet. We sent a fresh code." };
+      return {
+        verifyEmail: parsed.data.email,
+        success: "Check your inbox and spam folder for a fresh code. Request another if it does not arrive.",
+      };
     }
     return { error: "Incorrect email or password." };
   }

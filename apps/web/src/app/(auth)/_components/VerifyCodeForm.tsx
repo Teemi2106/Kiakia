@@ -22,8 +22,8 @@ interface VerifyCodeFormProps {
 }
 
 /**
- * Code-entry step shown in place of the register form once signUp() has sent
- * the confirmation email. The code itself is Supabase's — see
+ * Code-entry step shown in place of the register form once signUp() has
+ * requested the confirmation email. The code itself is Supabase's — see
  * verifySignupCode() in actions/auth.ts.
  */
 export function VerifyCodeForm({
@@ -38,7 +38,7 @@ export function VerifyCodeForm({
   const [resendState, resendAction, resending] = useActionState(resendSignupCodeAction, initialState);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
 
-  // A fresh code was just sent (by signUp, or by the last resend) — restart
+  // A fresh code was requested (by signUp, or by the last resend) — restart
   // the cooldown so the button can't be hammered against Supabase's rate limit.
   useEffect(() => {
     if (resendState.success) setCooldown(RESEND_COOLDOWN_SECONDS);
@@ -58,7 +58,8 @@ export function VerifyCodeForm({
         </span>
         <h2 className="mt-5 font-sora text-xl font-bold tracking-[-0.02em] text-kk-ink">Enter your code</h2>
         <p className="mt-2 font-inter text-[14px] leading-6 text-kk-cocoa">
-          We sent a verification code to <span className="font-semibold text-kk-ink">{email}</span>.
+          Enter the six-digit code for <span className="font-semibold text-kk-ink">{email}</span>. Check your inbox
+          and spam folder; request another code below if it does not arrive.
         </p>
       </div>
 
@@ -93,7 +94,7 @@ export function VerifyCodeForm({
         <AuthError message={resendState.error} />
         {resendState.success ? (
           <p role="status" className="mb-2 text-kk-green-ink">
-            {resendState.success}
+            Check your inbox and spam folder for the new code.
           </p>
         ) : null}
         <button

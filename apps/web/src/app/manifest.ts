@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "KiaKia — Food & goods delivery",
+    name: "KiaKia",
     short_name: "KiaKia",
     description: "Order from local vendors and follow your delivery live.",
     id: "/home",
@@ -13,21 +13,15 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#b61913",
     icons: [
       {
-        src: "/assets/kiakia-pwa-icon.svg",
+        src: "/icon.svg",
         sizes: "192x192",
         type: "image/svg+xml",
         purpose: "any",
       },
       {
-        src: "/assets/kiakia-pwa-icon.svg",
+        src: "/icon.svg",
         sizes: "512x512",
         type: "image/svg+xml",
-        purpose: "any",
-      },
-      {
-        src: "/assets/sec-logo.png",
-        sizes: "128x122",
-        type: "image/png",
         purpose: "any",
       },
     ],
