@@ -20,6 +20,20 @@ export interface WebPushSubscriptionState {
 
 const PUSH_STATUS_EVENT = "kiakia:web-push-status";
 
+async function registerSubscription(subscription: PushSubscription) {
+  const json = subscription.toJSON();
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+    throw new Error("The browser returned an incomplete notification subscription.");
+  }
+
+  const { error } = await createClient().rpc("register_web_push_subscription", {
+    p_endpoint: json.endpoint,
+    p_p256dh: json.keys.p256dh,
+    p_auth: json.keys.auth,
+  });
+  if (error) throw error;
+}
+
 function urlBase64ToUint8Array(base64Url: string): Uint8Array {
   const padding = "=".repeat((4 - (base64Url.length % 4)) % 4);
   const base64 = (base64Url + padding).replaceAll("-", "+").replaceAll("_", "/");
@@ -28,7 +42,7 @@ function urlBase64ToUint8Array(base64Url: string): Uint8Array {
 }
 
 /** Manages the signed-in user's push subscription on this browser. */
-export function useWebPushSubscription(): WebPushSubscriptionState {
+export function useWebPushSubscription(enabled = true): WebPushSubscriptionState {
   const [status, setStatus] = useState<WebPushStatus>("loading");
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +66,12 @@ export function useWebPushSubscription(): WebPushSubscriptionState {
     let cancelled = false;
 
     async function checkExisting() {
+      if (!enabled) {
+        setError(null);
+        setStatus("not_subscribed");
+        return;
+      }
+
       if (
         typeof window === "undefined" ||
         !clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
@@ -71,10 +91,17 @@ export function useWebPushSubscription(): WebPushSubscriptionState {
       try {
         const registration = await navigator.serviceWorker.getRegistration("/");
         const existing = await registration?.pushManager.getSubscription();
-        if (!cancelled) updateStatus(existing ? "subscribed" : "not_subscribed");
+        if (existing) await registerSubscription(existing);
+        if (!cancelled) {
+          setError(null);
+          updateStatus(existing ? "subscribed" : "not_subscribed");
+        }
       } catch (cause) {
         console.error("useWebPushSubscription: could not read the browser subscription", cause);
-        if (!cancelled) updateStatus("not_subscribed");
+        if (!cancelled) {
+          updateStatus("not_subscribed");
+          setError("Couldn’t connect this device to your account. Try turning alerts on again.");
+        }
       }
     }
 
@@ -82,7 +109,7 @@ export function useWebPushSubscription(): WebPushSubscriptionState {
     return () => {
       cancelled = true;
     };
-  }, [updateStatus]);
+  }, [enabled, updateStatus]);
 
   const subscribe = useCallback(async () => {
     setError(null);
@@ -101,24 +128,13 @@ export function useWebPushSubscription(): WebPushSubscriptionState {
 
       const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
       await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY) as BufferSource,
-      });
-      const json = subscription.toJSON();
-
-      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
-        await subscription.unsubscribe();
-        throw new Error("The browser returned an incomplete notification subscription.");
-      }
-
-      const supabase = createClient();
-      const { error: registrationError } = await supabase.rpc("register_web_push_subscription", {
-        p_endpoint: json.endpoint,
-        p_p256dh: json.keys.p256dh,
-        p_auth: json.keys.auth,
-      });
-      if (registrationError) throw registrationError;
+      const subscription =
+        (await registration.pushManager.getSubscription()) ??
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY) as BufferSource,
+        }));
+      await registerSubscription(subscription);
 
       updateStatus("subscribed");
     } catch (cause) {

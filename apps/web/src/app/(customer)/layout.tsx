@@ -101,7 +101,7 @@ export default async function CustomerLayout({
           {children}
         </CustomerPageFrame>
         <CustomerBottomNav />
-        <MobileAppPrompt enablePush={Boolean(session)} />
+        <MobileAppPrompt key={session?.userId ?? "guest"} enablePush={Boolean(session)} />
         {/* Fixed overlays stay inside the themed wrapper so they pick up its tokens. */}
         <CartFab />
         {cart}

@@ -46,7 +46,7 @@ export default async function VendorLayout({
           {children}
         </main>
       </div>
-      <MobileAppPrompt enablePush={Boolean(vendor)} />
+      <MobileAppPrompt key={vendor?.id ?? "vendor-guest"} enablePush={Boolean(vendor)} />
       {vendor && <VendorBottomNav />}
     </div>
   );

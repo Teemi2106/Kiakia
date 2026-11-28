@@ -2,7 +2,7 @@
 
 import { BellRing, Download, X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWebPushSubscription } from "@/lib/push/useWebPushSubscription";
 
 interface MobileAppPromptProps {
@@ -29,7 +29,7 @@ function isStandaloneApp() {
 
 export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
   const pathname = usePathname();
-  const push = useWebPushSubscription();
+  const push = useWebPushSubscription(enablePush);
   const [ready, setReady] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -37,6 +37,10 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
   const [visible, setVisible] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<DeferredInstallPrompt | null>(null);
   const [pushPending, setPushPending] = useState(false);
+  const pwaPromptDismissed = useRef(false);
+
+  const hasPushOption = enablePush && (push.status === "not_subscribed" || push.status === "denied");
+  const isPwaPushPrompt = isStandalone && hasPushOption;
 
   useEffect(() => {
     const ios =
@@ -70,37 +74,49 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
   }, []);
 
   useEffect(() => {
-    if (!ready || pathname.startsWith("/checkout")) {
+    if (!ready || (pathname.startsWith("/checkout") && !isPwaPushPrompt)) {
       setVisible(false);
       return;
     }
 
     const hasInstallOption = isMobile && !isStandalone;
-    const hasPushOption = enablePush && (push.status === "not_subscribed" || push.status === "denied");
     if (!hasInstallOption && !hasPushOption) {
       setVisible(false);
       return;
     }
 
-    try {
-      const dismissedUntil = Number(window.localStorage.getItem(DISMISSAL_KEY));
-      if (dismissedUntil > Date.now()) {
-        setVisible(false);
-        return;
+    if (isPwaPushPrompt && pwaPromptDismissed.current) {
+      setVisible(false);
+      return;
+    }
+
+    // In an installed PWA, check again whenever the signed-in app surface
+    // mounts. A saved browser-level dismissal must not hide the login prompt.
+    if (!isPwaPushPrompt) {
+      try {
+        const dismissedUntil = Number(window.localStorage.getItem(DISMISSAL_KEY));
+        if (dismissedUntil > Date.now()) {
+          setVisible(false);
+          return;
+        }
+      } catch {
+        // Storage may be unavailable in private browsing; the prompt can still work.
       }
-    } catch {
-      // Storage may be unavailable in private browsing; the prompt can still work.
     }
 
     const timer = window.setTimeout(() => setVisible(true), 1800);
     return () => window.clearTimeout(timer);
-  }, [enablePush, isMobile, isStandalone, pathname, push.status, ready]);
+  }, [enablePush, hasPushOption, isMobile, isPwaPushPrompt, isStandalone, pathname, push.status, ready]);
 
   function dismiss() {
-    try {
-      window.localStorage.setItem(DISMISSAL_KEY, String(Date.now() + DISMISSAL_MS));
-    } catch {
-      // Dismiss for this render even when storage is unavailable.
+    if (isPwaPushPrompt) {
+      pwaPromptDismissed.current = true;
+    } else {
+      try {
+        window.localStorage.setItem(DISMISSAL_KEY, String(Date.now() + DISMISSAL_MS));
+      } catch {
+        // Dismiss for this render even when storage is unavailable.
+      }
     }
     setVisible(false);
   }
@@ -201,7 +217,11 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
                     disabled={pushPending}
                     className="mt-2 rounded-xl border border-kk-red/30 px-3 py-2 font-inter text-xs font-semibold text-kk-red-ink hover:bg-kk-red/5 disabled:opacity-60"
                   >
-                    {pushPending ? "Turning alerts on…" : "Turn on order alerts"}
+                    {pushPending
+                      ? "Turning alerts on…"
+                      : isStandalone
+                        ? "Yes, turn on notifications"
+                        : "Turn on order alerts"}
                   </button>
                   {push.error && <p role="status" className="mt-2 font-inter text-xs text-kk-red-ink">{push.error}</p>}
                 </>
