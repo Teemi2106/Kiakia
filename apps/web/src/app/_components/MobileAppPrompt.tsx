@@ -166,7 +166,7 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
           {showInstallPrompt && (
             <>
               <p className="mt-1 font-inter text-sm text-kk-cocoa">
-                Save KiaKia to your home screen for quicker orders.
+                Save KiaKia to your phone, then turn on alerts for instant order updates.
               </p>
               <p className="mt-2 font-inter text-xs leading-5 text-kk-cocoa">
                 {platform === "ios"
@@ -211,7 +211,7 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
               ) : (
                 <>
                   <p className="mt-1 font-inter text-xs text-kk-cocoa">
-                    We’ll let you know when your order changes.
+                    Get an instant alert when your order status changes, even when KiaKia is closed.
                   </p>
                   <button
                     type="button"

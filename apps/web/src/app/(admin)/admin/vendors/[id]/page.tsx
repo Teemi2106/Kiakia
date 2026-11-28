@@ -2,7 +2,7 @@ import { approveVendorAction, rejectVendorAction } from "@/app/actions/admin";
 import { setVendorCommissionAction } from "@/app/actions/admin-settings";
 import { getVendorDetail, MENU_ITEM_CAP } from "@/lib/admin/vendors";
 import { canManageFinance, requireAdminContext } from "@/lib/auth/dal";
-import { Badge, EmptyState, Input } from "@kiakia/ui";
+import { Badge, EmptyState, Input, buttonVariants } from "@kiakia/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -170,6 +170,15 @@ export default async function AdminVendorDetailPage({ params }: { params: Promis
       </div>
 
       <Section title="Menu">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-ink-muted">Add menu items and their photos or options for this vendor.</p>
+          <Link
+            href={`/admin/vendors/${vendor.id}/menu/new`}
+            className={buttonVariants({ variant: "primary", size: "sm" })}
+          >
+            Add menu item
+          </Link>
+        </div>
         {menu.categories.length === 0 ? (
           <EmptyState title="No menu items yet" description="This store has not added anything to sell." />
         ) : (

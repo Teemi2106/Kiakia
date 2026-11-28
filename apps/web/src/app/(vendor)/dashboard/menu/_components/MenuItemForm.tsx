@@ -1,6 +1,7 @@
 "use client";
 
 import { createMenuItemAction, updateMenuItemAction, type FormState } from "@/app/actions/menu";
+import { createAdminVendorMenuItemAction } from "@/app/actions/admin-menu";
 import { applyBps, formatNaira, koboOf, MEAL_CATEGORIES, subtractKobo } from "@kiakia/domain";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
@@ -31,6 +32,7 @@ export function MenuItemForm({
   vendorId,
   commissionBps,
   existingItem,
+  adminMode = false,
 }: {
   vendorId: string;
   /** vendors.commission_bps — used only to show the vendor their own net
@@ -40,8 +42,10 @@ export function MenuItemForm({
    * anything this form computes. */
   commissionBps: number;
   existingItem?: ExistingItem;
+  /** The same menu editor can be used by admins assisting a vendor. */
+  adminMode?: boolean;
 }) {
-  const action = existingItem ? updateMenuItemAction : createMenuItemAction;
+  const action = adminMode ? createAdminVendorMenuItemAction : existingItem ? updateMenuItemAction : createMenuItemAction;
   const [state, formAction, pending] = useActionState(action, initialState);
   const [groups, setGroups] = useState<OptionGroupState[]>([...(existingItem?.optionGroups ?? [])]);
   const [preview, setPreview] = useState<string | null>(existingItem?.imageUrl ?? null);

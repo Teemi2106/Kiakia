@@ -22,7 +22,7 @@ const EXTENSION_BY_MIME: Record<string, string> = {
  * function does no authorization of its own, same as `createAdminClient()`
  * itself.
  */
-export type UploadVendorImageResult = { ok: true; url: string } | { ok: false; error: string };
+export type UploadVendorImageResult = { ok: true; url: string; path: string } | { ok: false; error: string };
 
 export async function uploadVendorImage(vendorId: string, pathPrefix: string, file: File): Promise<UploadVendorImageResult> {
   const ext = EXTENSION_BY_MIME[file.type];
@@ -44,5 +44,5 @@ export async function uploadVendorImage(vendorId: string, pathPrefix: string, fi
   }
 
   const { data } = admin.storage.from(BUCKET).getPublicUrl(objectPath);
-  return { ok: true, url: data.publicUrl };
+  return { ok: true, url: data.publicUrl, path: objectPath };
 }

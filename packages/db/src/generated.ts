@@ -2597,6 +2597,21 @@ export interface Database {
         };
         Returns: VendorRow;
       };
+      // 0129: create a vendor menu item and its option groups, with an audit row.
+      admin_create_vendor_menu_item: {
+        Args: {
+          p_actor_id: string;
+          p_vendor_id: string;
+          p_name: string;
+          p_description: string | null;
+          p_image_url: string | null;
+          p_price_kobo: number;
+          p_category_key: string | null;
+          p_is_available: boolean;
+          p_option_groups: Json;
+        };
+        Returns: string;
+      };
       admin_update_service_area: {
         Args: {
           p_service_area_id: string;
