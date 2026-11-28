@@ -2,7 +2,7 @@
 "use client";
 
 import { ArrowLeftRight, Search, ShoppingCart, Truck, User, Wallet } from "lucide-react";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -120,11 +120,7 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
   }, []);
 
   return (
-    <nav
-      data-nav-compact={compact || undefined}
-      style={{ "--kk-notification-offset": compact ? "0px" : "85px" } as CSSProperties}
-      className="fixed inset-x-0 top-0 z-40 border-b border-kk-line/50 bg-kk-cream/90 backdrop-blur-xl transition-[background-color]"
-    >
+    <nav data-nav-compact={compact || undefined} className="fixed inset-x-0 top-0 z-40 border-b border-kk-line/50 bg-kk-cream/90 backdrop-blur-xl transition-[background-color]">
       {/* ------------------------------------------------ identity row */}
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-4 transition-[height] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:gap-3 sm:px-6 lg:h-18 motion-reduce:transition-none">
         <Link href="/home" style={{ viewTransitionName: "kk-brand" }} className="shrink-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-[1.03] motion-reduce:transition-none">
@@ -252,7 +248,7 @@ export function CustomerTopNav({ canSwitchToVendor = false, isFleetManager = fal
               >
                 <Wallet className="size-[18px]" />
               </Link>
-              <NotificationsButton audience="customer" />
+              <NotificationsButton audience="customer" mobileMenuTop={compact ? 56 : 141} />
 
               <Link
                 href="/profile"

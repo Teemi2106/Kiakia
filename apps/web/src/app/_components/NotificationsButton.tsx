@@ -1,7 +1,7 @@
 // app/_components/NotificationsButton.tsx
 "use client";
 
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type Dispatch, type SetStateAction } from "react";
 import { Bell, BellRing, CheckCheck } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -33,6 +33,8 @@ interface Notification {
 type Audience = { audience: "customer" } | { audience: "vendor"; vendorId: string };
 
 type NotificationsButtonProps = Audience & {
+  /** Mobile dropdown offset; customer navigation includes a second search row. */
+  mobileMenuTop?: number;
   /** Overrides for the two headers' different button treatments. */
   buttonClassName?: string;
   iconClassName?: string;
@@ -124,10 +126,11 @@ function NotificationsMenu({
   buttonClassName = "relative rounded-full p-2 transition-colors hover:bg-black/5",
   iconClassName = "size-5 text-kk-cocoa sm:size-4",
   emptyMessage = "Nothing here yet — updates about your orders will show up as they happen.",
+  mobileMenuTop = 56,
   scope,
   unreadCount,
   setUnreadCount,
-}: Pick<NotificationsButtonProps, "buttonClassName" | "iconClassName" | "emptyMessage"> & {
+}: Pick<NotificationsButtonProps, "buttonClassName" | "iconClassName" | "emptyMessage" | "mobileMenuTop"> & {
   scope: Scope;
   unreadCount: number;
   setUnreadCount: Dispatch<SetStateAction<number>>;
@@ -254,7 +257,10 @@ function NotificationsMenu({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-[calc(100%_+_var(--kk-notification-offset,0px))] z-50 mt-2 max-h-[70vh] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-2xl border border-kk-line bg-kk-card shadow-lg lg:top-full lg:w-80">
+        <div
+          style={{ "--kk-notification-menu-top": `${mobileMenuTop}px` } as CSSProperties}
+          className="fixed right-3 top-[var(--kk-notification-menu-top)] z-[60] mt-2 max-h-[70vh] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-2xl border border-kk-line bg-kk-card shadow-lg lg:absolute lg:right-0 lg:top-full lg:w-80"
+        >
           <div className="flex items-center justify-between border-b border-kk-line px-4 py-3">
             <span className="font-sora text-sm font-semibold text-kk-ink">Notifications</span>
             {unreadCount > 0 && (
