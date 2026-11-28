@@ -72,14 +72,24 @@ export function useWebPushSubscription(enabled = true): WebPushSubscriptionState
         return;
       }
 
+      if (!clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+        if (!cancelled) {
+          updateStatus("unsupported");
+          setError("Push alerts aren’t configured for this app yet.");
+        }
+        return;
+      }
+
       if (
         typeof window === "undefined" ||
-        !clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
         !("Notification" in window) ||
         !("serviceWorker" in navigator) ||
         !("PushManager" in window)
       ) {
-        if (!cancelled) updateStatus("unsupported");
+        if (!cancelled) {
+          updateStatus("unsupported");
+          setError("This browser or app version doesn’t support push notifications.");
+        }
         return;
       }
 

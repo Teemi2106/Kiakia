@@ -254,7 +254,7 @@ function NotificationsMenu({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 max-h-[70vh] w-80 overflow-y-auto rounded-2xl border border-kk-line bg-kk-card shadow-lg">
+        <div className="absolute right-0 top-[calc(100%_+_var(--kk-notification-offset,0px))] z-50 mt-2 max-h-[70vh] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-2xl border border-kk-line bg-kk-card shadow-lg lg:top-full lg:w-80">
           <div className="flex items-center justify-between border-b border-kk-line px-4 py-3">
             <span className="font-sora text-sm font-semibold text-kk-ink">Notifications</span>
             {unreadCount > 0 && (

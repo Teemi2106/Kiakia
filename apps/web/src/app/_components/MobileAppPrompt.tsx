@@ -40,7 +40,9 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
   const pwaPromptDismissed = useRef(false);
 
   const hasPushOption = enablePush && (push.status === "not_subscribed" || push.status === "denied");
-  const isPwaPushPrompt = isStandalone && hasPushOption;
+  const pushUnavailableInPwa = enablePush && isStandalone && push.status === "unsupported";
+  const hasPushPrompt = hasPushOption || pushUnavailableInPwa;
+  const isPwaPushPrompt = isStandalone && hasPushPrompt;
 
   useEffect(() => {
     const ios =
@@ -80,7 +82,7 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
     }
 
     const hasInstallOption = isMobile && !isStandalone;
-    if (!hasInstallOption && !hasPushOption) {
+    if (!hasInstallOption && !hasPushPrompt) {
       setVisible(false);
       return;
     }
@@ -106,7 +108,7 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
 
     const timer = window.setTimeout(() => setVisible(true), 1800);
     return () => window.clearTimeout(timer);
-  }, [enablePush, hasPushOption, isMobile, isPwaPushPrompt, isStandalone, pathname, push.status, ready]);
+  }, [enablePush, hasPushOption, hasPushPrompt, isMobile, isPwaPushPrompt, isStandalone, pathname, push.status, ready]);
 
   function dismiss() {
     if (isPwaPushPrompt) {
@@ -240,6 +242,12 @@ export function MobileAppPrompt({ enablePush }: MobileAppPromptProps) {
             </p>
           </div>
         </div>
+      )}
+
+      {pushUnavailableInPwa && (
+        <p role="status" className="mt-4 border-t border-kk-line pt-3 font-inter text-xs leading-5 text-kk-cocoa">
+          {push.error ?? "Push notifications aren’t available in this browser or app version."}
+        </p>
       )}
 
       {enablePush && push.status === "subscribed" && (
